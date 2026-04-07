@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 
 import connectDB.ConnectDB;
@@ -210,5 +211,87 @@ public class Ban_DAO {
 		}
 
 		return false;
+	}
+	public ArrayList<String[]> getTatCaBanKemTrangThaiMacDinh() {
+	    ArrayList<String[]> ds = new ArrayList<>();
+	    Connection con = ConnectDB.getConnection();
+
+	    String sql = "SELECT maBan, tenBan, trangThai FROM Ban ORDER BY tenBan";
+
+	    try {
+	        PreparedStatement stmt = con.prepareStatement(sql);
+	        ResultSet rs = stmt.executeQuery();
+
+	        while (rs.next()) {
+	            String trangThai = rs.getString("trangThai");
+	            if (trangThai == null || trangThai.trim().isEmpty()) {
+	                trangThai = "Bàn trống";
+	            }
+
+	            ds.add(new String[] {
+	                rs.getString("maBan"),
+	                rs.getString("tenBan"),
+	                trangThai
+	            });
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+
+	    return ds;
+	}
+
+	public ArrayList<String[]> getDanhSachBanTheoThoiGian(Timestamp thoiGianChon) {
+	    ArrayList<String[]> ds = new ArrayList<>();
+	    Connection con = ConnectDB.getConnection();
+
+	    String sql = """
+	        SELECT 
+	            b.maBan,
+	            b.tenBan,
+	            CASE
+	                WHEN EXISTS (
+	                    SELECT 1
+	                    FROM HoaDon hd
+	                    WHERE hd.maBan = b.maBan
+	                      AND hd.thoiGianVao <= ?
+	                      AND (hd.thoiGianRa IS NULL OR hd.thoiGianRa >= ?)
+	                ) THEN N'Đang phục vụ'
+
+	                WHEN EXISTS (
+	                    SELECT 1
+	                    FROM PhieuDatBan pdb
+	                    WHERE pdb.maBan = b.maBan
+	                      AND (pdb.trangThai IS NULL OR pdb.trangThai <> N'Đã hủy')
+	                      AND pdb.thoiGianDen < DATEADD(HOUR, 2, ?)
+	                      AND DATEADD(HOUR, 2, pdb.thoiGianDen) > ?
+	                ) THEN N'Đã đặt'
+
+	                ELSE N'Bàn trống'
+	            END AS trangThaiHienTai
+	        FROM Ban b
+	        ORDER BY b.tenBan
+	    """;
+
+	    try {
+	        PreparedStatement stmt = con.prepareStatement(sql);
+	        stmt.setTimestamp(1, thoiGianChon);
+	        stmt.setTimestamp(2, thoiGianChon);
+	        stmt.setTimestamp(3, thoiGianChon);
+	        stmt.setTimestamp(4, thoiGianChon);
+
+	        ResultSet rs = stmt.executeQuery();
+	        while (rs.next()) {
+	            ds.add(new String[] {
+	                rs.getString("maBan"),
+	                rs.getString("tenBan"),
+	                rs.getString("trangThaiHienTai")
+	            });
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+
+	    return ds;
 	}
 }

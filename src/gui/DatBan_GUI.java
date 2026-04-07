@@ -2,11 +2,14 @@ package gui;
 
 import java.awt.*;
 import java.awt.event.MouseWheelListener;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -16,7 +19,9 @@ import com.toedter.calendar.JDateChooser;
 
 import connectDB.ConnectDB;
 import dao.Ban_DAO;
+import dao.PhieuDatBan_DAO;
 import entity.Ban;
+import digLog.PhieuDatBan_DigLog;
 
 public class DatBan_GUI extends JFrame {
 
@@ -66,6 +71,37 @@ public class DatBan_GUI extends JFrame {
         private ViewMode currentMode = ViewMode.DAY;
 
         private java.util.List<String> tableNames = new ArrayList<>();
+        private Map<String, String> tableNameMap = new HashMap<>();
+
+        private JTextField txtSearchMaPhieu;
+        private JTextField txtSearchSdt;
+
+        private final java.util.List<JCheckBox> statusCheckBoxes = new ArrayList<>();
+        private final java.util.List<String> statusValues = new ArrayList<>();
+
+        class BookingDisplayItem {
+            String maPhieu;
+            String maBan;
+            String tenKhach;
+            String sdt;
+            String trangThai;
+            Timestamp thoiGianDen;
+            int soLuongNguoi;
+            String ghiChu;
+
+            public BookingDisplayItem(String maPhieu, String maBan, String tenKhach,
+                                      String sdt, String trangThai,
+                                      Timestamp thoiGianDen, int soLuongNguoi, String ghiChu) {
+                this.maPhieu = maPhieu;
+                this.maBan = maBan;
+                this.tenKhach = tenKhach;
+                this.sdt = sdt;
+                this.trangThai = trangThai;
+                this.thoiGianDen = thoiGianDen;
+                this.soLuongNguoi = soLuongNguoi;
+                this.ghiChu = ghiChu;
+            }
+        }
 
         public DatBanMainPanel() {
             setLayout(new BorderLayout());
@@ -87,8 +123,29 @@ public class DatBan_GUI extends JFrame {
             refreshView();
         }
 
+        private void moChiTietPhieu(BookingDisplayItem item) {
+            try {
+                PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(
+                        DatBan_GUI.this,
+                        item.maPhieu
+                );
+                dialog.setLocationRelativeTo(DatBan_GUI.this);
+                dialog.setVisible(true);
+                refreshView();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(
+                        DatBan_GUI.this,
+                        "Không mở được chi tiết phiếu đặt bàn!",
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+        }
+
         private void loadTableNamesFromDB() {
             tableNames.clear();
+            tableNameMap.clear();
 
             try {
                 Ban_DAO banDAO = new Ban_DAO();
@@ -96,7 +153,9 @@ public class DatBan_GUI extends JFrame {
 
                 for (Ban ban : dsBan) {
                     if (ban.getTenBan() != null && !ban.getTenBan().trim().isEmpty()) {
-                        tableNames.add(ban.getTenBan().trim());
+                        String tenBan = ban.getTenBan().trim();
+                        tableNames.add(tenBan);
+                        tableNameMap.put(ban.getMaBan(), tenBan);
                     }
                 }
             } catch (Exception e) {
@@ -129,7 +188,110 @@ public class DatBan_GUI extends JFrame {
             }
         }
 
-        // ================= LEFT PANEL =================
+        private java.util.List<BookingDisplayItem> getBookingsByDate(Date ngay) {
+            java.util.List<BookingDisplayItem> result = new ArrayList<>();
+
+            try {
+                PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
+                ArrayList<String[]> ds = dao.getPhieuDatBanTheoNgay(new java.sql.Date(ngay.getTime()));
+
+                for (String[] row : ds) {
+                    Timestamp tg = Timestamp.valueOf(row[5]);
+                    result.add(new BookingDisplayItem(
+                            row[0],
+                            row[1],
+                            row[2],
+                            row[3],
+                            row[8],
+                            tg,
+                            Integer.parseInt(row[4]),
+                            row[7]
+                    ));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return result;
+        }
+
+        private BookingDisplayItem findBookingAt(String tenBan, Date ngay, int hour) {
+            java.util.List<BookingDisplayItem> ds = getBookingsByDate(ngay);
+
+            for (BookingDisplayItem item : ds) {
+                String tenBanDB = tableNameMap.getOrDefault(item.maBan, item.maBan);
+
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(item.thoiGianDen);
+
+                int bookingHour = cal.get(Calendar.HOUR_OF_DAY);
+
+                if (tenBan.equalsIgnoreCase(tenBanDB)) {
+                    if (bookingHour == hour && isAcceptedByFilter(item)) {
+                        return item;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private boolean isAcceptedByFilter(BookingDisplayItem item) {
+            String maPhieuFilter = getRealText(txtSearchMaPhieu, "Nhập mã phiếu đặt bàn");
+            String sdtFilter = getRealText(txtSearchSdt, "Nhập số điện thoại");
+
+            if (!maPhieuFilter.isEmpty()) {
+                if (item.maPhieu == null || !item.maPhieu.toLowerCase().contains(maPhieuFilter.toLowerCase())) {
+                    return false;
+                }
+            }
+
+            if (!sdtFilter.isEmpty()) {
+                if (item.sdt == null || !item.sdt.contains(sdtFilter)) {
+                    return false;
+                }
+            }
+
+            java.util.List<String> selectedStatuses = getSelectedStatuses();
+            if (!selectedStatuses.isEmpty()) {
+                if (item.trangThai == null || !selectedStatuses.contains(item.trangThai.trim())) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private java.util.List<String> getSelectedStatuses() {
+            java.util.List<String> selected = new ArrayList<>();
+            for (int i = 0; i < statusCheckBoxes.size(); i++) {
+                if (statusCheckBoxes.get(i).isSelected()) {
+                    selected.add(statusValues.get(i));
+                }
+            }
+            return selected;
+        }
+
+        private String getRealText(JTextField txt, String placeholder) {
+            if (txt == null) return "";
+            String value = txt.getText().trim();
+            if (value.equalsIgnoreCase(placeholder)) return "";
+            return value;
+        }
+
+        private Color getStatusColor(String trangThai) {
+            if (trangThai == null) return new Color(220, 170, 76);
+
+            String s = trangThai.trim().toLowerCase();
+
+            if (s.equals("hoàn thành")) return new Color(124, 183, 103);
+            if (s.equals("đã xếp bàn")) return new Color(46, 134, 222);
+            if (s.equals("đang chờ")) return new Color(227, 177, 30);
+            if (s.equals("quá giờ")) return new Color(95, 95, 95);
+            if (s.equals("đã hủy")) return new Color(219, 47, 47);
+
+            return new Color(220, 170, 76);
+        }
+
         private JPanel createLeftFilterPanel() {
             JPanel panel = new JPanel(new GridBagLayout());
             panel.setBackground(new Color(236, 236, 236));
@@ -144,11 +306,11 @@ public class DatBan_GUI extends JFrame {
 
             gbc.gridy = 0;
             gbc.insets = new Insets(0, 0, 26, 0);
-            panel.add(createSearchBlock("Tìm kiếm phiếu đặt bàn", "Nhập mã phiếu đặt bàn"), gbc);
+            panel.add(createSearchBlock("Tìm kiếm phiếu đặt bàn", "Nhập mã phiếu đặt bàn", true), gbc);
 
             gbc.gridy = 1;
             gbc.insets = new Insets(0, 0, 26, 0);
-            panel.add(createSearchBlock("Tìm kiếm theo khách hàng", "Nhập số điện thoại"), gbc);
+            panel.add(createSearchBlock("Tìm kiếm theo khách hàng", "Nhập số điện thoại", false), gbc);
 
             gbc.gridy = 2;
             gbc.insets = new Insets(0, 0, 0, 0);
@@ -161,7 +323,7 @@ public class DatBan_GUI extends JFrame {
             return panel;
         }
 
-        private JPanel createSearchBlock(String title, String hint) {
+        private JPanel createSearchBlock(String title, String hint, boolean maPhieuField) {
             JPanel wrap = new JPanel(new BorderLayout(0, 10));
             wrap.setOpaque(false);
 
@@ -204,6 +366,29 @@ public class DatBan_GUI extends JFrame {
             txt.setMargin(new Insets(0, 10, 0, 10));
 
             addPlaceholderBehavior(txt, hint);
+
+            txt.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+                @Override
+                public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                    refreshView();
+                }
+
+                @Override
+                public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                    refreshView();
+                }
+
+                @Override
+                public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                    refreshView();
+                }
+            });
+
+            if (maPhieuField) {
+                txtSearchMaPhieu = txt;
+            } else {
+                txtSearchSdt = txt;
+            }
 
             wrap.add(top, BorderLayout.NORTH);
             wrap.add(txt, BorderLayout.CENTER);
@@ -248,11 +433,11 @@ public class DatBan_GUI extends JFrame {
             statusList.setOpaque(false);
             statusList.setLayout(new BoxLayout(statusList, BoxLayout.Y_AXIS));
 
-            statusList.add(createStatusItem("Hoàn thành", new Color(124, 183, 103)));
-            statusList.add(createStatusItem("Đã xếp bàn", new Color(46, 134, 222)));
-            statusList.add(createStatusItem("Đang chờ", new Color(227, 177, 30)));
-            statusList.add(createStatusItem("Quá giờ", new Color(95, 95, 95)));
-            statusList.add(createStatusItem("Đã hủy", new Color(219, 47, 47)));
+            addStatusItem(statusList, "Hoàn thành", new Color(124, 183, 103));
+            addStatusItem(statusList, "Đã xếp bàn", new Color(46, 134, 222));
+            addStatusItem(statusList, "Đang chờ", new Color(227, 177, 30));
+            addStatusItem(statusList, "Quá giờ", new Color(95, 95, 95));
+            addStatusItem(statusList, "Đã hủy", new Color(219, 47, 47));
 
             wrap.add(top, BorderLayout.NORTH);
             wrap.add(statusList, BorderLayout.CENTER);
@@ -260,7 +445,7 @@ public class DatBan_GUI extends JFrame {
             return wrap;
         }
 
-        private JPanel createStatusItem(String text, Color color) {
+        private void addStatusItem(JPanel container, String text, Color color) {
             JPanel row = new JPanel();
             row.setOpaque(false);
             row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
@@ -278,6 +463,7 @@ public class DatBan_GUI extends JFrame {
             chk.setMaximumSize(new Dimension(26, 22));
             chk.setMinimumSize(new Dimension(26, 22));
             chk.setAlignmentY(Component.CENTER_ALIGNMENT);
+            chk.addActionListener(e -> refreshView());
 
             JLabel lbl = new JLabel(text);
             lbl.setForeground(color);
@@ -289,7 +475,10 @@ public class DatBan_GUI extends JFrame {
             row.add(lbl);
             row.add(Box.createHorizontalGlue());
 
-            return row;
+            statusCheckBoxes.add(chk);
+            statusValues.add(text);
+
+            container.add(row);
         }
 
         private void addPlaceholderBehavior(JTextField textField, String placeholder) {
@@ -312,7 +501,6 @@ public class DatBan_GUI extends JFrame {
             });
         }
 
-        // ================= CENTER PANEL =================
         private JPanel createCenterPanel() {
             JPanel panel = new JPanel(new BorderLayout(0, 10));
             panel.setBackground(Color.WHITE);
@@ -333,6 +521,23 @@ public class DatBan_GUI extends JFrame {
             btnAdd.setBorderPainted(false);
             btnAdd.setPreferredSize(new Dimension(350, 38));
             btnAdd.setFont(new Font("SansSerif", Font.BOLD, 19));
+
+            btnAdd.addActionListener(e -> {
+                try {
+                    PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(DatBan_GUI.this);
+                    dialog.setLocationRelativeTo(DatBan_GUI.this);
+                    dialog.setVisible(true);
+                    refreshView();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(
+                            DatBan_GUI.this,
+                            "Không mở được phiếu đặt bàn!",
+                            "Lỗi",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            });
 
             headerPanel.add(lblTitle, BorderLayout.WEST);
             headerPanel.add(btnAdd, BorderLayout.EAST);
@@ -408,7 +613,6 @@ public class DatBan_GUI extends JFrame {
             scrollPane.getHorizontalScrollBar().setUnitIncrement(20);
         }
 
-        // ================= EVENTS =================
         private void initEvents() {
             btnToday.addActionListener(e -> {
                 currentCalendar.setTime(new Date());
@@ -460,7 +664,6 @@ public class DatBan_GUI extends JFrame {
             });
         }
 
-        // ================= REFRESH =================
         private void refreshView() {
             updateButtonStyles();
             cardPanel.removeAll();
@@ -492,7 +695,6 @@ public class DatBan_GUI extends JFrame {
             }
         }
 
-        // ================= PANEL CỐ ĐỊNH CỘT BÀN =================
         private JPanel createFixedTablePanel(JPanel leftPanel, JPanel rightPanel, int fixedWidth) {
             JScrollPane leftScroll = new JScrollPane(leftPanel);
             JScrollPane rightScroll = new JScrollPane(rightPanel);
@@ -508,7 +710,7 @@ public class DatBan_GUI extends JFrame {
             rightScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
             rightScroll.getVerticalScrollBar().addAdjustmentListener(
-                e -> leftScroll.getVerticalScrollBar().setValue(e.getValue())
+                    e -> leftScroll.getVerticalScrollBar().setValue(e.getValue())
             );
 
             MouseWheelListener syncWheel = e -> {
@@ -531,7 +733,6 @@ public class DatBan_GUI extends JFrame {
             return panel;
         }
 
-        // ================= DAY VIEW =================
         private JPanel buildDayGrid() {
             JPanel leftPanel = new JPanel(new GridBagLayout());
             JPanel rightPanel = new JPanel(new GridBagLayout());
@@ -550,7 +751,7 @@ public class DatBan_GUI extends JFrame {
 
             int leftColWidth = 170;
             int hourWidth = 120;
-            int rowHeight = 38;
+            int rowHeight = 52;
 
             gbcL.gridy = 0;
             leftPanel.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbcL);
@@ -567,8 +768,8 @@ public class DatBan_GUI extends JFrame {
             gbcR.gridy = 0;
             gbcR.gridwidth = hours.size();
             rightPanel.add(
-                createCell(formatDayHeaderFull(currentCalendar), hourWidth * hours.size(), rowHeight, true, SwingConstants.LEFT),
-                gbcR
+                    createCell(formatDayHeaderFull(currentCalendar), hourWidth * hours.size(), rowHeight, true, SwingConstants.LEFT),
+                    gbcR
             );
 
             for (int i = 0; i < hours.size(); i++) {
@@ -583,7 +784,9 @@ public class DatBan_GUI extends JFrame {
                     gbcR.gridx = c;
                     gbcR.gridy = r + 2;
                     gbcR.gridwidth = 1;
-                    rightPanel.add(createCell("", hourWidth, rowHeight, false, SwingConstants.CENTER), gbcR);
+
+                    BookingDisplayItem item = findBookingAt(tableNames.get(r), currentCalendar.getTime(), c);
+                    rightPanel.add(createBookingSlotCell(item, hourWidth, rowHeight), gbcR);
                 }
             }
 
@@ -593,7 +796,6 @@ public class DatBan_GUI extends JFrame {
             return createFixedTablePanel(leftPanel, rightPanel, leftColWidth);
         }
 
-        // ================= WEEK VIEW =================
         private JPanel buildWeekGridLikeImage() {
             JPanel leftPanel = new JPanel(new GridBagLayout());
             JPanel rightPanel = new JPanel(new GridBagLayout());
@@ -613,7 +815,7 @@ public class DatBan_GUI extends JFrame {
 
             int leftColWidth = 170;
             int hourWidth = 110;
-            int rowHeight = 38;
+            int rowHeight = 52;
 
             gbcL.gridy = 0;
             leftPanel.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbcL);
@@ -635,8 +837,8 @@ public class DatBan_GUI extends JFrame {
                 gbcR.gridy = 0;
                 gbcR.gridwidth = hours.size();
                 rightPanel.add(
-                    createCell(formatDayHeader(day), hourWidth * hours.size(), rowHeight, true, SwingConstants.LEFT),
-                    gbcR
+                        createCell(formatDayHeader(day), hourWidth * hours.size(), rowHeight, true, SwingConstants.LEFT),
+                        gbcR
                 );
                 colIndex += hours.size();
             }
@@ -653,12 +855,23 @@ public class DatBan_GUI extends JFrame {
 
             colIndex = 0;
             for (int d = 0; d < 7; d++) {
+                Calendar day = (Calendar) weekStart.clone();
+                day.add(Calendar.DAY_OF_MONTH, d);
+
                 for (int h = 0; h < hours.size(); h++) {
+                    int startHour = h * 2;
+
                     for (int r = 0; r < tableNames.size(); r++) {
                         gbcR.gridx = colIndex;
                         gbcR.gridy = r + 2;
                         gbcR.gridwidth = 1;
-                        rightPanel.add(createCell("", hourWidth, rowHeight, false, SwingConstants.CENTER), gbcR);
+
+                        BookingDisplayItem item = findBookingAt(
+                                tableNames.get(r),
+                                day.getTime(),
+                                startHour
+                        );
+                        rightPanel.add(createBookingSlotCell(item, hourWidth, rowHeight), gbcR);
                     }
                     colIndex++;
                 }
@@ -670,7 +883,6 @@ public class DatBan_GUI extends JFrame {
             return createFixedTablePanel(leftPanel, rightPanel, leftColWidth);
         }
 
-        // ================= SCHEDULE VIEW =================
         private JComponent buildScheduleViewLikeImage() {
             JPanel content = new JPanel(new GridBagLayout());
             content.setBackground(Color.WHITE);
@@ -685,7 +897,7 @@ public class DatBan_GUI extends JFrame {
             int colThongTin = 700;
 
             int headerH = 42;
-            int rowH = 64;
+            int rowH = 70;
 
             gbc.gridy = 0;
             gbc.gridx = 0;
@@ -702,27 +914,58 @@ public class DatBan_GUI extends JFrame {
             gbc.weightx = 1;
             content.add(createCell("Thông tin", colThongTin, headerH, true, SwingConstants.LEFT), gbc);
 
-            for (int i = 0; i < tableNames.size(); i++) {
+            java.util.List<BookingDisplayItem> bookings = getBookingsByDate(currentCalendar.getTime());
+            java.util.List<BookingDisplayItem> filtered = new ArrayList<>();
+
+            for (BookingDisplayItem item : bookings) {
+                if (isAcceptedByFilter(item)) {
+                    filtered.add(item);
+                }
+            }
+
+            for (int i = 0; i < filtered.size(); i++) {
+                BookingDisplayItem item = filtered.get(i);
                 int row = i + 1;
+
+                String tenBan = tableNameMap.getOrDefault(item.maBan, item.maBan);
 
                 gbc.gridy = row;
                 gbc.gridx = 0;
                 gbc.weightx = 0;
-                content.add(createCell(tableNames.get(i), colBan, rowH, false, SwingConstants.LEFT), gbc);
+                content.add(createCell(tenBan, colBan, rowH, false, SwingConstants.LEFT), gbc);
 
                 gbc.gridx = 1;
-                content.add(createCell(formatDayHeaderFull(currentCalendar), colNgay, rowH, false, SwingConstants.CENTER), gbc);
+                content.add(createCell(formatDateOnly(item.thoiGianDen), colNgay, rowH, false, SwingConstants.CENTER), gbc);
 
                 gbc.gridx = 2;
-                content.add(createCell("10 AM", colThoiGian, rowH, false, SwingConstants.CENTER), gbc);
+                content.add(createCell(formatTimeOnly(item.thoiGianDen), colThoiGian, rowH, false, SwingConstants.CENTER), gbc);
 
                 gbc.gridx = 3;
                 gbc.weightx = 1;
-                content.add(createBookingInfoCell("", colThongTin, rowH), gbc);
+                content.add(createBookingInfoCell(item, colThongTin, rowH), gbc);
+            }
+
+            if (filtered.isEmpty()) {
+                gbc.gridy = 1;
+                gbc.gridx = 0;
+                gbc.gridwidth = 4;
+
+                JPanel empty = new JPanel(new BorderLayout());
+                empty.setBackground(Color.WHITE);
+                empty.setBorder(new LineBorder(new Color(200, 200, 200)));
+                empty.setPreferredSize(new Dimension(colBan + colNgay + colThoiGian + colThongTin, 80));
+
+                JLabel lbl = new JLabel("Không có dữ liệu đặt bàn", SwingConstants.CENTER);
+                lbl.setFont(new Font("SansSerif", Font.PLAIN, 16));
+                lbl.setForeground(Color.GRAY);
+                empty.add(lbl, BorderLayout.CENTER);
+
+                content.add(empty, gbc);
+                gbc.gridwidth = 1;
             }
 
             int totalWidth = colBan + colNgay + colThoiGian + colThongTin;
-            int totalHeight = headerH + tableNames.size() * rowH;
+            int totalHeight = headerH + Math.max(filtered.size(), 1) * rowH;
             content.setPreferredSize(new Dimension(totalWidth, totalHeight));
 
             JScrollPane scrollPane = new JScrollPane(content);
@@ -730,29 +973,97 @@ public class DatBan_GUI extends JFrame {
             return scrollPane;
         }
 
-        // ================= COMMON COMPONENTS =================
-        private JPanel createBookingInfoCell(String text, int w, int h) {
+        private JPanel createBookingInfoCell(BookingDisplayItem item, int w, int h) {
             JPanel wrapper = new JPanel(new BorderLayout());
             wrapper.setBackground(Color.WHITE);
             wrapper.setBorder(new LineBorder(new Color(200, 200, 200)));
             wrapper.setPreferredSize(new Dimension(w, h));
 
-            JPanel orangeBox = new JPanel(new BorderLayout());
-            orangeBox.setBackground(new Color(220, 170, 76));
-            orangeBox.setBorder(new EmptyBorder(10, 18, 10, 18));
+            JPanel colorBox = new JPanel(new BorderLayout());
+            colorBox.setBackground(getStatusColor(item.trangThai));
+            colorBox.setBorder(new EmptyBorder(10, 18, 10, 18));
+            colorBox.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
+            String text = item.tenKhach + " - " + item.sdt + " - " + item.trangThai;
             JLabel lbl = new JLabel(text);
             lbl.setForeground(Color.WHITE);
             lbl.setFont(new Font("SansSerif", Font.PLAIN, 15));
-            orangeBox.add(lbl, BorderLayout.WEST);
+            colorBox.add(lbl, BorderLayout.WEST);
+
+            colorBox.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    moChiTietPhieu(item);
+                }
+            });
 
             JPanel margin = new JPanel(new BorderLayout());
             margin.setOpaque(false);
             margin.setBorder(new EmptyBorder(8, 18, 8, 18));
-            margin.add(orangeBox, BorderLayout.CENTER);
+            margin.add(colorBox, BorderLayout.CENTER);
 
             wrapper.add(margin, BorderLayout.CENTER);
+            wrapper.setToolTipText(buildToolTip(item));
             return wrapper;
+        }
+
+        private JPanel createBookingSlotCell(BookingDisplayItem item, int w, int h) {
+            JPanel wrapper = new JPanel(new BorderLayout());
+            wrapper.setBackground(Color.WHITE);
+            wrapper.setBorder(new LineBorder(new Color(200, 200, 200)));
+            wrapper.setPreferredSize(new Dimension(w, h));
+
+            if (item == null) {
+                return wrapper;
+            }
+
+            JPanel colorBox = new JPanel();
+            colorBox.setLayout(new BoxLayout(colorBox, BoxLayout.Y_AXIS));
+            colorBox.setBackground(getStatusColor(item.trangThai));
+            colorBox.setBorder(new EmptyBorder(4, 8, 4, 8));
+            colorBox.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+            JLabel lblPhone = new JLabel("☏ " + item.sdt);
+            lblPhone.setForeground(Color.WHITE);
+            lblPhone.setFont(new Font("SansSerif", Font.PLAIN, 11));
+            lblPhone.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            JLabel lblName = new JLabel("👤 " + item.tenKhach);
+            lblName.setForeground(Color.WHITE);
+            lblName.setFont(new Font("SansSerif", Font.PLAIN, 11));
+            lblName.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            colorBox.add(lblPhone);
+            colorBox.add(Box.createVerticalStrut(2));
+            colorBox.add(lblName);
+
+            colorBox.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    moChiTietPhieu(item);
+                }
+            });
+
+            wrapper.add(colorBox, BorderLayout.CENTER);
+            wrapper.setToolTipText(buildToolTip(item));
+            return wrapper;
+        }
+
+        private String buildToolTip(BookingDisplayItem item) {
+            return "<html>"
+                    + "Mã phiếu: " + safe(item.maPhieu)
+                    + "<br>Bàn: " + safe(tableNameMap.getOrDefault(item.maBan, item.maBan))
+                    + "<br>Khách: " + safe(item.tenKhach)
+                    + "<br>SĐT: " + safe(item.sdt)
+                    + "<br>Số lượng: " + item.soLuongNguoi
+                    + "<br>Thời gian: " + formatDateTime(item.thoiGianDen)
+                    + "<br>Trạng thái: " + safe(item.trangThai)
+                    + "<br>Ghi chú: " + safe(item.ghiChu)
+                    + "</html>";
+        }
+
+        private String safe(String value) {
+            return value == null || value.trim().isEmpty() ? "" : value;
         }
 
         private JPanel createCell(String text, int w, int h, boolean header, int align) {
@@ -780,7 +1091,6 @@ public class DatBan_GUI extends JFrame {
             }
         }
 
-        // ================= DATA =================
         private java.util.List<String> createHoursDay() {
             java.util.List<String> hours = new ArrayList<>();
             for (int h = 0; h < 24; h++) {
@@ -830,6 +1140,18 @@ public class DatBan_GUI extends JFrame {
         private String formatDayHeaderFull(Calendar c) {
             SimpleDateFormat sdf = new SimpleDateFormat("dd 'Tháng' MM yyyy", new Locale("vi", "VN"));
             return sdf.format(c.getTime());
+        }
+
+        private String formatDateOnly(Date d) {
+            return new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN")).format(d);
+        }
+
+        private String formatTimeOnly(Date d) {
+            return new SimpleDateFormat("HH:mm", new Locale("vi", "VN")).format(d);
+        }
+
+        private String formatDateTime(Date d) {
+            return new SimpleDateFormat("dd/MM/yyyy HH:mm", new Locale("vi", "VN")).format(d);
         }
 
         enum ViewMode {

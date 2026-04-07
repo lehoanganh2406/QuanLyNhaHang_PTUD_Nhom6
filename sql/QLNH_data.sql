@@ -671,16 +671,9 @@ VALUES
 ('HD00002', 'MM012', 2, 35000, N'');
 GO
 
-/*==========================================================
-15. CẬP NHẬT TRẠNG THÁI BÀN MẪU
-==========================================================*/
-UPDATE Ban SET trangThai = N'Đã đặt' WHERE maBan IN ('A01', 'A05', 'B10', 'C15', 'B03');
-UPDATE Ban SET trangThai = N'Đang phục vụ' WHERE maBan IN ('A02', 'B01');
-GO
-
 
 /*==========================================================
-16. KIỂM TRA
+15. KIỂM TRA
 ==========================================================*/
 SELECT * FROM LoaiMonAn;
 SELECT * FROM MonAn;

@@ -94,5 +94,7 @@ public class NhanVien {
 				+ ", gioiTinh=" + gioiTinh + ", cccd=" + cccd + ", email=" + email + ", sdt=" + sdt + ", chucVu="
 				+ chucVu + ", trangThai=" + trangThai + "]";
 	}
-	
+	public NhanVien() {
+		// TODO Auto-generated constructor stub
+	}
 }

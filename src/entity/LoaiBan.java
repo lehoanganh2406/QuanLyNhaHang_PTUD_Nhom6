@@ -25,5 +25,7 @@ public class LoaiBan {
 	public String toString() {
 		return "LoaiBan [maLoaiBan=" + maLoaiBan + ", tenLoaiBan=" + tenLoaiBan + "]";
 	}
-	
+	public LoaiBan() {
+		// TODO Auto-generated constructor stub
+	}
 }

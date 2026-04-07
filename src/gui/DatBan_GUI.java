@@ -1,8 +1,7 @@
 package gui;
 
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelListener;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -14,6 +13,10 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import com.toedter.calendar.JDateChooser;
+
+import connectDB.ConnectDB;
+import dao.Ban_DAO;
+import entity.Ban;
 
 public class DatBan_GUI extends JFrame {
 
@@ -34,7 +37,14 @@ public class DatBan_GUI extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new DatBan_GUI().setVisible(true));
+        SwingUtilities.invokeLater(() -> {
+            try {
+                ConnectDB.getInstance().connect();
+                new DatBan_GUI().setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     class DatBanMainPanel extends JPanel {
@@ -50,20 +60,12 @@ public class DatBan_GUI extends JFrame {
         private final JButton btnWeekView = new JButton("Tuần");
         private final JButton btnScheduleView = new JButton("Theo lịch đặt");
 
-        private final JLabel lblDateRange = new JLabel();
+        private final JDateChooser dateChooser = new JDateChooser();
 
         private final Calendar currentCalendar = Calendar.getInstance();
         private ViewMode currentMode = ViewMode.DAY;
 
-        private final JScrollPane dayScrollPane;
-        private final JScrollPane weekScrollPane;
-        private final JScrollPane scheduleScrollPane;
-
-        private final JPanel dayGridPanel = new JPanel();
-        private final JPanel weekGridPanel = new JPanel();
-        private final JPanel scheduleListPanel = new JPanel();
-
-        private final java.util.List<String> tableNames = createTableNames();
+        private java.util.List<String> tableNames = new ArrayList<>();
 
         public DatBanMainPanel() {
             setLayout(new BorderLayout());
@@ -72,151 +74,221 @@ public class DatBan_GUI extends JFrame {
             JPanel centerPanel = createCenterPanel();
 
             JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, centerPanel);
-            splitPane.setDividerLocation(215);
+            splitPane.setDividerLocation(255);
             splitPane.setDividerSize(2);
             splitPane.setBorder(null);
             splitPane.setResizeWeight(0);
 
             add(splitPane, BorderLayout.CENTER);
 
-            dayScrollPane = new JScrollPane(dayGridPanel);
-            weekScrollPane = new JScrollPane(weekGridPanel);
-            scheduleScrollPane = new JScrollPane(scheduleListPanel);
-
-            configScroll(dayScrollPane);
-            configScroll(weekScrollPane);
-            configScroll(scheduleScrollPane);
-
-            cardPanel.add(dayScrollPane, ViewMode.DAY.name());
-            cardPanel.add(weekScrollPane, ViewMode.WEEK.name());
-            cardPanel.add(scheduleScrollPane, ViewMode.SCHEDULE.name());
-
+            loadTableNamesFromDB();
+            initDateChooser();
             initEvents();
             refreshView();
         }
 
+        private void loadTableNamesFromDB() {
+            tableNames.clear();
+
+            try {
+                Ban_DAO banDAO = new Ban_DAO();
+                ArrayList<Ban> dsBan = banDAO.getAllBan();
+
+                for (Ban ban : dsBan) {
+                    if (ban.getTenBan() != null && !ban.getTenBan().trim().isEmpty()) {
+                        tableNames.add(ban.getTenBan().trim());
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Không lấy được danh sách bàn từ cơ sở dữ liệu!",
+                        "Lỗi dữ liệu",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+        }
+
+        private void initDateChooser() {
+            dateChooser.setDate(currentCalendar.getTime());
+            dateChooser.setDateFormatString("dd/MM/yyyy");
+            dateChooser.setLocale(new Locale("vi", "VN"));
+            dateChooser.setPreferredSize(new Dimension(150, 30));
+            dateChooser.setFont(new Font("SansSerif", Font.PLAIN, 14));
+
+            JComponent editorComp = dateChooser.getDateEditor().getUiComponent();
+            if (editorComp instanceof JTextField) {
+                JTextField editor = (JTextField) editorComp;
+                editor.setEditable(false);
+                editor.setHorizontalAlignment(SwingConstants.LEFT);
+                editor.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+                editor.setBackground(Color.WHITE);
+                editor.setForeground(Color.BLACK);
+                editor.setFont(new Font("SansSerif", Font.PLAIN, 14));
+            }
+        }
+
         // ================= LEFT PANEL =================
         private JPanel createLeftFilterPanel() {
-            JPanel panel = new JPanel();
-            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-            panel.setBackground(new Color(231, 231, 231));
-            panel.setBorder(new EmptyBorder(12, 8, 12, 8));
-            panel.setPreferredSize(new Dimension(215, 0));
+            JPanel panel = new JPanel(new GridBagLayout());
+            panel.setBackground(new Color(236, 236, 236));
+            panel.setBorder(new EmptyBorder(14, 14, 14, 14));
+            panel.setPreferredSize(new Dimension(255, 0));
 
-            panel.add(createSearchBlock("Tìm kiếm bàn", "Nhập tên bàn"));
-            panel.add(Box.createVerticalStrut(52));
-            panel.add(createSearchBlock("Tìm kiếm theo khách hàng", "Nhập số điện thoại"));
-            panel.add(Box.createVerticalStrut(52));
-            panel.add(createStatusBlock());
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.gridx = 0;
+            gbc.weightx = 1;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.anchor = GridBagConstraints.NORTHWEST;
+
+            gbc.gridy = 0;
+            gbc.insets = new Insets(0, 0, 26, 0);
+            panel.add(createSearchBlock("Tìm kiếm phiếu đặt bàn", "Nhập mã phiếu đặt bàn"), gbc);
+
+            gbc.gridy = 1;
+            gbc.insets = new Insets(0, 0, 26, 0);
+            panel.add(createSearchBlock("Tìm kiếm theo khách hàng", "Nhập số điện thoại"), gbc);
+
+            gbc.gridy = 2;
+            gbc.insets = new Insets(0, 0, 0, 0);
+            panel.add(createStatusBlock(), gbc);
+
+            gbc.gridy = 3;
+            gbc.weighty = 1;
+            panel.add(Box.createVerticalGlue(), gbc);
 
             return panel;
         }
 
         private JPanel createSearchBlock(String title, String hint) {
-            JPanel wrap = new JPanel();
+            JPanel wrap = new JPanel(new BorderLayout(0, 10));
             wrap.setOpaque(false);
-            wrap.setLayout(new BoxLayout(wrap, BoxLayout.Y_AXIS));
-            wrap.setAlignmentX(LEFT_ALIGNMENT);
 
-            JPanel titlePanel = new JPanel(new BorderLayout(4, 0));
-            titlePanel.setOpaque(false);
-            titlePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
-            titlePanel.setAlignmentX(LEFT_ALIGNMENT);
+            JPanel top = new JPanel();
+            top.setOpaque(false);
+            top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+
+            JPanel titleRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            titleRow.setOpaque(false);
+            titleRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
             JLabel lblIcon = new JLabel();
-            lblIcon.setPreferredSize(new Dimension(18, 18));
-            lblIcon.setIcon(loadIcon("img/ic_search.png", 18, 18));
+            lblIcon.setIcon(loadIcon("img/mn_tracuu.png", 20, 20));
+            lblIcon.setPreferredSize(new Dimension(22, 22));
 
             JLabel lblTitle = new JLabel(title);
-            lblTitle.setFont(new Font("Arial", Font.PLAIN, 14));
+            lblTitle.setFont(new Font("SansSerif", Font.PLAIN, 15));
             lblTitle.setForeground(Color.BLACK);
+            lblTitle.setBorder(new EmptyBorder(0, 3, 0, 0));
 
-            titlePanel.add(lblIcon, BorderLayout.WEST);
-            titlePanel.add(lblTitle, BorderLayout.CENTER);
+            titleRow.add(lblIcon);
+            titleRow.add(lblTitle);
 
             JSeparator line = new JSeparator();
             line.setForeground(Color.BLACK);
             line.setMaximumSize(new Dimension(Integer.MAX_VALUE, 2));
-            line.setPreferredSize(new Dimension(190, 2));
+            line.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-            JTextField txt = new JTextField();
-            txt.setFont(new Font("Arial", Font.PLAIN, 13));
-            txt.setForeground(Color.GRAY);
-            txt.setText(hint);
-            txt.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
-            txt.setPreferredSize(new Dimension(190, 34));
-            txt.setBorder(new LineBorder(new Color(80, 80, 80), 1));
-            txt.setBackground(new Color(245, 245, 245));
+            top.add(titleRow);
+            top.add(Box.createVerticalStrut(6));
+            top.add(line);
+
+            JTextField txt = new JTextField(hint);
+            txt.setFont(new Font("SansSerif", Font.PLAIN, 15));
+            txt.setForeground(new Color(145, 145, 145));
+            txt.setPreferredSize(new Dimension(0, 36));
+            txt.setMinimumSize(new Dimension(120, 36));
+            txt.setBorder(new LineBorder(new Color(120, 120, 120), 1));
+            txt.setBackground(new Color(246, 246, 246));
             txt.setMargin(new Insets(0, 10, 0, 10));
 
             addPlaceholderBehavior(txt, hint);
 
-            wrap.add(titlePanel);
-            wrap.add(Box.createVerticalStrut(4));
-            wrap.add(line);
-            wrap.add(Box.createVerticalStrut(14));
-            wrap.add(txt);
+            wrap.add(top, BorderLayout.NORTH);
+            wrap.add(txt, BorderLayout.CENTER);
 
             return wrap;
         }
 
         private JPanel createStatusBlock() {
-            JPanel p = new JPanel();
-            p.setOpaque(false);
-            p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-            p.setAlignmentX(LEFT_ALIGNMENT);
+            JPanel wrap = new JPanel(new BorderLayout(0, 10));
+            wrap.setOpaque(false);
 
-            JPanel titlePanel = new JPanel(new BorderLayout(4, 0));
-            titlePanel.setOpaque(false);
-            titlePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+            JPanel top = new JPanel();
+            top.setOpaque(false);
+            top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+
+            JPanel titleRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            titleRow.setOpaque(false);
+            titleRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
             JLabel lblIcon = new JLabel();
-            lblIcon.setPreferredSize(new Dimension(18, 18));
-            lblIcon.setIcon(loadIcon("img/ic_search.png", 18, 18));
+            lblIcon.setIcon(loadIcon("img/mn_tracuu.png", 20, 20));
+            lblIcon.setPreferredSize(new Dimension(22, 22));
 
             JLabel lblTitle = new JLabel("Tìm kiếm theo trạng thái");
-            lblTitle.setFont(new Font("Arial", Font.PLAIN, 14));
+            lblTitle.setFont(new Font("SansSerif", Font.PLAIN, 15));
             lblTitle.setForeground(Color.BLACK);
+            lblTitle.setBorder(new EmptyBorder(0, 3, 0, 0));
 
-            titlePanel.add(lblIcon, BorderLayout.WEST);
-            titlePanel.add(lblTitle, BorderLayout.CENTER);
+            titleRow.add(lblIcon);
+            titleRow.add(lblTitle);
 
             JSeparator line = new JSeparator();
             line.setForeground(Color.BLACK);
             line.setMaximumSize(new Dimension(Integer.MAX_VALUE, 2));
+            line.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-            p.add(titlePanel);
-            p.add(Box.createVerticalStrut(4));
-            p.add(line);
-            p.add(Box.createVerticalStrut(12));
+            top.add(titleRow);
+            top.add(Box.createVerticalStrut(6));
+            top.add(line);
 
-            p.add(createStatusItem("Hoàn thành", new Color(124, 183, 103)));
-            p.add(createStatusItem("Đã xếp bàn", new Color(46, 134, 222)));
-            p.add(createStatusItem("Đang chờ", new Color(227, 177, 30)));
-            p.add(createStatusItem("Quá giờ", new Color(95, 95, 95)));
-            p.add(createStatusItem("Đã hủy", new Color(219, 47, 47)));
+            JPanel statusList = new JPanel();
+            statusList.setOpaque(false);
+            statusList.setLayout(new BoxLayout(statusList, BoxLayout.Y_AXIS));
 
-            return p;
+            statusList.add(createStatusItem("Hoàn thành", new Color(124, 183, 103)));
+            statusList.add(createStatusItem("Đã xếp bàn", new Color(46, 134, 222)));
+            statusList.add(createStatusItem("Đang chờ", new Color(227, 177, 30)));
+            statusList.add(createStatusItem("Quá giờ", new Color(95, 95, 95)));
+            statusList.add(createStatusItem("Đã hủy", new Color(219, 47, 47)));
+
+            wrap.add(top, BorderLayout.NORTH);
+            wrap.add(statusList, BorderLayout.CENTER);
+
+            return wrap;
         }
 
         private JPanel createStatusItem(String text, Color color) {
-            JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
+            JPanel row = new JPanel();
             row.setOpaque(false);
-            row.setAlignmentX(LEFT_ALIGNMENT);
+            row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
+            row.setAlignmentX(Component.LEFT_ALIGNMENT);
+            row.setPreferredSize(new Dimension(220, 32));
             row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+            row.setMinimumSize(new Dimension(220, 32));
+            row.setBorder(new EmptyBorder(2, 4, 2, 0));
 
             JCheckBox chk = new JCheckBox();
             chk.setOpaque(false);
-            chk.setPreferredSize(new Dimension(18, 18));
             chk.setFocusPainted(false);
+            chk.setMargin(new Insets(0, 0, 0, 0));
+            chk.setPreferredSize(new Dimension(26, 22));
+            chk.setMaximumSize(new Dimension(26, 22));
+            chk.setMinimumSize(new Dimension(26, 22));
+            chk.setAlignmentY(Component.CENTER_ALIGNMENT);
 
             JLabel lbl = new JLabel(text);
             lbl.setForeground(color);
-            lbl.setFont(new Font("Arial", Font.PLAIN, 14));
+            lbl.setFont(new Font("SansSerif", Font.PLAIN, 18));
+            lbl.setAlignmentY(Component.CENTER_ALIGNMENT);
 
-            row.add(Box.createHorizontalStrut(2));
             row.add(chk);
+            row.add(Box.createRigidArea(new Dimension(12, 0)));
             row.add(lbl);
+            row.add(Box.createHorizontalGlue());
+
             return row;
         }
 
@@ -234,7 +306,7 @@ public class DatBan_GUI extends JFrame {
                 public void focusLost(java.awt.event.FocusEvent e) {
                     if (textField.getText().trim().isEmpty()) {
                         textField.setText(placeholder);
-                        textField.setForeground(Color.GRAY);
+                        textField.setForeground(new Color(145, 145, 145));
                     }
                 }
             });
@@ -250,12 +322,17 @@ public class DatBan_GUI extends JFrame {
             headerPanel.setOpaque(false);
 
             JLabel lblTitle = new JLabel("Đặt bàn");
-            lblTitle.setFont(new Font("Arial", Font.BOLD, 28));
+            lblTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
 
             JButton btnAdd = new JButton("+ Thêm mới phiếu đặt bàn");
-            btnAdd.setBackground(new Color(186, 230, 170));
+            btnAdd.setBackground(new Color(76, 175, 80));
+            btnAdd.setForeground(Color.WHITE);
             btnAdd.setFocusPainted(false);
-            btnAdd.setPreferredSize(new Dimension(235, 38));
+            btnAdd.setOpaque(true);
+            btnAdd.setContentAreaFilled(true);
+            btnAdd.setBorderPainted(false);
+            btnAdd.setPreferredSize(new Dimension(350, 38));
+            btnAdd.setFont(new Font("SansSerif", Font.BOLD, 19));
 
             headerPanel.add(lblTitle, BorderLayout.WEST);
             headerPanel.add(btnAdd, BorderLayout.EAST);
@@ -277,22 +354,18 @@ public class DatBan_GUI extends JFrame {
             JPanel panel = new JPanel(new BorderLayout());
             panel.setOpaque(false);
 
-            JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+            JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
             left.setOpaque(false);
 
             styleTopButton(btnToday, true);
             styleArrowButton(btnPrev);
             styleArrowButton(btnNext);
-
-            lblDateRange.setFont(new Font("Arial", Font.PLAIN, 16));
-            lblDateRange.setForeground(Color.BLACK);
-            lblDateRange.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            lblDateRange.setBorder(new EmptyBorder(0, 2, 0, 2));
+            styleDateChooser(dateChooser);
 
             left.add(btnToday);
             left.add(btnPrev);
             left.add(btnNext);
-            left.add(lblDateRange);
+            left.add(dateChooser);
 
             JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
             right.setOpaque(false);
@@ -312,7 +385,7 @@ public class DatBan_GUI extends JFrame {
             btn.setBorderPainted(false);
             btn.setOpaque(true);
             btn.setBackground(blue ? new Color(191, 219, 254) : new Color(240, 240, 240));
-            btn.setFont(new Font("Arial", Font.PLAIN, 15));
+            btn.setFont(new Font("SansSerif", Font.PLAIN, 15));
             btn.setMargin(new Insets(8, 12, 8, 12));
         }
 
@@ -320,8 +393,13 @@ public class DatBan_GUI extends JFrame {
             btn.setFocusPainted(false);
             btn.setBorderPainted(false);
             btn.setContentAreaFilled(false);
-            btn.setFont(new Font("Arial", Font.PLAIN, 14));
+            btn.setFont(new Font("SansSerif", Font.PLAIN, 14));
             btn.setMargin(new Insets(6, 4, 6, 4));
+        }
+
+        private void styleDateChooser(JDateChooser chooser) {
+            chooser.setPreferredSize(new Dimension(150, 30));
+            chooser.setBorder(new LineBorder(new Color(180, 180, 180), 1));
         }
 
         private void configScroll(JScrollPane scrollPane) {
@@ -334,6 +412,7 @@ public class DatBan_GUI extends JFrame {
         private void initEvents() {
             btnToday.addActionListener(e -> {
                 currentCalendar.setTime(new Date());
+                dateChooser.setDate(currentCalendar.getTime());
                 refreshView();
             });
 
@@ -343,6 +422,7 @@ public class DatBan_GUI extends JFrame {
                 } else {
                     currentCalendar.add(Calendar.DAY_OF_MONTH, -7);
                 }
+                dateChooser.setDate(currentCalendar.getTime());
                 refreshView();
             });
 
@@ -352,24 +432,15 @@ public class DatBan_GUI extends JFrame {
                 } else {
                     currentCalendar.add(Calendar.DAY_OF_MONTH, 7);
                 }
+                dateChooser.setDate(currentCalendar.getTime());
                 refreshView();
             });
 
-            lblDateRange.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            lblDateRange.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseEntered(MouseEvent e) {
-                    lblDateRange.setForeground(new Color(0, 102, 204));
-                }
-
-                @Override
-                public void mouseExited(MouseEvent e) {
-                    lblDateRange.setForeground(Color.BLACK);
-                }
-
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    openDateChooserDialog();
+            dateChooser.getDateEditor().addPropertyChangeListener("date", evt -> {
+                Date selectedDate = dateChooser.getDate();
+                if (selectedDate != null) {
+                    currentCalendar.setTime(selectedDate);
+                    refreshView();
                 }
             });
 
@@ -389,41 +460,17 @@ public class DatBan_GUI extends JFrame {
             });
         }
 
-        private void openDateChooserDialog() {
-            final JDateChooser chooser = new JDateChooser();
-            chooser.setDate(currentCalendar.getTime());
-            chooser.setDateFormatString("dd/MM/yyyy");
-            chooser.setLocale(new Locale("vi", "VN"));
-            chooser.setPreferredSize(new Dimension(170, 30));
-
-            JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
-            panel.add(chooser);
-
-            int result = JOptionPane.showConfirmDialog(
-                    this,
-                    panel,
-                    "Chọn ngày",
-                    JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.PLAIN_MESSAGE
-            );
-
-            if (result == JOptionPane.OK_OPTION && chooser.getDate() != null) {
-                currentCalendar.setTime(chooser.getDate());
-                refreshView();
-            }
-        }
-
         // ================= REFRESH =================
         private void refreshView() {
             updateButtonStyles();
-            updateDateLabel();
+            cardPanel.removeAll();
 
             if (currentMode == ViewMode.DAY) {
-                buildDayGrid();
+                cardPanel.add(buildDayGrid(), ViewMode.DAY.name());
             } else if (currentMode == ViewMode.WEEK) {
-                buildWeekGridLikeImage();
+                cardPanel.add(buildWeekGridLikeImage(), ViewMode.WEEK.name());
             } else {
-                buildScheduleViewLikeImage();
+                cardPanel.add(buildScheduleViewLikeImage(), ViewMode.SCHEDULE.name());
             }
 
             cardLayout.show(cardPanel, currentMode.name());
@@ -445,216 +492,242 @@ public class DatBan_GUI extends JFrame {
             }
         }
 
-        private void updateDateLabel() {
-            if (currentMode == ViewMode.DAY) {
-                SimpleDateFormat sdfDay = new SimpleDateFormat("dd 'Tháng' MM yyyy", new Locale("vi", "VN"));
-                lblDateRange.setText(sdfDay.format(currentCalendar.getTime()));
-            } else {
-                Calendar start = getWeekStart(currentCalendar);
-                Calendar end = (Calendar) start.clone();
-                end.add(Calendar.DAY_OF_MONTH, 6);
+        // ================= PANEL CỐ ĐỊNH CỘT BÀN =================
+        private JPanel createFixedTablePanel(JPanel leftPanel, JPanel rightPanel, int fixedWidth) {
+            JScrollPane leftScroll = new JScrollPane(leftPanel);
+            JScrollPane rightScroll = new JScrollPane(rightPanel);
 
-                SimpleDateFormat sdf = new SimpleDateFormat("dd 'Tháng' MM yyyy", new Locale("vi", "VN"));
-                lblDateRange.setText(sdf.format(start.getTime()) + " - " + sdf.format(end.getTime()));
-            }
+            configScroll(leftScroll);
+            configScroll(rightScroll);
+
+            leftScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            leftScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+            leftScroll.setPreferredSize(new Dimension(fixedWidth + 2, 0));
+
+            rightScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            rightScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+            rightScroll.getVerticalScrollBar().addAdjustmentListener(
+                e -> leftScroll.getVerticalScrollBar().setValue(e.getValue())
+            );
+
+            MouseWheelListener syncWheel = e -> {
+                JScrollBar bar = rightScroll.getVerticalScrollBar();
+                int amount = e.getUnitsToScroll() * 16;
+                bar.setValue(bar.getValue() + amount);
+            };
+
+            leftScroll.addMouseWheelListener(syncWheel);
+            leftPanel.addMouseWheelListener(syncWheel);
+
+            JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftScroll, rightScroll);
+            split.setDividerLocation(fixedWidth);
+            split.setDividerSize(1);
+            split.setEnabled(false);
+            split.setBorder(null);
+
+            JPanel panel = new JPanel(new BorderLayout());
+            panel.add(split, BorderLayout.CENTER);
+            return panel;
         }
 
         // ================= DAY VIEW =================
-        private void buildDayGrid() {
-            dayGridPanel.removeAll();
-            dayGridPanel.setLayout(new BorderLayout());
-            dayGridPanel.setBackground(Color.WHITE);
+        private JPanel buildDayGrid() {
+            JPanel leftPanel = new JPanel(new GridBagLayout());
+            JPanel rightPanel = new JPanel(new GridBagLayout());
 
-            JPanel content = new JPanel(new GridBagLayout());
-            content.setBackground(Color.WHITE);
+            leftPanel.setBackground(Color.WHITE);
+            rightPanel.setBackground(Color.WHITE);
 
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.fill = GridBagConstraints.BOTH;
+            GridBagConstraints gbcL = new GridBagConstraints();
+            gbcL.fill = GridBagConstraints.BOTH;
+            gbcL.gridx = 0;
+
+            GridBagConstraints gbcR = new GridBagConstraints();
+            gbcR.fill = GridBagConstraints.BOTH;
 
             java.util.List<String> hours = createHoursDay();
 
-            int leftColWidth = 90;
+            int leftColWidth = 170;
             int hourWidth = 120;
             int rowHeight = 38;
 
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-            gbc.gridwidth = 1;
-            content.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbc);
+            gbcL.gridy = 0;
+            leftPanel.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbcL);
 
-            gbc.gridx = 1;
-            gbc.gridy = 0;
-            gbc.gridwidth = hours.size();
-            content.add(createCell(formatDayHeaderFull(currentCalendar), hourWidth * hours.size(), rowHeight, true, SwingConstants.LEFT), gbc);
+            gbcL.gridy = 1;
+            leftPanel.add(createCell("Bàn", leftColWidth, rowHeight, true, SwingConstants.LEFT), gbcL);
 
-            gbc.gridx = 0;
-            gbc.gridy = 1;
-            gbc.gridwidth = 1;
-            content.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbc);
+            for (int r = 0; r < tableNames.size(); r++) {
+                gbcL.gridy = r + 2;
+                leftPanel.add(createCell(tableNames.get(r), leftColWidth, rowHeight, false, SwingConstants.LEFT), gbcL);
+            }
+
+            gbcR.gridx = 0;
+            gbcR.gridy = 0;
+            gbcR.gridwidth = hours.size();
+            rightPanel.add(
+                createCell(formatDayHeaderFull(currentCalendar), hourWidth * hours.size(), rowHeight, true, SwingConstants.LEFT),
+                gbcR
+            );
 
             for (int i = 0; i < hours.size(); i++) {
-                gbc.gridx = i + 1;
-                gbc.gridy = 1;
-                gbc.gridwidth = 1;
-                content.add(createCell(hours.get(i), hourWidth, rowHeight, true, SwingConstants.CENTER), gbc);
+                gbcR.gridx = i;
+                gbcR.gridy = 1;
+                gbcR.gridwidth = 1;
+                rightPanel.add(createCell(hours.get(i), hourWidth, rowHeight, true, SwingConstants.CENTER), gbcR);
             }
 
             for (int r = 0; r < tableNames.size(); r++) {
-                gbc.gridx = 0;
-                gbc.gridy = r + 2;
-                gbc.gridwidth = 1;
-                content.add(createCell(tableNames.get(r), leftColWidth, rowHeight, false, SwingConstants.CENTER), gbc);
-
                 for (int c = 0; c < hours.size(); c++) {
-                    gbc.gridx = c + 1;
-                    gbc.gridy = r + 2;
-                    gbc.gridwidth = 1;
-                    content.add(createCell("", hourWidth, rowHeight, false, SwingConstants.CENTER), gbc);
+                    gbcR.gridx = c;
+                    gbcR.gridy = r + 2;
+                    gbcR.gridwidth = 1;
+                    rightPanel.add(createCell("", hourWidth, rowHeight, false, SwingConstants.CENTER), gbcR);
                 }
             }
 
-            int totalWidth = leftColWidth + hours.size() * hourWidth;
-            int totalHeight = (tableNames.size() + 2) * rowHeight;
-            content.setPreferredSize(new Dimension(totalWidth, totalHeight));
+            leftPanel.setPreferredSize(new Dimension(leftColWidth, (tableNames.size() + 2) * rowHeight));
+            rightPanel.setPreferredSize(new Dimension(hours.size() * hourWidth, (tableNames.size() + 2) * rowHeight));
 
-            dayGridPanel.add(content, BorderLayout.CENTER);
+            return createFixedTablePanel(leftPanel, rightPanel, leftColWidth);
         }
 
         // ================= WEEK VIEW =================
-        private void buildWeekGridLikeImage() {
-            weekGridPanel.removeAll();
-            weekGridPanel.setLayout(new BorderLayout());
-            weekGridPanel.setBackground(Color.WHITE);
+        private JPanel buildWeekGridLikeImage() {
+            JPanel leftPanel = new JPanel(new GridBagLayout());
+            JPanel rightPanel = new JPanel(new GridBagLayout());
 
-            JPanel content = new JPanel(new GridBagLayout());
-            content.setBackground(Color.WHITE);
+            leftPanel.setBackground(Color.WHITE);
+            rightPanel.setBackground(Color.WHITE);
 
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.fill = GridBagConstraints.BOTH;
+            GridBagConstraints gbcL = new GridBagConstraints();
+            gbcL.fill = GridBagConstraints.BOTH;
+            gbcL.gridx = 0;
+
+            GridBagConstraints gbcR = new GridBagConstraints();
+            gbcR.fill = GridBagConstraints.BOTH;
 
             java.util.List<String> hours = createHoursWeek2Hours();
             Calendar weekStart = getWeekStart(currentCalendar);
 
-            int leftColWidth = 90;
+            int leftColWidth = 170;
             int hourWidth = 110;
             int rowHeight = 38;
 
-            gbc.gridy = 0;
-            gbc.gridx = 0;
-            gbc.gridwidth = 1;
-            content.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbc);
+            gbcL.gridy = 0;
+            leftPanel.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbcL);
 
-            int colIndex = 1;
+            gbcL.gridy = 1;
+            leftPanel.add(createCell("Bàn", leftColWidth, rowHeight, true, SwingConstants.LEFT), gbcL);
+
+            for (int r = 0; r < tableNames.size(); r++) {
+                gbcL.gridy = r + 2;
+                leftPanel.add(createCell(tableNames.get(r), leftColWidth, rowHeight, false, SwingConstants.LEFT), gbcL);
+            }
+
+            int colIndex = 0;
             for (int d = 0; d < 7; d++) {
                 Calendar day = (Calendar) weekStart.clone();
                 day.add(Calendar.DAY_OF_MONTH, d);
 
-                gbc.gridx = colIndex;
-                gbc.gridy = 0;
-                gbc.gridwidth = hours.size();
-                content.add(createCell(formatDayHeader(day), hourWidth * hours.size(), rowHeight, true, SwingConstants.LEFT), gbc);
-
+                gbcR.gridx = colIndex;
+                gbcR.gridy = 0;
+                gbcR.gridwidth = hours.size();
+                rightPanel.add(
+                    createCell(formatDayHeader(day), hourWidth * hours.size(), rowHeight, true, SwingConstants.LEFT),
+                    gbcR
+                );
                 colIndex += hours.size();
             }
 
-            gbc.gridy = 1;
-            gbc.gridx = 0;
-            gbc.gridwidth = 1;
-            content.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbc);
-
-            colIndex = 1;
+            colIndex = 0;
             for (int d = 0; d < 7; d++) {
                 for (String hour : hours) {
-                    gbc.gridx = colIndex++;
-                    gbc.gridy = 1;
-                    gbc.gridwidth = 1;
-                    content.add(createCell(hour, hourWidth, rowHeight, true, SwingConstants.CENTER), gbc);
+                    gbcR.gridx = colIndex++;
+                    gbcR.gridy = 1;
+                    gbcR.gridwidth = 1;
+                    rightPanel.add(createCell(hour, hourWidth, rowHeight, true, SwingConstants.CENTER), gbcR);
                 }
             }
 
-            for (int r = 0; r < tableNames.size(); r++) {
-                gbc.gridy = r + 2;
-                gbc.gridx = 0;
-                gbc.gridwidth = 1;
-                content.add(createCell(tableNames.get(r), leftColWidth, rowHeight, false, SwingConstants.CENTER), gbc);
-
-                colIndex = 1;
-                for (int d = 0; d < 7; d++) {
-                    for (int h = 0; h < hours.size(); h++) {
-                        gbc.gridx = colIndex++;
-                        gbc.gridy = r + 2;
-                        gbc.gridwidth = 1;
-                        content.add(createCell("", hourWidth, rowHeight, false, SwingConstants.CENTER), gbc);
+            colIndex = 0;
+            for (int d = 0; d < 7; d++) {
+                for (int h = 0; h < hours.size(); h++) {
+                    for (int r = 0; r < tableNames.size(); r++) {
+                        gbcR.gridx = colIndex;
+                        gbcR.gridy = r + 2;
+                        gbcR.gridwidth = 1;
+                        rightPanel.add(createCell("", hourWidth, rowHeight, false, SwingConstants.CENTER), gbcR);
                     }
+                    colIndex++;
                 }
             }
 
-            int totalWidth = leftColWidth + (7 * hours.size() * hourWidth);
-            int totalHeight = (tableNames.size() + 2) * rowHeight;
-            content.setPreferredSize(new Dimension(totalWidth, totalHeight));
+            leftPanel.setPreferredSize(new Dimension(leftColWidth, (tableNames.size() + 2) * rowHeight));
+            rightPanel.setPreferredSize(new Dimension(7 * hours.size() * hourWidth, (tableNames.size() + 2) * rowHeight));
 
-            weekGridPanel.add(content, BorderLayout.CENTER);
+            return createFixedTablePanel(leftPanel, rightPanel, leftColWidth);
         }
 
         // ================= SCHEDULE VIEW =================
-        private void buildScheduleViewLikeImage() {
-            scheduleListPanel.removeAll();
-            scheduleListPanel.setLayout(new BorderLayout());
-            scheduleListPanel.setBackground(Color.WHITE);
-
-            JPanel content = new JPanel();
-            content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        private JComponent buildScheduleViewLikeImage() {
+            JPanel content = new JPanel(new GridBagLayout());
             content.setBackground(Color.WHITE);
-
-            JPanel header = new JPanel(new GridBagLayout());
-            header.setBackground(Color.WHITE);
-            header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
 
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.fill = GridBagConstraints.BOTH;
             gbc.weighty = 1;
 
-            int h = 42;
+            int colBan = 170;
+            int colNgay = 220;
+            int colThoiGian = 150;
+            int colThongTin = 700;
+
+            int headerH = 42;
             int rowH = 64;
 
-            gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0;
-            header.add(createCell("Bàn", 80, h, true, SwingConstants.LEFT), gbc);
+            gbc.gridy = 0;
+            gbc.gridx = 0;
+            gbc.weightx = 0;
+            content.add(createCell("Bàn", colBan, headerH, true, SwingConstants.LEFT), gbc);
 
-            gbc.gridx = 1; gbc.weightx = 0;
-            header.add(createCell("Ngày đặt", 240, h, true, SwingConstants.LEFT), gbc);
+            gbc.gridx = 1;
+            content.add(createCell("Ngày đặt", colNgay, headerH, true, SwingConstants.LEFT), gbc);
 
-            gbc.gridx = 2; gbc.weightx = 0;
-            header.add(createCell("Thời gian", 170, h, true, SwingConstants.LEFT), gbc);
+            gbc.gridx = 2;
+            content.add(createCell("Thời gian", colThoiGian, headerH, true, SwingConstants.LEFT), gbc);
 
-            gbc.gridx = 3; gbc.weightx = 1;
-            header.add(createCell("Thông tin", 700, h, true, SwingConstants.LEFT), gbc);
+            gbc.gridx = 3;
+            gbc.weightx = 1;
+            content.add(createCell("Thông tin", colThongTin, headerH, true, SwingConstants.LEFT), gbc);
 
-            content.add(header);
+            for (int i = 0; i < tableNames.size(); i++) {
+                int row = i + 1;
 
-            JPanel row = new JPanel(new GridBagLayout());
-            row.setBackground(Color.WHITE);
-            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, rowH));
+                gbc.gridy = row;
+                gbc.gridx = 0;
+                gbc.weightx = 0;
+                content.add(createCell(tableNames.get(i), colBan, rowH, false, SwingConstants.LEFT), gbc);
 
-            gbc = new GridBagConstraints();
-            gbc.fill = GridBagConstraints.BOTH;
-            gbc.weighty = 1;
+                gbc.gridx = 1;
+                content.add(createCell(formatDayHeaderFull(currentCalendar), colNgay, rowH, false, SwingConstants.CENTER), gbc);
 
-            gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0;
-            row.add(createCell("A01", 80, rowH, false, SwingConstants.CENTER), gbc);
+                gbc.gridx = 2;
+                content.add(createCell("10 AM", colThoiGian, rowH, false, SwingConstants.CENTER), gbc);
 
-            gbc.gridx = 1; gbc.weightx = 0;
-            row.add(createCell("25 Tháng 03 2026", 240, rowH, false, SwingConstants.CENTER), gbc);
+                gbc.gridx = 3;
+                gbc.weightx = 1;
+                content.add(createBookingInfoCell("", colThongTin, rowH), gbc);
+            }
 
-            gbc.gridx = 2; gbc.weightx = 0;
-            row.add(createCell("10 AM", 170, rowH, false, SwingConstants.CENTER), gbc);
+            int totalWidth = colBan + colNgay + colThoiGian + colThongTin;
+            int totalHeight = headerH + tableNames.size() * rowH;
+            content.setPreferredSize(new Dimension(totalWidth, totalHeight));
 
-            gbc.gridx = 3; gbc.weightx = 1;
-            row.add(createBookingInfoCell("", 700, rowH), gbc);
-
-            content.add(row);
-            content.add(Box.createVerticalGlue());
-
-            scheduleListPanel.add(content, BorderLayout.NORTH);
+            JScrollPane scrollPane = new JScrollPane(content);
+            configScroll(scrollPane);
+            return scrollPane;
         }
 
         // ================= COMMON COMPONENTS =================
@@ -670,7 +743,7 @@ public class DatBan_GUI extends JFrame {
 
             JLabel lbl = new JLabel(text);
             lbl.setForeground(Color.WHITE);
-            lbl.setFont(new Font("Monospaced", Font.PLAIN, 15));
+            lbl.setFont(new Font("SansSerif", Font.PLAIN, 15));
             orangeBox.add(lbl, BorderLayout.WEST);
 
             JPanel margin = new JPanel(new BorderLayout());
@@ -689,8 +762,8 @@ public class DatBan_GUI extends JFrame {
             cell.setPreferredSize(new Dimension(w, h));
 
             JLabel lbl = new JLabel(text, align);
-            lbl.setFont(new Font("Monospaced", Font.PLAIN, 15));
-            lbl.setBorder(new EmptyBorder(0, 14, 0, 14));
+            lbl.setFont(new Font("SansSerif", header ? Font.BOLD : Font.PLAIN, 15));
+            lbl.setBorder(new EmptyBorder(0, 12, 0, 12));
 
             cell.add(lbl, BorderLayout.CENTER);
             return cell;
@@ -708,16 +781,6 @@ public class DatBan_GUI extends JFrame {
         }
 
         // ================= DATA =================
-        private java.util.List<String> createTableNames() {
-            java.util.List<String> list = new ArrayList<>();
-
-            for (int i = 1; i <= 15; i++) list.add(String.format("A%02d", i));
-            for (int i = 1; i <= 20; i++) list.add(String.format("B%02d", i));
-            for (int i = 1; i <= 20; i++) list.add(String.format("C%02d", i));
-
-            return list;
-        }
-
         private java.util.List<String> createHoursDay() {
             java.util.List<String> hours = new ArrayList<>();
             for (int h = 0; h < 24; h++) {

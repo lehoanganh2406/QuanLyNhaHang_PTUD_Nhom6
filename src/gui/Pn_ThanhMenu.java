@@ -44,7 +44,7 @@ public class Pn_ThanhMenu extends JPanel {
         lblUserIcon.setIcon(loadIcon("img/mn_acout.png", 32, 32));
 
         lblUserText = new JLabel("Quản lý: HoàngAnh");
-        lblUserText.setFont(new Font("Times New Roman", Font.BOLD, 18));
+        lblUserText.setFont(new Font("SansSerif", Font.BOLD, 18));
         lblUserText.setForeground(Color.BLACK);
 
         pnUserInfo.add(lblUserIcon);
@@ -270,7 +270,7 @@ public class Pn_ThanhMenu extends JPanel {
             lblIcon.setIcon(loadIcon(iconPath, 16, 16));
 
             lblText = new JLabel(text);
-            lblText.setFont(new Font("Times New Roman", Font.BOLD, 18));
+            lblText.setFont(new Font("SansSerif", Font.BOLD, 18));
             lblText.setForeground(Color.BLACK);
 
             lblArrow = new JLabel();
@@ -328,7 +328,7 @@ public class Pn_ThanhMenu extends JPanel {
             setBorder(new EmptyBorder(0, 12, 0, 10));
 
             JLabel lblText = new JLabel(text);
-            lblText.setFont(new Font("Times New Roman", Font.BOLD, 18));
+            lblText.setFont(new Font("SansSerif", Font.BOLD, 18));
             lblText.setForeground(Color.BLACK);
 
             add(lblText, BorderLayout.WEST);

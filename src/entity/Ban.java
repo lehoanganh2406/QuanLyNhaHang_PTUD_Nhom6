@@ -67,5 +67,7 @@ public class Ban {
 		return "Ban [maBan=" + maBan + ", maKhuVuc=" + maKhuVuc + ", maLoaiBan=" + maLoaiBan + ", tenBan=" + tenBan
 				+ ", ghiChu=" + ghiChu + ", soChoNgoi=" + soChoNgoi + ", trangThai=" + trangThai + "]";
 	}
-	
+	public Ban() {
+		// TODO Auto-generated constructor stub
+	}
 }

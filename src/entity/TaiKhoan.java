@@ -65,6 +65,8 @@ public class TaiKhoan {
 		this.tenDangNhap = tenDangNhap;
 		this.matKhau = matKhau;
 	}
-	
+	public TaiKhoan() {
+		// TODO Auto-generated constructor stub
+	}
 	
 }

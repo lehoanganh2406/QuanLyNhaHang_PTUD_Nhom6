@@ -6,6 +6,7 @@ import javax.swing.border.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -51,7 +52,7 @@ public class QLNhanVien_GUI extends JPanel {
         pnl.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JLabel lbl = new JLabel("QUẢN LÝ NHÂN VIÊN", SwingConstants.CENTER);
-        lbl.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        lbl.setFont(scaledFontStatic("Times New Roman", Font.BOLD, 26));
         lbl.setForeground(CLR_HEADER_FG);
         lbl.setOpaque(false);
         pnl.add(lbl, BorderLayout.CENTER);
@@ -105,10 +106,13 @@ public class QLNhanVien_GUI extends JPanel {
         addRow(pnlFields, gbc, 1, "Họ tên", txtHoTen, "Email", txtEmail);
 
         // Hàng 2: Ngày sinh / SĐT
-//        txtNgaySinh = createTextField(16);
         txtNgaySinh = new JDateChooser();
         txtNgaySinh.setDateFormatString("dd/MM/yyyy");
-        txtNgaySinh.setPreferredSize(new Dimension(160, 28));
+        txtNgaySinh.setPreferredSize(null);
+        txtNgaySinh.getDateEditor().getUiComponent().setEnabled(false);
+        ((JTextField) txtNgaySinh.getDateEditor().getUiComponent())
+        .setFont(scaledFontStatic("Times New Roman", Font.PLAIN, 13));
+
         txtSDT      = createTextField(16);
         addRow(pnlFields, gbc, 2, "Ngày sinh", txtNgaySinh, "SĐT:", txtSDT);
         
@@ -116,8 +120,8 @@ public class QLNhanVien_GUI extends JPanel {
         // Hàng 3: Giới tính / Trạng thái
         rdNam = new JRadioButton("Nam"); rdNam.setOpaque(false);
         rdNu  = new JRadioButton("Nữ");  rdNu.setOpaque(false);
-        rdNam.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        rdNu.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+//        rdNam.setFont(new Font("Times New Roman", Font.PLAIN, 13));
+//        rdNu.setFont(new Font("Times New Roman", Font.PLAIN, 13));
         bgGioiTinh = new ButtonGroup();
         bgGioiTinh.add(rdNam); bgGioiTinh.add(rdNu);
         rdNam.setSelected(true);
@@ -143,27 +147,9 @@ public class QLNhanVien_GUI extends JPanel {
         pnlAnh.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 0));
 
         JLabel lblTitle = new JLabel("Ảnh nhân viên", SwingConstants.CENTER);
-        lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+//        lblTitle.setFont(new Font("Times New Roman", Font.PLAIN, 12));
 
         lblAnh = new JLabel() ;
-//        {
-//            @Override
-//            protected void paintComponent(Graphics g) {
-//                super.paintComponent(g);
-//                Graphics2D g2 = (Graphics2D) g.create();
-//                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-//                // Nền xám nhạt
-//                g2.setColor(new Color(210, 205, 195));
-//                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
-//                // Icon avatar đơn giản
-//                g2.setColor(new Color(160, 155, 145));
-//                int cx = getWidth() / 2;
-//                int cy = getHeight() / 2 - 8;
-//                g2.fillOval(cx - 18, cy - 20, 36, 36);          // đầu
-//                g2.fillRoundRect(cx - 28, cy + 18, 56, 32, 28, 28); // thân
-//                g2.dispose();
-//            }
-//        };
         lblAnh.setPreferredSize(new Dimension(150, 150));
         lblAnh.setBorder(BorderFactory.createLineBorder(CLR_BORDER, 1));
         lblAnh.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -208,17 +194,72 @@ public class QLNhanVien_GUI extends JPanel {
         gbc.gridx = 3; gbc.weightx = 1;
         p.add(comp2, gbc);
     }
+    
+    private static final double SCALE;
+
+    static {
+        GraphicsDevice gd = GraphicsEnvironment
+                .getLocalGraphicsEnvironment()
+                .getDefaultScreenDevice();
+
+        GraphicsConfiguration gc = gd.getDefaultConfiguration();
+        AffineTransform at = gc.getDefaultTransform();
+
+        SCALE = at.getScaleX();
+    }
+
+    private static Font scaledFontStatic(String name, int style, int size) {
+        return new Font(name, style, (int)(size * SCALE));
+    }
+    
+    
+    private ImageIcon loadIcon(String path, int w, int h) {
+        ImageIcon icon = new ImageIcon(path);
+        Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+        return new ImageIcon(img);
+    }
+    
+    private JButton createFuncButton(String text, Color bg, String iconPath) {
+        JButton btn = new JButton(text) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getModel().isPressed() ? bg.darker() : bg);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 10, 10));
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+//        btn.setFont(new Font("Times New Roman", Font.BOLD, 13));
+        btn.setForeground(new Color(30, 30, 30));
+        btn.setFocusPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        btn.setMargin(new Insets(2, 8, 2, 8));
+        btn.setIconTextGap(10);
+
+        // ── Thêm icon trước chữ ──────────────────────────────
+        btn.setIcon(loadIcon(iconPath, 18, 18));
+        btn.setHorizontalTextPosition(SwingConstants.RIGHT); // chữ bên phải icon
+        btn.setIconTextGap(6);                               // khoảng cách icon - chữ
+
+        return btn;
+    }
 
     // 4. CÁC NÚT CHỨC NĂNG
     private JPanel buildButtonPanel() {
-        JPanel pnl = new JPanel(new GridLayout(1,4,15,0));
+//        JPanel pnl = new JPanel(new GridLayout(1,4,15,0));
+        JPanel pnl = new JPanel(new FlowLayout(FlowLayout.LEFT, 40, 0));
+
         pnl.setBackground(CLR_PANEL_BG);
         pnl.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));
 
-        btnThem    = createFuncButton("Thêm",    CLR_BTN_ADD);
-        btnCapNhat = createFuncButton("Cập nhật", CLR_BTN_UPDATE);
-        btnLamMoi  = createFuncButton("Làm mới", CLR_BTN_RESET);
-        btnTraCuu  = createFuncButton("Tra cứu", CLR_BTN_SEARCH);
+        btnThem    = createFuncButton("Thêm",    CLR_BTN_ADD,"img/cn_them.png");
+        btnCapNhat = createFuncButton("Cập nhật", CLR_BTN_UPDATE,"img/cn_capnhat.png");
+        btnLamMoi  = createFuncButton("Làm mới", CLR_BTN_RESET,"img/mn_xuly.png");
+        btnTraCuu  = createFuncButton("Tra cứu", CLR_BTN_SEARCH,"img/mn_tracuu.png");
 
         pnl.add(btnThem);
         pnl.add(btnCapNhat);
@@ -232,6 +273,9 @@ public class QLNhanVien_GUI extends JPanel {
 
         return pnl;
     }
+    
+    
+    
 
     // 5. BẢNG DANH SÁCH
     private JScrollPane buildTablePanel() {
@@ -245,7 +289,7 @@ public class QLNhanVien_GUI extends JPanel {
         };
 
         table = new JTable(tableModel);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+//        table.setFont(new Font("Times New Roman", Font.PLAIN, 13));
         table.setRowHeight(26);
         table.setShowGrid(true);
         table.setGridColor(CLR_BORDER);
@@ -255,7 +299,7 @@ public class QLNhanVien_GUI extends JPanel {
 
         // Header
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
+//        header.setFont(new Font("Times New Roman", Font.BOLD, 13));
         header.setBackground(CLR_TABLE_HDR);
         header.setForeground(new Color(50, 40, 30));
         header.setReorderingAllowed(false);
@@ -269,6 +313,10 @@ public class QLNhanVien_GUI extends JPanel {
         // Chọn dòng → điền form
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) loadRowToForm();
+        });
+        
+        tableModel.addRow(new Object[]{
+        "NV001","Hoàng Anh","Nữ","03/02/2000","0123456789","012222345678","anh12@gmail.com","Đang làm việc"        
         });
 
       
@@ -395,27 +443,26 @@ public class QLNhanVien_GUI extends JPanel {
     // 7. HELPER – tạo component phụ
     private JLabel createLabel(String text) {
         JLabel lbl = new JLabel(text);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+//        lbl.setFont(new Font("Times New Roman", Font.PLAIN, 13));
         return lbl;
     }
 
     private JTextField createTextField(int cols) {
         JTextField tf = new JTextField(cols);
-        tf.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+//        tf.setFont(new Font("Times New Roman", Font.PLAIN, 13));
         tf.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(CLR_BORDER),
                 BorderFactory.createEmptyBorder(2, 4, 2, 4)
         ));
-        tf.setMaximumSize(new Dimension(120, 30));
-        tf.setPreferredSize(new Dimension(120, 28));
+        tf.setPreferredSize(null);
         return tf;
     }
 
     private void styleComboBox(JComboBox<?> cb) {
-        cb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+//        cb.setFont(new Font("Times New Roman", Font.PLAIN, 13));
         cb.setBackground(Color.WHITE);
         cb.setBorder(BorderFactory.createLineBorder(CLR_BORDER));
-        cb.setPreferredSize(new Dimension(220, 28)); 
+        cb.setPreferredSize(null); 
     }
 
     /** Nút tròn bo góc với màu nền tuỳ chỉnh */
@@ -431,7 +478,7 @@ public class QLNhanVien_GUI extends JPanel {
                 super.paintComponent(g);
             }
         };
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+//        btn.setFont(new Font("Times New Roman", Font.BOLD, 13));
         btn.setForeground(new Color(30, 30, 30));
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
@@ -443,29 +490,53 @@ public class QLNhanVien_GUI extends JPanel {
 
 //     8. MAIN – demo độc lập (xoá khi ghép vào JFrame chính)
     public static void main(String[] args) {
+    	System.setProperty("sun.java2d.uiScale", "auto");
+
+    	UIManager.put("Label.font",   scaledFontStatic("Times New Roman", Font.PLAIN, 12));
+    	UIManager.put("Button.font",  scaledFontStatic("Times New Roman", Font.BOLD, 12));
+    	UIManager.put("TextField.font", scaledFontStatic("Times New Roman", Font.PLAIN, 12));
+    	UIManager.put("Table.font",   scaledFontStatic("Times New Roman", Font.PLAIN, 12));
+    	UIManager.put("TableHeader.font", scaledFontStatic("Times New Roman", Font.BOLD, 12));
+    	UIManager.put("ComboBox.font", scaledFontStatic("Times New Roman", Font.PLAIN, 12));
+    	UIManager.put("ComboBox.listFont", scaledFontStatic("Times New Roman", Font.PLAIN, 12));
+    	
+    	
         SwingUtilities.invokeLater(() -> {
             try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
             catch (Exception ignored) {}
 
             JFrame frame = new JFrame("Quản Lý Nhân Viên");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//            frame.setSize(900, 580);
-            frame.setExtendedState(JFrame.MAXIMIZED_BOTH); // bỏ setSize
-            frame.setLocationRelativeTo(null);
+            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-            // ── Giả lập khoảng trắng cho MenuBar sẽ ghép sau ─────────────────
-            JPanel menuPlaceholder = new JPanel();
-            menuPlaceholder.setBackground(new Color(74, 55, 40));
-            menuPlaceholder.setPreferredSize(new Dimension(0, 35));
-            JLabel note = new JLabel("  [ MenuBar ]");
-            note.setForeground(new Color(200, 190, 170));
-            note.setFont(new Font("Segoe UI", Font.ITALIC, 12));
-            menuPlaceholder.setLayout(new BorderLayout());
-            menuPlaceholder.add(note, BorderLayout.WEST);
+            // ── Dùng JLayeredPane để menu đè lên content, không đẩy content xuống ──
+            JLayeredPane layeredPane = new JLayeredPane();
+            frame.setContentPane(layeredPane);
 
-            frame.setLayout(new BorderLayout());
-            frame.add(menuPlaceholder,        BorderLayout.NORTH);
-            frame.add(new QLNhanVien_GUI(), BorderLayout.CENTER);
+            QLNhanVien_GUI mainPanel = new QLNhanVien_GUI();
+            Pn_ThanhMenu   menuPanel = new Pn_ThanhMenu();
+
+            // Layer thấp: content chính
+            layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
+            // Layer cao: menu đè lên trên
+            layeredPane.add(menuPanel, JLayeredPane.PALETTE_LAYER);
+
+            // Resize cả 2 theo kích thước frame
+            layeredPane.addComponentListener(new java.awt.event.ComponentAdapter() {
+                @Override
+                public void componentResized(java.awt.event.ComponentEvent e) {
+                    int w = layeredPane.getWidth();
+                    int h = layeredPane.getHeight();
+                    int menuHeaderH = 42; // chiều cao cố định phần header menu
+
+                    // Menu trải full width, đủ cao để popup hiện không bị cắt
+                    menuPanel.setBounds(0, 0, w, 400);
+
+                    // Content bắt đầu từ dưới header menu, không bị đẩy khi popup mở
+                    mainPanel.setBounds(0, menuHeaderH, w, h - menuHeaderH);
+                }
+            });
+
             frame.setVisible(true);
         });
     }

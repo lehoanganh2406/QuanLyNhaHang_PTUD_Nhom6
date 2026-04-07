@@ -38,10 +38,10 @@ public class TrangChu_GUI extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH); // full màn hình
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            TrangChu_GUI frame = new TrangChu_GUI();
-            frame.setVisible(true);
-        });
-    }
+//    public static void main(String[] args) {
+//        SwingUtilities.invokeLater(() -> {
+//            TrangChu_GUI frame = new TrangChu_GUI();
+//            frame.setVisible(true);
+//        });
+//    }
 }

@@ -23,53 +23,56 @@ import com.toedter.calendar.JDateChooser;
 import connectDB.ConnectDB;
 import dao.Ban_DAO;
 import dao.PhieuDatBan_DAO;
+import digLog.PhieuDatBan_DigLog;
 import entity.Ban;
 import entity.TaiKhoan;
-import digLog.PhieuDatBan_DigLog;
-
 
 public class DatBan_GUI extends JFrame {
-	private TaiKhoan taiKhoanDangNhap;
-	public DatBan_GUI(TaiKhoan tk) {
-	    setTitle("Đặt bàn");
-	    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    private static final long serialVersionUID = 1L;
 
-	    JLayeredPane layeredPane = new JLayeredPane();
-	    layeredPane.setLayout(null);
-	    setContentPane(layeredPane);
+    private TaiKhoan taiKhoanDangNhap;
 
-	    Pn_ThanhMenu menu = new Pn_ThanhMenu(taiKhoanDangNhap);
-	    DatBanMainPanel mainPanel = new DatBanMainPanel();
+    public DatBan_GUI(TaiKhoan tk) {
+        this.taiKhoanDangNhap = tk;
 
-	    layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
-	    layeredPane.add(menu, JLayeredPane.PALETTE_LAYER);
+        setTitle("Đặt bàn");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-	    addComponentListener(new ComponentAdapter() {
-	        @Override
-	        public void componentResized(ComponentEvent e) {
-	            int w = getContentPane().getWidth();
-	            int h = getContentPane().getHeight();
+        JLayeredPane layeredPane = new JLayeredPane();
+        layeredPane.setLayout(null);
+        setContentPane(layeredPane);
 
-	            mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
+        Pn_ThanhMenu menu = new Pn_ThanhMenu(taiKhoanDangNhap);
+        DatBanMainPanel mainPanel = new DatBanMainPanel();
 
-	            // menu chỉ cao 42, submenu sẽ vẽ đè xuống dưới
-	            menu.setBounds(0, 0, w, h);
-	            layeredPane.revalidate();
-	            layeredPane.repaint();
-	        }
-	    });
+        layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
+        layeredPane.add(menu, JLayeredPane.PALETTE_LAYER);
 
-	    setExtendedState(JFrame.MAXIMIZED_BOTH);
-	    setMinimumSize(new Dimension(1280, 720));
-	    setLocationRelativeTo(null);
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                int w = getContentPane().getWidth();
+                int h = getContentPane().getHeight();
 
-	    SwingUtilities.invokeLater(() -> {
-	        int w = getContentPane().getWidth();
-	        int h = getContentPane().getHeight();
-	        mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
-	        menu.setBounds(0, 0, w, h);
-	    });
-	}
+                mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
+                menu.setBounds(0, 0, w, h);
+
+                layeredPane.revalidate();
+                layeredPane.repaint();
+            }
+        });
+
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setMinimumSize(new Dimension(1280, 720));
+        setLocationRelativeTo(null);
+
+        SwingUtilities.invokeLater(() -> {
+            int w = getContentPane().getWidth();
+            int h = getContentPane().getHeight();
+            mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
+            menu.setBounds(0, 0, w, h);
+        });
+    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -83,6 +86,7 @@ public class DatBan_GUI extends JFrame {
     }
 
     class DatBanMainPanel extends JPanel {
+        private static final long serialVersionUID = 1L;
 
         private final CardLayout cardLayout = new CardLayout();
         private final JPanel cardPanel = new JPanel(cardLayout);
@@ -106,7 +110,7 @@ public class DatBan_GUI extends JFrame {
         private JTextField txtSearchMaPhieu;
         private JTextField txtSearchSdt;
         private JLabel lblSearchInfo;
-        
+
         private Timer resizeTimer;
 
         private final java.util.List<JCheckBox> statusCheckBoxes = new ArrayList<>();
@@ -117,6 +121,10 @@ public class DatBan_GUI extends JFrame {
 
         private JScrollPane currentMainScrollPane;
         private JScrollPane currentLeftScrollPane;
+
+        private Date cachedDate = null;
+        private final java.util.List<BookingDisplayItem> cachedBookings = new ArrayList<>();
+        private final java.util.List<BookingDisplayItem> cachedFilteredBookings = new ArrayList<>();
 
         class BookingDisplayItem {
             String maPhieu;
@@ -129,8 +137,8 @@ public class DatBan_GUI extends JFrame {
             String ghiChu;
 
             public BookingDisplayItem(String maPhieu, String maBan, String tenKhach,
-                                      String sdt, String trangThai,
-                                      Timestamp thoiGianDen, int soLuongNguoi, String ghiChu) {
+                    String sdt, String trangThai,
+                    Timestamp thoiGianDen, int soLuongNguoi, String ghiChu) {
                 this.maPhieu = maPhieu;
                 this.maBan = maBan;
                 this.tenKhach = tenKhach;
@@ -141,24 +149,38 @@ public class DatBan_GUI extends JFrame {
                 this.ghiChu = ghiChu;
             }
         }
-        private void initResponsiveEvents() {
-            resizeTimer = new Timer(180, e -> {
-                refreshView();
-            });
-            resizeTimer.setRepeats(false);
+        private void updateDisplayedDateText() {
+            JComponent editorComp = dateChooser.getDateEditor().getUiComponent();
+            if (!(editorComp instanceof JTextField)) return;
 
-            ComponentAdapter resizeHandler = new ComponentAdapter() {
-                @Override
-                public void componentResized(ComponentEvent e) {
-                    if (resizeTimer != null) {
-                        resizeTimer.restart();
-                    }
-                }
-            };
+            JTextField editor = (JTextField) editorComp;
 
-            DatBan_GUI.this.addComponentListener(resizeHandler);
-            this.addComponentListener(resizeHandler);
-            cardPanel.addComponentListener(resizeHandler);
+            if (currentMode == ViewMode.WEEK) {
+                Calendar start = getWeekStart(currentCalendar);
+                Calendar end = (Calendar) start.clone();
+                end.add(Calendar.DAY_OF_MONTH, 6);
+
+                String text = new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN")).format(start.getTime())
+                        + " - "
+                        + new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN")).format(end.getTime());
+
+                editor.setText(text);
+            } else {
+                editor.setText(new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN"))
+                        .format(currentCalendar.getTime()));
+            }
+        }
+        private void updateDateChooserSize() {
+            if (currentMode == ViewMode.WEEK) {
+                dateChooser.setPreferredSize(new Dimension(260, 34));
+                dateChooser.setMinimumSize(new Dimension(260, 34));
+            } else {
+                dateChooser.setPreferredSize(new Dimension(165, 34));
+                dateChooser.setMinimumSize(new Dimension(165, 34));
+            }
+
+            dateChooser.revalidate();
+            dateChooser.repaint();
         }
 
         public DatBanMainPanel() {
@@ -182,11 +204,30 @@ public class DatBan_GUI extends JFrame {
             refreshView();
         }
 
+        private void initResponsiveEvents() {
+            resizeTimer = new Timer(220, e -> refreshView());
+            resizeTimer.setRepeats(false);
+
+            ComponentAdapter resizeHandler = new ComponentAdapter() {
+                @Override
+                public void componentResized(ComponentEvent e) {
+                    if (resizeTimer != null) {
+                        resizeTimer.restart();
+                    }
+                }
+            };
+
+            DatBan_GUI.this.addComponentListener(resizeHandler);
+            this.addComponentListener(resizeHandler);
+            cardPanel.addComponentListener(resizeHandler);
+        }
+
         private void moChiTietPhieu(BookingDisplayItem item) {
             try {
                 PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(DatBan_GUI.this, item.maPhieu);
                 dialog.setLocationRelativeTo(DatBan_GUI.this);
                 dialog.setVisible(true);
+                clearBookingCache();
                 refreshView();
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -194,9 +235,14 @@ public class DatBan_GUI extends JFrame {
                         DatBan_GUI.this,
                         "Không mở được chi tiết phiếu đặt bàn!",
                         "Lỗi",
-                        JOptionPane.ERROR_MESSAGE
-                );
+                        JOptionPane.ERROR_MESSAGE);
             }
+        }
+
+        private void clearBookingCache() {
+            cachedDate = null;
+            cachedBookings.clear();
+            cachedFilteredBookings.clear();
         }
 
         private void loadTableNamesFromDB() {
@@ -220,8 +266,7 @@ public class DatBan_GUI extends JFrame {
                         this,
                         "Không lấy được danh sách bàn từ cơ sở dữ liệu!",
                         "Lỗi dữ liệu",
-                        JOptionPane.ERROR_MESSAGE
-                );
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -246,18 +291,41 @@ public class DatBan_GUI extends JFrame {
                 editor.setForeground(Color.BLACK);
                 editor.setFont(new Font("SansSerif", Font.PLAIN, 14));
             }
+            updateDateChooserSize();
+            updateDisplayedDateText();
         }
 
-        private java.util.List<BookingDisplayItem> getBookingsByDate(Date ngay) {
-            java.util.List<BookingDisplayItem> result = new ArrayList<>();
+        private boolean isSameDay(Date d1, Date d2) {
+            if (d1 == null || d2 == null)
+                return false;
+
+            Calendar c1 = Calendar.getInstance();
+            Calendar c2 = Calendar.getInstance();
+            c1.setTime(d1);
+            c2.setTime(d2);
+
+            return c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR)
+                    && c1.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR);
+        }
+
+        private void loadBookingsCache(Date ngay) {
+            Date normalized = normalizeDate(ngay);
+
+            if (isSameDay(cachedDate, normalized)) {
+                return;
+            }
+
+            cachedDate = normalized;
+            cachedBookings.clear();
+            cachedFilteredBookings.clear();
 
             try {
                 PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
-                ArrayList<String[]> ds = dao.getPhieuDatBanTheoNgay(new java.sql.Date(ngay.getTime()));
+                ArrayList<String[]> ds = dao.getPhieuDatBanTheoNgay(new java.sql.Date(normalized.getTime()));
 
                 for (String[] row : ds) {
                     Timestamp tg = Timestamp.valueOf(row[5]);
-                    result.add(new BookingDisplayItem(
+                    cachedBookings.add(new BookingDisplayItem(
                             row[0],
                             row[1],
                             row[2],
@@ -265,29 +333,35 @@ public class DatBan_GUI extends JFrame {
                             row[8],
                             tg,
                             Integer.parseInt(row[4]),
-                            row[7]
-                    ));
+                            row[7]));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
 
-            return result;
+        private void rebuildFilteredCache() {
+            cachedFilteredBookings.clear();
+            for (BookingDisplayItem item : cachedBookings) {
+                if (isAcceptedByFilter(item)) {
+                    cachedFilteredBookings.add(item);
+                }
+            }
+        }
+
+        private java.util.List<BookingDisplayItem> getBookingsByDate(Date ngay) {
+            loadBookingsCache(ngay);
+            return new ArrayList<>(cachedBookings);
         }
 
         private java.util.List<BookingDisplayItem> getFilteredBookingsByDate(Date ngay) {
-            java.util.List<BookingDisplayItem> all = getBookingsByDate(ngay);
-            java.util.List<BookingDisplayItem> filtered = new ArrayList<>();
-
-            for (BookingDisplayItem item : all) {
-                if (isAcceptedByFilter(item)) {
-                    filtered.add(item);
-                }
-            }
-            return filtered;
+            loadBookingsCache(ngay);
+            rebuildFilteredCache();
+            return new ArrayList<>(cachedFilteredBookings);
         }
 
-        private BookingDisplayItem findBookingAt(String tenBan, Date ngay, int hour) {
+        private Map<String, BookingDisplayItem> buildDaySlotMap(Date ngay) {
+            Map<String, BookingDisplayItem> map = new HashMap<>();
             java.util.List<BookingDisplayItem> ds = getFilteredBookingsByDate(ngay);
 
             for (BookingDisplayItem item : ds) {
@@ -297,30 +371,42 @@ public class DatBan_GUI extends JFrame {
                 cal.setTime(item.thoiGianDen);
                 int bookingHour = cal.get(Calendar.HOUR_OF_DAY);
 
-                if (tenBan.equalsIgnoreCase(tenBanDB) && bookingHour == hour) {
-                    return item;
-                }
+                String key = tenBanDB.toLowerCase() + "_" + bookingHour;
+                map.put(key, item);
             }
-            return null;
+            return map;
         }
 
-        private BookingDisplayItem findBookingAtWeekSlot(String tenBan, Date ngay, int startHour, int endHourExclusive) {
-            java.util.List<BookingDisplayItem> ds = getFilteredBookingsByDate(ngay);
+        private Map<String, BookingDisplayItem> buildWeekSlotMap(Calendar weekStart, java.util.List<Integer> hours) {
+            Map<String, BookingDisplayItem> map = new HashMap<>();
 
-            for (BookingDisplayItem item : ds) {
-                String tenBanDB = tableNameMap.getOrDefault(item.maBan, item.maBan);
+            for (int d = 0; d < 7; d++) {
+                Calendar day = (Calendar) weekStart.clone();
+                day.add(Calendar.DAY_OF_MONTH, d);
 
-                Calendar cal = Calendar.getInstance();
-                cal.setTime(item.thoiGianDen);
-                int bookingHour = cal.get(Calendar.HOUR_OF_DAY);
+                java.util.List<BookingDisplayItem> ds = getFilteredBookingsByDate(day.getTime());
 
-                if (tenBan.equalsIgnoreCase(tenBanDB)
-                        && bookingHour >= startHour
-                        && bookingHour < endHourExclusive) {
-                    return item;
+                for (BookingDisplayItem item : ds) {
+                    String tenBanDB = tableNameMap.getOrDefault(item.maBan, item.maBan);
+
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime(item.thoiGianDen);
+                    int bookingHour = cal.get(Calendar.HOUR_OF_DAY);
+
+                    for (int h = 0; h < hours.size(); h++) {
+                        int startHour = hours.get(h);
+                        int endHourExclusive = (h == hours.size() - 1) ? 24 : hours.get(h + 1);
+
+                        if (bookingHour >= startHour && bookingHour < endHourExclusive) {
+                            String key = d + "_" + tenBanDB.toLowerCase() + "_" + startHour;
+                            map.put(key, item);
+                            break;
+                        }
+                    }
                 }
             }
-            return null;
+
+            return map;
         }
 
         private boolean isAcceptedByFilter(BookingDisplayItem item) {
@@ -360,9 +446,11 @@ public class DatBan_GUI extends JFrame {
         }
 
         private String getRealText(JTextField txt, String placeholder) {
-            if (txt == null) return "";
+            if (txt == null)
+                return "";
             String value = txt.getText().trim();
-            if (value.equalsIgnoreCase(placeholder)) return "";
+            if (value.equalsIgnoreCase(placeholder))
+                return "";
             return value;
         }
 
@@ -390,15 +478,21 @@ public class DatBan_GUI extends JFrame {
         }
 
         private Color getStatusColor(String trangThai) {
-            if (trangThai == null) return new Color(220, 170, 76);
+            if (trangThai == null)
+                return new Color(220, 170, 76);
 
             String s = trangThai.trim().toLowerCase();
 
-            if (s.equals("hoàn thành")) return new Color(124, 183, 103);
-            if (s.equals("đã xếp bàn")) return new Color(46, 134, 222);
-            if (s.equals("đang chờ")) return new Color(227, 177, 30);
-            if (s.equals("quá giờ")) return new Color(95, 95, 95);
-            if (s.equals("đã hủy")) return new Color(219, 47, 47);
+            if (s.equals("hoàn thành"))
+                return new Color(124, 183, 103);
+            if (s.equals("đã xếp bàn"))
+                return new Color(46, 134, 222);
+            if (s.equals("đang chờ"))
+                return new Color(227, 177, 30);
+            if (s.equals("quá giờ"))
+                return new Color(95, 95, 95);
+            if (s.equals("đã hủy"))
+                return new Color(219, 47, 47);
 
             return new Color(220, 170, 76);
         }
@@ -664,6 +758,7 @@ public class DatBan_GUI extends JFrame {
                     PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(DatBan_GUI.this);
                     dialog.setLocationRelativeTo(DatBan_GUI.this);
                     dialog.setVisible(true);
+                    clearBookingCache();
                     refreshView();
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -671,8 +766,7 @@ public class DatBan_GUI extends JFrame {
                             DatBan_GUI.this,
                             "Không mở được phiếu đặt bàn!",
                             "Lỗi",
-                            JOptionPane.ERROR_MESSAGE
-                    );
+                            JOptionPane.ERROR_MESSAGE);
                 }
             });
 
@@ -755,6 +849,8 @@ public class DatBan_GUI extends JFrame {
                 Date today = getTodayStartDate();
                 currentCalendar.setTime(today);
                 dateChooser.setDate(today);
+                clearBookingCache();
+                updateDisplayedDateText();
                 refreshView();
             });
 
@@ -773,6 +869,8 @@ public class DatBan_GUI extends JFrame {
 
                 currentCalendar.setTime(normalizeDate(temp.getTime()));
                 dateChooser.setDate(currentCalendar.getTime());
+                clearBookingCache();
+                updateDisplayedDateText();
                 refreshView();
             });
 
@@ -785,6 +883,8 @@ public class DatBan_GUI extends JFrame {
 
                 currentCalendar.setTime(normalizeDate(currentCalendar.getTime()));
                 dateChooser.setDate(currentCalendar.getTime());
+                clearBookingCache();
+                updateDisplayedDateText();
                 refreshView();
             });
 
@@ -798,22 +898,33 @@ public class DatBan_GUI extends JFrame {
                     } else {
                         currentCalendar.setTime(normalizeDate(selectedDate));
                     }
+                    clearBookingCache();
+                    updateDisplayedDateText();
                     refreshView();
                 }
             });
 
             btnDayView.addActionListener(e -> {
                 currentMode = ViewMode.DAY;
+                clearBookingCache();
+                updateDateChooserSize();
+                updateDisplayedDateText();
                 refreshView();
             });
 
             btnWeekView.addActionListener(e -> {
                 currentMode = ViewMode.WEEK;
+                clearBookingCache();
+                updateDateChooserSize();
+                updateDisplayedDateText();
                 refreshView();
             });
 
             btnScheduleView.addActionListener(e -> {
                 currentMode = ViewMode.SCHEDULE;
+                clearBookingCache();
+                updateDateChooserSize();
+                updateDisplayedDateText();
                 refreshView();
             });
         }
@@ -857,8 +968,7 @@ public class DatBan_GUI extends JFrame {
                             DatBan_GUI.this,
                             "Không tìm thấy lịch bàn phù hợp!",
                             "Thông báo",
-                            JOptionPane.INFORMATION_MESSAGE
-                    );
+                            JOptionPane.INFORMATION_MESSAGE);
                 }
                 return;
             }
@@ -869,16 +979,17 @@ public class DatBan_GUI extends JFrame {
         }
 
         private void scrollToComponent(JComponent comp) {
-            if (comp == null || currentMainScrollPane == null) return;
+            if (comp == null || currentMainScrollPane == null)
+                return;
 
             JViewport viewport = currentMainScrollPane.getViewport();
-            if (viewport == null || viewport.getView() == null) return;
+            if (viewport == null || viewport.getView() == null)
+                return;
 
             Rectangle bounds = SwingUtilities.convertRectangle(
                     comp.getParent(),
                     comp.getBounds(),
-                    viewport.getView()
-            );
+                    viewport.getView());
 
             int targetX = Math.max(0, bounds.x - 120);
             int targetY = Math.max(0, bounds.y - 80);
@@ -927,8 +1038,7 @@ public class DatBan_GUI extends JFrame {
                 JPanel leftBodyPanel,
                 JPanel bodyPanel,
                 int fixedWidth,
-                int headerHeight
-        ) {
+                int headerHeight) {
             JPanel topLeftWrap = new JPanel(new BorderLayout());
             topLeftWrap.setBackground(Color.WHITE);
             topLeftWrap.add(topLeftPanel, BorderLayout.CENTER);
@@ -975,9 +1085,7 @@ public class DatBan_GUI extends JFrame {
 
             bodyScroll.getVerticalScrollBar().addAdjustmentListener(e ->
                     leftBodyScroll.getViewport().setViewPosition(
-                            new Point(0, bodyScroll.getVerticalScrollBar().getValue())
-                    )
-            );
+                            new Point(0, bodyScroll.getVerticalScrollBar().getValue())));
 
             topLeftScroll.setPreferredSize(new Dimension(fixedWidth, headerHeight));
             headerScroll.setPreferredSize(new Dimension(0, headerHeight));
@@ -1025,15 +1133,13 @@ public class DatBan_GUI extends JFrame {
 
             java.util.List<Integer> hours = createHourValuesDay();
             java.util.List<String> visibleTables = new ArrayList<>(tableNames);
+            Map<String, BookingDisplayItem> daySlotMap = buildDaySlotMap(currentCalendar.getTime());
 
             int availableWidth = getCenterAvailableWidth();
             int leftColWidth = clamp((int) (availableWidth * 0.12), 110, 170);
 
-            // 15 cột giờ từ 9 -> 23
             int totalHourColumns = hours.size();
             int hourWidth = (availableWidth - leftColWidth) / totalHourColumns;
-
-            // giới hạn để màn nhỏ vẫn đẹp, màn lớn thì giãn ra
             hourWidth = clamp(hourWidth, 72, 170);
 
             int rowHeight = 48;
@@ -1048,9 +1154,9 @@ public class DatBan_GUI extends JFrame {
             gbcH.gridy = 0;
             gbcH.gridwidth = hours.size();
             headerPanel.add(
-                    createCell(formatDayHeaderFull(currentCalendar), hourWidth * hours.size(), rowHeight, true, SwingConstants.LEFT),
-                    gbcH
-            );
+                    createCell(formatDayHeaderFull(currentCalendar), hourWidth * hours.size(), rowHeight, true,
+                            SwingConstants.LEFT),
+                    gbcH);
 
             for (int i = 0; i < hours.size(); i++) {
                 gbcH.gridx = i;
@@ -1070,7 +1176,8 @@ public class DatBan_GUI extends JFrame {
                     gbcB.gridy = r;
                     gbcB.gridwidth = 1;
 
-                    BookingDisplayItem item = findBookingAt(visibleTables.get(r), currentCalendar.getTime(), hours.get(c));
+                    String key = visibleTables.get(r).toLowerCase() + "_" + hours.get(c);
+                    BookingDisplayItem item = daySlotMap.get(key);
                     bodyPanel.add(createBookingSlotCell(item, hourWidth, rowHeight), gbcB);
                 }
             }
@@ -1111,6 +1218,7 @@ public class DatBan_GUI extends JFrame {
             java.util.List<Integer> hours = createHourValuesWeek();
             Calendar weekStart = getWeekStart(currentCalendar);
             java.util.List<String> visibleTables = new ArrayList<>(tableNames);
+            Map<String, BookingDisplayItem> weekSlotMap = buildWeekSlotMap(weekStart, hours);
 
             int availableWidth = getCenterAvailableWidth();
             int leftColWidth = clamp((int) (availableWidth * 0.12), 110, 170);
@@ -1133,8 +1241,7 @@ public class DatBan_GUI extends JFrame {
                 gbcH.gridwidth = hours.size();
                 headerPanel.add(
                         createCell(formatDayHeader(day), hourWidth * hours.size(), rowHeight, true, SwingConstants.LEFT),
-                        gbcH
-                );
+                        gbcH);
                 colIndex += hours.size();
             }
 
@@ -1155,24 +1262,16 @@ public class DatBan_GUI extends JFrame {
 
             colIndex = 0;
             for (int d = 0; d < 7; d++) {
-                Calendar day = (Calendar) weekStart.clone();
-                day.add(Calendar.DAY_OF_MONTH, d);
-
                 for (int h = 0; h < hours.size(); h++) {
                     int startHour = hours.get(h);
-                    int endHourExclusive = (h == hours.size() - 1) ? 24 : hours.get(h + 1);
 
                     for (int r = 0; r < visibleTables.size(); r++) {
                         gbcB.gridx = colIndex;
                         gbcB.gridy = r;
                         gbcB.gridwidth = 1;
 
-                        BookingDisplayItem item = findBookingAtWeekSlot(
-                                visibleTables.get(r),
-                                day.getTime(),
-                                startHour,
-                                endHourExclusive
-                        );
+                        String key = d + "_" + visibleTables.get(r).toLowerCase() + "_" + startHour;
+                        BookingDisplayItem item = weekSlotMap.get(key);
                         bodyPanel.add(createBookingSlotCell(item, hourWidth, rowHeight), gbcB);
                     }
                     colIndex++;
@@ -1408,7 +1507,8 @@ public class DatBan_GUI extends JFrame {
         private ImageIcon loadIcon(String path, int w, int h) {
             try {
                 ImageIcon icon = new ImageIcon(path);
-                if (icon.getIconWidth() <= 0) return null;
+                if (icon.getIconWidth() <= 0)
+                    return null;
                 Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
                 return new ImageIcon(img);
             } catch (Exception e) {

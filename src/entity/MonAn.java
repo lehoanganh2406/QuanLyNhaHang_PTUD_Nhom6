@@ -67,5 +67,8 @@ public class MonAn {
 		return "MonAn [maMon=" + maMon + ", maLoaiMonAn=" + maLoaiMonAn + ", tenMon=" + tenMon + ", anhMon=" + anhMon
 				+ ", donGia=" + donGia + ", moTa=" + moTa + ", trangThai=" + trangThai + "]";
 	}
+	public MonAn() {
+		// TODO Auto-generated constructor stub
+	}
 	
 }

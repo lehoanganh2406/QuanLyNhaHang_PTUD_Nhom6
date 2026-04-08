@@ -2,6 +2,9 @@ package gui;
 
 import javax.swing.*;
 import com.toedter.calendar.JDateChooser;
+
+import entity.TaiKhoan;
+
 import javax.swing.border.*;
 import javax.swing.table.*;
 import java.awt.*;
@@ -12,7 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 
-public class QLNhanVien_GUI extends JPanel {
+public class NhanVien_GUI extends JPanel {
 
     // Màu sắc 
     private static final Color CLR_HEADER_BG  = new Color(74, 55, 40);   // nâu đậm
@@ -37,8 +40,9 @@ public class QLNhanVien_GUI extends JPanel {
     private DefaultTableModel tableModel;
 
     private JButton btnThem, btnCapNhat, btnLamMoi, btnTraCuu;
+    private static TaiKhoan taiKhoanDangNhap;
 
-    public QLNhanVien_GUI() {
+    public NhanVien_GUI(TaiKhoan tk) {
         setLayout(new BorderLayout());
         setBackground(CLR_PANEL_BG);
 
@@ -513,8 +517,8 @@ public class QLNhanVien_GUI extends JPanel {
             JLayeredPane layeredPane = new JLayeredPane();
             frame.setContentPane(layeredPane);
 
-            QLNhanVien_GUI mainPanel = new QLNhanVien_GUI();
-            Pn_ThanhMenu   menuPanel = new Pn_ThanhMenu();
+            NhanVien_GUI mainPanel = new NhanVien_GUI(null);
+            Pn_ThanhMenu menuPanel = new Pn_ThanhMenu(taiKhoanDangNhap);
 
             // Layer thấp: content chính
             layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);

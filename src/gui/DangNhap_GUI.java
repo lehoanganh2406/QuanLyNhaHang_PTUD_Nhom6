@@ -1,10 +1,7 @@
 package gui;
 
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -21,7 +18,6 @@ public class DangNhap_GUI extends JFrame {
     private RoundedButton btnDangNhap;
     private JCheckBox chkForgot;
 
-    // Mã đăng nhập tạm
     private String maTamThoi = null;
     private String tenDangNhapMaTam = null;
     private long thoiGianHetHanMaTam = 0;
@@ -48,7 +44,6 @@ public class DangNhap_GUI extends JFrame {
         contentPane.setLayout(new GridLayout(1, 2));
         setContentPane(contentPane);
 
-        // Panel trái chứa ảnh
         JPanel panelLeft = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -61,13 +56,11 @@ public class DangNhap_GUI extends JFrame {
         panelLeft.setLayout(null);
         contentPane.add(panelLeft);
 
-        // Panel phải
         JPanel panelRight = new JPanel();
         panelRight.setBackground(new Color(220, 230, 241));
         panelRight.setLayout(null);
         contentPane.add(panelRight);
 
-        // Icon phía trên
         JLabel lblTopIcon = new JLabel("");
         lblTopIcon.setHorizontalAlignment(SwingConstants.CENTER);
         lblTopIcon.setBounds(0, 40, 610, 80);
@@ -77,7 +70,6 @@ public class DangNhap_GUI extends JFrame {
         lblTopIcon.setIcon(new ImageIcon(imgTop));
         panelRight.add(lblTopIcon);
 
-        // Tiêu đề
         JLabel lblTitle = new JLabel("Hy Vong Restaurant");
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
         lblTitle.setFont(new Font("Savoye LET", Font.ITALIC, 56));
@@ -85,7 +77,6 @@ public class DangNhap_GUI extends JFrame {
         lblTitle.setBounds(60, 160, 500, 60);
         panelRight.add(lblTitle);
 
-        // ===== Ô tên đăng nhập =====
         RoundedPanel pnlUser = new RoundedPanel(30);
         pnlUser.setBackground(new Color(190, 195, 202));
         pnlUser.setBounds(120, 250, 380, 68);
@@ -111,7 +102,6 @@ public class DangNhap_GUI extends JFrame {
 
         addPlaceholder(txtTenDangNhap, "Tên đăng nhập");
 
-        // ===== Ô mật khẩu =====
         RoundedPanel pnlPass = new RoundedPanel(30);
         pnlPass.setBackground(new Color(190, 195, 202));
         pnlPass.setBounds(120, 350, 380, 68);
@@ -176,7 +166,6 @@ public class DangNhap_GUI extends JFrame {
 
         pnlPass.add(lblEye);
 
-        // Checkbox quên mật khẩu
         chkForgot = new JCheckBox("Quên mật khẩu?");
         chkForgot.setFont(new Font("SansSerif", Font.PLAIN, 20));
         chkForgot.setBackground(new Color(220, 230, 241));
@@ -194,7 +183,6 @@ public class DangNhap_GUI extends JFrame {
             }
         });
 
-        // Nút đăng nhập
         btnDangNhap = new RoundedButton("Đăng nhập", 30);
         btnDangNhap.setBounds(100, 530, 420, 85);
         btnDangNhap.setFont(new Font("SansSerif", Font.BOLD, 46));
@@ -240,13 +228,11 @@ public class DangNhap_GUI extends JFrame {
 
                 TaiKhoan_DAO tkDao = new TaiKhoan_DAO();
 
-                // Đăng nhập bình thường
                 TaiKhoan tk = tkDao.dangNhap(tenDangNhap, matKhauNhap);
                 if (tk != null) {
                     return tk;
                 }
 
-                // Đăng nhập bằng mã tạm
                 if (kiemTraMaTamHopLe(tenDangNhap, matKhauNhap)) {
                     TaiKhoan tkTam = tkDao.getTaiKhoanTheoTenDangNhap(tenDangNhap);
                     if (tkTam != null && tkTam.isTrangThai()) {
@@ -267,7 +253,7 @@ public class DangNhap_GUI extends JFrame {
 
                     if (tk != null) {
                         JOptionPane.showMessageDialog(DangNhap_GUI.this, "Đăng nhập thành công!");
-                        moTrangChu();
+                        moTrangChu(tk);
                     } else {
                         JOptionPane.showMessageDialog(DangNhap_GUI.this,
                                 "Sai tên đăng nhập, sai mật khẩu, sai mã tạm hoặc mã đã hết hiệu lực!");
@@ -354,7 +340,6 @@ public class DangNhap_GUI extends JFrame {
 
         long hienTai = System.currentTimeMillis();
 
-        // vừa chạm mốc 5 phút là hết hạn
         if (hienTai >= thoiGianHetHanMaTam) {
             maTamThoi = null;
             tenDangNhapMaTam = null;
@@ -363,7 +348,6 @@ public class DangNhap_GUI extends JFrame {
         }
 
         if (tenDangNhap.equals(tenDangNhapMaTam) && maNhap.equals(maTamThoi)) {
-            // dùng 1 lần là hủy
             maTamThoi = null;
             tenDangNhapMaTam = null;
             thoiGianHetHanMaTam = 0;
@@ -373,13 +357,12 @@ public class DangNhap_GUI extends JFrame {
         return false;
     }
 
-    private void moTrangChu() {
-        TrangChu_GUI trangChu = new TrangChu_GUI();
+    private void moTrangChu(TaiKhoan tk) {
+        TrangChu_GUI trangChu = new TrangChu_GUI(tk);
         trangChu.setVisible(true);
         dispose();
     }
 
-    // ===== Placeholder cho JTextField =====
     private void addPlaceholder(JTextField textField, String placeholder) {
         textField.addFocusListener(new FocusAdapter() {
             @Override
@@ -400,7 +383,6 @@ public class DangNhap_GUI extends JFrame {
         });
     }
 
-    // ===== Placeholder cho JPasswordField =====
     private void addPasswordPlaceholder(JPasswordField passwordField, String placeholder) {
         passwordField.addFocusListener(new FocusAdapter() {
             @Override
@@ -425,7 +407,6 @@ public class DangNhap_GUI extends JFrame {
         });
     }
 
-    // ===== Dialog loading =====
     class LoadingDialog extends JDialog {
         private JLabel lblLoading;
         private Timer timer;
@@ -474,7 +455,6 @@ public class DangNhap_GUI extends JFrame {
         }
     }
 
-    // ===== Panel bo góc =====
     class RoundedPanel extends JPanel {
         private int radius;
 
@@ -494,7 +474,6 @@ public class DangNhap_GUI extends JFrame {
         }
     }
 
-    // ===== Button bo góc =====
     class RoundedButton extends JButton {
         private int radius;
 

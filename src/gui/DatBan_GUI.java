@@ -1,7 +1,8 @@
 package gui;
 
 import java.awt.*;
-import java.awt.event.MouseWheelListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -14,6 +15,8 @@ import java.util.Map;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import com.toedter.calendar.JDateChooser;
 
@@ -21,31 +24,58 @@ import connectDB.ConnectDB;
 import dao.Ban_DAO;
 import dao.PhieuDatBan_DAO;
 import entity.Ban;
+import entity.TaiKhoan;
 import digLog.PhieuDatBan_DigLog;
 
+
 public class DatBan_GUI extends JFrame {
+	private TaiKhoan taiKhoanDangNhap;
+	public DatBan_GUI(TaiKhoan tk) {
+	    setTitle("Đặt bàn");
+	    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-    public DatBan_GUI() {
-        setTitle("Đặt bàn");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+	    JLayeredPane layeredPane = new JLayeredPane();
+	    layeredPane.setLayout(null);
+	    setContentPane(layeredPane);
 
-        Pn_ThanhMenu menu = new Pn_ThanhMenu();
-        menu.setPreferredSize(new Dimension(0, 42));
-        add(menu, BorderLayout.NORTH);
+	    Pn_ThanhMenu menu = new Pn_ThanhMenu(taiKhoanDangNhap);
+	    DatBanMainPanel mainPanel = new DatBanMainPanel();
 
-        add(new DatBanMainPanel(), BorderLayout.CENTER);
+	    layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
+	    layeredPane.add(menu, JLayeredPane.PALETTE_LAYER);
 
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setMinimumSize(new Dimension(1280, 720));
-        setLocationRelativeTo(null);
-    }
+	    addComponentListener(new ComponentAdapter() {
+	        @Override
+	        public void componentResized(ComponentEvent e) {
+	            int w = getContentPane().getWidth();
+	            int h = getContentPane().getHeight();
+
+	            mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
+
+	            // menu chỉ cao 42, submenu sẽ vẽ đè xuống dưới
+	            menu.setBounds(0, 0, w, h);
+	            layeredPane.revalidate();
+	            layeredPane.repaint();
+	        }
+	    });
+
+	    setExtendedState(JFrame.MAXIMIZED_BOTH);
+	    setMinimumSize(new Dimension(1280, 720));
+	    setLocationRelativeTo(null);
+
+	    SwingUtilities.invokeLater(() -> {
+	        int w = getContentPane().getWidth();
+	        int h = getContentPane().getHeight();
+	        mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
+	        menu.setBounds(0, 0, w, h);
+	    });
+	}
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
                 ConnectDB.getInstance().connect();
-                new DatBan_GUI().setVisible(true);
+                new DatBan_GUI(null).setVisible(true);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -75,9 +105,18 @@ public class DatBan_GUI extends JFrame {
 
         private JTextField txtSearchMaPhieu;
         private JTextField txtSearchSdt;
+        private JLabel lblSearchInfo;
+        
+        private Timer resizeTimer;
 
         private final java.util.List<JCheckBox> statusCheckBoxes = new ArrayList<>();
         private final java.util.List<String> statusValues = new ArrayList<>();
+        private final java.util.List<JComponent> matchedComponents = new ArrayList<>();
+
+        private boolean searchByEnterRequested = false;
+
+        private JScrollPane currentMainScrollPane;
+        private JScrollPane currentLeftScrollPane;
 
         class BookingDisplayItem {
             String maPhieu;
@@ -102,6 +141,25 @@ public class DatBan_GUI extends JFrame {
                 this.ghiChu = ghiChu;
             }
         }
+        private void initResponsiveEvents() {
+            resizeTimer = new Timer(180, e -> {
+                refreshView();
+            });
+            resizeTimer.setRepeats(false);
+
+            ComponentAdapter resizeHandler = new ComponentAdapter() {
+                @Override
+                public void componentResized(ComponentEvent e) {
+                    if (resizeTimer != null) {
+                        resizeTimer.restart();
+                    }
+                }
+            };
+
+            DatBan_GUI.this.addComponentListener(resizeHandler);
+            this.addComponentListener(resizeHandler);
+            cardPanel.addComponentListener(resizeHandler);
+        }
 
         public DatBanMainPanel() {
             setLayout(new BorderLayout());
@@ -120,15 +178,13 @@ public class DatBan_GUI extends JFrame {
             loadTableNamesFromDB();
             initDateChooser();
             initEvents();
+            initResponsiveEvents();
             refreshView();
         }
 
         private void moChiTietPhieu(BookingDisplayItem item) {
             try {
-                PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(
-                        DatBan_GUI.this,
-                        item.maPhieu
-                );
+                PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(DatBan_GUI.this, item.maPhieu);
                 dialog.setLocationRelativeTo(DatBan_GUI.this);
                 dialog.setVisible(true);
                 refreshView();
@@ -170,10 +226,14 @@ public class DatBan_GUI extends JFrame {
         }
 
         private void initDateChooser() {
-            dateChooser.setDate(currentCalendar.getTime());
+            Date today = getTodayStartDate();
+
+            currentCalendar.setTime(today);
+            dateChooser.setDate(today);
+            dateChooser.setMinSelectableDate(today);
             dateChooser.setDateFormatString("dd/MM/yyyy");
             dateChooser.setLocale(new Locale("vi", "VN"));
-            dateChooser.setPreferredSize(new Dimension(150, 30));
+            dateChooser.setPreferredSize(new Dimension(165, 34));
             dateChooser.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
             JComponent editorComp = dateChooser.getDateEditor().getUiComponent();
@@ -215,21 +275,49 @@ public class DatBan_GUI extends JFrame {
             return result;
         }
 
+        private java.util.List<BookingDisplayItem> getFilteredBookingsByDate(Date ngay) {
+            java.util.List<BookingDisplayItem> all = getBookingsByDate(ngay);
+            java.util.List<BookingDisplayItem> filtered = new ArrayList<>();
+
+            for (BookingDisplayItem item : all) {
+                if (isAcceptedByFilter(item)) {
+                    filtered.add(item);
+                }
+            }
+            return filtered;
+        }
+
         private BookingDisplayItem findBookingAt(String tenBan, Date ngay, int hour) {
-            java.util.List<BookingDisplayItem> ds = getBookingsByDate(ngay);
+            java.util.List<BookingDisplayItem> ds = getFilteredBookingsByDate(ngay);
 
             for (BookingDisplayItem item : ds) {
                 String tenBanDB = tableNameMap.getOrDefault(item.maBan, item.maBan);
 
                 Calendar cal = Calendar.getInstance();
                 cal.setTime(item.thoiGianDen);
-
                 int bookingHour = cal.get(Calendar.HOUR_OF_DAY);
 
-                if (tenBan.equalsIgnoreCase(tenBanDB)) {
-                    if (bookingHour == hour && isAcceptedByFilter(item)) {
-                        return item;
-                    }
+                if (tenBan.equalsIgnoreCase(tenBanDB) && bookingHour == hour) {
+                    return item;
+                }
+            }
+            return null;
+        }
+
+        private BookingDisplayItem findBookingAtWeekSlot(String tenBan, Date ngay, int startHour, int endHourExclusive) {
+            java.util.List<BookingDisplayItem> ds = getFilteredBookingsByDate(ngay);
+
+            for (BookingDisplayItem item : ds) {
+                String tenBanDB = tableNameMap.getOrDefault(item.maBan, item.maBan);
+
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(item.thoiGianDen);
+                int bookingHour = cal.get(Calendar.HOUR_OF_DAY);
+
+                if (tenBan.equalsIgnoreCase(tenBanDB)
+                        && bookingHour >= startHour
+                        && bookingHour < endHourExclusive) {
+                    return item;
                 }
             }
             return null;
@@ -278,6 +366,29 @@ public class DatBan_GUI extends JFrame {
             return value;
         }
 
+        private boolean hasActiveFilter() {
+            return !getRealText(txtSearchMaPhieu, "Nhập mã phiếu đặt bàn").isEmpty()
+                    || !getRealText(txtSearchSdt, "Nhập số điện thoại").isEmpty()
+                    || !getSelectedStatuses().isEmpty();
+        }
+
+        private int countMatchesCurrentMode() {
+            int count = 0;
+
+            if (currentMode == ViewMode.DAY || currentMode == ViewMode.SCHEDULE) {
+                count = getFilteredBookingsByDate(currentCalendar.getTime()).size();
+            } else if (currentMode == ViewMode.WEEK) {
+                Calendar weekStart = getWeekStart(currentCalendar);
+                for (int d = 0; d < 7; d++) {
+                    Calendar day = (Calendar) weekStart.clone();
+                    day.add(Calendar.DAY_OF_MONTH, d);
+                    count += getFilteredBookingsByDate(day.getTime()).size();
+                }
+            }
+
+            return count;
+        }
+
         private Color getStatusColor(String trangThai) {
             if (trangThai == null) return new Color(220, 170, 76);
 
@@ -313,14 +424,32 @@ public class DatBan_GUI extends JFrame {
             panel.add(createSearchBlock("Tìm kiếm theo khách hàng", "Nhập số điện thoại", false), gbc);
 
             gbc.gridy = 2;
-            gbc.insets = new Insets(0, 0, 0, 0);
+            gbc.insets = new Insets(0, 0, 16, 0);
             panel.add(createStatusBlock(), gbc);
 
             gbc.gridy = 3;
+            gbc.insets = new Insets(0, 0, 0, 0);
+            panel.add(createSearchInfoBlock(), gbc);
+
+            gbc.gridy = 4;
             gbc.weighty = 1;
             panel.add(Box.createVerticalGlue(), gbc);
 
             return panel;
+        }
+
+        private JPanel createSearchInfoBlock() {
+            JPanel wrap = new JPanel(new BorderLayout());
+            wrap.setOpaque(false);
+
+            lblSearchInfo = new JLabel(" ");
+            lblSearchInfo.setFont(new Font("SansSerif", Font.PLAIN, 14));
+            lblSearchInfo.setForeground(new Color(90, 90, 90));
+            lblSearchInfo.setVerticalAlignment(SwingConstants.TOP);
+            lblSearchInfo.setBorder(new EmptyBorder(4, 4, 4, 4));
+
+            wrap.add(lblSearchInfo, BorderLayout.CENTER);
+            return wrap;
         }
 
         private JPanel createSearchBlock(String title, String hint, boolean maPhieuField) {
@@ -367,21 +496,29 @@ public class DatBan_GUI extends JFrame {
 
             addPlaceholderBehavior(txt, hint);
 
-            txt.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            txt.getDocument().addDocumentListener(new DocumentListener() {
                 @Override
-                public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                public void insertUpdate(DocumentEvent e) {
+                    searchByEnterRequested = false;
                     refreshView();
                 }
 
                 @Override
-                public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                public void removeUpdate(DocumentEvent e) {
+                    searchByEnterRequested = false;
                     refreshView();
                 }
 
                 @Override
-                public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                public void changedUpdate(DocumentEvent e) {
+                    searchByEnterRequested = false;
                     refreshView();
                 }
+            });
+
+            txt.addActionListener(e -> {
+                searchByEnterRequested = true;
+                refreshView();
             });
 
             if (maPhieuField) {
@@ -603,7 +740,7 @@ public class DatBan_GUI extends JFrame {
         }
 
         private void styleDateChooser(JDateChooser chooser) {
-            chooser.setPreferredSize(new Dimension(150, 30));
+            chooser.setPreferredSize(new Dimension(165, 34));
             chooser.setBorder(new LineBorder(new Color(180, 180, 180), 1));
         }
 
@@ -615,27 +752,38 @@ public class DatBan_GUI extends JFrame {
 
         private void initEvents() {
             btnToday.addActionListener(e -> {
-                currentCalendar.setTime(new Date());
-                dateChooser.setDate(currentCalendar.getTime());
+                Date today = getTodayStartDate();
+                currentCalendar.setTime(today);
+                dateChooser.setDate(today);
                 refreshView();
             });
 
             btnPrev.addActionListener(e -> {
-                if (currentMode == ViewMode.DAY) {
-                    currentCalendar.add(Calendar.DAY_OF_MONTH, -1);
+                Calendar temp = (Calendar) currentCalendar.clone();
+
+                if (currentMode == ViewMode.DAY || currentMode == ViewMode.SCHEDULE) {
+                    temp.add(Calendar.DAY_OF_MONTH, -1);
                 } else {
-                    currentCalendar.add(Calendar.DAY_OF_MONTH, -7);
+                    temp.add(Calendar.DAY_OF_MONTH, -7);
                 }
+
+                if (isBeforeToday(temp.getTime())) {
+                    temp.setTime(getTodayStartDate());
+                }
+
+                currentCalendar.setTime(normalizeDate(temp.getTime()));
                 dateChooser.setDate(currentCalendar.getTime());
                 refreshView();
             });
 
             btnNext.addActionListener(e -> {
-                if (currentMode == ViewMode.DAY) {
+                if (currentMode == ViewMode.DAY || currentMode == ViewMode.SCHEDULE) {
                     currentCalendar.add(Calendar.DAY_OF_MONTH, 1);
                 } else {
                     currentCalendar.add(Calendar.DAY_OF_MONTH, 7);
                 }
+
+                currentCalendar.setTime(normalizeDate(currentCalendar.getTime()));
                 dateChooser.setDate(currentCalendar.getTime());
                 refreshView();
             });
@@ -643,7 +791,13 @@ public class DatBan_GUI extends JFrame {
             dateChooser.getDateEditor().addPropertyChangeListener("date", evt -> {
                 Date selectedDate = dateChooser.getDate();
                 if (selectedDate != null) {
-                    currentCalendar.setTime(selectedDate);
+                    if (isBeforeToday(selectedDate)) {
+                        Date today = getTodayStartDate();
+                        currentCalendar.setTime(today);
+                        dateChooser.setDate(today);
+                    } else {
+                        currentCalendar.setTime(normalizeDate(selectedDate));
+                    }
                     refreshView();
                 }
             });
@@ -665,6 +819,10 @@ public class DatBan_GUI extends JFrame {
         }
 
         private void refreshView() {
+            matchedComponents.clear();
+            currentMainScrollPane = null;
+            currentLeftScrollPane = null;
+
             updateButtonStyles();
             cardPanel.removeAll();
 
@@ -679,6 +837,74 @@ public class DatBan_GUI extends JFrame {
             cardLayout.show(cardPanel, currentMode.name());
             revalidate();
             repaint();
+
+            SwingUtilities.invokeLater(this::afterRefreshFocusAndMessage);
+        }
+
+        private void afterRefreshFocusAndMessage() {
+            if (!hasActiveFilter()) {
+                lblSearchInfo.setText(" ");
+                return;
+            }
+
+            int count = countMatchesCurrentMode();
+
+            if (count <= 0 || matchedComponents.isEmpty()) {
+                lblSearchInfo.setText(" ");
+                if (searchByEnterRequested) {
+                    searchByEnterRequested = false;
+                    JOptionPane.showMessageDialog(
+                            DatBan_GUI.this,
+                            "Không tìm thấy lịch bàn phù hợp!",
+                            "Thông báo",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                }
+                return;
+            }
+
+            lblSearchInfo.setText(" ");
+            scrollToComponent(matchedComponents.get(0));
+            searchByEnterRequested = false;
+        }
+
+        private void scrollToComponent(JComponent comp) {
+            if (comp == null || currentMainScrollPane == null) return;
+
+            JViewport viewport = currentMainScrollPane.getViewport();
+            if (viewport == null || viewport.getView() == null) return;
+
+            Rectangle bounds = SwingUtilities.convertRectangle(
+                    comp.getParent(),
+                    comp.getBounds(),
+                    viewport.getView()
+            );
+
+            int targetX = Math.max(0, bounds.x - 120);
+            int targetY = Math.max(0, bounds.y - 80);
+
+            viewport.setViewPosition(new Point(targetX, targetY));
+
+            if (currentLeftScrollPane != null) {
+                currentLeftScrollPane.getViewport().setViewPosition(new Point(0, targetY));
+            }
+
+            Object oldBorder = comp.getClientProperty("oldBorder");
+            if (oldBorder == null) {
+                oldBorder = comp.getBorder();
+                comp.putClientProperty("oldBorder", oldBorder);
+            }
+
+            comp.setBorder(new LineBorder(new Color(255, 80, 80), 3));
+
+            Timer timer = new Timer(1500, e -> {
+                Object old = comp.getClientProperty("oldBorder");
+                if (old instanceof javax.swing.border.Border) {
+                    comp.setBorder((javax.swing.border.Border) old);
+                }
+            });
+            timer.setRepeats(false);
+            timer.start();
         }
 
         private void updateButtonStyles() {
@@ -695,162 +921,236 @@ public class DatBan_GUI extends JFrame {
             }
         }
 
-        private JPanel createFixedTablePanel(JPanel leftPanel, JPanel rightPanel, int fixedWidth) {
-            JScrollPane leftScroll = new JScrollPane(leftPanel);
-            JScrollPane rightScroll = new JScrollPane(rightPanel);
+        private JPanel createFrozenTablePanel(
+                JPanel topLeftPanel,
+                JPanel headerPanel,
+                JPanel leftBodyPanel,
+                JPanel bodyPanel,
+                int fixedWidth,
+                int headerHeight
+        ) {
+            JPanel topLeftWrap = new JPanel(new BorderLayout());
+            topLeftWrap.setBackground(Color.WHITE);
+            topLeftWrap.add(topLeftPanel, BorderLayout.CENTER);
 
-            configScroll(leftScroll);
-            configScroll(rightScroll);
+            JPanel headerWrap = new JPanel(new BorderLayout());
+            headerWrap.setBackground(Color.WHITE);
+            headerWrap.add(headerPanel, BorderLayout.WEST);
 
-            leftScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-            leftScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-            leftScroll.setPreferredSize(new Dimension(fixedWidth + 2, 0));
+            JPanel leftBodyWrap = new JPanel(new BorderLayout());
+            leftBodyWrap.setBackground(Color.WHITE);
+            leftBodyWrap.add(leftBodyPanel, BorderLayout.NORTH);
 
-            rightScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            rightScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+            JPanel bodyWrap = new JPanel(new BorderLayout());
+            bodyWrap.setBackground(Color.WHITE);
+            bodyWrap.add(bodyPanel, BorderLayout.NORTH);
 
-            rightScroll.getVerticalScrollBar().addAdjustmentListener(
-                    e -> leftScroll.getVerticalScrollBar().setValue(e.getValue())
+            JScrollPane topLeftScroll = new JScrollPane(topLeftWrap);
+            JScrollPane headerScroll = new JScrollPane(headerWrap);
+            JScrollPane leftBodyScroll = new JScrollPane(leftBodyWrap);
+            JScrollPane bodyScroll = new JScrollPane(bodyWrap);
+
+            currentMainScrollPane = bodyScroll;
+            currentLeftScrollPane = leftBodyScroll;
+
+            configScroll(topLeftScroll);
+            configScroll(headerScroll);
+            configScroll(leftBodyScroll);
+            configScroll(bodyScroll);
+
+            topLeftScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            topLeftScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+
+            headerScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            headerScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+
+            leftBodyScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            leftBodyScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+
+            bodyScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            bodyScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+            bodyScroll.getHorizontalScrollBar().addAdjustmentListener(e ->
+                    headerScroll.getHorizontalScrollBar().setValue(e.getValue()));
+
+            bodyScroll.getVerticalScrollBar().addAdjustmentListener(e ->
+                    leftBodyScroll.getViewport().setViewPosition(
+                            new Point(0, bodyScroll.getVerticalScrollBar().getValue())
+                    )
             );
 
-            MouseWheelListener syncWheel = e -> {
-                JScrollBar bar = rightScroll.getVerticalScrollBar();
-                int amount = e.getUnitsToScroll() * 16;
-                bar.setValue(bar.getValue() + amount);
-            };
+            topLeftScroll.setPreferredSize(new Dimension(fixedWidth, headerHeight));
+            headerScroll.setPreferredSize(new Dimension(0, headerHeight));
+            leftBodyScroll.setPreferredSize(new Dimension(fixedWidth, 0));
 
-            leftScroll.addMouseWheelListener(syncWheel);
-            leftPanel.addMouseWheelListener(syncWheel);
+            JPanel topPanel = new JPanel(new BorderLayout());
+            topPanel.add(topLeftScroll, BorderLayout.WEST);
+            topPanel.add(headerScroll, BorderLayout.CENTER);
 
-            JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftScroll, rightScroll);
-            split.setDividerLocation(fixedWidth);
-            split.setDividerSize(1);
-            split.setEnabled(false);
-            split.setBorder(null);
+            JPanel bottomPanel = new JPanel(new BorderLayout());
+            bottomPanel.add(leftBodyScroll, BorderLayout.WEST);
+            bottomPanel.add(bodyScroll, BorderLayout.CENTER);
 
-            JPanel panel = new JPanel(new BorderLayout());
-            panel.add(split, BorderLayout.CENTER);
-            return panel;
+            JPanel root = new JPanel(new BorderLayout());
+            root.add(topPanel, BorderLayout.NORTH);
+            root.add(bottomPanel, BorderLayout.CENTER);
+
+            return root;
         }
 
         private JPanel buildDayGrid() {
-            JPanel leftPanel = new JPanel(new GridBagLayout());
-            JPanel rightPanel = new JPanel(new GridBagLayout());
+            JPanel topLeftPanel = new JPanel(new GridBagLayout());
+            JPanel headerPanel = new JPanel(new GridBagLayout());
+            JPanel leftBodyPanel = new JPanel(new GridBagLayout());
+            JPanel bodyPanel = new JPanel(new GridBagLayout());
 
-            leftPanel.setBackground(Color.WHITE);
-            rightPanel.setBackground(Color.WHITE);
+            topLeftPanel.setBackground(Color.WHITE);
+            headerPanel.setBackground(Color.WHITE);
+            leftBodyPanel.setBackground(Color.WHITE);
+            bodyPanel.setBackground(Color.WHITE);
+
+            GridBagConstraints gbcTL = new GridBagConstraints();
+            gbcTL.fill = GridBagConstraints.BOTH;
+            gbcTL.gridx = 0;
+
+            GridBagConstraints gbcH = new GridBagConstraints();
+            gbcH.fill = GridBagConstraints.BOTH;
 
             GridBagConstraints gbcL = new GridBagConstraints();
             gbcL.fill = GridBagConstraints.BOTH;
             gbcL.gridx = 0;
 
-            GridBagConstraints gbcR = new GridBagConstraints();
-            gbcR.fill = GridBagConstraints.BOTH;
+            GridBagConstraints gbcB = new GridBagConstraints();
+            gbcB.fill = GridBagConstraints.BOTH;
 
-            java.util.List<String> hours = createHoursDay();
+            java.util.List<Integer> hours = createHourValuesDay();
+            java.util.List<String> visibleTables = new ArrayList<>(tableNames);
 
-            int leftColWidth = 170;
-            int hourWidth = 120;
-            int rowHeight = 52;
+            int availableWidth = getCenterAvailableWidth();
+            int leftColWidth = clamp((int) (availableWidth * 0.12), 110, 170);
 
-            gbcL.gridy = 0;
-            leftPanel.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbcL);
+            // 15 cột giờ từ 9 -> 23
+            int totalHourColumns = hours.size();
+            int hourWidth = (availableWidth - leftColWidth) / totalHourColumns;
 
-            gbcL.gridy = 1;
-            leftPanel.add(createCell("Bàn", leftColWidth, rowHeight, true, SwingConstants.LEFT), gbcL);
+            // giới hạn để màn nhỏ vẫn đẹp, màn lớn thì giãn ra
+            hourWidth = clamp(hourWidth, 72, 170);
 
-            for (int r = 0; r < tableNames.size(); r++) {
-                gbcL.gridy = r + 2;
-                leftPanel.add(createCell(tableNames.get(r), leftColWidth, rowHeight, false, SwingConstants.LEFT), gbcL);
-            }
+            int rowHeight = 48;
+            int headerHeight = rowHeight * 2;
 
-            gbcR.gridx = 0;
-            gbcR.gridy = 0;
-            gbcR.gridwidth = hours.size();
-            rightPanel.add(
+            gbcTL.gridy = 0;
+            topLeftPanel.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbcTL);
+            gbcTL.gridy = 1;
+            topLeftPanel.add(createCell("Bàn", leftColWidth, rowHeight, true, SwingConstants.LEFT), gbcTL);
+
+            gbcH.gridx = 0;
+            gbcH.gridy = 0;
+            gbcH.gridwidth = hours.size();
+            headerPanel.add(
                     createCell(formatDayHeaderFull(currentCalendar), hourWidth * hours.size(), rowHeight, true, SwingConstants.LEFT),
-                    gbcR
+                    gbcH
             );
 
             for (int i = 0; i < hours.size(); i++) {
-                gbcR.gridx = i;
-                gbcR.gridy = 1;
-                gbcR.gridwidth = 1;
-                rightPanel.add(createCell(hours.get(i), hourWidth, rowHeight, true, SwingConstants.CENTER), gbcR);
+                gbcH.gridx = i;
+                gbcH.gridy = 1;
+                gbcH.gridwidth = 1;
+                headerPanel.add(createCell(formatHour24(hours.get(i)), hourWidth, rowHeight, true, SwingConstants.CENTER), gbcH);
             }
 
-            for (int r = 0; r < tableNames.size(); r++) {
-                for (int c = 0; c < hours.size(); c++) {
-                    gbcR.gridx = c;
-                    gbcR.gridy = r + 2;
-                    gbcR.gridwidth = 1;
+            for (int r = 0; r < visibleTables.size(); r++) {
+                gbcL.gridy = r;
+                leftBodyPanel.add(createCell(visibleTables.get(r), leftColWidth, rowHeight, false, SwingConstants.LEFT), gbcL);
+            }
 
-                    BookingDisplayItem item = findBookingAt(tableNames.get(r), currentCalendar.getTime(), c);
-                    rightPanel.add(createBookingSlotCell(item, hourWidth, rowHeight), gbcR);
+            for (int r = 0; r < visibleTables.size(); r++) {
+                for (int c = 0; c < hours.size(); c++) {
+                    gbcB.gridx = c;
+                    gbcB.gridy = r;
+                    gbcB.gridwidth = 1;
+
+                    BookingDisplayItem item = findBookingAt(visibleTables.get(r), currentCalendar.getTime(), hours.get(c));
+                    bodyPanel.add(createBookingSlotCell(item, hourWidth, rowHeight), gbcB);
                 }
             }
 
-            leftPanel.setPreferredSize(new Dimension(leftColWidth, (tableNames.size() + 2) * rowHeight));
-            rightPanel.setPreferredSize(new Dimension(hours.size() * hourWidth, (tableNames.size() + 2) * rowHeight));
+            topLeftPanel.setPreferredSize(new Dimension(leftColWidth, headerHeight));
+            headerPanel.setPreferredSize(new Dimension(hours.size() * hourWidth, headerHeight));
+            leftBodyPanel.setPreferredSize(new Dimension(leftColWidth, Math.max(1, visibleTables.size()) * rowHeight));
+            bodyPanel.setPreferredSize(new Dimension(hours.size() * hourWidth, Math.max(1, visibleTables.size()) * rowHeight));
 
-            return createFixedTablePanel(leftPanel, rightPanel, leftColWidth);
+            return createFrozenTablePanel(topLeftPanel, headerPanel, leftBodyPanel, bodyPanel, leftColWidth, headerHeight);
         }
 
         private JPanel buildWeekGridLikeImage() {
-            JPanel leftPanel = new JPanel(new GridBagLayout());
-            JPanel rightPanel = new JPanel(new GridBagLayout());
+            JPanel topLeftPanel = new JPanel(new GridBagLayout());
+            JPanel headerPanel = new JPanel(new GridBagLayout());
+            JPanel leftBodyPanel = new JPanel(new GridBagLayout());
+            JPanel bodyPanel = new JPanel(new GridBagLayout());
 
-            leftPanel.setBackground(Color.WHITE);
-            rightPanel.setBackground(Color.WHITE);
+            topLeftPanel.setBackground(Color.WHITE);
+            headerPanel.setBackground(Color.WHITE);
+            leftBodyPanel.setBackground(Color.WHITE);
+            bodyPanel.setBackground(Color.WHITE);
+
+            GridBagConstraints gbcTL = new GridBagConstraints();
+            gbcTL.fill = GridBagConstraints.BOTH;
+            gbcTL.gridx = 0;
+
+            GridBagConstraints gbcH = new GridBagConstraints();
+            gbcH.fill = GridBagConstraints.BOTH;
 
             GridBagConstraints gbcL = new GridBagConstraints();
             gbcL.fill = GridBagConstraints.BOTH;
             gbcL.gridx = 0;
 
-            GridBagConstraints gbcR = new GridBagConstraints();
-            gbcR.fill = GridBagConstraints.BOTH;
+            GridBagConstraints gbcB = new GridBagConstraints();
+            gbcB.fill = GridBagConstraints.BOTH;
 
-            java.util.List<String> hours = createHoursWeek2Hours();
+            java.util.List<Integer> hours = createHourValuesWeek();
             Calendar weekStart = getWeekStart(currentCalendar);
+            java.util.List<String> visibleTables = new ArrayList<>(tableNames);
 
-            int leftColWidth = 170;
-            int hourWidth = 110;
-            int rowHeight = 52;
+            int availableWidth = getCenterAvailableWidth();
+            int leftColWidth = clamp((int) (availableWidth * 0.12), 110, 170);
+            int hourWidth = clamp((int) (availableWidth * 0.11), 88, 130);
+            int rowHeight = 48;
+            int headerHeight = rowHeight * 2;
 
-            gbcL.gridy = 0;
-            leftPanel.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbcL);
-
-            gbcL.gridy = 1;
-            leftPanel.add(createCell("Bàn", leftColWidth, rowHeight, true, SwingConstants.LEFT), gbcL);
-
-            for (int r = 0; r < tableNames.size(); r++) {
-                gbcL.gridy = r + 2;
-                leftPanel.add(createCell(tableNames.get(r), leftColWidth, rowHeight, false, SwingConstants.LEFT), gbcL);
-            }
+            gbcTL.gridy = 0;
+            topLeftPanel.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbcTL);
+            gbcTL.gridy = 1;
+            topLeftPanel.add(createCell("Bàn", leftColWidth, rowHeight, true, SwingConstants.LEFT), gbcTL);
 
             int colIndex = 0;
             for (int d = 0; d < 7; d++) {
                 Calendar day = (Calendar) weekStart.clone();
                 day.add(Calendar.DAY_OF_MONTH, d);
 
-                gbcR.gridx = colIndex;
-                gbcR.gridy = 0;
-                gbcR.gridwidth = hours.size();
-                rightPanel.add(
+                gbcH.gridx = colIndex;
+                gbcH.gridy = 0;
+                gbcH.gridwidth = hours.size();
+                headerPanel.add(
                         createCell(formatDayHeader(day), hourWidth * hours.size(), rowHeight, true, SwingConstants.LEFT),
-                        gbcR
+                        gbcH
                 );
                 colIndex += hours.size();
             }
 
             colIndex = 0;
             for (int d = 0; d < 7; d++) {
-                for (String hour : hours) {
-                    gbcR.gridx = colIndex++;
-                    gbcR.gridy = 1;
-                    gbcR.gridwidth = 1;
-                    rightPanel.add(createCell(hour, hourWidth, rowHeight, true, SwingConstants.CENTER), gbcR);
+                for (Integer hour : hours) {
+                    gbcH.gridx = colIndex++;
+                    gbcH.gridy = 1;
+                    gbcH.gridwidth = 1;
+                    headerPanel.add(createCell(formatHour24(hour), hourWidth, rowHeight, true, SwingConstants.CENTER), gbcH);
                 }
+            }
+
+            for (int r = 0; r < visibleTables.size(); r++) {
+                gbcL.gridy = r;
+                leftBodyPanel.add(createCell(visibleTables.get(r), leftColWidth, rowHeight, false, SwingConstants.LEFT), gbcL);
             }
 
             colIndex = 0;
@@ -859,28 +1159,32 @@ public class DatBan_GUI extends JFrame {
                 day.add(Calendar.DAY_OF_MONTH, d);
 
                 for (int h = 0; h < hours.size(); h++) {
-                    int startHour = h * 2;
+                    int startHour = hours.get(h);
+                    int endHourExclusive = (h == hours.size() - 1) ? 24 : hours.get(h + 1);
 
-                    for (int r = 0; r < tableNames.size(); r++) {
-                        gbcR.gridx = colIndex;
-                        gbcR.gridy = r + 2;
-                        gbcR.gridwidth = 1;
+                    for (int r = 0; r < visibleTables.size(); r++) {
+                        gbcB.gridx = colIndex;
+                        gbcB.gridy = r;
+                        gbcB.gridwidth = 1;
 
-                        BookingDisplayItem item = findBookingAt(
-                                tableNames.get(r),
+                        BookingDisplayItem item = findBookingAtWeekSlot(
+                                visibleTables.get(r),
                                 day.getTime(),
-                                startHour
+                                startHour,
+                                endHourExclusive
                         );
-                        rightPanel.add(createBookingSlotCell(item, hourWidth, rowHeight), gbcR);
+                        bodyPanel.add(createBookingSlotCell(item, hourWidth, rowHeight), gbcB);
                     }
                     colIndex++;
                 }
             }
 
-            leftPanel.setPreferredSize(new Dimension(leftColWidth, (tableNames.size() + 2) * rowHeight));
-            rightPanel.setPreferredSize(new Dimension(7 * hours.size() * hourWidth, (tableNames.size() + 2) * rowHeight));
+            topLeftPanel.setPreferredSize(new Dimension(leftColWidth, headerHeight));
+            headerPanel.setPreferredSize(new Dimension(7 * hours.size() * hourWidth, headerHeight));
+            leftBodyPanel.setPreferredSize(new Dimension(leftColWidth, Math.max(1, visibleTables.size()) * rowHeight));
+            bodyPanel.setPreferredSize(new Dimension(7 * hours.size() * hourWidth, Math.max(1, visibleTables.size()) * rowHeight));
 
-            return createFixedTablePanel(leftPanel, rightPanel, leftColWidth);
+            return createFrozenTablePanel(topLeftPanel, headerPanel, leftBodyPanel, bodyPanel, leftColWidth, headerHeight);
         }
 
         private JComponent buildScheduleViewLikeImage() {
@@ -889,19 +1193,20 @@ public class DatBan_GUI extends JFrame {
 
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.fill = GridBagConstraints.BOTH;
-            gbc.weighty = 1;
 
-            int colBan = 170;
-            int colNgay = 220;
-            int colThoiGian = 150;
-            int colThongTin = 700;
+            int availableWidth = getCenterAvailableWidth();
+            int colBan = clamp((int) (availableWidth * 0.12), 110, 140);
+            int colNgay = clamp((int) (availableWidth * 0.15), 130, 170);
+            int colThoiGian = clamp((int) (availableWidth * 0.12), 110, 140);
+            int colThongTin = Math.max(450, availableWidth - colBan - colNgay - colThoiGian);
 
             int headerH = 42;
-            int rowH = 70;
+            int rowH = 64;
 
             gbc.gridy = 0;
             gbc.gridx = 0;
             gbc.weightx = 0;
+            gbc.weighty = 0;
             content.add(createCell("Bàn", colBan, headerH, true, SwingConstants.LEFT), gbc);
 
             gbc.gridx = 1;
@@ -914,41 +1219,37 @@ public class DatBan_GUI extends JFrame {
             gbc.weightx = 1;
             content.add(createCell("Thông tin", colThongTin, headerH, true, SwingConstants.LEFT), gbc);
 
-            java.util.List<BookingDisplayItem> bookings = getBookingsByDate(currentCalendar.getTime());
-            java.util.List<BookingDisplayItem> filtered = new ArrayList<>();
+            java.util.List<BookingDisplayItem> filtered = getFilteredBookingsByDate(currentCalendar.getTime());
 
-            for (BookingDisplayItem item : bookings) {
-                if (isAcceptedByFilter(item)) {
-                    filtered.add(item);
+            if (!filtered.isEmpty()) {
+                for (int i = 0; i < filtered.size(); i++) {
+                    BookingDisplayItem item = filtered.get(i);
+                    int row = i + 1;
+
+                    String tenBan = tableNameMap.getOrDefault(item.maBan, item.maBan);
+
+                    gbc.gridy = row;
+                    gbc.gridx = 0;
+                    gbc.weightx = 0;
+                    gbc.weighty = 0;
+                    content.add(createCell(tenBan, colBan, rowH, false, SwingConstants.LEFT), gbc);
+
+                    gbc.gridx = 1;
+                    content.add(createCell(formatDateOnly(item.thoiGianDen), colNgay, rowH, false, SwingConstants.CENTER), gbc);
+
+                    gbc.gridx = 2;
+                    content.add(createCell(formatTimeOnly(item.thoiGianDen), colThoiGian, rowH, false, SwingConstants.CENTER), gbc);
+
+                    gbc.gridx = 3;
+                    gbc.weightx = 1;
+                    content.add(createBookingInfoCell(item, colThongTin, rowH), gbc);
                 }
-            }
-
-            for (int i = 0; i < filtered.size(); i++) {
-                BookingDisplayItem item = filtered.get(i);
-                int row = i + 1;
-
-                String tenBan = tableNameMap.getOrDefault(item.maBan, item.maBan);
-
-                gbc.gridy = row;
-                gbc.gridx = 0;
-                gbc.weightx = 0;
-                content.add(createCell(tenBan, colBan, rowH, false, SwingConstants.LEFT), gbc);
-
-                gbc.gridx = 1;
-                content.add(createCell(formatDateOnly(item.thoiGianDen), colNgay, rowH, false, SwingConstants.CENTER), gbc);
-
-                gbc.gridx = 2;
-                content.add(createCell(formatTimeOnly(item.thoiGianDen), colThoiGian, rowH, false, SwingConstants.CENTER), gbc);
-
-                gbc.gridx = 3;
-                gbc.weightx = 1;
-                content.add(createBookingInfoCell(item, colThongTin, rowH), gbc);
-            }
-
-            if (filtered.isEmpty()) {
+            } else {
                 gbc.gridy = 1;
                 gbc.gridx = 0;
                 gbc.gridwidth = 4;
+                gbc.weightx = 1;
+                gbc.weighty = 0;
 
                 JPanel empty = new JPanel(new BorderLayout());
                 empty.setBackground(Color.WHITE);
@@ -965,11 +1266,19 @@ public class DatBan_GUI extends JFrame {
             }
 
             int totalWidth = colBan + colNgay + colThoiGian + colThongTin;
-            int totalHeight = headerH + Math.max(filtered.size(), 1) * rowH;
+            int totalHeight = headerH + (filtered.isEmpty() ? 80 : filtered.size() * rowH);
             content.setPreferredSize(new Dimension(totalWidth, totalHeight));
 
-            JScrollPane scrollPane = new JScrollPane(content);
+            JPanel wrapper = new JPanel(new BorderLayout());
+            wrapper.setBackground(Color.WHITE);
+            wrapper.add(content, BorderLayout.NORTH);
+
+            JScrollPane scrollPane = new JScrollPane(wrapper);
             configScroll(scrollPane);
+
+            currentMainScrollPane = scrollPane;
+            currentLeftScrollPane = null;
+
             return scrollPane;
         }
 
@@ -978,16 +1287,17 @@ public class DatBan_GUI extends JFrame {
             wrapper.setBackground(Color.WHITE);
             wrapper.setBorder(new LineBorder(new Color(200, 200, 200)));
             wrapper.setPreferredSize(new Dimension(w, h));
+            wrapper.putClientProperty("oldBorder", wrapper.getBorder());
 
             JPanel colorBox = new JPanel(new BorderLayout());
             colorBox.setBackground(getStatusColor(item.trangThai));
             colorBox.setBorder(new EmptyBorder(10, 18, 10, 18));
             colorBox.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-            String text = item.tenKhach + " - " + item.sdt + " - " + item.trangThai;
+            String text = safe(item.maPhieu) + "        " + safe(item.sdt) + "        " + safe(item.tenKhach);
             JLabel lbl = new JLabel(text);
             lbl.setForeground(Color.WHITE);
-            lbl.setFont(new Font("SansSerif", Font.PLAIN, 15));
+            lbl.setFont(new Font("SansSerif", Font.PLAIN, 13));
             colorBox.add(lbl, BorderLayout.WEST);
 
             colorBox.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1004,6 +1314,11 @@ public class DatBan_GUI extends JFrame {
 
             wrapper.add(margin, BorderLayout.CENTER);
             wrapper.setToolTipText(buildToolTip(item));
+
+            if (hasActiveFilter() && isAcceptedByFilter(item)) {
+                matchedComponents.add(wrapper);
+            }
+
             return wrapper;
         }
 
@@ -1012,6 +1327,9 @@ public class DatBan_GUI extends JFrame {
             wrapper.setBackground(Color.WHITE);
             wrapper.setBorder(new LineBorder(new Color(200, 200, 200)));
             wrapper.setPreferredSize(new Dimension(w, h));
+            wrapper.setMinimumSize(new Dimension(w, h));
+            wrapper.setMaximumSize(new Dimension(w, h));
+            wrapper.putClientProperty("oldBorder", wrapper.getBorder());
 
             if (item == null) {
                 return wrapper;
@@ -1023,12 +1341,12 @@ public class DatBan_GUI extends JFrame {
             colorBox.setBorder(new EmptyBorder(4, 8, 4, 8));
             colorBox.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-            JLabel lblPhone = new JLabel("☏ " + item.sdt);
+            JLabel lblPhone = new JLabel(item.sdt == null ? "" : item.sdt);
             lblPhone.setForeground(Color.WHITE);
             lblPhone.setFont(new Font("SansSerif", Font.PLAIN, 11));
             lblPhone.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-            JLabel lblName = new JLabel("👤 " + item.tenKhach);
+            JLabel lblName = new JLabel(item.tenKhach == null ? "" : item.tenKhach);
             lblName.setForeground(Color.WHITE);
             lblName.setFont(new Font("SansSerif", Font.PLAIN, 11));
             lblName.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1046,6 +1364,11 @@ public class DatBan_GUI extends JFrame {
 
             wrapper.add(colorBox, BorderLayout.CENTER);
             wrapper.setToolTipText(buildToolTip(item));
+
+            if (hasActiveFilter() && isAcceptedByFilter(item)) {
+                matchedComponents.add(wrapper);
+            }
+
             return wrapper;
         }
 
@@ -1071,6 +1394,8 @@ public class DatBan_GUI extends JFrame {
             cell.setBackground(header ? new Color(245, 245, 245) : Color.WHITE);
             cell.setBorder(new LineBorder(new Color(200, 200, 200)));
             cell.setPreferredSize(new Dimension(w, h));
+            cell.setMinimumSize(new Dimension(w, h));
+            cell.setMaximumSize(new Dimension(w, h));
 
             JLabel lbl = new JLabel(text, align);
             lbl.setFont(new Font("SansSerif", header ? Font.BOLD : Font.PLAIN, 15));
@@ -1091,27 +1416,24 @@ public class DatBan_GUI extends JFrame {
             }
         }
 
-        private java.util.List<String> createHoursDay() {
-            java.util.List<String> hours = new ArrayList<>();
-            for (int h = 0; h < 24; h++) {
-                hours.add(formatHour12(h));
+        private java.util.List<Integer> createHourValuesDay() {
+            java.util.List<Integer> hours = new ArrayList<>();
+            for (int h = 9; h <= 23; h++) {
+                hours.add(h);
             }
             return hours;
         }
 
-        private java.util.List<String> createHoursWeek2Hours() {
-            java.util.List<String> hours = new ArrayList<>();
-            for (int h = 0; h < 24; h += 2) {
-                hours.add(formatHour12(h));
+        private java.util.List<Integer> createHourValuesWeek() {
+            java.util.List<Integer> hours = new ArrayList<>();
+            for (int h = 9; h <= 23; h += 2) {
+                hours.add(h);
             }
             return hours;
         }
 
-        private String formatHour12(int h) {
-            if (h == 0) return "0 AM";
-            if (h < 12) return h + " AM";
-            if (h == 12) return "12 PM";
-            return (h - 12) + " PM";
+        private String formatHour24(int h) {
+            return String.format("%02d:00", h);
         }
 
         private Calendar getWeekStart(Calendar source) {
@@ -1129,6 +1451,12 @@ public class DatBan_GUI extends JFrame {
                 diff = Calendar.MONDAY - dayOfWeek;
             }
             start.add(Calendar.DAY_OF_MONTH, diff);
+
+            if (isBeforeToday(start.getTime())) {
+                Calendar today = Calendar.getInstance();
+                today.setTime(getTodayStartDate());
+                return today;
+            }
             return start;
         }
 
@@ -1152,6 +1480,55 @@ public class DatBan_GUI extends JFrame {
 
         private String formatDateTime(Date d) {
             return new SimpleDateFormat("dd/MM/yyyy HH:mm", new Locale("vi", "VN")).format(d);
+        }
+
+        private Date getTodayStartDate() {
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            return cal.getTime();
+        }
+
+        private Date normalizeDate(Date date) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(date);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            return cal.getTime();
+        }
+
+        private boolean isBeforeToday(Date date) {
+            return normalizeDate(date).before(getTodayStartDate());
+        }
+
+        private int getCenterAvailableWidth() {
+            int width = 0;
+
+            if (currentMainScrollPane != null && currentMainScrollPane.getParent() != null) {
+                width = currentMainScrollPane.getParent().getWidth();
+            }
+
+            if (width <= 0) {
+                width = cardPanel.getWidth();
+            }
+
+            if (width <= 0) {
+                width = DatBanMainPanel.this.getWidth() - 24;
+            }
+
+            if (width <= 0) {
+                width = Toolkit.getDefaultToolkit().getScreenSize().width - 320;
+            }
+
+            return Math.max(980, width - 8);
+        }
+
+        private int clamp(int value, int min, int max) {
+            return Math.max(min, Math.min(max, value));
         }
 
         enum ViewMode {

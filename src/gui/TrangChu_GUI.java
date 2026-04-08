@@ -3,45 +3,51 @@ package gui;
 import java.awt.BorderLayout;
 import java.awt.Graphics;
 import java.awt.Image;
+
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
+
+import entity.TaiKhoan;
 
 public class TrangChu_GUI extends JFrame {
 
-    private Image backgroundImage;
+    private static final long serialVersionUID = 1L;
 
-    public TrangChu_GUI() {
+    private Image backgroundImage;
+    private TaiKhoan taiKhoanDangNhap;
+
+    public TrangChu_GUI(TaiKhoan tk) {
+        this.taiKhoanDangNhap = tk;
+
         setTitle("Trang chủ");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-        // Đọc ảnh từ thư mục img cùng cấp với src
         backgroundImage = new ImageIcon("img/trangchu.png").getImage();
 
-        // Panel nền có vẽ ảnh
         JPanel backgroundPanel = new JPanel() {
+            private static final long serialVersionUID = 1L;
+
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+                if (backgroundImage != null) {
+                    g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+                }
             }
         };
 
         backgroundPanel.setLayout(new BorderLayout());
         setContentPane(backgroundPanel);
 
-        // Menu trên cùng
-        Pn_ThanhMenu menu = new Pn_ThanhMenu();
+        Pn_ThanhMenu menu = new Pn_ThanhMenu(taiKhoanDangNhap);
         backgroundPanel.add(menu, BorderLayout.NORTH);
 
-        setExtendedState(JFrame.MAXIMIZED_BOTH); // full màn hình
+        setLocationRelativeTo(null);
     }
 
-//    public static void main(String[] args) {
-//        SwingUtilities.invokeLater(() -> {
-//            TrangChu_GUI frame = new TrangChu_GUI();
-//            frame.setVisible(true);
-//        });
-//    }
+    public TaiKhoan getTaiKhoanDangNhap() {
+        return taiKhoanDangNhap;
+    }
 }

@@ -1,6 +1,9 @@
 package gui;
 
 import com.toedter.calendar.JDateChooser;
+
+import entity.TaiKhoan;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.table.*;
@@ -39,8 +42,8 @@ public class HoaDon_GUI extends JPanel {
 
     // ── Nút ──────────────────────────────────────────────────────────────────
     private JButton btnChiTiet, btnTraCuu, btnLamMoi, btnLoc, btnCapNhat;
-
-    public HoaDon_GUI() {
+    private static TaiKhoan taiKhoanDangNhap;
+    public HoaDon_GUI(TaiKhoan tk) {
         setLayout(new BorderLayout());
         setBackground(CLR_PANEL_BG);
         add(buildTitlePanel(),  BorderLayout.NORTH);
@@ -500,8 +503,8 @@ public class HoaDon_GUI extends JPanel {
             JLayeredPane layeredPane = new JLayeredPane();
             frame.setContentPane(layeredPane);
 
-            HoaDon_GUI   mainPanel = new HoaDon_GUI();
-            Pn_ThanhMenu menuPanel = new Pn_ThanhMenu();
+            HoaDon_GUI   mainPanel = new HoaDon_GUI(null);
+            Pn_ThanhMenu menuPanel = new Pn_ThanhMenu(taiKhoanDangNhap);
 
             layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
             layeredPane.add(menuPanel, JLayeredPane.PALETTE_LAYER);

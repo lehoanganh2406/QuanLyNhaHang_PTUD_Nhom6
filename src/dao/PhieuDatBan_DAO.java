@@ -11,11 +11,6 @@ import java.util.ArrayList;
 
 public class PhieuDatBan_DAO {
 
-    /**
-     * Thêm mới phiếu đặt bàn.
-     * maPhieuDatBan được SQL Server tự sinh bằng DEFAULT.
-     * Hàm trả về mã phiếu vừa tạo, ví dụ: PDB00006
-     */
     public String themPhieuDatBan(
             String maBan,
             String tenKhach,
@@ -34,9 +29,10 @@ public class PhieuDatBan_DAO {
             con = ConnectDB.getConnection();
 
             String sql = "INSERT INTO PhieuDatBan "
-                    + "(maBan, tenKhach, sdt, soLuongNguoi, thoiGianDen, tienCoc, ghiChu, trangThai) "
+                    + "(maBan, tenKhach, sdt, soLuongNguoi, thoiGianDen, tienCoc, ghiChu, trangThai, "
+                    + " phuongThucHoanTien, lyDoHuy, tienHoanTra) "
                     + "OUTPUT INSERTED.maPhieuDatBan "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             stmt = con.prepareStatement(sql);
             stmt.setString(1, maBan);
@@ -47,6 +43,9 @@ public class PhieuDatBan_DAO {
             stmt.setBigDecimal(6, tienCoc);
             stmt.setString(7, (ghiChu == null || ghiChu.trim().isEmpty()) ? null : ghiChu.trim());
             stmt.setString(8, trangThai);
+            stmt.setString(9, null);
+            stmt.setString(10, null);
+            stmt.setBigDecimal(11, BigDecimal.ZERO);
 
             rs = stmt.executeQuery();
             if (rs.next()) {
@@ -60,10 +59,6 @@ public class PhieuDatBan_DAO {
         return null;
     }
 
-    /**
-     * Kiểm tra bàn có bị trùng lịch trong vòng soPhutMacDinh phút hay không.
-     * Ví dụ 120 phút = 2 tiếng.
-     */
     public boolean kiemTraTrungLich(String maBan, Timestamp thoiGianDen, int soPhutMacDinh) {
         Connection con = null;
         PreparedStatement stmt = null;
@@ -95,9 +90,6 @@ public class PhieuDatBan_DAO {
         return true;
     }
 
-    /**
-     * Lấy tất cả phiếu đặt bàn theo ngày.
-     */
     public ArrayList<String[]> getPhieuDatBanTheoNgay(java.sql.Date ngay) {
         ArrayList<String[]> ds = new ArrayList<>();
         Connection con = null;
@@ -108,7 +100,8 @@ public class PhieuDatBan_DAO {
             con = ConnectDB.getConnection();
 
             String sql = "SELECT maPhieuDatBan, maBan, tenKhach, sdt, soLuongNguoi, "
-                    + "thoiGianDen, tienCoc, ghiChu, trangThai "
+                    + "thoiGianDen, tienCoc, ghiChu, trangThai, "
+                    + "phuongThucHoanTien, lyDoHuy, tienHoanTra "
                     + "FROM PhieuDatBan "
                     + "WHERE CAST(thoiGianDen AS DATE) = ? "
                     + "ORDER BY thoiGianDen, maBan";
@@ -118,7 +111,7 @@ public class PhieuDatBan_DAO {
 
             rs = stmt.executeQuery();
             while (rs.next()) {
-                String[] row = new String[9];
+                String[] row = new String[12];
                 row[0] = rs.getString("maPhieuDatBan");
                 row[1] = rs.getString("maBan");
                 row[2] = rs.getString("tenKhach");
@@ -128,6 +121,9 @@ public class PhieuDatBan_DAO {
                 row[6] = rs.getBigDecimal("tienCoc") == null ? "0" : rs.getBigDecimal("tienCoc").toPlainString();
                 row[7] = rs.getString("ghiChu");
                 row[8] = rs.getString("trangThai");
+                row[9] = rs.getString("phuongThucHoanTien");
+                row[10] = rs.getString("lyDoHuy");
+                row[11] = rs.getBigDecimal("tienHoanTra") == null ? "0" : rs.getBigDecimal("tienHoanTra").toPlainString();
                 ds.add(row);
             }
         } catch (Exception e) {
@@ -139,9 +135,6 @@ public class PhieuDatBan_DAO {
         return ds;
     }
 
-    /**
-     * Tìm theo mã phiếu.
-     */
     public String[] timTheoMaPhieu(String maPhieuDatBan) {
         Connection con = null;
         PreparedStatement stmt = null;
@@ -151,7 +144,8 @@ public class PhieuDatBan_DAO {
             con = ConnectDB.getConnection();
 
             String sql = "SELECT maPhieuDatBan, maBan, tenKhach, sdt, soLuongNguoi, "
-                    + "thoiGianDen, tienCoc, ghiChu, trangThai "
+                    + "thoiGianDen, tienCoc, ghiChu, trangThai, "
+                    + "phuongThucHoanTien, lyDoHuy, tienHoanTra "
                     + "FROM PhieuDatBan "
                     + "WHERE maPhieuDatBan = ?";
 
@@ -160,7 +154,7 @@ public class PhieuDatBan_DAO {
 
             rs = stmt.executeQuery();
             if (rs.next()) {
-                String[] row = new String[9];
+                String[] row = new String[12];
                 row[0] = rs.getString("maPhieuDatBan");
                 row[1] = rs.getString("maBan");
                 row[2] = rs.getString("tenKhach");
@@ -170,6 +164,9 @@ public class PhieuDatBan_DAO {
                 row[6] = rs.getBigDecimal("tienCoc") == null ? "0" : rs.getBigDecimal("tienCoc").toPlainString();
                 row[7] = rs.getString("ghiChu");
                 row[8] = rs.getString("trangThai");
+                row[9] = rs.getString("phuongThucHoanTien");
+                row[10] = rs.getString("lyDoHuy");
+                row[11] = rs.getBigDecimal("tienHoanTra") == null ? "0" : rs.getBigDecimal("tienHoanTra").toPlainString();
                 return row;
             }
         } catch (Exception e) {
@@ -181,10 +178,6 @@ public class PhieuDatBan_DAO {
         return null;
     }
 
-    /**
-     * Cập nhật trạng thái phiếu đặt bàn.
-     * Ví dụ: Đã đặt / Đang chờ / Đã hủy / Hoàn thành
-     */
     public boolean capNhatTrangThai(String maPhieuDatBan, String trangThaiMoi) {
         Connection con = null;
         PreparedStatement stmt = null;
@@ -207,11 +200,44 @@ public class PhieuDatBan_DAO {
         return false;
     }
 
-    /**
-     * Hủy phiếu đặt bàn.
-     */
     public boolean huyPhieuDatBan(String maPhieuDatBan) {
         return capNhatTrangThai(maPhieuDatBan, "Đã hủy");
+    }
+
+    public boolean huyPhieuDatBanVaLuuThongTin(
+            String maPhieuDatBan,
+            String phuongThucHoanTien,
+            String lyDoHuy,
+            BigDecimal tienHoanTra
+    ) {
+        Connection con = null;
+        PreparedStatement stmt = null;
+
+        try {
+            con = ConnectDB.getConnection();
+
+            String sql = "UPDATE PhieuDatBan "
+                    + "SET trangThai = ?, "
+                    + "    phuongThucHoanTien = ?, "
+                    + "    lyDoHuy = ?, "
+                    + "    tienHoanTra = ? "
+                    + "WHERE maPhieuDatBan = ?";
+
+            stmt = con.prepareStatement(sql);
+            stmt.setString(1, "Đã hủy");
+            stmt.setString(2, phuongThucHoanTien);
+            stmt.setString(3, lyDoHuy);
+            stmt.setBigDecimal(4, tienHoanTra);
+            stmt.setString(5, maPhieuDatBan);
+
+            return stmt.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(null, stmt);
+        }
+
+        return false;
     }
 
     private void closeResources(ResultSet rs, PreparedStatement stmt) {

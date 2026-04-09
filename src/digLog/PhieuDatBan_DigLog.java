@@ -14,6 +14,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
+import java.awt.Window;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
@@ -33,9 +34,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -128,7 +127,7 @@ public class PhieuDatBan_DigLog extends JDialog {
     public PhieuDatBan_DigLog(Frame owner) {
         super(owner, "Phiếu đặt bàn", true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(620, 500));
+        setMinimumSize(new Dimension(620, 800));
         setSize(620, 800);
         setLocationRelativeTo(owner);
 
@@ -319,20 +318,17 @@ public class PhieuDatBan_DigLog extends JDialog {
         tblMonDatTruoc.setCellSelectionEnabled(false);
         tblMonDatTruoc.setFillsViewportHeight(true);
 
-        // chỉnh độ rộng cột
-        tblMonDatTruoc.getColumnModel().getColumn(0).setPreferredWidth(220); // Tên món
+        tblMonDatTruoc.getColumnModel().getColumn(0).setPreferredWidth(220);
         tblMonDatTruoc.getColumnModel().getColumn(0).setMinWidth(180);
 
-        tblMonDatTruoc.getColumnModel().getColumn(1).setPreferredWidth(75);  // Số lượng nhỏ lại
+        tblMonDatTruoc.getColumnModel().getColumn(1).setPreferredWidth(75);
         tblMonDatTruoc.getColumnModel().getColumn(1).setMinWidth(55);
         tblMonDatTruoc.getColumnModel().getColumn(1).setMaxWidth(75);
 
-        // căn giữa cột số lượng
         javax.swing.table.DefaultTableCellRenderer centerRenderer = new javax.swing.table.DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         tblMonDatTruoc.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);
 
-        // header căn giữa cột số lượng
         javax.swing.table.DefaultTableCellRenderer headerRenderer =
                 (javax.swing.table.DefaultTableCellRenderer) tblMonDatTruoc.getTableHeader().getDefaultRenderer();
         headerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
@@ -485,6 +481,52 @@ public class PhieuDatBan_DigLog extends JDialog {
         return String.format("%,.0f", soTien).replace(",", ".");
     }
 
+    private double parseMoney(String text) {
+        try {
+            if (text == null) return 0;
+            String value = text.replace("VNĐ", "")
+                    .replace("đ", "")
+                    .replace("Đ", "")
+                    .replace(".", "")
+                    .replace(",", "")
+                    .trim();
+            if (value.isEmpty()) return 0;
+            return Double.parseDouble(value);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private boolean phieuDaHuy() {
+        return trangThaiHienTai != null && trangThaiHienTai.trim().equalsIgnoreCase("Đã hủy");
+    }
+
+    private boolean phieuDaNhanBan() {
+        return trangThaiHienTai != null && trangThaiHienTai.trim().equalsIgnoreCase("Đã nhận bàn");
+    }
+
+    private boolean phieuHoanThanh() {
+        return trangThaiHienTai != null && trangThaiHienTai.trim().equalsIgnoreCase("Hoàn thành");
+    }
+
+    private boolean phieuQuaGio() {
+        return trangThaiHienTai != null && trangThaiHienTai.trim().equalsIgnoreCase("Quá giờ");
+    }
+
+    private boolean coDatMonTheoPhieu() {
+        try {
+            if (maPhieuHienTai == null || maPhieuHienTai.trim().isEmpty()) return false;
+
+            if (dsMonDatTam != null && !dsMonDatTam.isEmpty()) return true;
+
+            PhieuDatMon_DAO dao = new PhieuDatMon_DAO();
+            return dao.coDatMonTheoPhieu(maPhieuHienTai);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     private JLabel createLabel(String text, Font font) {
         JLabel lbl = new JLabel(text, SwingConstants.RIGHT);
         lbl.setFont(font);
@@ -616,12 +658,16 @@ public class PhieuDatBan_DigLog extends JDialog {
             lblMonDatTruoc.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    moDatMonTruoc();
+                    if (lblMonDatTruoc.isEnabled()) {
+                        moDatMonTruoc();
+                    }
                 }
 
                 @Override
                 public void mouseEntered(MouseEvent e) {
-                    lblMonDatTruoc.setForeground(new Color(40, 120, 220));
+                    if (lblMonDatTruoc.isEnabled()) {
+                        lblMonDatTruoc.setForeground(new Color(40, 120, 220));
+                    }
                 }
 
                 @Override
@@ -637,32 +683,45 @@ public class PhieuDatBan_DigLog extends JDialog {
         });
 
         btnHuy.addActionListener(e -> {
-            if (!btnHuy.isEnabled()) return;
             if (maPhieuHienTai == null || maPhieuHienTai.trim().isEmpty()) return;
 
-            int confirm = JOptionPane.showConfirmDialog(
-                    this,
-                    "Bạn có chắc muốn hủy phiếu này không?",
-                    "Xác nhận",
-                    JOptionPane.YES_NO_OPTION
-            );
+            try {
+                boolean daHuy = trangThaiHienTai != null
+                        && trangThaiHienTai.trim().equalsIgnoreCase("Đã hủy");
 
-            if (confirm == JOptionPane.YES_OPTION) {
-                try {
-                    PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
-                    if (dao.huyPhieuDatBan(maPhieuHienTai)) {
-                        Ban_DAO banDAO = new Ban_DAO();
-                        if (maBanDuocChon != null && !maBanDuocChon.trim().isEmpty()) {
-                            banDAO.capNhatTrangThaiBan(maBanDuocChon, "Trống");
-                        }
-                        JOptionPane.showMessageDialog(this, "Hủy phiếu thành công!");
-                        dispose();
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Hủy phiếu thất bại!");
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                Frame ownerFrame = null;
+                Window w = SwingUtilities.getWindowAncestor(this);
+                if (w instanceof Frame) {
+                    ownerFrame = (Frame) w;
                 }
+
+                boolean coDatMon = coDatMonTheoPhieu();
+                double tienCoc = parseMoney(txtTienCoc.getText());
+
+                HuyBan_DigLog dialog = new HuyBan_DigLog(
+                        ownerFrame,
+                        maPhieuHienTai,
+                        tienCoc,
+                        thoiGianDaChon,
+                        coDatMon,
+                        daHuy
+                );
+                dialog.setLocationRelativeTo(this);
+                dialog.setVisible(true);
+
+                if (!daHuy && dialog.isHuyThanhCong()) {
+                    Ban_DAO banDAO = new Ban_DAO();
+                    if (maBanDuocChon != null && !maBanDuocChon.trim().isEmpty()) {
+                        banDAO.capNhatTrangThaiBan(maBanDuocChon, "Trống");
+                    }
+
+                    trangThaiHienTai = "Đã hủy";
+                    JOptionPane.showMessageDialog(this, "Hủy phiếu thành công!");
+                    dispose();
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Có lỗi khi xử lý hủy phiếu!");
             }
         });
 
@@ -681,6 +740,8 @@ public class PhieuDatBan_DigLog extends JDialog {
                 try {
                     PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
                     if (dao.capNhatTrangThai(maPhieuHienTai, "Đã nhận bàn")) {
+                        trangThaiHienTai = "Đã nhận bàn";
+
                         Ban_DAO banDAO = new Ban_DAO();
                         if (maBanDuocChon != null && !maBanDuocChon.trim().isEmpty()) {
                             banDAO.capNhatTrangThaiBan(maBanDuocChon, "Đã nhận bàn");
@@ -810,6 +871,7 @@ public class PhieuDatBan_DigLog extends JDialog {
             );
         }
     }
+    
 
     private void capNhatPhieuDatBan() {
         if (maPhieuHienTai == null || maPhieuHienTai.trim().isEmpty()) return;
@@ -890,6 +952,7 @@ public class PhieuDatBan_DigLog extends JDialog {
             }
 
             txtMaPhieu.setText(row[0]);
+            maPhieuHienTai = row[0];
             maBanDuocChon = row[1];
 
             txtKhachHang.setText(row[2]);
@@ -962,7 +1025,13 @@ public class PhieuDatBan_DigLog extends JDialog {
             }
 
             loadMonDatTruocLenBang();
-            capNhatTienCocTheoMonDatTruoc();
+
+            if (dsMonDatTam == null || dsMonDatTam.isEmpty()) {
+                txtTienCoc.setText(formatTienCoc(row[6]));
+            } else {
+                capNhatTienCocTheoMonDatTruoc();
+            }
+
             apDungTrangThaiForm(trangThaiHienTai);
 
         } catch (Exception e) {
@@ -1010,6 +1079,12 @@ public class PhieuDatBan_DigLog extends JDialog {
         setButtonEnabledVisual(btnLuu, choLuu);
         setButtonEnabledVisual(btnHuy, choHuy);
         setButtonEnabledVisual(btnNhanBan, choNhanBan);
+
+        if (tt.equals("đã hủy")) {
+            btnHuy.setText("Đã hủy");
+        } else {
+            btnHuy.setText("Hủy");
+        }
     }
 
     private void setEditableThongTin(boolean editable) {
@@ -1031,6 +1106,8 @@ public class PhieuDatBan_DigLog extends JDialog {
 
         btnCalendar.setEnabled(editable);
         btnSearchBan.setEnabled(editable);
+
+        lblMonDatTruoc.setEnabled(editable);
 
         styleSmallButton(btnCalendar, editable);
         styleSmallButton(btnSearchBan, editable);
@@ -1079,8 +1156,8 @@ public class PhieuDatBan_DigLog extends JDialog {
 
     private String formatTienCoc(String value) {
         try {
-            long so = Long.parseLong(value.split("\\.")[0]);
-            return String.format("%,d", so).replace(',', '.');
+            BigDecimal bd = new BigDecimal(value);
+            return String.format("%,.0f", bd.doubleValue()).replace(',', '.');
         } catch (Exception e) {
             return value;
         }
@@ -1148,7 +1225,7 @@ public class PhieuDatBan_DigLog extends JDialog {
 
         String[] dsGio = new String[14];
         for (int i = 0; i < 14; i++) {
-            dsGio[i] = String.format("%02d", i + 9); // 09 -> 22
+            dsGio[i] = String.format("%02d", i + 9);
         }
 
         String[] dsPhut = new String[60];
@@ -1156,8 +1233,8 @@ public class PhieuDatBan_DigLog extends JDialog {
             dsPhut[i] = String.format("%02d", i);
         }
 
-        JComboBox<String> cboGio = new JComboBox<>(dsGio);
-        JComboBox<String> cboPhut = new JComboBox<>(dsPhut);
+        javax.swing.JComboBox<String> cboGio = new javax.swing.JComboBox<>(dsGio);
+        javax.swing.JComboBox<String> cboPhut = new javax.swing.JComboBox<>(dsPhut);
 
         cboGio.setFont(new Font("Arial", Font.PLAIN, 14));
         cboPhut.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -1402,6 +1479,7 @@ public class PhieuDatBan_DigLog extends JDialog {
     }
 
     class ColoredButton extends JButton {
+        private static final long serialVersionUID = 1L;
         private final Color bgColor;
 
         public ColoredButton(String text, Color bgColor) {

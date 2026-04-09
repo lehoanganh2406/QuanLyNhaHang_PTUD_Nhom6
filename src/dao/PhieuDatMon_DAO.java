@@ -12,36 +12,50 @@ import entity.PhieuDatMon;
 
 public class PhieuDatMon_DAO {
 
-    public ArrayList<PhieuDatMon> getDanhSachTheoMaPhieu(String maPhieuDatBan) {
-        ArrayList<PhieuDatMon> ds = new ArrayList<>();
-        Connection con = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
+	public ArrayList<PhieuDatMon> getDanhSachTheoMaPhieu(String maPhieuDatBan) {
+	    ArrayList<PhieuDatMon> ds = new ArrayList<>();
+	    Connection con = null;
+	    PreparedStatement stmt = null;
+	    ResultSet rs = null;
 
-        try {
-            con = ConnectDB.getInstance().getConnection();
-            String sql = "SELECT * FROM PhieuDatMon WHERE maPhieuDatBan = ?";
-            stmt = con.prepareStatement(sql);
-            stmt.setString(1, maPhieuDatBan);
-            rs = stmt.executeQuery();
+	    try {
+	        con = ConnectDB.getConnection();
 
-            while (rs.next()) {
-                PhieuDatBan pdb = new PhieuDatBan(rs.getString("maPhieuDatBan"));
-                MonAn mon = new MonAn(rs.getString("maMon"));
-                int soLuong = rs.getInt("soLuong");
-                double donGia = rs.getDouble("donGia");
-                String ghiChu = rs.getString("ghiChu");
+	        String sql = "SELECT pdm.maMon, pdm.soLuong, pdm.donGia, pdm.ghiChu, ma.tenMon "
+	                + "FROM PhieuDatMon pdm "
+	                + "JOIN MonAn ma ON pdm.maMon = ma.maMon "
+	                + "WHERE pdm.maPhieuDatBan = ?";
 
-                ds.add(new PhieuDatMon(pdb, mon, soLuong, donGia, ghiChu));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            close(rs, stmt);
-        }
+	        stmt = con.prepareStatement(sql);
+	        stmt.setString(1, maPhieuDatBan);
 
-        return ds;
-    }
+	        rs = stmt.executeQuery();
+	        while (rs.next()) {
+	            MonAn mon = new MonAn();
+	            mon.setMaMon(rs.getString("maMon"));
+	            mon.setTenMon(rs.getString("tenMon"));
+
+	            PhieuDatMon pdm = new PhieuDatMon();
+	            pdm.setMaMon(mon);
+	            pdm.setSoLuong(rs.getInt("soLuong"));
+	            pdm.setDonGia(rs.getDouble("donGia"));
+	            pdm.setGhiChu(rs.getString("ghiChu"));
+
+	            ds.add(pdm);
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    } finally {
+	        try {
+	            if (rs != null) rs.close();
+	            if (stmt != null) stmt.close();
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+	    }
+
+	    return ds;
+	}
 
     public boolean xoaTheoMaPhieu(String maPhieuDatBan) {
         Connection con = null;
@@ -147,5 +161,34 @@ public class PhieuDatMon_DAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    public boolean coDatMonTheoPhieu(String maPhieuDatBan) {
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = ConnectDB.getConnection();
+
+            String sql = "SELECT COUNT(*) FROM PhieuDatMon WHERE maPhieuDatBan = ?";
+            stmt = con.prepareStatement(sql);
+            stmt.setString(1, maPhieuDatBan);
+
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (stmt != null) stmt.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return false;
     }
 }

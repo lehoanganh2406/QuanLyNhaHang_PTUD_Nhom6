@@ -150,9 +150,15 @@ CREATE TABLE PhieuDatBan (
     tienCoc DECIMAL(18,2) NOT NULL DEFAULT 0,
     ghiChu NVARCHAR(255) NULL,
     trangThai NVARCHAR(50) NULL,
+
+    phuongThucHoanTien NVARCHAR(50) NULL,
+    lyDoHuy NVARCHAR(255) NULL,
+    tienHoanTra DECIMAL(18,2) NULL DEFAULT 0,
+
     CONSTRAINT FK_PhieuDatBan_Ban FOREIGN KEY (maBan) REFERENCES Ban(maBan),
     CONSTRAINT CK_PhieuDatBan_SoLuongNguoi CHECK (soLuongNguoi > 0),
-    CONSTRAINT CK_PhieuDatBan_TienCoc CHECK (tienCoc >= 0)
+    CONSTRAINT CK_PhieuDatBan_TienCoc CHECK (tienCoc >= 0),
+    CONSTRAINT CK_PhieuDatBan_TienHoanTra CHECK (tienHoanTra >= 0)
 );
 GO
 
@@ -630,16 +636,17 @@ GO
 /*==========================================================
 11. PHIẾU ĐẶT BÀN
 ==========================================================*/
-INSERT INTO PhieuDatBan (maPhieuDatBan, maBan, tenKhach, sdt, soLuongNguoi, thoiGianDen, tienCoc, ghiChu, trangThai)
+INSERT INTO PhieuDatBan (maPhieuDatBan, maBan, tenKhach, sdt, soLuongNguoi, thoiGianDen, tienCoc, ghiChu, trangThai,phuongThucHoanTien,lyDoHuy,tienHoanTra)
 VALUES
-('PDB00001', 'A01', N'Nguyễn Văn Nam', '0922000001', 2, '2026-04-08 18:30:00', 200000, N'Đặt bàn thường', N'Đang chờ'),
-('PDB00002', 'A05', N'Trần Thị Mai', '0922000002', 4, '2026-04-08 19:00:00', 450000, N'Có đặt món trước', N'Đang chờ'),
-('PDB00003', 'B10', N'Lê Quốc Bảo', '0922000003', 6, '2026-04-09 18:00:00', 200000, N'Nhóm bạn', N'Đang chờ'),
-('PDB00004', 'C15', N'Phạm Minh Thư', '0922000004', 8, '2026-04-09 20:00:00', 600000, N'Sinh nhật', N'Đang chờ'),
-('PDB00005', 'B03', N'Đặng Gia Hân', '0922000005', 2, '2026-04-10 17:45:00', 200000, N'Đặt trước', N'Đang chờ');
+('PDB00001', 'A01', N'Nguyễn Văn Nam', '0922000001', 2, '2026-04-08 18:30:00', 200000, N'Đặt bàn thường', N'Đang chờ', NULL, NULL, 0),
+('PDB00002', 'A05', N'Trần Thị Mai', '0922000002', 4, '2026-04-08 19:00:00', 450000, N'Có đặt món trước', N'Đang chờ', NULL, NULL, 0),
+('PDB00003', 'B10', N'Lê Quốc Bảo', '0922000003', 6, '2026-04-09 18:00:00', 200000, N'Nhóm bạn', N'Đang chờ', NULL, NULL, 0),
+('PDB00004', 'C15', N'Phạm Minh Thư', '0922000004', 8, '2026-04-09 20:00:00', 600000, N'Sinh nhật', N'Đang chờ', NULL, NULL, 0),
+('PDB00005', 'B03', N'Đặng Gia Hân', '0922000005', 2, '2026-04-10 17:45:00', 200000, N'Đặt trước', N'Đang chờ', NULL, NULL, 0),
+('PDB00006', 'A02', N'Hoàng Minh Anh', '0922000006', 4, '2026-04-11 19:00:00', 300000, N'Test hủy bàn', N'Đã hủy', N'Tiền mặt', N'Khách bận việc đột xuất', 210000);
 GO
 
-ALTER SEQUENCE seq_PhieuDatBan RESTART WITH 6;
+ALTER SEQUENCE seq_PhieuDatBan RESTART WITH 7;
 GO
 
 /*==========================================================

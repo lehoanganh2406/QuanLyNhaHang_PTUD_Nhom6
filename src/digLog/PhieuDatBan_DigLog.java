@@ -20,12 +20,15 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
@@ -34,7 +37,6 @@ import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import com.toedter.calendar.JDateChooser;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -54,9 +56,15 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 
+import com.toedter.calendar.JDateChooser;
+
 import connectDB.ConnectDB;
 import dao.Ban_DAO;
+import dao.MonAn_DAO;
 import dao.PhieuDatBan_DAO;
+import dao.PhieuDatMon_DAO;
+import entity.MonAn;
+import entity.PhieuDatMon;
 
 public class PhieuDatBan_DigLog extends JDialog {
 
@@ -77,16 +85,24 @@ public class PhieuDatBan_DigLog extends JDialog {
     private JButton btnNhanBan;
     private JButton btnLuu;
 
+    private JLabel lblMonDatTruoc;
+    private JTable tblMonDatTruoc;
+    private DefaultTableModel modelMonDatTruoc;
+
     private JPopupMenu popupBan;
     private JTable tblBan;
     private DefaultTableModel modelBan;
+    private JScrollPane scrMonDatTruoc;
 
     private Timestamp thoiGianDaChon;
     private ArrayList<String[]> dsBanTheoGio = new ArrayList<>();
     private String maBanDuocChon = "";
 
     private String maPhieuHienTai = null;
+    private String trangThaiHienTai = "";
     private boolean cheDoChiTiet = false;
+
+    private ArrayList<PhieuDatMon> dsMonDatTam = new ArrayList<>();
 
     private final Color BG_MAIN = new Color(239, 239, 239);
     private final Color BORDER = new Color(170, 170, 170);
@@ -112,21 +128,23 @@ public class PhieuDatBan_DigLog extends JDialog {
     public PhieuDatBan_DigLog(Frame owner) {
         super(owner, "Phiếu đặt bàn", true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(720, 560));
-        setSize(700, 880);
+        setMinimumSize(new Dimension(620, 500));
+        setSize(620, 800);
         setLocationRelativeTo(owner);
 
         initUI();
         initEvents();
         loadDanhSachBanTheoGioChon();
         setModeThemMoi();
+        loadMonDatTruocLenBang();
+        capNhatTienCocTheoMonDatTruoc();
     }
 
     public PhieuDatBan_DigLog(Frame owner, String maPhieuDatBan) {
         super(owner, "Phiếu đặt bàn", true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(720, 560));
-        setSize(700, 880);
+        setMinimumSize(new Dimension(620, 500));
+        setSize(620, 760);
         setLocationRelativeTo(owner);
 
         this.maPhieuHienTai = maPhieuDatBan;
@@ -135,8 +153,8 @@ public class PhieuDatBan_DigLog extends JDialog {
         initUI();
         initEvents();
         loadDanhSachBanTheoGioChon();
-        loadPhieuDatBanLenForm(maPhieuDatBan);
         setModeChiTiet();
+        loadPhieuDatBanLenForm(maPhieuDatBan);
     }
 
     private void initUI() {
@@ -146,10 +164,10 @@ public class PhieuDatBan_DigLog extends JDialog {
 
         JPanel pnlTitle = new JPanel(new BorderLayout());
         pnlTitle.setBackground(BG_MAIN);
-        pnlTitle.setBorder(new EmptyBorder(20, 20, 20, 20));
+        pnlTitle.setBorder(new EmptyBorder(14, 16, 14, 16));
 
         JLabel lblTitle = new JLabel("Phiếu đặt bàn", SwingConstants.CENTER);
-        lblTitle.setFont(new Font("Arial", Font.PLAIN, 34));
+        lblTitle.setFont(new Font("Arial", Font.BOLD, 24));
         lblTitle.setForeground(Color.BLACK);
         pnlTitle.add(lblTitle, BorderLayout.CENTER);
 
@@ -165,7 +183,7 @@ public class PhieuDatBan_DigLog extends JDialog {
 
         JPanel formWrap = new JPanel(new BorderLayout());
         formWrap.setBackground(BG_MAIN);
-        formWrap.setBorder(new EmptyBorder(18, 24, 12, 24));
+        formWrap.setBorder(new EmptyBorder(12, 18, 10, 18));
 
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(BG_MAIN);
@@ -179,8 +197,8 @@ public class PhieuDatBan_DigLog extends JDialog {
 
         contentPane.add(formWrap, BorderLayout.CENTER);
 
-        Font lblFont = new Font("Arial", Font.PLAIN, 22);
-        Font inputFont = new Font("Arial", Font.PLAIN, 18);
+        Font lblFont = new Font("Arial", Font.PLAIN, 16);
+        Font inputFont = new Font("Arial", Font.PLAIN, 15);
 
         txtMaPhieu = createTextField("", inputFont);
         txtMaPhieu.setEditable(false);
@@ -200,7 +218,7 @@ public class PhieuDatBan_DigLog extends JDialog {
 
         spnSoLuongKhach = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
         spnSoLuongKhach.setFont(inputFont);
-        spnSoLuongKhach.setPreferredSize(new Dimension(360, 44));
+        spnSoLuongKhach.setPreferredSize(new Dimension(300, 36));
         spnSoLuongKhach.setBorder(new LineBorder(BORDER, 1));
 
         JComponent editor = spnSoLuongKhach.getEditor();
@@ -208,7 +226,7 @@ public class PhieuDatBan_DigLog extends JDialog {
             JTextField txt = ((JSpinner.DefaultEditor) editor).getTextField();
             txt.setFont(inputFont);
             txt.setHorizontalAlignment(SwingConstants.LEFT);
-            txt.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+            txt.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
         }
 
         txtBan = createTextField("", inputFont);
@@ -216,6 +234,7 @@ public class PhieuDatBan_DigLog extends JDialog {
         datPlaceholder(txtBan, PH_BAN);
 
         txtTienCoc = createTextField("200.000", inputFont);
+        txtTienCoc.setEditable(false);
         txtTienCoc.setBackground(DISABLED_BG);
         txtTienCoc.setForeground(Color.DARK_GRAY);
 
@@ -223,14 +242,14 @@ public class PhieuDatBan_DigLog extends JDialog {
         txtGhiChu.setFont(inputFont);
         txtGhiChu.setLineWrap(true);
         txtGhiChu.setWrapStyleWord(true);
-        txtGhiChu.setBorder(new EmptyBorder(10, 12, 10, 12));
+        txtGhiChu.setBorder(new EmptyBorder(8, 10, 8, 10));
         txtGhiChu.setBackground(Color.WHITE);
 
-        btnCalendar = createIconButton("📅", 18);
-        btnSearchBan = createIconButton("⌕", 20);
+        btnCalendar = createIconButton("📅", 14);
+        btnSearchBan = createIconButton("⌕", 16);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(8, 8, 8, 8);
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
@@ -246,57 +265,108 @@ public class PhieuDatBan_DigLog extends JDialog {
 
         gbc.gridx = 0;
         gbc.gridy = row;
-        gbc.weightx = 0.36;
+        gbc.weightx = 0.34;
         gbc.weighty = 0;
         gbc.anchor = GridBagConstraints.NORTH;
         formPanel.add(createLabel("Ghi chú", lblFont), gbc);
 
         gbc.gridx = 1;
         gbc.gridy = row++;
-        gbc.weightx = 0.64;
+        gbc.weightx = 0.66;
         gbc.fill = GridBagConstraints.BOTH;
 
         JScrollPane scrGhiChu = new JScrollPane(txtGhiChu);
-        scrGhiChu.setPreferredSize(new Dimension(360, 100));
+        scrGhiChu.setPreferredSize(new Dimension(300, 80));
         scrGhiChu.setBorder(new LineBorder(BORDER, 1));
         formPanel.add(scrGhiChu, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = row;
-        gbc.weightx = 0.36;
+        gbc.weightx = 0.34;
         gbc.weighty = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.CENTER;
-        formPanel.add(createLabel("Món đặt trước ✍", lblFont), gbc);
+
+        lblMonDatTruoc = createLabel("Món đặt trước ✍", lblFont);
+        lblMonDatTruoc.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        lblMonDatTruoc.setForeground(new Color(30, 30, 30));
+        formPanel.add(lblMonDatTruoc, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = row++;
-        gbc.weightx = 0.64;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        formPanel.add(Box.createVerticalStrut(24), gbc);
+        gbc.weightx = 0.66;
+        gbc.fill = GridBagConstraints.BOTH;
 
-        JPanel pnlButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 14, 8));
+        modelMonDatTruoc = new DefaultTableModel(
+                new String[] { "Tên món", "Số lượng" }, 0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        tblMonDatTruoc = new JTable(modelMonDatTruoc);
+        tblMonDatTruoc.setRowHeight(30);
+        tblMonDatTruoc.setFont(new Font("Arial", Font.PLAIN, 14));
+        tblMonDatTruoc.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
+        tblMonDatTruoc.getTableHeader().setReorderingAllowed(false);
+        tblMonDatTruoc.setShowGrid(true);
+        tblMonDatTruoc.setGridColor(new Color(190, 190, 190));
+        tblMonDatTruoc.setIntercellSpacing(new Dimension(1, 1));
+        tblMonDatTruoc.setSelectionBackground(new Color(230, 240, 250));
+        tblMonDatTruoc.setRowSelectionAllowed(false);
+        tblMonDatTruoc.setCellSelectionEnabled(false);
+        tblMonDatTruoc.setFillsViewportHeight(true);
+
+        // chỉnh độ rộng cột
+        tblMonDatTruoc.getColumnModel().getColumn(0).setPreferredWidth(220); // Tên món
+        tblMonDatTruoc.getColumnModel().getColumn(0).setMinWidth(180);
+
+        tblMonDatTruoc.getColumnModel().getColumn(1).setPreferredWidth(75);  // Số lượng nhỏ lại
+        tblMonDatTruoc.getColumnModel().getColumn(1).setMinWidth(55);
+        tblMonDatTruoc.getColumnModel().getColumn(1).setMaxWidth(75);
+
+        // căn giữa cột số lượng
+        javax.swing.table.DefaultTableCellRenderer centerRenderer = new javax.swing.table.DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        tblMonDatTruoc.getColumnModel().getColumn(1).setCellRenderer(centerRenderer);
+
+        // header căn giữa cột số lượng
+        javax.swing.table.DefaultTableCellRenderer headerRenderer =
+                (javax.swing.table.DefaultTableCellRenderer) tblMonDatTruoc.getTableHeader().getDefaultRenderer();
+        headerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+
+        scrMonDatTruoc = new JScrollPane(tblMonDatTruoc);
+        scrMonDatTruoc.setPreferredSize(new Dimension(300, 150));
+        scrMonDatTruoc.setBorder(new LineBorder(BORDER, 1));
+        scrMonDatTruoc.getViewport().setBackground(Color.WHITE);
+        scrMonDatTruoc.setVisible(false);
+
+        formPanel.add(scrMonDatTruoc, gbc);
+
+        JPanel pnlButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 6));
         pnlButtons.setBackground(BG_MAIN);
 
         btnHuy = new ColoredButton("Hủy", new Color(232, 83, 83));
-        btnHuy.setFont(new Font("Arial", Font.PLAIN, 22));
-        btnHuy.setPreferredSize(new Dimension(120, 52));
+        btnHuy.setFont(new Font("Arial", Font.PLAIN, 16));
+        btnHuy.setPreferredSize(new Dimension(92, 40));
 
         btnThoat = new ColoredButton("Thoát", new Color(219, 167, 69));
-        btnThoat.setFont(new Font("Arial", Font.PLAIN, 22));
-        btnThoat.setPreferredSize(new Dimension(120, 52));
+        btnThoat.setFont(new Font("Arial", Font.PLAIN, 16));
+        btnThoat.setPreferredSize(new Dimension(92, 40));
 
         btnNhanBan = new ColoredButton("Nhận bàn", new Color(116, 191, 102));
-        btnNhanBan.setFont(new Font("Arial", Font.PLAIN, 22));
-        btnNhanBan.setPreferredSize(new Dimension(150, 52));
+        btnNhanBan.setFont(new Font("Arial", Font.PLAIN, 16));
+        btnNhanBan.setPreferredSize(new Dimension(120, 40));
 
         btnLuu = new ColoredButton("Lưu", new Color(74, 144, 206));
-        btnLuu.setFont(new Font("Arial", Font.PLAIN, 22));
-        btnLuu.setPreferredSize(new Dimension(120, 52));
+        btnLuu.setFont(new Font("Arial", Font.PLAIN, 16));
+        btnLuu.setPreferredSize(new Dimension(92, 40));
 
         btnDatBan = new ColoredButton("Đặt bàn", new Color(74, 144, 206));
-        btnDatBan.setFont(new Font("Arial", Font.PLAIN, 22));
-        btnDatBan.setPreferredSize(new Dimension(140, 52));
+        btnDatBan.setFont(new Font("Arial", Font.PLAIN, 16));
+        btnDatBan.setPreferredSize(new Dimension(110, 40));
 
         pnlButtons.add(btnHuy);
         pnlButtons.add(btnThoat);
@@ -311,7 +381,7 @@ public class PhieuDatBan_DigLog extends JDialog {
         gbc.weighty = 1;
         gbc.anchor = GridBagConstraints.SOUTHEAST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(16, 10, 8, 10);
+        gbc.insets = new Insets(12, 8, 6, 8);
 
         JPanel pnlBottomWrap = new JPanel(new BorderLayout());
         pnlBottomWrap.setOpaque(false);
@@ -334,12 +404,15 @@ public class PhieuDatBan_DigLog extends JDialog {
         btnHuy.setVisible(false);
         btnNhanBan.setVisible(false);
         btnLuu.setVisible(false);
+
+        trangThaiHienTai = "Đang chờ";
+        setEditableThongTin(true);
     }
 
     private void addFormRow(JPanel panel, GridBagConstraints gbc, int row, String label, Font lblFont, Component comp) {
         gbc.gridx = 0;
         gbc.gridy = row;
-        gbc.weightx = 0.36;
+        gbc.weightx = 0.34;
         gbc.weighty = 0;
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -348,8 +421,68 @@ public class PhieuDatBan_DigLog extends JDialog {
 
         gbc.gridx = 1;
         gbc.gridy = row;
-        gbc.weightx = 0.64;
+        gbc.weightx = 0.66;
         panel.add(comp, gbc);
+    }
+
+    private void loadMonDatTruocLenBang() {
+        if (modelMonDatTruoc == null || scrMonDatTruoc == null) return;
+
+        modelMonDatTruoc.setRowCount(0);
+
+        if (dsMonDatTam == null || dsMonDatTam.isEmpty()) {
+            scrMonDatTruoc.setVisible(false);
+            revalidate();
+            repaint();
+            return;
+        }
+
+        for (PhieuDatMon pdm : dsMonDatTam) {
+            String tenMon = "";
+            if (pdm.getMaMon() != null) {
+                tenMon = pdm.getMaMon().getTenMon();
+                if (tenMon == null || tenMon.trim().isEmpty()) {
+                    tenMon = pdm.getMaMon().getMaMon();
+                }
+            }
+
+            modelMonDatTruoc.addRow(new Object[] {
+                    tenMon,
+                    pdm.getSoLuong()
+            });
+        }
+
+        boolean coMon = modelMonDatTruoc.getRowCount() > 0;
+        scrMonDatTruoc.setVisible(coMon);
+
+        if (coMon) {
+            scrMonDatTruoc.setBorder(new LineBorder(new Color(150, 150, 150), 1, true));
+        } else {
+            scrMonDatTruoc.setBorder(new LineBorder(BORDER, 1));
+        }
+
+        revalidate();
+        repaint();
+    }
+
+    private void capNhatTienCocTheoMonDatTruoc() {
+        double tongTien = 0;
+
+        if (dsMonDatTam != null) {
+            for (PhieuDatMon pdm : dsMonDatTam) {
+                tongTien += pdm.getSoLuong() * pdm.getDonGia();
+            }
+        }
+
+        if (tongTien <= 0) {
+            txtTienCoc.setText("200.000");
+        } else {
+            txtTienCoc.setText(formatTienVND(tongTien));
+        }
+    }
+
+    private String formatTienVND(double soTien) {
+        return String.format("%,.0f", soTien).replace(",", ".");
     }
 
     private JLabel createLabel(String text, Font font) {
@@ -362,17 +495,17 @@ public class PhieuDatBan_DigLog extends JDialog {
     private JTextField createTextField(String text, Font font) {
         JTextField txt = new JTextField(text);
         txt.setFont(font);
-        txt.setPreferredSize(new Dimension(360, 44));
+        txt.setPreferredSize(new Dimension(300, 36));
         txt.setBorder(new LineBorder(BORDER, 1));
         txt.setBackground(Color.WHITE);
-        txt.setMargin(new Insets(0, 12, 0, 12));
+        txt.setMargin(new Insets(0, 10, 0, 10));
         return txt;
     }
 
     private JPanel wrapField(JTextField txt, JButton rightButton) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
-        panel.setPreferredSize(new Dimension(360, 44));
+        panel.setPreferredSize(new Dimension(300, 36));
 
         if (rightButton == null) {
             panel.add(txt, BorderLayout.CENTER);
@@ -388,7 +521,7 @@ public class PhieuDatBan_DigLog extends JDialog {
     private JButton createIconButton(String text, int fontSize) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Arial", Font.PLAIN, fontSize));
-        btn.setPreferredSize(new Dimension(44, 44));
+        btn.setPreferredSize(new Dimension(36, 36));
         btn.setBackground(Color.WHITE);
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(true);
@@ -404,6 +537,8 @@ public class PhieuDatBan_DigLog extends JDialog {
         txt.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
+                if (!txt.isEditable()) return;
+
                 if (txt.getText().equals(placeholder)) {
                     txt.setText("");
                     txt.setForeground(Color.BLACK);
@@ -412,6 +547,8 @@ public class PhieuDatBan_DigLog extends JDialog {
 
             @Override
             public void focusLost(FocusEvent e) {
+                if (!txt.isEditable()) return;
+
                 if (txt.getText().trim().isEmpty()) {
                     txt.setText(placeholder);
                     txt.setForeground(PLACEHOLDER);
@@ -427,9 +564,14 @@ public class PhieuDatBan_DigLog extends JDialog {
     private void initEvents() {
         btnThoat.addActionListener(e -> dispose());
 
-        btnCalendar.addActionListener(e -> moDialogChonNgayGio());
+        btnCalendar.addActionListener(e -> {
+            if (!btnCalendar.isEnabled()) return;
+            moDialogChonNgayGio();
+        });
 
         btnSearchBan.addActionListener(e -> {
+            if (!btnSearchBan.isEnabled()) return;
+
             if (thoiGianDaChon == null) {
                 JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày giờ trước!");
                 return;
@@ -441,6 +583,8 @@ public class PhieuDatBan_DigLog extends JDialog {
         txtBan.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                if (!txtBan.isEnabled() || !txtBan.isEditable()) return;
+
                 if (thoiGianDaChon == null) {
                     JOptionPane.showMessageDialog(PhieuDatBan_DigLog.this, "Vui lòng chọn ngày giờ trước!");
                     return;
@@ -460,17 +604,40 @@ public class PhieuDatBan_DigLog extends JDialog {
         txtBan.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                if (thoiGianDaChon == null) {
-                    return;
-                }
+                if (!txtBan.isEnabled() || !txtBan.isEditable()) return;
+                if (thoiGianDaChon == null) return;
+
                 locBan(isPlaceholder(txtBan, PH_BAN) ? "" : txtBan.getText().trim());
                 showPopupBan();
             }
         });
 
-        btnDatBan.addActionListener(e -> datBanMoi());
+        if (lblMonDatTruoc != null) {
+            lblMonDatTruoc.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    moDatMonTruoc();
+                }
+
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    lblMonDatTruoc.setForeground(new Color(40, 120, 220));
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    lblMonDatTruoc.setForeground(new Color(30, 30, 30));
+                }
+            });
+        }
+
+        btnDatBan.addActionListener(e -> {
+            if (!btnDatBan.isEnabled()) return;
+            datBanMoi();
+        });
 
         btnHuy.addActionListener(e -> {
+            if (!btnHuy.isEnabled()) return;
             if (maPhieuHienTai == null || maPhieuHienTai.trim().isEmpty()) return;
 
             int confirm = JOptionPane.showConfirmDialog(
@@ -484,6 +651,10 @@ public class PhieuDatBan_DigLog extends JDialog {
                 try {
                     PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
                     if (dao.huyPhieuDatBan(maPhieuHienTai)) {
+                        Ban_DAO banDAO = new Ban_DAO();
+                        if (maBanDuocChon != null && !maBanDuocChon.trim().isEmpty()) {
+                            banDAO.capNhatTrangThaiBan(maBanDuocChon, "Trống");
+                        }
                         JOptionPane.showMessageDialog(this, "Hủy phiếu thành công!");
                         dispose();
                     } else {
@@ -496,22 +667,63 @@ public class PhieuDatBan_DigLog extends JDialog {
         });
 
         btnNhanBan.addActionListener(e -> {
+            if (!btnNhanBan.isEnabled()) return;
             if (maPhieuHienTai == null || maPhieuHienTai.trim().isEmpty()) return;
 
-            try {
-                PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
-                if (dao.capNhatTrangThai(maPhieuHienTai, "Đã xếp bàn")) {
-                    JOptionPane.showMessageDialog(this, "Nhận bàn thành công!");
-                    loadPhieuDatBanLenForm(maPhieuHienTai);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Nhận bàn thất bại!");
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Bạn có chắc muốn nhận bàn phiếu này không?",
+                    "Xác nhận",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                try {
+                    PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
+                    if (dao.capNhatTrangThai(maPhieuHienTai, "Đã nhận bàn")) {
+                        Ban_DAO banDAO = new Ban_DAO();
+                        if (maBanDuocChon != null && !maBanDuocChon.trim().isEmpty()) {
+                            banDAO.capNhatTrangThaiBan(maBanDuocChon, "Đã nhận bàn");
+                        }
+                        JOptionPane.showMessageDialog(this, "Nhận bàn thành công!");
+                        dispose();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Nhận bàn thất bại!");
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Có lỗi khi nhận bàn!");
                 }
-            } catch (Exception ex) {
-                ex.printStackTrace();
             }
         });
 
-        btnLuu.addActionListener(e -> capNhatPhieuDatBan());
+        btnLuu.addActionListener(e -> {
+            if (!btnLuu.isEnabled()) return;
+            capNhatPhieuDatBan();
+        });
+    }
+
+    private void moDatMonTruoc() {
+        try {
+            DatMon_DigLog dlg = new DatMon_DigLog((Frame) getOwner(), dsMonDatTam);
+            dlg.setLocationRelativeTo(this);
+
+            dlg.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    dsMonDatTam = dlg.getDanhSachMonTam();
+                    loadMonDatTruocLenBang();
+                    capNhatTienCocTheoMonDatTruoc();
+                    toFront();
+                    requestFocus();
+                }
+            });
+
+            dlg.setVisible(true);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Không mở được màn hình đặt món trước!");
+        }
     }
 
     private void datBanMoi() {
@@ -554,16 +766,31 @@ public class PhieuDatBan_DigLog extends JDialog {
             );
 
             if (maPhieuMoi != null) {
+                maPhieuHienTai = maPhieuMoi;
                 txtMaPhieu.setText(maPhieuMoi);
 
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Đặt bàn thành công! Mã phiếu: " + maPhieuMoi,
-                        "Thông báo",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
+                PhieuDatMon_DAO pdmDAO = new PhieuDatMon_DAO();
+                boolean luuMonOK = pdmDAO.luuDanhSachMonChoPhieu(maPhieuMoi, dsMonDatTam);
 
-                dispose();
+                Ban_DAO banDAO = new Ban_DAO();
+                boolean capNhatBanOK = banDAO.capNhatTrangThaiBan(maBanDuocChon, "Đang chờ");
+
+                if (luuMonOK && capNhatBanOK) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Đặt bàn thành công! Mã phiếu: " + maPhieuMoi,
+                            "Thông báo",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                    dispose();
+                } else {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Lưu phiếu thành công nhưng lưu món hoặc cập nhật trạng thái bàn thất bại!",
+                            "Cảnh báo",
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                }
             } else {
                 JOptionPane.showMessageDialog(
                         this,
@@ -634,8 +861,14 @@ public class PhieuDatBan_DigLog extends JDialog {
             ps.close();
 
             if (n > 0) {
+                PhieuDatMon_DAO pdmDAO = new PhieuDatMon_DAO();
+                pdmDAO.luuDanhSachMonChoPhieu(maPhieuHienTai, dsMonDatTam);
+
+                Ban_DAO banDAO = new Ban_DAO();
+                banDAO.capNhatTrangThaiBan(maBanDuocChon, "Đang chờ");
+
                 JOptionPane.showMessageDialog(this, "Lưu cập nhật thành công!");
-                loadPhieuDatBanLenForm(maPhieuHienTai);
+                dispose();
             } else {
                 JOptionPane.showMessageDialog(this, "Lưu cập nhật thất bại!");
             }
@@ -675,18 +908,173 @@ public class PhieuDatBan_DigLog extends JDialog {
             txtTienCoc.setText(formatTienCoc(row[6]));
             txtGhiChu.setText(row[7] == null ? "" : row[7]);
 
+            if (row.length > 8 && row[8] != null) {
+                trangThaiHienTai = row[8].trim();
+            } else {
+                trangThaiHienTai = "";
+            }
+
+            PhieuDatMon_DAO pdmDAO = new PhieuDatMon_DAO();
+            ArrayList<PhieuDatMon> dsDB = pdmDAO.getDanhSachTheoMaPhieu(maPhieu);
+            dsMonDatTam.clear();
+
+            if (dsDB != null && !dsDB.isEmpty()) {
+                MonAn_DAO monDAO = new MonAn_DAO();
+                for (PhieuDatMon pdm : dsDB) {
+                    try {
+                        MonAn mon = monDAO.getMonAnTheoMa(pdm.getMaMon().getMaMon());
+                        if (mon != null) {
+                            pdm.setMaMon(mon);
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                    dsMonDatTam.add(pdm);
+                }
+            }
+
             loadDanhSachBanTheoGioChon();
+            boolean daGanTenBan = false;
+
             for (String[] ban : dsBanTheoGio) {
                 if (ban[0].equalsIgnoreCase(maBanDuocChon)) {
                     txtBan.setText(ban[1]);
                     txtBan.setForeground(Color.BLACK);
+                    daGanTenBan = true;
                     break;
                 }
             }
+
+            if (!daGanTenBan) {
+                try {
+                    Ban_DAO banDAO = new Ban_DAO();
+                    ArrayList<String[]> tatCaBan = banDAO.getTatCaBanKemTrangThaiMacDinh();
+                    for (String[] ban : tatCaBan) {
+                        if (ban[0].equalsIgnoreCase(maBanDuocChon)) {
+                            txtBan.setText(ban[1]);
+                            txtBan.setForeground(Color.BLACK);
+                            break;
+                        }
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+            loadMonDatTruocLenBang();
+            capNhatTienCocTheoMonDatTruoc();
+            apDungTrangThaiForm(trangThaiHienTai);
+
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Lỗi tải phiếu đặt bàn!");
         }
+    }
+
+    private void apDungTrangThaiForm(String trangThai) {
+        String tt = trangThai == null ? "" : trangThai.trim().toLowerCase();
+
+        boolean choSuaThongTin = false;
+        boolean choLuu = false;
+        boolean choHuy = false;
+        boolean choNhanBan = false;
+
+        if (tt.equals("đang chờ")) {
+            choSuaThongTin = true;
+            choLuu = true;
+            choHuy = true;
+            choNhanBan = true;
+        } else if (tt.equals("hoàn thành")) {
+            choSuaThongTin = false;
+            choLuu = false;
+            choHuy = false;
+            choNhanBan = false;
+        } else if (tt.equals("đã nhận bàn")) {
+            choSuaThongTin = false;
+            choLuu = false;
+            choHuy = false;
+            choNhanBan = false;
+        } else if (tt.equals("đã hủy") || tt.equals("quá giờ")) {
+            choSuaThongTin = false;
+            choLuu = false;
+            choHuy = false;
+            choNhanBan = false;
+        } else {
+            choSuaThongTin = false;
+            choLuu = false;
+            choHuy = false;
+            choNhanBan = false;
+        }
+
+        setEditableThongTin(choSuaThongTin);
+        setButtonEnabledVisual(btnLuu, choLuu);
+        setButtonEnabledVisual(btnHuy, choHuy);
+        setButtonEnabledVisual(btnNhanBan, choNhanBan);
+    }
+
+    private void setEditableThongTin(boolean editable) {
+        setTextFieldEditable(txtKhachHang, editable, PH_KHACH);
+        setTextFieldEditable(txtSoDienThoai, editable, PH_SDT);
+        setTextFieldEditable(txtBan, editable, PH_BAN);
+
+        spnSoLuongKhach.setEnabled(editable);
+        txtGhiChu.setEditable(editable);
+        txtGhiChu.setEnabled(true);
+        txtGhiChu.setBackground(editable ? Color.WHITE : DISABLED_BG);
+        txtGhiChu.setForeground(Color.BLACK);
+
+        txtGioKhachVao.setBackground(editable ? Color.WHITE : DISABLED_BG);
+        txtGioKhachVao.setForeground(
+                (txtGioKhachVao.getText().trim().isEmpty() || txtGioKhachVao.getText().trim().equals(PH_GIO))
+                        ? PLACEHOLDER : Color.BLACK
+        );
+
+        btnCalendar.setEnabled(editable);
+        btnSearchBan.setEnabled(editable);
+
+        styleSmallButton(btnCalendar, editable);
+        styleSmallButton(btnSearchBan, editable);
+    }
+
+    private void setTextFieldEditable(JTextField txt, boolean editable, String placeholder) {
+        txt.setEditable(editable);
+        txt.setEnabled(true);
+
+        String value = txt.getText().trim();
+
+        if (editable) {
+            txt.setBackground(Color.WHITE);
+
+            if (value.isEmpty()) {
+                txt.setText(placeholder);
+                txt.setForeground(PLACEHOLDER);
+            } else if (!value.equals(placeholder)) {
+                txt.setForeground(Color.BLACK);
+            }
+        } else {
+            txt.setBackground(DISABLED_BG);
+
+            if (value.isEmpty()) {
+                txt.setText(placeholder);
+                txt.setForeground(PLACEHOLDER);
+            } else if (!value.equals(placeholder)) {
+                txt.setForeground(Color.BLACK);
+            }
+        }
+    }
+
+    private void styleSmallButton(JButton btn, boolean enabled) {
+        btn.setEnabled(enabled);
+        btn.setCursor(new Cursor(enabled ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+        btn.setBackground(enabled ? Color.WHITE : DISABLED_BG);
+        btn.setForeground(enabled ? Color.BLACK : new Color(130, 130, 130));
+    }
+
+    private void setButtonEnabledVisual(JButton button, boolean enabled) {
+        if (button == null) return;
+        button.setEnabled(enabled);
+        button.setCursor(new Cursor(enabled ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+        button.repaint();
     }
 
     private String formatTienCoc(String value) {
@@ -702,6 +1090,11 @@ public class PhieuDatBan_DigLog extends JDialog {
         txtSoDienThoai.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
+                if (!txtSoDienThoai.isEditable()) {
+                    e.consume();
+                    return;
+                }
+
                 if (isPlaceholder(txtSoDienThoai, PH_SDT)) {
                     txtSoDienThoai.setText("");
                     txtSoDienThoai.setForeground(Color.BLACK);
@@ -719,28 +1112,28 @@ public class PhieuDatBan_DigLog extends JDialog {
 
     private void moDialogChonNgayGio() {
         JDialog dlg = new JDialog(this, "Chọn ngày giờ", true);
-        dlg.setSize(380, 230);
+        dlg.setSize(340, 210);
         dlg.setLocationRelativeTo(this);
         dlg.setLayout(new BorderLayout());
 
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        panel.setBorder(new EmptyBorder(16, 16, 16, 16));
         panel.setBackground(Color.WHITE);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.insets = new Insets(6, 6, 6, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JLabel lblNgay = new JLabel("Ngày:");
-        lblNgay.setFont(new Font("Arial", Font.PLAIN, 16));
+        lblNgay.setFont(new Font("Arial", Font.PLAIN, 14));
 
         JDateChooser chooser = new JDateChooser();
 
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
-        cal.set(java.util.Calendar.MINUTE, 0);
-        cal.set(java.util.Calendar.SECOND, 0);
-        cal.set(java.util.Calendar.MILLISECOND, 0);
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
 
         Date homNay = cal.getTime();
 
@@ -748,14 +1141,14 @@ public class PhieuDatBan_DigLog extends JDialog {
         chooser.setMinSelectableDate(homNay);
         chooser.setDateFormatString("dd/MM/yyyy");
         chooser.setLocale(new Locale("vi", "VN"));
-        chooser.setPreferredSize(new Dimension(190, 34));
+        chooser.setPreferredSize(new Dimension(170, 32));
 
         JLabel lblGio = new JLabel("Giờ:");
-        lblGio.setFont(new Font("Arial", Font.PLAIN, 16));
+        lblGio.setFont(new Font("Arial", Font.PLAIN, 14));
 
-        String[] dsGio = new String[15];
-        for (int i = 0; i < 15; i++) {
-            dsGio[i] = String.format("%02d", i + 9);
+        String[] dsGio = new String[14];
+        for (int i = 0; i < 14; i++) {
+            dsGio[i] = String.format("%02d", i + 9); // 09 -> 22
         }
 
         String[] dsPhut = new String[60];
@@ -766,11 +1159,28 @@ public class PhieuDatBan_DigLog extends JDialog {
         JComboBox<String> cboGio = new JComboBox<>(dsGio);
         JComboBox<String> cboPhut = new JComboBox<>(dsPhut);
 
-        cboGio.setFont(new Font("Arial", Font.PLAIN, 16));
-        cboPhut.setFont(new Font("Arial", Font.PLAIN, 16));
+        cboGio.setFont(new Font("Arial", Font.PLAIN, 14));
+        cboPhut.setFont(new Font("Arial", Font.PLAIN, 14));
 
-        cboGio.setPreferredSize(new Dimension(80, 34));
-        cboPhut.setPreferredSize(new Dimension(80, 34));
+        cboGio.setPreferredSize(new Dimension(70, 32));
+        cboPhut.setPreferredSize(new Dimension(70, 32));
+
+        Calendar nowPlus1h = Calendar.getInstance();
+        nowPlus1h.add(Calendar.HOUR_OF_DAY, 1);
+
+        int gioMacDinh = nowPlus1h.get(Calendar.HOUR_OF_DAY);
+        int phutMacDinh = nowPlus1h.get(Calendar.MINUTE);
+
+        if (gioMacDinh < 9) {
+            gioMacDinh = 9;
+            phutMacDinh = 0;
+        } else if (gioMacDinh > 22) {
+            gioMacDinh = 22;
+            phutMacDinh = 0;
+        }
+
+        cboGio.setSelectedItem(String.format("%02d", gioMacDinh));
+        cboPhut.setSelectedItem(String.format("%02d", phutMacDinh));
 
         JPanel pnlGioPhut = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         pnlGioPhut.setBackground(Color.WHITE);
@@ -807,32 +1217,56 @@ public class PhieuDatBan_DigLog extends JDialog {
         btnCancel.addActionListener(e -> dlg.dispose());
 
         btnOK.addActionListener(e -> {
-            if (chooser.getDate() != null) {
-                Date ngay = chooser.getDate();
-
-                int gio = Integer.parseInt(cboGio.getSelectedItem().toString());
-                int phut = Integer.parseInt(cboPhut.getSelectedItem().toString());
-
-                java.util.Calendar calNgay = java.util.Calendar.getInstance();
-                calNgay.setTime(ngay);
-                calNgay.set(java.util.Calendar.HOUR_OF_DAY, gio);
-                calNgay.set(java.util.Calendar.MINUTE, phut);
-                calNgay.set(java.util.Calendar.SECOND, 0);
-                calNgay.set(java.util.Calendar.MILLISECOND, 0);
-
-                thoiGianDaChon = new Timestamp(calNgay.getTimeInMillis());
-
-                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-                txtGioKhachVao.setForeground(Color.BLACK);
-                txtGioKhachVao.setText(sdf.format(thoiGianDaChon));
-
-                txtBan.setText(PH_BAN);
-                txtBan.setForeground(PLACEHOLDER);
-                maBanDuocChon = "";
-
-                loadDanhSachBanTheoGioChon();
-                dlg.dispose();
+            if (chooser.getDate() == null) {
+                JOptionPane.showMessageDialog(dlg, "Vui lòng chọn ngày!");
+                return;
             }
+
+            Date ngay = chooser.getDate();
+
+            int gio = Integer.parseInt(cboGio.getSelectedItem().toString());
+            int phut = Integer.parseInt(cboPhut.getSelectedItem().toString());
+
+            Calendar calNgay = Calendar.getInstance();
+            calNgay.setTime(ngay);
+            calNgay.set(Calendar.HOUR_OF_DAY, gio);
+            calNgay.set(Calendar.MINUTE, phut);
+            calNgay.set(Calendar.SECOND, 0);
+            calNgay.set(Calendar.MILLISECOND, 0);
+
+            Timestamp tgChon = new Timestamp(calNgay.getTimeInMillis());
+
+            Calendar homNayCal = Calendar.getInstance();
+            Calendar ngayChon = Calendar.getInstance();
+            ngayChon.setTime(ngay);
+
+            boolean cungNgay = homNayCal.get(Calendar.YEAR) == ngayChon.get(Calendar.YEAR)
+                    && homNayCal.get(Calendar.DAY_OF_YEAR) == ngayChon.get(Calendar.DAY_OF_YEAR);
+
+            if (cungNgay) {
+                Timestamp mocToiThieu = new Timestamp(nowPlus1h.getTimeInMillis());
+
+                if (tgChon.before(mocToiThieu)) {
+                    JOptionPane.showMessageDialog(
+                            dlg,
+                            "Nếu đặt trong hôm nay thì giờ vào phải sau thời điểm hiện tại ít nhất 1 tiếng!"
+                    );
+                    return;
+                }
+            }
+
+            thoiGianDaChon = tgChon;
+
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+            txtGioKhachVao.setForeground(Color.BLACK);
+            txtGioKhachVao.setText(sdf.format(thoiGianDaChon));
+
+            txtBan.setText(PH_BAN);
+            txtBan.setForeground(PLACEHOLDER);
+            maBanDuocChon = "";
+
+            loadDanhSachBanTheoGioChon();
+            dlg.dispose();
         });
 
         dlg.setVisible(true);
@@ -850,18 +1284,20 @@ public class PhieuDatBan_DigLog extends JDialog {
         };
 
         tblBan = new JTable(modelBan);
-        tblBan.setRowHeight(28);
-        tblBan.setFont(new Font("Arial", Font.PLAIN, 14));
-        tblBan.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
+        tblBan.setRowHeight(24);
+        tblBan.setFont(new Font("Arial", Font.PLAIN, 13));
+        tblBan.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
         tblBan.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         JScrollPane scroll = new JScrollPane(tblBan);
-        scroll.setPreferredSize(new Dimension(360, 180));
+        scroll.setPreferredSize(new Dimension(300, 160));
         popupBan.add(scroll, BorderLayout.CENTER);
 
         tblBan.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                if (!txtBan.isEditable() || !txtBan.isEnabled()) return;
+
                 int row = tblBan.getSelectedRow();
                 if (row >= 0) {
                     txtBan.setForeground(Color.BLACK);
@@ -980,11 +1416,27 @@ public class PhieuDatBan_DigLog extends JDialog {
         }
 
         @Override
+        public void setEnabled(boolean enabled) {
+            super.setEnabled(enabled);
+            setCursor(new Cursor(enabled ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+            repaint();
+        }
+
+        @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(bgColor);
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 18, 18);
+
+            Color mauVe = bgColor;
+            if (!isEnabled()) {
+                mauVe = new Color(195, 195, 195);
+                setForeground(new Color(120, 120, 120));
+            } else {
+                setForeground(Color.WHITE);
+            }
+
+            g2.setColor(mauVe);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
             super.paintComponent(g);
             g2.dispose();
         }

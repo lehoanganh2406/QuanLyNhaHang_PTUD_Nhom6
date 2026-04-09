@@ -86,5 +86,11 @@ public class PhieuDatBan {
 				+ sdt + ", soLuongNguoi=" + soLuongNguoi + ", thoiGianDen=" + thoiGianDen + ", tienCoc=" + tienCoc
 				+ ", ghiChu=" + ghiChu + ", trangThai=" + trangThai + "]";
 	}
-	
+	public PhieuDatBan(String maPhieuDatBan) {
+		super();
+		this.maPhieuDatBan = maPhieuDatBan;
+	}
+	public PhieuDatBan() {
+		// TODO Auto-generated constructor stub
+	}
 }

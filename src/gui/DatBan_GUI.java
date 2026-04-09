@@ -1,6 +1,20 @@
 package gui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.sql.Timestamp;
@@ -12,7 +26,28 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.JViewport;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
@@ -137,8 +172,8 @@ public class DatBan_GUI extends JFrame {
             String ghiChu;
 
             public BookingDisplayItem(String maPhieu, String maBan, String tenKhach,
-                    String sdt, String trangThai,
-                    Timestamp thoiGianDen, int soLuongNguoi, String ghiChu) {
+                                      String sdt, String trangThai,
+                                      Timestamp thoiGianDen, int soLuongNguoi, String ghiChu) {
                 this.maPhieu = maPhieu;
                 this.maBan = maBan;
                 this.tenKhach = tenKhach;
@@ -148,39 +183,6 @@ public class DatBan_GUI extends JFrame {
                 this.soLuongNguoi = soLuongNguoi;
                 this.ghiChu = ghiChu;
             }
-        }
-        private void updateDisplayedDateText() {
-            JComponent editorComp = dateChooser.getDateEditor().getUiComponent();
-            if (!(editorComp instanceof JTextField)) return;
-
-            JTextField editor = (JTextField) editorComp;
-
-            if (currentMode == ViewMode.WEEK) {
-                Calendar start = getWeekStart(currentCalendar);
-                Calendar end = (Calendar) start.clone();
-                end.add(Calendar.DAY_OF_MONTH, 6);
-
-                String text = new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN")).format(start.getTime())
-                        + " - "
-                        + new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN")).format(end.getTime());
-
-                editor.setText(text);
-            } else {
-                editor.setText(new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN"))
-                        .format(currentCalendar.getTime()));
-            }
-        }
-        private void updateDateChooserSize() {
-            if (currentMode == ViewMode.WEEK) {
-                dateChooser.setPreferredSize(new Dimension(260, 34));
-                dateChooser.setMinimumSize(new Dimension(260, 34));
-            } else {
-                dateChooser.setPreferredSize(new Dimension(165, 34));
-                dateChooser.setMinimumSize(new Dimension(165, 34));
-            }
-
-            dateChooser.revalidate();
-            dateChooser.repaint();
         }
 
         public DatBanMainPanel() {
@@ -295,9 +297,43 @@ public class DatBan_GUI extends JFrame {
             updateDisplayedDateText();
         }
 
+        private void updateDisplayedDateText() {
+            JComponent editorComp = dateChooser.getDateEditor().getUiComponent();
+            if (!(editorComp instanceof JTextField)) return;
+
+            JTextField editor = (JTextField) editorComp;
+
+            if (currentMode == ViewMode.WEEK) {
+                Calendar start = getWeekStart(currentCalendar);
+                Calendar end = (Calendar) start.clone();
+                end.add(Calendar.DAY_OF_MONTH, 6);
+
+                String text = new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN")).format(start.getTime())
+                        + " - "
+                        + new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN")).format(end.getTime());
+
+                editor.setText(text);
+            } else {
+                editor.setText(new SimpleDateFormat("dd/MM/yyyy", new Locale("vi", "VN"))
+                        .format(currentCalendar.getTime()));
+            }
+        }
+
+        private void updateDateChooserSize() {
+            if (currentMode == ViewMode.WEEK) {
+                dateChooser.setPreferredSize(new Dimension(260, 34));
+                dateChooser.setMinimumSize(new Dimension(260, 34));
+            } else {
+                dateChooser.setPreferredSize(new Dimension(165, 34));
+                dateChooser.setMinimumSize(new Dimension(165, 34));
+            }
+
+            dateChooser.revalidate();
+            dateChooser.repaint();
+        }
+
         private boolean isSameDay(Date d1, Date d2) {
-            if (d1 == null || d2 == null)
-                return false;
+            if (d1 == null || d2 == null) return false;
 
             Calendar c1 = Calendar.getInstance();
             Calendar c2 = Calendar.getInstance();
@@ -347,11 +383,6 @@ public class DatBan_GUI extends JFrame {
                     cachedFilteredBookings.add(item);
                 }
             }
-        }
-
-        private java.util.List<BookingDisplayItem> getBookingsByDate(Date ngay) {
-            loadBookingsCache(ngay);
-            return new ArrayList<>(cachedBookings);
         }
 
         private java.util.List<BookingDisplayItem> getFilteredBookingsByDate(Date ngay) {
@@ -427,7 +458,12 @@ public class DatBan_GUI extends JFrame {
 
             java.util.List<String> selectedStatuses = getSelectedStatuses();
             if (!selectedStatuses.isEmpty()) {
-                if (item.trangThai == null || !selectedStatuses.contains(item.trangThai.trim())) {
+                if (item.trangThai == null) {
+                    return false;
+                }
+
+                String trangThai = item.trangThai.trim();
+                if (!selectedStatuses.contains(trangThai)) {
                     return false;
                 }
             }
@@ -446,11 +482,9 @@ public class DatBan_GUI extends JFrame {
         }
 
         private String getRealText(JTextField txt, String placeholder) {
-            if (txt == null)
-                return "";
+            if (txt == null) return "";
             String value = txt.getText().trim();
-            if (value.equalsIgnoreCase(placeholder))
-                return "";
+            if (value.equalsIgnoreCase(placeholder)) return "";
             return value;
         }
 
@@ -478,21 +512,15 @@ public class DatBan_GUI extends JFrame {
         }
 
         private Color getStatusColor(String trangThai) {
-            if (trangThai == null)
-                return new Color(220, 170, 76);
+            if (trangThai == null) return new Color(220, 170, 76);
 
             String s = trangThai.trim().toLowerCase();
 
-            if (s.equals("hoàn thành"))
-                return new Color(124, 183, 103);
-            if (s.equals("đã xếp bàn"))
-                return new Color(46, 134, 222);
-            if (s.equals("đang chờ"))
-                return new Color(227, 177, 30);
-            if (s.equals("quá giờ"))
-                return new Color(95, 95, 95);
-            if (s.equals("đã hủy"))
-                return new Color(219, 47, 47);
+            if (s.equals("hoàn thành")) return new Color(124, 183, 103);
+            if (s.equals("đã nhận bàn")) return new Color(46, 134, 222);
+            if (s.equals("đang chờ")) return new Color(227, 177, 30);
+            if (s.equals("quá giờ")) return new Color(95, 95, 95);
+            if (s.equals("đã hủy")) return new Color(219, 47, 47);
 
             return new Color(220, 170, 76);
         }
@@ -665,7 +693,7 @@ public class DatBan_GUI extends JFrame {
             statusList.setLayout(new BoxLayout(statusList, BoxLayout.Y_AXIS));
 
             addStatusItem(statusList, "Hoàn thành", new Color(124, 183, 103));
-            addStatusItem(statusList, "Đã xếp bàn", new Color(46, 134, 222));
+            addStatusItem(statusList, "Đã nhận bàn", new Color(46, 134, 222));
             addStatusItem(statusList, "Đang chờ", new Color(227, 177, 30));
             addStatusItem(statusList, "Quá giờ", new Color(95, 95, 95));
             addStatusItem(statusList, "Đã hủy", new Color(219, 47, 47));
@@ -838,97 +866,6 @@ public class DatBan_GUI extends JFrame {
             chooser.setBorder(new LineBorder(new Color(180, 180, 180), 1));
         }
 
-        private void configScroll(JScrollPane scrollPane) {
-            scrollPane.setBorder(new LineBorder(new Color(210, 210, 210)));
-            scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-            scrollPane.getHorizontalScrollBar().setUnitIncrement(20);
-        }
-
-        private void initEvents() {
-            btnToday.addActionListener(e -> {
-                Date today = getTodayStartDate();
-                currentCalendar.setTime(today);
-                dateChooser.setDate(today);
-                clearBookingCache();
-                updateDisplayedDateText();
-                refreshView();
-            });
-
-            btnPrev.addActionListener(e -> {
-                Calendar temp = (Calendar) currentCalendar.clone();
-
-                if (currentMode == ViewMode.DAY || currentMode == ViewMode.SCHEDULE) {
-                    temp.add(Calendar.DAY_OF_MONTH, -1);
-                } else {
-                    temp.add(Calendar.DAY_OF_MONTH, -7);
-                }
-
-                if (isBeforeToday(temp.getTime())) {
-                    temp.setTime(getTodayStartDate());
-                }
-
-                currentCalendar.setTime(normalizeDate(temp.getTime()));
-                dateChooser.setDate(currentCalendar.getTime());
-                clearBookingCache();
-                updateDisplayedDateText();
-                refreshView();
-            });
-
-            btnNext.addActionListener(e -> {
-                if (currentMode == ViewMode.DAY || currentMode == ViewMode.SCHEDULE) {
-                    currentCalendar.add(Calendar.DAY_OF_MONTH, 1);
-                } else {
-                    currentCalendar.add(Calendar.DAY_OF_MONTH, 7);
-                }
-
-                currentCalendar.setTime(normalizeDate(currentCalendar.getTime()));
-                dateChooser.setDate(currentCalendar.getTime());
-                clearBookingCache();
-                updateDisplayedDateText();
-                refreshView();
-            });
-
-            dateChooser.getDateEditor().addPropertyChangeListener("date", evt -> {
-                Date selectedDate = dateChooser.getDate();
-                if (selectedDate != null) {
-                    if (isBeforeToday(selectedDate)) {
-                        Date today = getTodayStartDate();
-                        currentCalendar.setTime(today);
-                        dateChooser.setDate(today);
-                    } else {
-                        currentCalendar.setTime(normalizeDate(selectedDate));
-                    }
-                    clearBookingCache();
-                    updateDisplayedDateText();
-                    refreshView();
-                }
-            });
-
-            btnDayView.addActionListener(e -> {
-                currentMode = ViewMode.DAY;
-                clearBookingCache();
-                updateDateChooserSize();
-                updateDisplayedDateText();
-                refreshView();
-            });
-
-            btnWeekView.addActionListener(e -> {
-                currentMode = ViewMode.WEEK;
-                clearBookingCache();
-                updateDateChooserSize();
-                updateDisplayedDateText();
-                refreshView();
-            });
-
-            btnScheduleView.addActionListener(e -> {
-                currentMode = ViewMode.SCHEDULE;
-                clearBookingCache();
-                updateDateChooserSize();
-                updateDisplayedDateText();
-                refreshView();
-            });
-        }
-
         private void refreshView() {
             matchedComponents.clear();
             currentMainScrollPane = null;
@@ -979,12 +916,10 @@ public class DatBan_GUI extends JFrame {
         }
 
         private void scrollToComponent(JComponent comp) {
-            if (comp == null || currentMainScrollPane == null)
-                return;
+            if (comp == null || currentMainScrollPane == null) return;
 
             JViewport viewport = currentMainScrollPane.getViewport();
-            if (viewport == null || viewport.getView() == null)
-                return;
+            if (viewport == null || viewport.getView() == null) return;
 
             Rectangle bounds = SwingUtilities.convertRectangle(
                     comp.getParent(),
@@ -1039,6 +974,7 @@ public class DatBan_GUI extends JFrame {
                 JPanel bodyPanel,
                 int fixedWidth,
                 int headerHeight) {
+
             JPanel topLeftWrap = new JPanel(new BorderLayout());
             topLeftWrap.setBackground(Color.WHITE);
             topLeftWrap.add(topLeftPanel, BorderLayout.CENTER);
@@ -1107,29 +1043,29 @@ public class DatBan_GUI extends JFrame {
         }
 
         private JPanel buildDayGrid() {
-            JPanel topLeftPanel = new JPanel(new GridBagLayout());
-            JPanel headerPanel = new JPanel(new GridBagLayout());
-            JPanel leftBodyPanel = new JPanel(new GridBagLayout());
-            JPanel bodyPanel = new JPanel(new GridBagLayout());
+            JPanel topLeftPanel = new JPanel(new java.awt.GridBagLayout());
+            JPanel headerPanel = new JPanel(new java.awt.GridBagLayout());
+            JPanel leftBodyPanel = new JPanel(new java.awt.GridBagLayout());
+            JPanel bodyPanel = new JPanel(new java.awt.GridBagLayout());
 
             topLeftPanel.setBackground(Color.WHITE);
             headerPanel.setBackground(Color.WHITE);
             leftBodyPanel.setBackground(Color.WHITE);
             bodyPanel.setBackground(Color.WHITE);
 
-            GridBagConstraints gbcTL = new GridBagConstraints();
-            gbcTL.fill = GridBagConstraints.BOTH;
+            java.awt.GridBagConstraints gbcTL = new java.awt.GridBagConstraints();
+            gbcTL.fill = java.awt.GridBagConstraints.BOTH;
             gbcTL.gridx = 0;
 
-            GridBagConstraints gbcH = new GridBagConstraints();
-            gbcH.fill = GridBagConstraints.BOTH;
+            java.awt.GridBagConstraints gbcH = new java.awt.GridBagConstraints();
+            gbcH.fill = java.awt.GridBagConstraints.BOTH;
 
-            GridBagConstraints gbcL = new GridBagConstraints();
-            gbcL.fill = GridBagConstraints.BOTH;
+            java.awt.GridBagConstraints gbcL = new java.awt.GridBagConstraints();
+            gbcL.fill = java.awt.GridBagConstraints.BOTH;
             gbcL.gridx = 0;
 
-            GridBagConstraints gbcB = new GridBagConstraints();
-            gbcB.fill = GridBagConstraints.BOTH;
+            java.awt.GridBagConstraints gbcB = new java.awt.GridBagConstraints();
+            gbcB.fill = java.awt.GridBagConstraints.BOTH;
 
             java.util.List<Integer> hours = createHourValuesDay();
             java.util.List<String> visibleTables = new ArrayList<>(tableNames);
@@ -1191,29 +1127,29 @@ public class DatBan_GUI extends JFrame {
         }
 
         private JPanel buildWeekGridLikeImage() {
-            JPanel topLeftPanel = new JPanel(new GridBagLayout());
-            JPanel headerPanel = new JPanel(new GridBagLayout());
-            JPanel leftBodyPanel = new JPanel(new GridBagLayout());
-            JPanel bodyPanel = new JPanel(new GridBagLayout());
+            JPanel topLeftPanel = new JPanel(new java.awt.GridBagLayout());
+            JPanel headerPanel = new JPanel(new java.awt.GridBagLayout());
+            JPanel leftBodyPanel = new JPanel(new java.awt.GridBagLayout());
+            JPanel bodyPanel = new JPanel(new java.awt.GridBagLayout());
 
             topLeftPanel.setBackground(Color.WHITE);
             headerPanel.setBackground(Color.WHITE);
             leftBodyPanel.setBackground(Color.WHITE);
             bodyPanel.setBackground(Color.WHITE);
 
-            GridBagConstraints gbcTL = new GridBagConstraints();
-            gbcTL.fill = GridBagConstraints.BOTH;
+            java.awt.GridBagConstraints gbcTL = new java.awt.GridBagConstraints();
+            gbcTL.fill = java.awt.GridBagConstraints.BOTH;
             gbcTL.gridx = 0;
 
-            GridBagConstraints gbcH = new GridBagConstraints();
-            gbcH.fill = GridBagConstraints.BOTH;
+            java.awt.GridBagConstraints gbcH = new java.awt.GridBagConstraints();
+            gbcH.fill = java.awt.GridBagConstraints.BOTH;
 
-            GridBagConstraints gbcL = new GridBagConstraints();
-            gbcL.fill = GridBagConstraints.BOTH;
+            java.awt.GridBagConstraints gbcL = new java.awt.GridBagConstraints();
+            gbcL.fill = java.awt.GridBagConstraints.BOTH;
             gbcL.gridx = 0;
 
-            GridBagConstraints gbcB = new GridBagConstraints();
-            gbcB.fill = GridBagConstraints.BOTH;
+            java.awt.GridBagConstraints gbcB = new java.awt.GridBagConstraints();
+            gbcB.fill = java.awt.GridBagConstraints.BOTH;
 
             java.util.List<Integer> hours = createHourValuesWeek();
             Calendar weekStart = getWeekStart(currentCalendar);
@@ -1287,11 +1223,11 @@ public class DatBan_GUI extends JFrame {
         }
 
         private JComponent buildScheduleViewLikeImage() {
-            JPanel content = new JPanel(new GridBagLayout());
+            JPanel content = new JPanel(new java.awt.GridBagLayout());
             content.setBackground(Color.WHITE);
 
-            GridBagConstraints gbc = new GridBagConstraints();
-            gbc.fill = GridBagConstraints.BOTH;
+            java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
+            gbc.fill = java.awt.GridBagConstraints.BOTH;
 
             int availableWidth = getCenterAvailableWidth();
             int colBan = clamp((int) (availableWidth * 0.12), 110, 140);
@@ -1507,8 +1443,7 @@ public class DatBan_GUI extends JFrame {
         private ImageIcon loadIcon(String path, int w, int h) {
             try {
                 ImageIcon icon = new ImageIcon(path);
-                if (icon.getIconWidth() <= 0)
-                    return null;
+                if (icon.getIconWidth() <= 0) return null;
                 Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
                 return new ImageIcon(img);
             } catch (Exception e) {
@@ -1612,23 +1547,108 @@ public class DatBan_GUI extends JFrame {
                 width = currentMainScrollPane.getParent().getWidth();
             }
 
-            if (width <= 0) {
-                width = cardPanel.getWidth();
-            }
-
-            if (width <= 0) {
-                width = DatBanMainPanel.this.getWidth() - 24;
-            }
-
-            if (width <= 0) {
-                width = Toolkit.getDefaultToolkit().getScreenSize().width - 320;
-            }
+            if (width <= 0) width = cardPanel.getWidth();
+            if (width <= 0) width = DatBanMainPanel.this.getWidth() - 24;
+            if (width <= 0) width = Toolkit.getDefaultToolkit().getScreenSize().width - 320;
 
             return Math.max(980, width - 8);
         }
 
         private int clamp(int value, int min, int max) {
             return Math.max(min, Math.min(max, value));
+        }
+
+        private void initEvents() {
+            btnToday.addActionListener(e -> {
+                Date today = getTodayStartDate();
+                currentCalendar.setTime(today);
+                dateChooser.setDate(today);
+                clearBookingCache();
+                updateDisplayedDateText();
+                refreshView();
+            });
+
+            btnPrev.addActionListener(e -> {
+                Calendar temp = (Calendar) currentCalendar.clone();
+
+                if (currentMode == ViewMode.DAY || currentMode == ViewMode.SCHEDULE) {
+                    temp.add(Calendar.DAY_OF_MONTH, -1);
+                } else {
+                    temp.add(Calendar.DAY_OF_MONTH, -7);
+                }
+
+                if (isBeforeToday(temp.getTime())) {
+                    temp.setTime(getTodayStartDate());
+                }
+
+                currentCalendar.setTime(normalizeDate(temp.getTime()));
+                dateChooser.setDate(currentCalendar.getTime());
+                clearBookingCache();
+                updateDisplayedDateText();
+                refreshView();
+            });
+
+            btnNext.addActionListener(e -> {
+                if (currentMode == ViewMode.DAY || currentMode == ViewMode.SCHEDULE) {
+                    currentCalendar.add(Calendar.DAY_OF_MONTH, 1);
+                } else {
+                    currentCalendar.add(Calendar.DAY_OF_MONTH, 7);
+                }
+
+                currentCalendar.setTime(normalizeDate(currentCalendar.getTime()));
+                dateChooser.setDate(currentCalendar.getTime());
+                clearBookingCache();
+                updateDisplayedDateText();
+                refreshView();
+            });
+
+            dateChooser.getDateEditor().addPropertyChangeListener("date", evt -> {
+                Date selectedDate = dateChooser.getDate();
+                if (selectedDate != null) {
+                    if (isBeforeToday(selectedDate)) {
+                        Date today = getTodayStartDate();
+                        currentCalendar.setTime(today);
+                        dateChooser.setDate(today);
+                    } else {
+                        currentCalendar.setTime(normalizeDate(selectedDate));
+                    }
+                    clearBookingCache();
+                    updateDisplayedDateText();
+                    refreshView();
+                }
+            });
+
+            btnDayView.addActionListener(e -> {
+                currentMode = ViewMode.DAY;
+                clearBookingCache();
+                updateDateChooserSize();
+                updateDisplayedDateText();
+                refreshView();
+            });
+
+            btnWeekView.addActionListener(e -> {
+                currentMode = ViewMode.WEEK;
+                clearBookingCache();
+                updateDateChooserSize();
+                updateDisplayedDateText();
+                refreshView();
+            });
+
+            btnScheduleView.addActionListener(e -> {
+                currentMode = ViewMode.SCHEDULE;
+                clearBookingCache();
+                updateDateChooserSize();
+                updateDisplayedDateText();
+                refreshView();
+            });
+        }
+
+        private void configScroll(JScrollPane scroll) {
+            scroll.setBorder(null);
+            scroll.getViewport().setBackground(Color.WHITE);
+            scroll.getVerticalScrollBar().setUnitIncrement(16);
+            scroll.getHorizontalScrollBar().setUnitIncrement(16);
+            scroll.setWheelScrollingEnabled(true);
         }
 
         enum ViewMode {

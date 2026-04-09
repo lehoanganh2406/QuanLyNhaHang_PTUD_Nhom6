@@ -70,5 +70,9 @@ public class MonAn {
 	public MonAn() {
 		// TODO Auto-generated constructor stub
 	}
+	public MonAn(String maMon) {
+		super();
+		this.maMon = maMon;
+	}
 	
 }

@@ -1,16 +1,46 @@
 package gui;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JProgressBar;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 
 import connectDB.ConnectDB;
 import dao.TaiKhoan_DAO;
+import digLog.TienMoCa_DigLog;
 import entity.TaiKhoan;
 
 public class DangNhap_GUI extends JFrame {
+
+    private static final long serialVersionUID = 1L;
 
     private JPanel contentPane;
     private JTextField txtTenDangNhap;
@@ -29,6 +59,10 @@ public class DangNhap_GUI extends JFrame {
                 new DangNhap_GUI().setVisible(true);
             } catch (Exception e) {
                 e.printStackTrace();
+                JOptionPane.showMessageDialog(null,
+                        "Không thể kết nối cơ sở dữ liệu!",
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
     }
@@ -45,6 +79,8 @@ public class DangNhap_GUI extends JFrame {
         setContentPane(contentPane);
 
         JPanel panelLeft = new JPanel() {
+            private static final long serialVersionUID = 1L;
+
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -224,7 +260,7 @@ public class DangNhap_GUI extends JFrame {
         SwingWorker<TaiKhoan, Void> worker = new SwingWorker<TaiKhoan, Void>() {
             @Override
             protected TaiKhoan doInBackground() throws Exception {
-                Thread.sleep(1200);
+                Thread.sleep(1000);
 
                 TaiKhoan_DAO tkDao = new TaiKhoan_DAO();
 
@@ -252,8 +288,7 @@ public class DangNhap_GUI extends JFrame {
                     TaiKhoan tk = get();
 
                     if (tk != null) {
-                        JOptionPane.showMessageDialog(DangNhap_GUI.this, "Đăng nhập thành công!");
-                        moTrangChu(tk);
+                        moTienMoCaSauDangNhap(tk);
                     } else {
                         JOptionPane.showMessageDialog(DangNhap_GUI.this,
                                 "Sai tên đăng nhập, sai mật khẩu, sai mã tạm hoặc mã đã hết hiệu lực!");
@@ -268,6 +303,19 @@ public class DangNhap_GUI extends JFrame {
 
         worker.execute();
         loading.setVisible(true);
+    }
+
+    private void moTienMoCaSauDangNhap(TaiKhoan tk) {
+        setVisible(false);
+
+        TienMoCa_DigLog dlg = new TienMoCa_DigLog(this, tk);
+        dlg.setVisible(true);
+
+        if (dlg.isMoCaThanhCong()) {
+            TrangChu_GUI trangChu = new TrangChu_GUI(tk);
+            trangChu.setVisible(true);
+            dispose();
+        }
     }
 
     private void xuLyQuenMatKhau() {
@@ -357,12 +405,6 @@ public class DangNhap_GUI extends JFrame {
         return false;
     }
 
-    private void moTrangChu(TaiKhoan tk) {
-        TrangChu_GUI trangChu = new TrangChu_GUI(tk);
-        trangChu.setVisible(true);
-        dispose();
-    }
-
     private void addPlaceholder(JTextField textField, String placeholder) {
         textField.addFocusListener(new FocusAdapter() {
             @Override
@@ -408,6 +450,8 @@ public class DangNhap_GUI extends JFrame {
     }
 
     class LoadingDialog extends JDialog {
+        private static final long serialVersionUID = 1L;
+
         private JLabel lblLoading;
         private Timer timer;
         private int dotCount = 0;
@@ -456,6 +500,7 @@ public class DangNhap_GUI extends JFrame {
     }
 
     class RoundedPanel extends JPanel {
+        private static final long serialVersionUID = 1L;
         private int radius;
 
         public RoundedPanel(int radius) {
@@ -475,6 +520,7 @@ public class DangNhap_GUI extends JFrame {
     }
 
     class RoundedButton extends JButton {
+        private static final long serialVersionUID = 1L;
         private int radius;
 
         public RoundedButton(String text, int radius) {

@@ -79,10 +79,19 @@ CREATE TABLE CaLamViec (
     maCa VARCHAR(20) NOT NULL PRIMARY KEY,
     tenCa NVARCHAR(100) NOT NULL,
     thoiGianMoCa DATETIME NOT NULL,
-    thoiGianDongCa DATETIME NOT NULL,
+    thoiGianDongCa DATETIME NULL,
+    tienMoCa DECIMAL(18,2) NOT NULL DEFAULT 0,
+    tienMatCuoiCa DECIMAL(18,2) NOT NULL DEFAULT 0,
+    tienChuyenKhoanCuoiCa DECIMAL(18,2) NOT NULL DEFAULT 0,
+    tienVisaCuoiCa DECIMAL(18,2) NOT NULL DEFAULT 0,
     maTaiKhoan VARCHAR(20) NOT NULL,
+
     CONSTRAINT FK_CaLamViec_TaiKhoan FOREIGN KEY (maTaiKhoan) REFERENCES TaiKhoan(maTaiKhoan),
-    CONSTRAINT CK_CaLamViec_ThoiGian CHECK (thoiGianDongCa > thoiGianMoCa)
+    CONSTRAINT CK_CaLamViec_ThoiGian CHECK (thoiGianDongCa IS NULL OR thoiGianDongCa > thoiGianMoCa),
+    CONSTRAINT CK_CaLamViec_TienMoCa CHECK (tienMoCa >= 0),
+    CONSTRAINT CK_CaLamViec_TienMatCuoiCa CHECK (tienMatCuoiCa >= 0),
+    CONSTRAINT CK_CaLamViec_TienChuyenKhoanCuoiCa CHECK (tienChuyenKhoanCuoiCa >= 0),
+    CONSTRAINT CK_CaLamViec_TienVisaCuoiCa CHECK (tienVisaCuoiCa >= 0)
 );
 GO
 
@@ -468,11 +477,11 @@ VALUES
 ('TK04', 'NV004', 'phucvu', N'Lễ tân', 1, 'NV004');
 GO
 
-INSERT INTO CaLamViec (maCa, tenCa, thoiGianMoCa, thoiGianDongCa, maTaiKhoan)
+INSERT INTO CaLamViec (maCa, tenCa, thoiGianMoCa, thoiGianDongCa, tienMoCa, tienMatCuoiCa, tienChuyenKhoanCuoiCa, tienVisaCuoiCa, maTaiKhoan)
 VALUES
-('CL001', N'Ca sáng 07/04/2026', '2026-04-07 07:00:00', '2026-04-07 14:00:00', 'TK01'),
-('CL002', N'Ca chiều 07/04/2026', '2026-04-07 14:00:00', '2026-04-07 22:00:00', 'TK02'),
-('CL003', N'Ca sáng 08/04/2026', '2026-04-08 07:00:00', '2026-04-08 14:00:00', 'TK03');
+('CL001', N'Ca sáng', '2026-04-07 09:00:00', '2026-04-07 17:00:00', 1000000, 2000000, 1500000, 300000, 'TK01'),
+('CL002', N'Ca chiều', '2026-04-07 17:00:00', '2026-04-07 23:00:00', 1000000, 1800000, 1200000, 250000, 'TK02'),
+('CL003', N'Ca sáng', '2026-04-08 09:00:00', '2026-04-08 17:00:00', 1000000, 2200000, 1700000, 350000, 'TK03');
 GO
 
 ALTER SEQUENCE seq_NhanVien RESTART WITH 5;

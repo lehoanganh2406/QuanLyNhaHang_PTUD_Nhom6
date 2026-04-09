@@ -28,6 +28,16 @@ public class Pn_ThanhMenu extends JPanel {
     private final JLabel lblUserIcon;
     private final JLabel lblUserText;
 
+    // Callback xử lý việc chuyển trang
+    public interface PageSwitcher {
+        void switchPage(String pageName);
+    }
+    private PageSwitcher pageSwitcher;
+
+    public void setPageSwitcher(PageSwitcher switcher) {
+        this.pageSwitcher = switcher;
+    }
+
     public Pn_ThanhMenu() {
         setLayout(null);
         setOpaque(false);
@@ -98,18 +108,26 @@ public class Pn_ThanhMenu extends JPanel {
 
     private void initMenu() {
         MenuItemPanel mnHeThong = new MenuItemPanel("Hệ thống", "img/mn_hethong.png");
-        mnHeThong.addSubItem("Trang chủ", () -> System.out.println("Trang chủ"));
+        mnHeThong.addSubItem("Trang chủ", () -> {
+            if (pageSwitcher != null) pageSwitcher.switchPage("TrangChu");
+        });
         mnHeThong.addSubItem("Quản lý tài khoản", () -> System.out.println("Quản lý tài khoản"));
         mnHeThong.addSubItem("Đăng xuất", () -> System.out.println("Đăng xuất"));
         mnHeThong.addSubItem("Hỗ trợ", () -> System.out.println("Hỗ trợ"));
 
         MenuItemPanel mnDanhMuc = new MenuItemPanel("Danh mục", "img/mn_danhmuc.png");
         mnDanhMuc.addSubItem("Thực đơn", () -> System.out.println("Thực đơn"));
-        mnDanhMuc.addSubItem("Khu vực", () -> System.out.println("Khu vực"));
+        mnDanhMuc.addSubItem("Khu vực", () -> {
+            if (pageSwitcher != null) pageSwitcher.switchPage("KhuVuc");
+        });
         mnDanhMuc.addSubItem("Nhân viên", () -> System.out.println("Nhân viên"));
         mnDanhMuc.addSubItem("Khách hàng", () -> System.out.println("Khách hàng"));
-        mnDanhMuc.addSubItem("Khuyến mãi", () -> System.out.println("Khuyến mãi"));
-        mnDanhMuc.addSubItem("Bàn", () -> System.out.println("Bàn"));
+        mnDanhMuc.addSubItem("Khuyến mãi", () -> {
+            if (pageSwitcher != null) pageSwitcher.switchPage("KhuyenMai");
+        });
+        mnDanhMuc.addSubItem("Bàn", () -> {
+            if (pageSwitcher != null) pageSwitcher.switchPage("Ban");
+        });
 
         MenuItemPanel mnXuLy = new MenuItemPanel("Xử lý", "img/mn_xuly.png");
         mnXuLy.addSubItem("Order", () -> System.out.println("Order"));
@@ -119,9 +137,15 @@ public class Pn_ThanhMenu extends JPanel {
         MenuItemPanel mnTraCuu = new MenuItemPanel("Tra cứu", "img/mn_tracuu.png");
 
         MenuItemPanel mnThongKe = new MenuItemPanel("Thống kê", "img/mn_thongke.png");
-        mnThongKe.addSubItem("Thống kê theo ca", () -> System.out.println("Thống kê theo ca"));
-        mnThongKe.addSubItem("Phân tích bán hàng", () -> System.out.println("Phân tích bán hàng"));
-        mnThongKe.addSubItem("Tổng kết bán hàng", () -> System.out.println("Tổng kết bán hàng"));
+        mnThongKe.addSubItem("Thống kê theo ca", () -> {
+            if (pageSwitcher != null) pageSwitcher.switchPage("TK_TheoCa");
+        });
+        mnThongKe.addSubItem("Phân tích bán hàng", () -> {
+            if (pageSwitcher != null) pageSwitcher.switchPage("TK_PhanTich");
+        });
+        mnThongKe.addSubItem("Tổng kết bán hàng", () -> {
+            if (pageSwitcher != null) pageSwitcher.switchPage("TK_TongKet");
+        });
 
         addMenu(mnHeThong);
         addMenu(mnDanhMuc);
@@ -166,7 +190,7 @@ public class Pn_ThanhMenu extends JPanel {
         selectedMenu.setSelected(true);
     }
 
-    private void hideSubMenu() {
+    public void hideSubMenu() {
         if (selectedMenu != null) {
             selectedMenu.setSelected(false);
             selectedMenu = null;

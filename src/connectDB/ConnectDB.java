@@ -16,8 +16,8 @@ public class ConnectDB {
     }
 	public void connect()  {
         String username = "sa";
-        String password = "Qazwsxedc@12345";
-        String url = "jdbc:sqlserver://localhost:1433;databaseName=QuanLyDatBanNhaHangHyVong;encrypt=true;trustServerCertificate=true;loginTimeout=5";
+        String password = "Plmoknijb@12345";
+        String url = "jdbc:sqlserver://localhost:1433;databaseName=QL_NhaHang;encrypt=true;trustServerCertificate=true;loginTimeout=5";
         
 
         

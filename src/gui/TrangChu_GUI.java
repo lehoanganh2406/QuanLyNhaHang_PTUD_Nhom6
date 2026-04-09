@@ -4,26 +4,35 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Graphics;
 import java.awt.Image;
+
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
+
+import entity.TaiKhoan;
 
 public class TrangChu_GUI extends JFrame {
 
+    private static final long serialVersionUID = 1L;
+
     private Image backgroundImage;
+
     private CardLayout cardLayout;
     private JPanel pnContent;
 
     public TrangChu_GUI() {
         setTitle("Trang chủ - Quản Lý Nhà Hàng");
+
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+
 
         // Ảnh nền trang chủ
         backgroundImage = new ImageIcon("img/trangchu.png").getImage();
 
         // Panel gốc vẽ ảnh nền phía dưới
         JPanel backgroundPanel = new JPanel(new BorderLayout()) {
+
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -34,6 +43,7 @@ public class TrangChu_GUI extends JFrame {
         };
         backgroundPanel.setOpaque(true);
         setContentPane(backgroundPanel);
+
 
         // ── Vùng nội dung trung tâm dùng CardLayout để swap panel ──
         cardLayout = new CardLayout();
@@ -69,12 +79,10 @@ public class TrangChu_GUI extends JFrame {
         backgroundPanel.add(pnContent, BorderLayout.CENTER);
 
         setExtendedState(JFrame.MAXIMIZED_BOTH);
+
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            TrangChu_GUI frame = new TrangChu_GUI();
-            frame.setVisible(true);
-        });
+    public TaiKhoan getTaiKhoanDangNhap() {
+        return taiKhoanDangNhap;
     }
 }

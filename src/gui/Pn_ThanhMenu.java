@@ -2,31 +2,38 @@ package gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+
+import entity.TaiKhoan;
 
 public class Pn_ThanhMenu extends JPanel {
 
     private final Color BG_TOP = new Color(239, 211, 158);
     private final Color BG_HOVER = new Color(231, 191, 120);
     private final Color BG_SELECTED = new Color(220, 170, 80);
+
     private final Color BG_SUB = new Color(238, 194, 120);
     private final Color BG_SUB_HOVER = new Color(245, 218, 170);
+
     private final Color BORDER_COLOR = new Color(201, 155, 86);
+
+    private final Color FG_NORMAL = Color.BLACK;
+    private final Color FG_DISABLED = new Color(140, 140, 140);
+    private final Color BG_DISABLED = new Color(232, 220, 198);
 
     private final JPanel pnHeader;
     private final JPanel pnTopMenu;
     private final JPanel pnUserInfo;
-    private final JPanel pnPopupLayer;
-
-    private MenuItemPanel selectedMenu;
-    private JPanel currentSubPanel;
 
     private final JLabel lblUserIcon;
     private final JLabel lblUserText;
+
 
     // Callback xử lý việc chuyển trang
     public interface PageSwitcher {
@@ -39,6 +46,7 @@ public class Pn_ThanhMenu extends JPanel {
     }
 
     public Pn_ThanhMenu() {
+
         setLayout(null);
         setOpaque(false);
 
@@ -46,15 +54,15 @@ public class Pn_ThanhMenu extends JPanel {
         pnTopMenu.setOpaque(false);
         pnTopMenu.setBorder(new EmptyBorder(0, 8, 0, 8));
 
-        pnUserInfo = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 8));
+        pnUserInfo = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
         pnUserInfo.setOpaque(false);
         pnUserInfo.setBorder(new EmptyBorder(2, 8, 2, 16));
 
         lblUserIcon = new JLabel();
-        lblUserIcon.setIcon(loadIcon("img/mn_acout.png", 32, 32));
+        lblUserIcon.setIcon(loadIcon("img/mn_acout.png", 30, 30));
 
-        lblUserText = new JLabel("Quản lý: HoàngAnh");
-        lblUserText.setFont(new Font("Times New Roman", Font.BOLD, 18));
+        lblUserText = new JLabel(buildUserText());
+        lblUserText.setFont(new Font("SansSerif", Font.BOLD, 16));
         lblUserText.setForeground(Color.BLACK);
 
         pnUserInfo.add(lblUserIcon);
@@ -66,14 +74,11 @@ public class Pn_ThanhMenu extends JPanel {
         pnHeader.add(pnTopMenu, BorderLayout.WEST);
         pnHeader.add(pnUserInfo, BorderLayout.EAST);
 
-        pnPopupLayer = new JPanel(null);
-        pnPopupLayer.setOpaque(false);
-
         add(pnHeader);
-        add(pnPopupLayer);
 
         initMenu();
         initResponsiveBehavior();
+        installGlobalHidePopup();
     }
 
     private void initResponsiveBehavior() {
@@ -81,33 +86,71 @@ public class Pn_ThanhMenu extends JPanel {
             @Override
             public void componentResized(ComponentEvent e) {
                 layoutChildren();
-                updatePopupPosition();
                 revalidate();
                 repaint();
             }
         });
     }
 
+    private void installGlobalHidePopup() {
+        Toolkit.getDefaultToolkit().addAWTEventListener(event -> {
+            if (!(event instanceof MouseEvent)) return;
+            MouseEvent me = (MouseEvent) event;
+            if (me.getID() != MouseEvent.MOUSE_PRESSED) return;
+
+            if (currentPopupMenu == null || !currentPopupMenu.isVisible()) return;
+
+            Object src = me.getSource();
+            if (!(src instanceof Component)) return;
+
+            Component clicked = (Component) src;
+
+            if (SwingUtilities.isDescendingFrom(clicked, this)) return;
+            if (SwingUtilities.isDescendingFrom(clicked, currentPopupMenu)) return;
+
+            hideSubMenu();
+        }, AWTEvent.MOUSE_EVENT_MASK);
+    }
+
     private void layoutChildren() {
-        int headerHeight = 42;
-        pnHeader.setBounds(0, 0, getWidth(), headerHeight);
-        pnPopupLayer.setBounds(0, headerHeight, getWidth(), Math.max(0, getHeight() - headerHeight));
+        pnHeader.setBounds(0, 0, getWidth(), 42);
     }
 
     @Override
     public Dimension getPreferredSize() {
-        int headerHeight = 42;
-        int popupHeight = 0;
+        return new Dimension(100, 42);
+    }
 
-        if (currentSubPanel != null && currentSubPanel.isVisible()) {
-            popupHeight = currentSubPanel.getHeight();
+    private String buildUserText() {
+        String hoTen = "";
+        String vaiTro = "";
+
+        try {
+            if (taiKhoanDangNhap != null && taiKhoanDangNhap.getMaNV() != null) {
+                if (taiKhoanDangNhap.getMaNV().getHoTen() != null) {
+                    hoTen = taiKhoanDangNhap.getMaNV().getHoTen().trim();
+                }
+                if (taiKhoanDangNhap.getMaNV().getChucVu() != null) {
+                    vaiTro = taiKhoanDangNhap.getMaNV().getChucVu().trim();
+                }
+            }
+
+            if ((vaiTro == null || vaiTro.isEmpty()) && taiKhoanDangNhap != null && taiKhoanDangNhap.getPhanQuyen() != null) {
+                vaiTro = taiKhoanDangNhap.getPhanQuyen().trim();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        return new Dimension(100, headerHeight + popupHeight);
+        if (hoTen.isEmpty()) hoTen = "Người dùng";
+        if (vaiTro.isEmpty()) return hoTen;
+
+        return vaiTro + ": " + hoTen;
     }
 
     private void initMenu() {
         MenuItemPanel mnHeThong = new MenuItemPanel("Hệ thống", "img/mn_hethong.png");
+
         mnHeThong.addSubItem("Trang chủ", () -> {
             if (pageSwitcher != null) pageSwitcher.switchPage("TrangChu");
         });
@@ -129,14 +172,17 @@ public class Pn_ThanhMenu extends JPanel {
             if (pageSwitcher != null) pageSwitcher.switchPage("Ban");
         });
 
+
         MenuItemPanel mnXuLy = new MenuItemPanel("Xử lý", "img/mn_xuly.png");
-        mnXuLy.addSubItem("Order", () -> System.out.println("Order"));
-        mnXuLy.addSubItem("Đặt bàn", () -> System.out.println("Đặt bàn"));
-        mnXuLy.addSubItem("Hóa đơn", () -> System.out.println("Hóa đơn"));
+        mnXuLy.addSubItem("Order", "Order_GUI");
+        mnXuLy.addSubItem("Đặt bàn", "DatBan_GUI");
+        mnXuLy.addSubItem("Hóa đơn", "HoaDon_GUI");
 
         MenuItemPanel mnTraCuu = new MenuItemPanel("Tra cứu", "img/mn_tracuu.png");
+        mnTraCuu.addDirectPage("TraCuuBan_GUI");
 
         MenuItemPanel mnThongKe = new MenuItemPanel("Thống kê", "img/mn_thongke.png");
+
         mnThongKe.addSubItem("Thống kê theo ca", () -> {
             if (pageSwitcher != null) pageSwitcher.switchPage("TK_TheoCa");
         });
@@ -152,6 +198,79 @@ public class Pn_ThanhMenu extends JPanel {
         addMenu(mnXuLy);
         addMenu(mnTraCuu);
         addMenu(mnThongKe);
+
+        SwingUtilities.invokeLater(() -> {
+            updateAllMenuWidths();
+            revalidate();
+            repaint();
+        });
+    }
+
+    private void applyPermissionForRole(MenuItemPanel mnHeThong,
+                                        MenuItemPanel mnDanhMuc,
+                                        MenuItemPanel mnXuLy,
+                                        MenuItemPanel mnTraCuu,
+                                        MenuItemPanel mnThongKe) {
+
+        if (isLeTan()) {
+            // Hệ thống: chỉ cho Trang chủ, Hỗ trợ, Đăng xuất
+            mnHeThong.setSubItemEnabled("Trang chủ", true);
+            mnHeThong.setSubItemEnabled("Quản lý tài khoản", false);
+            mnHeThong.setSubItemEnabled("Đăng xuất", true);
+            mnHeThong.setSubItemEnabled("Hỗ trợ", true);
+
+            // Danh mục: cấm hết
+            mnDanhMuc.setAllSubItemsEnabled(false);
+
+            // Xử lý: chỉ cho Order, Đặt bàn
+            mnXuLy.setSubItemEnabled("Order", true);
+            mnXuLy.setSubItemEnabled("Đặt bàn", true);
+            mnXuLy.setSubItemEnabled("Hóa đơn", false);
+
+            // Tra cứu: cho phép
+            mnTraCuu.setDirectPageEnabled(true);
+
+            // Thống kê: chỉ cho Thống kê theo ca
+            mnThongKe.setSubItemEnabled("Thống kê theo ca", true);
+            mnThongKe.setSubItemEnabled("Phân tích bán hàng", false);
+            mnThongKe.setSubItemEnabled("Tổng kết bán hàng", false);
+        } else {
+            // Quản lý hoặc quyền khác: cho tất cả
+            mnHeThong.setAllSubItemsEnabled(true);
+            mnDanhMuc.setAllSubItemsEnabled(true);
+            mnXuLy.setAllSubItemsEnabled(true);
+            mnTraCuu.setDirectPageEnabled(true);
+            mnThongKe.setAllSubItemsEnabled(true);
+        }
+
+        mnHeThong.refreshParentEnabledState();
+        mnDanhMuc.refreshParentEnabledState();
+        mnXuLy.refreshParentEnabledState();
+        mnTraCuu.refreshParentEnabledState();
+        mnThongKe.refreshParentEnabledState();
+    }
+
+    private boolean isLeTan() {
+        String phanQuyen = "";
+        String chucVu = "";
+
+        try {
+            if (taiKhoanDangNhap != null) {
+                if (taiKhoanDangNhap.getPhanQuyen() != null) {
+                    phanQuyen = taiKhoanDangNhap.getPhanQuyen().trim().toLowerCase();
+                }
+                if (taiKhoanDangNhap.getMaNV() != null && taiKhoanDangNhap.getMaNV().getChucVu() != null) {
+                    chucVu = taiKhoanDangNhap.getMaNV().getChucVu().trim().toLowerCase();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return phanQuyen.contains("lễ tân")
+                || phanQuyen.contains("le tan")
+                || chucVu.contains("lễ tân")
+                || chucVu.contains("le tan");
     }
 
     private void addMenu(MenuItemPanel menu) {
@@ -160,13 +279,29 @@ public class Pn_ThanhMenu extends JPanel {
         MouseAdapter clickEvent = new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (selectedMenu == menu && currentSubPanel != null && currentSubPanel.isVisible()) {
-                    hideSubMenu();
+                if (!menu.isMenuUsable()) {
+                    Toolkit.getDefaultToolkit().beep();
                     return;
                 }
 
-                selectMenu(menu);
-                toggleSubMenu(menu);
+                if (menu.hasSubMenu()) {
+                    if (selectedMenu == menu && currentPopupMenu != null && currentPopupMenu.isVisible()) {
+                        hideSubMenu();
+                        return;
+                    }
+
+                    selectMenu(menu);
+                    toggleSubMenu(menu);
+                } else {
+                    selectMenu(menu);
+                    hideOnlyPopup();
+
+                    if (menu.directPageEnabled) {
+                        navigateTo(menu.directPageClassName);
+                    } else {
+                        Toolkit.getDefaultToolkit().beep();
+                    }
+                }
             }
         };
 
@@ -190,85 +325,163 @@ public class Pn_ThanhMenu extends JPanel {
         selectedMenu.setSelected(true);
     }
 
+
     public void hideSubMenu() {
+
         if (selectedMenu != null) {
             selectedMenu.setSelected(false);
             selectedMenu = null;
         }
-
-        pnPopupLayer.removeAll();
-        currentSubPanel = null;
+        hideOnlyPopup();
         revalidate();
         repaint();
     }
 
     private void toggleSubMenu(MenuItemPanel menu) {
-        pnPopupLayer.removeAll();
-        currentSubPanel = null;
+        hideOnlyPopup();
 
-        if (menu.subItems.isEmpty()) {
-            revalidate();
-            repaint();
+        if (!menu.hasEnabledSubMenu()) {
+            Toolkit.getDefaultToolkit().beep();
             return;
         }
 
-        JPanel subPanel = new JPanel();
-        subPanel.setLayout(new BoxLayout(subPanel, BoxLayout.Y_AXIS));
-        subPanel.setBackground(BG_SUB);
-        subPanel.setOpaque(true);
-        subPanel.setBorder(BorderFactory.createCompoundBorder(
+        JPopupMenu popup = new JPopupMenu();
+        popup.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(BORDER_COLOR, 1, true),
                 new EmptyBorder(2, 2, 2, 2)
         ));
+        popup.setBackground(BG_SUB);
+        popup.setOpaque(true);
+        popup.setLayout(new BoxLayout(popup, BoxLayout.Y_AXIS));
+
+        int itemHeight = 38;
+        int width = menu.getPreferredSize().width;
+
+        try {
+            Point locationOnScreen = menu.getLocationOnScreen();
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+            if (locationOnScreen.x + width > screenSize.width) {
+                width = Math.max(140, screenSize.width - locationOnScreen.x - 10);
+            }
+        } catch (IllegalComponentStateException ex) {
+            width = menu.getPreferredSize().width;
+        }
 
         for (int i = 0; i < menu.subItems.size(); i++) {
-            SubMenuItemPanel item = menu.subItems.get(i);
-            subPanel.add(item);
+            SubMenuItemPanel src = menu.subItems.get(i);
+            SubMenuItemPanel item = new SubMenuItemPanel(src.menuText, src.targetClassName, src.enabled);
+
+            item.setPreferredSize(new Dimension(width, itemHeight));
+            item.setMinimumSize(new Dimension(width, itemHeight));
+            item.setMaximumSize(new Dimension(width, itemHeight));
+
+            popup.add(item);
 
             if (i < menu.subItems.size() - 1) {
                 JPanel line = new JPanel();
                 line.setBackground(BORDER_COLOR);
-                line.setPreferredSize(new Dimension(1, 1));
-                line.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-                line.setMinimumSize(new Dimension(1, 1));
+                line.setPreferredSize(new Dimension(width, 1));
+                line.setMaximumSize(new Dimension(width, 1));
+                line.setMinimumSize(new Dimension(width, 1));
                 line.setAlignmentX(Component.LEFT_ALIGNMENT);
-                subPanel.add(line);
+                popup.add(line);
             }
         }
 
-        currentSubPanel = subPanel;
-        pnPopupLayer.add(subPanel);
-
-        updatePopupPosition();
-        revalidate();
-        repaint();
+        currentPopupMenu = popup;
+        currentPopupMenu.show(menu, 0, menu.getHeight());
     }
 
-    private void updatePopupPosition() {
-        if (selectedMenu == null || currentSubPanel == null) {
+    private void updateAllMenuWidths() {
+        for (Component c : pnTopMenu.getComponents()) {
+            if (c instanceof MenuItemPanel) {
+                ((MenuItemPanel) c).updateWidthByContent();
+            }
+        }
+    }
+
+    private void navigateTo(String targetClassName) {
+        if (targetClassName == null || targetClassName.trim().isEmpty()) {
+            Toolkit.getDefaultToolkit().beep();
             return;
         }
 
-        int itemHeight = 38;
-        int lineHeight = 1;
-        int count = selectedMenu.subItems.size();
-        int height = count * itemHeight + Math.max(0, count - 1) * lineHeight + 6;
-        int width = selectedMenu.getWidth();
+        if ("__HOTRO__".equals(targetClassName)) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Liên hệ quản lý hệ thống hoặc bộ phận kỹ thuật để được hỗ trợ.",
+                    "Hỗ trợ",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+            return;
+        }
 
-        Point p = SwingUtilities.convertPoint(selectedMenu.getParent(), selectedMenu.getLocation(), pnPopupLayer);
-        currentSubPanel.setBounds(p.x, 0, width, height);
+        Window currentWindow = SwingUtilities.getWindowAncestor(this);
+        if (currentWindow instanceof JFrame) {
+            String currentClassName = currentWindow.getClass().getSimpleName();
+            if (currentClassName.equals(targetClassName)) {
+                hideSubMenu();
+                return;
+            }
+        }
 
-        currentSubPanel.revalidate();
-        currentSubPanel.repaint();
+        try {
+            JFrame nextFrame = createFrame(targetClassName);
+            if (nextFrame == null) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Không mở được trang " + targetClassName,
+                        "Lỗi điều hướng",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            nextFrame.setVisible(true);
+
+            Window oldWindow = SwingUtilities.getWindowAncestor(this);
+            if (oldWindow != null) {
+                oldWindow.dispose();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Không mở được trang " + targetClassName,
+                    "Lỗi điều hướng",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        } finally {
+            hideSubMenu();
+        }
     }
 
-    public void setUserInfo(String text, String iconPath) {
-        lblUserText.setText(text == null ? "" : text);
+    private JFrame createFrame(String className) throws Exception {
+        Class<?> clazz = Class.forName("gui." + className);
 
-        if (iconPath != null && !iconPath.trim().isEmpty()) {
-            lblUserIcon.setIcon(loadIcon(iconPath, 18, 18));
-        } else {
-            lblUserIcon.setIcon(null);
+        try {
+            Constructor<?> cons = clazz.getConstructor(TaiKhoan.class);
+            Object obj = cons.newInstance(taiKhoanDangNhap);
+            if (obj instanceof JFrame) return (JFrame) obj;
+        } catch (NoSuchMethodException e) {
+            // bỏ qua để thử constructor rỗng
+        }
+
+        Constructor<?> emptyCons = clazz.getConstructor();
+        Object obj = emptyCons.newInstance();
+        if (obj instanceof JFrame) return (JFrame) obj;
+
+        return null;
+    }
+
+    private ImageIcon loadIcon(String path, int w, int h) {
+        try {
+            ImageIcon icon = new ImageIcon(path);
+            if (icon.getIconWidth() <= 0) return null;
+            Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            return new ImageIcon(img);
+        } catch (Exception e) {
+            return null;
         }
     }
 
@@ -276,38 +489,45 @@ public class Pn_ThanhMenu extends JPanel {
         private final JLabel lblIcon;
         private final JLabel lblText;
         private final JLabel lblArrow;
+
         private boolean selected = false;
+        private boolean menuUsable = true;
+
         private final List<SubMenuItemPanel> subItems = new ArrayList<>();
+
+        private String directPageClassName;
+        private boolean directPageEnabled = true;
 
         public MenuItemPanel(String text, String iconPath) {
             setLayout(new FlowLayout(FlowLayout.LEFT, 6, 8));
             setBackground(BG_TOP);
             setOpaque(true);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
-            setPreferredSize(new Dimension(170, 42));
             setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(220, 185, 120)),
                     new EmptyBorder(0, 14, 0, 14)
             ));
+            setPreferredSize(new Dimension(170, 42));
+            setMinimumSize(new Dimension(170, 42));
+            setMaximumSize(new Dimension(170, 42));
 
             lblIcon = new JLabel();
             lblIcon.setIcon(loadIcon(iconPath, 16, 16));
 
             lblText = new JLabel(text);
-            lblText.setFont(new Font("Times New Roman", Font.BOLD, 18));
-            lblText.setForeground(Color.BLACK);
+            lblText.setFont(new Font("SansSerif", Font.BOLD, 18));
+            lblText.setForeground(FG_NORMAL);
 
             lblArrow = new JLabel();
-            lblArrow.setIcon(loadIcon("img/mn_muiten.png", 24, 24)); // chỉnh size tùy bạn
+            lblArrow.setIcon(loadIcon("img/mn_muiten.png", 20, 20));
 
             add(lblIcon);
             add(lblText);
-            
 
             MouseAdapter hoverEvent = new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
-                    if (!selected) {
+                    if (!selected && menuUsable) {
                         setBackground(BG_HOVER);
                     }
                 }
@@ -315,7 +535,7 @@ public class Pn_ThanhMenu extends JPanel {
                 @Override
                 public void mouseExited(MouseEvent e) {
                     if (!selected) {
-                        setBackground(BG_TOP);
+                        setBackground(menuUsable ? BG_TOP : BG_DISABLED);
                     }
                 }
             };
@@ -323,66 +543,155 @@ public class Pn_ThanhMenu extends JPanel {
             attachMouseListenerRecursive(this, hoverEvent);
         }
 
-        public void addSubItem(String text, Runnable action) {
+        public void addSubItem(String text, String targetClassName) {
             if (subItems.isEmpty()) {
-                add(lblArrow);   // chỉ add khi có submenu
+                add(lblArrow);
                 revalidate();
                 repaint();
             }
-            subItems.add(new SubMenuItemPanel(text, action));
+            subItems.add(new SubMenuItemPanel(text, targetClassName, true));
+        }
+
+        public void addDirectPage(String targetClassName) {
+            this.directPageClassName = targetClassName;
+        }
+
+        public boolean hasSubMenu() {
+            return !subItems.isEmpty();
+        }
+
+        public boolean hasEnabledSubMenu() {
+            for (SubMenuItemPanel item : subItems) {
+                if (item.enabled) return true;
+            }
+            return false;
+        }
+
+        public void setSubItemEnabled(String text, boolean enabled) {
+            for (SubMenuItemPanel item : subItems) {
+                if (item.menuText.equalsIgnoreCase(text)) {
+                    item.enabled = enabled;
+                }
+            }
+        }
+
+        public void setAllSubItemsEnabled(boolean enabled) {
+            for (SubMenuItemPanel item : subItems) {
+                item.enabled = enabled;
+            }
+        }
+
+        public void setDirectPageEnabled(boolean enabled) {
+            this.directPageEnabled = enabled;
+        }
+
+        public void refreshParentEnabledState() {
+            if (hasSubMenu()) {
+                this.menuUsable = hasEnabledSubMenu();
+            } else {
+                this.menuUsable = directPageEnabled;
+            }
+
+            lblText.setForeground(menuUsable ? FG_NORMAL : FG_DISABLED);
+            setBackground(menuUsable ? BG_TOP : BG_DISABLED);
+            setCursor(menuUsable ? new Cursor(Cursor.HAND_CURSOR) : new Cursor(Cursor.DEFAULT_CURSOR));
+        }
+
+        public boolean isMenuUsable() {
+            return menuUsable;
         }
 
         public void setSelected(boolean selected) {
             this.selected = selected;
-            setBackground(selected ? BG_SELECTED : BG_TOP);
+            if (!menuUsable) {
+                setBackground(BG_DISABLED);
+            } else {
+                setBackground(selected ? BG_SELECTED : BG_TOP);
+            }
+        }
+
+        public void updateWidthByContent() {
+            Font font = new Font("SansSerif", Font.BOLD, 18);
+            FontMetrics fm = getFontMetrics(font);
+
+            int parentTextWidth = fm.stringWidth(lblText.getText());
+            int baseWidth = 14 + 16 + 6 + parentTextWidth + 14;
+
+            if (hasSubMenu()) {
+                baseWidth += 6 + 20;
+            }
+
+            int maxSubWidth = 0;
+            for (SubMenuItemPanel item : subItems) {
+                int subWidth = fm.stringWidth(item.menuText) + 24;
+                maxSubWidth = Math.max(maxSubWidth, subWidth);
+            }
+
+            int finalWidth = Math.max(baseWidth, maxSubWidth + 28);
+            finalWidth = Math.max(145, finalWidth);
+
+            setPreferredSize(new Dimension(finalWidth, 42));
+            setMinimumSize(new Dimension(finalWidth, 42));
+            setMaximumSize(new Dimension(finalWidth, 42));
         }
     }
 
     class SubMenuItemPanel extends JPanel {
-        public SubMenuItemPanel(String text, Runnable action) {
-            setLayout(new BorderLayout());
-            setBackground(BG_SUB);
-            setOpaque(true);
-            setCursor(new Cursor(Cursor.HAND_CURSOR));
-            setAlignmentX(Component.LEFT_ALIGNMENT);
+        private final String menuText;
+        private final String targetClassName;
+        private boolean enabled;
 
-            setPreferredSize(new Dimension(0, 38));
-            setMinimumSize(new Dimension(0, 38));
-            setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        public SubMenuItemPanel(String text, String targetClassName, boolean enabled) {
+            this.menuText = text;
+            this.targetClassName = targetClassName;
+            this.enabled = enabled;
+
+            setLayout(new BorderLayout());
+            setOpaque(true);
+            setAlignmentX(Component.LEFT_ALIGNMENT);
             setBorder(new EmptyBorder(0, 12, 0, 10));
+            setPreferredSize(new Dimension(1, 38));
+            setMinimumSize(new Dimension(1, 38));
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
 
             JLabel lblText = new JLabel(text);
-            lblText.setFont(new Font("Times New Roman", Font.BOLD, 18));
-            lblText.setForeground(Color.BLACK);
+            lblText.setFont(new Font("SansSerif", Font.BOLD, 18));
+            lblText.setForeground(enabled ? FG_NORMAL : FG_DISABLED);
 
             add(lblText, BorderLayout.WEST);
+
+            refreshStyle(lblText);
 
             MouseAdapter event = new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
-                    setBackground(BG_SUB_HOVER);
+                    if (enabled) {
+                        setBackground(BG_SUB_HOVER);
+                    }
                 }
 
                 @Override
                 public void mouseExited(MouseEvent e) {
-                    setBackground(BG_SUB);
+                    refreshStyle(lblText);
                 }
 
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    if (action != null) {
-                        action.run();
+                    if (!enabled) {
+                        Toolkit.getDefaultToolkit().beep();
+                        return;
                     }
+                    navigateTo(targetClassName);
                 }
             };
 
             attachMouseListenerRecursive(this, event);
         }
-    }
 
-    private ImageIcon loadIcon(String path, int w, int h) {
-        ImageIcon icon = new ImageIcon(path);
-        Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
-        return new ImageIcon(img);
+        private void refreshStyle(JLabel lblText) {
+            setBackground(enabled ? BG_SUB : BG_DISABLED);
+            lblText.setForeground(enabled ? FG_NORMAL : FG_DISABLED);
+            setCursor(enabled ? new Cursor(Cursor.HAND_CURSOR) : new Cursor(Cursor.DEFAULT_CURSOR));
+        }
     }
 }

@@ -199,12 +199,12 @@ public class TongKetBanHang_GUI extends JFrame {
                 new EmptyBorder(20, 15, 20, 15)));
 
         JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 11));
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 16));
         lblTitle.setForeground(titleFg);
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
 
         JLabel lblVal = new JLabel(value);
-        lblVal.setFont(new Font("SansSerif", Font.BOLD, 22));
+        lblVal.setFont(new Font("SansSerif", Font.BOLD, 28));
         lblVal.setForeground(new Color(40, 40, 40));
         lblVal.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -227,7 +227,7 @@ public class TongKetBanHang_GUI extends JFrame {
         leftCol.setOpaque(false);
 
         JLabel lblDetailsTitle = new JLabel("DANH SÁCH CHI TIẾT");
-        lblDetailsTitle.setFont(new Font("SansSerif", Font.BOLD, 13));
+        lblDetailsTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
         lblDetailsTitle.setForeground(new Color(60, 60, 60));
         leftCol.add(lblDetailsTitle, BorderLayout.NORTH);
 
@@ -241,17 +241,17 @@ public class TongKetBanHang_GUI extends JFrame {
         };
 
         JTable table = new JTable(data, cols);
-        table.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        table.setRowHeight(40);
+        table.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        table.setRowHeight(45);
         table.setGridColor(new Color(230, 230, 230));
         table.setShowVerticalLines(false);
         table.setSelectionBackground(new Color(230, 240, 255));
 
         JTableHeader th = table.getTableHeader();
-        th.setFont(new Font("SansSerif", Font.BOLD, 12));
+        th.setFont(new Font("SansSerif", Font.BOLD, 16));
         th.setBackground(new Color(235, 240, 250)); // Light blue header
         th.setForeground(new Color(50, 50, 50));
-        th.setPreferredSize(new Dimension(0, 45));
+        th.setPreferredSize(new Dimension(0, 50));
         ((DefaultTableCellRenderer) th.getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
 
         DefaultTableCellRenderer centerRender = new DefaultTableCellRenderer();
@@ -303,7 +303,7 @@ public class TongKetBanHang_GUI extends JFrame {
                 new EmptyBorder(15, 20, 15, 20)));
 
         JLabel lblTop = new JLabel(title);
-        lblTop.setFont(new Font("SansSerif", Font.BOLD, 13));
+        lblTop.setFont(new Font("SansSerif", Font.BOLD, 18));
         lblTop.setForeground(new Color(50, 50, 50));
         w.add(lblTop, BorderLayout.NORTH);
         w.add(chart, BorderLayout.CENTER);
@@ -318,7 +318,7 @@ public class TongKetBanHang_GUI extends JFrame {
                 new LineBorder(new Color(230, 230, 230), 1),
                 new EmptyBorder(10, 20, 10, 20)));
         JLabel l = new JLabel(text);
-        l.setFont(new Font("SansSerif", Font.BOLD, 12));
+        l.setFont(new Font("SansSerif", Font.BOLD, 16));
         l.setForeground(new Color(50, 50, 50));
         p.add(l, BorderLayout.CENTER);
         return p;

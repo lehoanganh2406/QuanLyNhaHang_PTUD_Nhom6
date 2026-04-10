@@ -118,28 +118,28 @@ public class TongKetBanHang_GUI extends JFrame {
         hdr.setOpaque(false);
 
         JLabel lblTitle = new JLabel("Tổng kết bán hàng");
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 26));
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 30));
         hdr.add(lblTitle, BorderLayout.WEST);
 
         JPanel rightHdr = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         rightHdr.setOpaque(false);
 
         JLabel lblStart = new JLabel("Ngày bắt đầu:");
-        lblStart.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        lblStart.setFont(new Font("SansSerif", Font.PLAIN, 20));
         lblStart.setForeground(Color.DARK_GRAY);
         JDateChooser startChooser = new JDateChooser();
-        startChooser.setPreferredSize(new Dimension(160, 36));
-        startChooser.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        startChooser.setPreferredSize(new Dimension(180, 40));
+        startChooser.setFont(new Font("SansSerif", Font.PLAIN, 18));
 
         JLabel lblEnd = new JLabel("Ngày kết thúc:");
-        lblEnd.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        lblEnd.setFont(new Font("SansSerif", Font.PLAIN, 20));
         lblEnd.setForeground(Color.DARK_GRAY);
         JDateChooser endChooser = new JDateChooser();
-        endChooser.setPreferredSize(new Dimension(160, 36));
-        endChooser.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        endChooser.setPreferredSize(new Dimension(180, 40));
+        endChooser.setFont(new Font("SansSerif", Font.PLAIN, 18));
 
         JButton btnFilter = new JButton("Lọc");
-        btnFilter.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        btnFilter.setFont(new Font("SansSerif", Font.PLAIN, 18));
         btnFilter.setBackground(new Color(250, 235, 215));
         btnFilter.setForeground(new Color(110, 80, 50));
         btnFilter.setBorder(BorderFactory.createCompoundBorder(
@@ -171,7 +171,7 @@ public class TongKetBanHang_GUI extends JFrame {
         JPanel btnWrap = new JPanel(new BorderLayout());
         btnWrap.setOpaque(false);
         JButton btnExport = new JButton("Xuất báo cáo");
-        btnExport.setFont(new Font("SansSerif", Font.PLAIN, 20));
+        btnExport.setFont(new Font("SansSerif", Font.BOLD, 24));
         btnExport.setBackground(new Color(105, 185, 115));
         btnExport.setForeground(Color.DARK_GRAY);
         btnExport.setBorder(BorderFactory.createCompoundBorder(
@@ -199,12 +199,12 @@ public class TongKetBanHang_GUI extends JFrame {
                 new EmptyBorder(20, 15, 20, 15)));
 
         JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
         lblTitle.setForeground(titleFg);
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
 
         JLabel lblVal = new JLabel(value);
-        lblVal.setFont(new Font("SansSerif", Font.BOLD, 28));
+        lblVal.setFont(new Font("SansSerif", Font.BOLD, 32));
         lblVal.setForeground(new Color(40, 40, 40));
         lblVal.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -227,7 +227,7 @@ public class TongKetBanHang_GUI extends JFrame {
         leftCol.setOpaque(false);
 
         JLabel lblDetailsTitle = new JLabel("DANH SÁCH CHI TIẾT");
-        lblDetailsTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
+        lblDetailsTitle.setFont(new Font("SansSerif", Font.BOLD, 24));
         lblDetailsTitle.setForeground(new Color(60, 60, 60));
         leftCol.add(lblDetailsTitle, BorderLayout.NORTH);
 
@@ -241,14 +241,14 @@ public class TongKetBanHang_GUI extends JFrame {
         };
 
         JTable table = new JTable(data, cols);
-        table.setFont(new Font("SansSerif", Font.PLAIN, 16));
-        table.setRowHeight(45);
+        table.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        table.setRowHeight(50);
         table.setGridColor(new Color(230, 230, 230));
         table.setShowVerticalLines(false);
         table.setSelectionBackground(new Color(230, 240, 255));
 
         JTableHeader th = table.getTableHeader();
-        th.setFont(new Font("SansSerif", Font.BOLD, 16));
+        th.setFont(new Font("SansSerif", Font.BOLD, 18));
         th.setBackground(new Color(235, 240, 250)); // Light blue header
         th.setForeground(new Color(50, 50, 50));
         th.setPreferredSize(new Dimension(0, 50));
@@ -303,7 +303,7 @@ public class TongKetBanHang_GUI extends JFrame {
                 new EmptyBorder(15, 20, 15, 20)));
 
         JLabel lblTop = new JLabel(title);
-        lblTop.setFont(new Font("SansSerif", Font.BOLD, 18));
+        lblTop.setFont(new Font("SansSerif", Font.BOLD, 22));
         lblTop.setForeground(new Color(50, 50, 50));
         w.add(lblTop, BorderLayout.NORTH);
         w.add(chart, BorderLayout.CENTER);
@@ -318,7 +318,7 @@ public class TongKetBanHang_GUI extends JFrame {
                 new LineBorder(new Color(230, 230, 230), 1),
                 new EmptyBorder(10, 20, 10, 20)));
         JLabel l = new JLabel(text);
-        l.setFont(new Font("SansSerif", Font.BOLD, 16));
+        l.setFont(new Font("SansSerif", Font.BOLD, 18));
         l.setForeground(new Color(50, 50, 50));
         p.add(l, BorderLayout.CENTER);
         return p;
@@ -339,7 +339,7 @@ public class TongKetBanHang_GUI extends JFrame {
             int w = getWidth();
             int h = getHeight();
             int padLeft = 20;
-            int padBottom = 25;
+            int padBottom = 35;
 
             g2.setColor(new Color(200, 200, 200));
             g2.drawLine(padLeft, h - padBottom, w, h - padBottom); // X axis
@@ -350,9 +350,9 @@ public class TongKetBanHang_GUI extends JFrame {
 
             int n = xLabels.length;
             double groupW = (w - padLeft) / (double) n;
-            int barW = 32;
+            int barW = 38;
 
-            g2.setFont(new Font("SansSerif", Font.PLAIN, 10));
+            g2.setFont(new Font("SansSerif", Font.PLAIN, 15));
             // Ensure no bars stretch above the panel artificially
             int maxBarHeightPixels = h - padBottom - 20;
 
@@ -360,18 +360,28 @@ public class TongKetBanHang_GUI extends JFrame {
                 int cx = padLeft + (int) (i * groupW) + (int) (groupW / 2);
 
                 int textW = g2.getFontMetrics().stringWidth(xLabels[i]);
-                g2.setColor(Color.GRAY);
-                g2.drawString(xLabels[i], cx - textW / 2, h - 8);
+                g2.setColor(Color.DARK_GRAY);
+                g2.drawString(xLabels[i], cx - textW / 2, h - 12);
 
                 int barH = (int) ((double) values[i] / 100.0 * maxBarHeightPixels);
+                int y = h - padBottom - barH;
                 g2.setColor(new Color(80, 160, 250)); // Bright sky blue
-                // Draw rounded rect, but pad it below axis so only top is rounded
-                g2.fillRoundRect(cx - barW / 2, h - padBottom - barH, barW, barH + 10, 8, 8);
+                
+                if (barH > 0) {
+                    g2.fillRoundRect(cx - barW / 2, y, barW, barH, 12, 12);
+                    // Square off the bottom portion so it doesn't bleed through the axis
+                    if (barH > 6) {
+                        g2.fillRect(cx - barW / 2, h - padBottom - 6, barW, 6);
+                    }
+                }
             }
 
-            // Re-draw axis to mask the bottom of rounded bars
+            // Re-draw axis heavily to ensure clean border line
             g2.setColor(new Color(200, 200, 200));
+            Stroke oldStr = g2.getStroke();
+            g2.setStroke(new BasicStroke(1.5f));
             g2.drawLine(padLeft, h - padBottom, w, h - padBottom);
+            g2.setStroke(oldStr);
         }
     }
 
@@ -390,7 +400,7 @@ public class TongKetBanHang_GUI extends JFrame {
             int w = getWidth();
             int h = getHeight();
             int padLeft = 20;
-            int padBottom = 25;
+            int padBottom = 35;
 
             g2.setColor(new Color(200, 200, 200));
             g2.drawLine(padLeft, h - padBottom, w, h - padBottom);
@@ -404,7 +414,7 @@ public class TongKetBanHang_GUI extends JFrame {
             int[] px = new int[n];
             int[] py = new int[n];
 
-            g2.setFont(new Font("SansSerif", Font.PLAIN, 10));
+            g2.setFont(new Font("SansSerif", Font.PLAIN, 15));
             int maxLineHeight = h - padBottom - 20;
 
             for (int i = 0; i < n; i++) {
@@ -412,16 +422,20 @@ public class TongKetBanHang_GUI extends JFrame {
                 px[i] = cx;
 
                 int textW = g2.getFontMetrics().stringWidth(xLabels[i]);
-                g2.setColor(Color.GRAY);
-                g2.drawString(xLabels[i], cx - textW / 2, h - 8);
+                g2.setColor(Color.DARK_GRAY);
+                g2.drawString(xLabels[i], cx - textW / 2, h - 12);
 
                 int pointH = (int) ((double) values[i] / 100.0 * maxLineHeight);
                 py[i] = h - padBottom - pointH;
+                
+                // Draw connecting dots for aesthetics
+                g2.setColor(new Color(30, 90, 250));
+                g2.fillOval(cx - 3, py[i] - 3, 6, 6);
             }
 
             g2.setColor(new Color(30, 90, 250)); // Deep energetic Blue
             Stroke oldStr = g2.getStroke();
-            g2.setStroke(new BasicStroke(2.5f));
+            g2.setStroke(new BasicStroke(3.0f));
             for (int i = 0; i < n - 1; i++) {
                 g2.drawLine(px[i], py[i], px[i + 1], py[i + 1]);
             }

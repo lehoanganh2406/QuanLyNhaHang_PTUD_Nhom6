@@ -25,5 +25,7 @@ public class LoaiMonAn {
 	public String toString() {
 		return "LoaiMonAn [maLoaiMonAn=" + maLoaiMonAn + ", tenLoaiMonAn=" + tenLoaiMonAn + "]";
 	}
-	
+	public LoaiMonAn() {
+		// TODO Auto-generated constructor stub
+	}
 }

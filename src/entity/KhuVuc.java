@@ -2,16 +2,16 @@ package entity;
 
 public class KhuVuc {
 	private static final long serialVersionUID = 1L;
-	private String maKhuvuc;
+	private String maKhuVuc;
 	private String tenKhuVuc;
 	private int soLuongBan;
 	private String trangThai;
 	private String kyHieu;
-	public String getMaKhuvuc() {
-		return maKhuvuc;
+	public String getMaKhuVuc() {
+		return maKhuVuc;
 	}
-	public void setMaKhuvuc(String maKhuvuc) {
-		this.maKhuvuc = maKhuvuc;
+	public void setMaKhuVuc(String maKhuVuc) {
+		this.maKhuVuc = maKhuVuc;
 	}
 	public String getTenKhuVuc() {
 		return tenKhuVuc;
@@ -37,9 +37,9 @@ public class KhuVuc {
 	public void setKyHieu(String kyHieu) {
 		this.kyHieu = kyHieu;
 	}
-	public KhuVuc(String maKhuvuc, String tenKhuVuc, int soLuongBan, String trangThai, String kyHieu) {
+	public KhuVuc(String maKhuVuc, String tenKhuVuc, int soLuongBan, String trangThai, String kyHieu) {
 		super();
-		this.maKhuvuc = maKhuvuc;
+		this.maKhuVuc = maKhuVuc;
 		this.tenKhuVuc = tenKhuVuc;
 		this.soLuongBan = soLuongBan;
 		this.trangThai = trangThai;
@@ -47,8 +47,10 @@ public class KhuVuc {
 	}
 	@Override
 	public String toString() {
-		return "KhuVuc [maKhuvuc=" + maKhuvuc + ", tenKhuVuc=" + tenKhuVuc + ", soLuongBan=" + soLuongBan
+		return "KhuVuc [maKhuVuc=" + maKhuVuc + ", tenKhuVuc=" + tenKhuVuc + ", soLuongBan=" + soLuongBan
 				+ ", trangThai=" + trangThai + ", kyHieu=" + kyHieu + "]";
 	}
-	
+	public KhuVuc() {
+		// TODO Auto-generated constructor stub
+	}
 }

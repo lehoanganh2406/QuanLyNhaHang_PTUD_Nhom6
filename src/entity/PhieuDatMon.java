@@ -50,5 +50,8 @@ public class PhieuDatMon {
 		return "PhieuDatMon [maPhieuDatBan=" + maPhieuDatBan + ", maMon=" + maMon + ", soLuong=" + soLuong + ", donGia="
 				+ donGia + ", ghiChu=" + ghiChu + "]";
 	}
+	public PhieuDatMon() {
+		// TODO Auto-generated constructor stub
+	}
 	
 }

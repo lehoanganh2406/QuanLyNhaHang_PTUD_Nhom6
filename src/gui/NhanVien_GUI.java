@@ -2,6 +2,9 @@ package gui;
 
 import javax.swing.*;
 import com.toedter.calendar.JDateChooser;
+
+import entity.TaiKhoan;
+
 import javax.swing.border.*;
 import javax.swing.table.*;
 import java.awt.*;
@@ -37,8 +40,12 @@ public class NhanVien_GUI extends JPanel {
     private DefaultTableModel tableModel;
 
     private JButton btnThem, btnCapNhat, btnLamMoi, btnTraCuu;
+    private static TaiKhoan taiKhoanDangNhap;
 
     public NhanVien_GUI() {
+    	this(null);
+    }
+    public NhanVien_GUI(TaiKhoan tk) {
         setLayout(new BorderLayout());
         setBackground(CLR_PANEL_BG);
 
@@ -513,8 +520,13 @@ public class NhanVien_GUI extends JPanel {
             JLayeredPane layeredPane = new JLayeredPane();
             frame.setContentPane(layeredPane);
 
+
             NhanVien_GUI mainPanel = new NhanVien_GUI();
             Pn_ThanhMenu   menuPanel = new Pn_ThanhMenu();
+=======
+            NhanVien_GUI mainPanel = new NhanVien_GUI(null);
+            Pn_ThanhMenu menuPanel = new Pn_ThanhMenu(taiKhoanDangNhap);
+
 
             // Layer thấp: content chính
             layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);

@@ -79,10 +79,19 @@ CREATE TABLE CaLamViec (
     maCa VARCHAR(20) NOT NULL PRIMARY KEY,
     tenCa NVARCHAR(100) NOT NULL,
     thoiGianMoCa DATETIME NOT NULL,
-    thoiGianDongCa DATETIME NOT NULL,
+    thoiGianDongCa DATETIME NULL,
+    tienMoCa DECIMAL(18,2) NOT NULL DEFAULT 0,
+    tienMatCuoiCa DECIMAL(18,2) NOT NULL DEFAULT 0,
+    tienChuyenKhoanCuoiCa DECIMAL(18,2) NOT NULL DEFAULT 0,
+    tienVisaCuoiCa DECIMAL(18,2) NOT NULL DEFAULT 0,
     maTaiKhoan VARCHAR(20) NOT NULL,
+
     CONSTRAINT FK_CaLamViec_TaiKhoan FOREIGN KEY (maTaiKhoan) REFERENCES TaiKhoan(maTaiKhoan),
-    CONSTRAINT CK_CaLamViec_ThoiGian CHECK (thoiGianDongCa > thoiGianMoCa)
+    CONSTRAINT CK_CaLamViec_ThoiGian CHECK (thoiGianDongCa IS NULL OR thoiGianDongCa > thoiGianMoCa),
+    CONSTRAINT CK_CaLamViec_TienMoCa CHECK (tienMoCa >= 0),
+    CONSTRAINT CK_CaLamViec_TienMatCuoiCa CHECK (tienMatCuoiCa >= 0),
+    CONSTRAINT CK_CaLamViec_TienChuyenKhoanCuoiCa CHECK (tienChuyenKhoanCuoiCa >= 0),
+    CONSTRAINT CK_CaLamViec_TienVisaCuoiCa CHECK (tienVisaCuoiCa >= 0)
 );
 GO
 
@@ -141,9 +150,15 @@ CREATE TABLE PhieuDatBan (
     tienCoc DECIMAL(18,2) NOT NULL DEFAULT 0,
     ghiChu NVARCHAR(255) NULL,
     trangThai NVARCHAR(50) NULL,
+
+    phuongThucHoanTien NVARCHAR(50) NULL,
+    lyDoHuy NVARCHAR(255) NULL,
+    tienHoanTra DECIMAL(18,2) NULL DEFAULT 0,
+
     CONSTRAINT FK_PhieuDatBan_Ban FOREIGN KEY (maBan) REFERENCES Ban(maBan),
     CONSTRAINT CK_PhieuDatBan_SoLuongNguoi CHECK (soLuongNguoi > 0),
-    CONSTRAINT CK_PhieuDatBan_TienCoc CHECK (tienCoc >= 0)
+    CONSTRAINT CK_PhieuDatBan_TienCoc CHECK (tienCoc >= 0),
+    CONSTRAINT CK_PhieuDatBan_TienHoanTra CHECK (tienHoanTra >= 0)
 );
 GO
 
@@ -399,51 +414,51 @@ Lẩu đưa vào Món chính
 INSERT INTO MonAn (maMon, maLoaiMonAn, tenMon, anhMon, donGia, moTa, trangThai)
 VALUES
 -- LM01: Món khai vị
-('MM001', 'LM01', N'Gỏi cuốn tôm thịt', N'goicuon.jpg', 45000, N'Khai vị truyền thống', 1),
-('MM002', 'LM01', N'Súp cua', N'supcua.jpg', 55000, N'Súp cua nóng', 1),
-('MM003', 'LM01', N'Chả giò hải sản', N'chagiohaisan.jpg', 65000, N'Chả giò chiên giòn', 1),
-('MM004', 'LM01', N'Salad cá ngừ', N'saladcangu.jpg', 70000, N'Salad tươi mát', 1),
-('MM005', 'LM01', N'Khoai tây chiên', N'khoaitaychien.jpg', 40000, N'Ăn kèm khai vị', 1),
-('MM006', 'LM01', N'Cánh gà chiên nước mắm', N'canhga.jpg', 85000, N'Cánh gà đậm vị', 1),
+('MM001', 'LM01', N'Gỏi cuốn tôm thịt', N'goicuon.png', 45000, N'Khai vị truyền thống', 1),
+('MM002', 'LM01', N'Súp cua', N'supcua.png', 55000, N'Súp cua nóng', 1),
+('MM003', 'LM01', N'Chả giò hải sản', N'chagiohaisan.png', 65000, N'Chả giò chiên giòn', 1),
+('MM004', 'LM01', N'Salad cá ngừ', N'saladcangu.png', 70000, N'Salad tươi mát', 1),
+('MM005', 'LM01', N'Khoai tây chiên', N'khoaitaychien.png', 40000, N'Ăn kèm khai vị', 1),
+('MM006', 'LM01', N'Cánh gà chiên nước mắm', N'canhga.png', 85000, N'Cánh gà đậm vị', 1),
 
 -- LM02: Món chính
-('MM007', 'LM02', N'Cơm chiên hải sản', N'comchienhaisan.jpg', 120000, N'Cơm chiên hải sản đặc biệt', 1),
-('MM008', 'LM02', N'Bò lúc lắc', N'boluclac.jpg', 165000, N'Bò mềm ăn kèm khoai tây', 1),
-('MM009', 'LM02', N'Sườn nướng mật ong', N'suonnuong.jpg', 150000, N'Sườn nướng thơm ngon', 1),
-('MM010', 'LM02', N'Lẩu thái hải sản', N'lauthai.jpg', 280000, N'Lẩu vị chua cay', 1),
-('MM011', 'LM02', N'Lẩu nấm', N'launam.jpg', 260000, N'Lẩu thanh đạm', 1),
-('MM012', 'LM02', N'Mì xào hải sản', N'mixaohaisan.jpg', 110000, N'Mì xào đậm vị', 1),
-('MM013', 'LM02', N'Cơm gà xối mỡ', N'comgaxoimo.jpg', 90000, N'Cơm gà giòn rụm', 1),
-('MM014', 'LM02', N'Cá hồi sốt bơ tỏi', N'cahoi.jpg', 190000, N'Cá hồi áp chảo', 1),
-('MM015', 'LM02', N'Bò né', N'bone.jpg', 95000, N'Bò né trứng ốp la', 1),
-('MM016', 'LM02', N'Gà nướng lu', N'ganuonglu.jpg', 210000, N'Gà nướng nguyên con', 1),
-('MM017', 'LM02', N'Tôm nướng muối ớt', N'tomnuong.jpg', 175000, N'Tôm nướng cay nhẹ', 1),
-('MM018', 'LM02', N'Mực chiên giòn', N'mucchien.jpg', 130000, N'Mực tươi chiên giòn', 1),
-('MM019', 'LM02', N'Cơm chiên cá mặn', N'comchiencaman.jpg', 105000, N'Cơm chiên cá mặn đậm đà', 1),
-('MM020', 'LM02', N'Bún bò Nam Bộ', N'bunbonambo.jpg', 85000, N'Bún bò trộn rau', 1),
+('MM007', 'LM02', N'Cơm chiên hải sản', N'comchienhaisan.png', 120000, N'Cơm chiên hải sản đặc biệt', 1),
+('MM008', 'LM02', N'Bò lúc lắc', N'boluclac.png', 165000, N'Bò mềm ăn kèm khoai tây', 1),
+('MM009', 'LM02', N'Sườn nướng mật ong', N'suonnuong.png', 150000, N'Sườn nướng thơm ngon', 1),
+('MM010', 'LM02', N'Lẩu thái hải sản', N'lauthai.png', 280000, N'Lẩu vị chua cay', 1),
+('MM011', 'LM02', N'Lẩu nấm', N'launam.png', 260000, N'Lẩu thanh đạm', 1),
+('MM012', 'LM02', N'Mì xào hải sản', N'mixaohaisan.png', 110000, N'Mì xào đậm vị', 1),
+('MM013', 'LM02', N'Cơm gà xối mỡ', N'comgaxoimo.png', 90000, N'Cơm gà giòn rụm', 1),
+('MM014', 'LM02', N'Cá hồi sốt bơ tỏi', N'cahoi.png', 190000, N'Cá hồi áp chảo', 1),
+('MM015', 'LM02', N'Bò né', N'bone.png', 95000, N'Bò né trứng ốp la', 1),
+('MM016', 'LM02', N'Gà nướng lu', N'ganuonglu.png', 210000, N'Gà nướng nguyên con', 1),
+('MM017', 'LM02', N'Tôm nướng muối ớt', N'tomnuong.png', 175000, N'Tôm nướng cay nhẹ', 1),
+('MM018', 'LM02', N'Mực chiên giòn', N'mucchien.png', 130000, N'Mực tươi chiên giòn', 1),
+('MM019', 'LM02', N'Cơm chiên cá mặn', N'comchiencaman.png', 105000, N'Cơm chiên cá mặn đậm đà', 1),
+('MM020', 'LM02', N'Bún bò Nam Bộ', N'bunbonambo.png', 85000, N'Bún bò trộn rau', 1),
 
 -- LM03: Món phụ
-('MM021', 'LM03', N'Cơm trắng', N'comtrang.jpg', 15000, N'Cơm dùng kèm', 1),
-('MM022', 'LM03', N'Bún tươi', N'buntuoi.jpg', 12000, N'Bún dùng kèm', 1),
-('MM023', 'LM03', N'Rau sống', N'rausong.jpg', 20000, N'Rau ăn kèm', 1),
-('MM024', 'LM03', N'Kim chi', N'kimchi.jpg', 25000, N'Món phụ ăn kèm', 1),
-('MM025', 'LM03', N'Bánh mì', N'banhmi.jpg', 10000, N'Bánh mì nóng giòn', 1),
+('MM021', 'LM03', N'Cơm trắng', N'comtrang.png', 15000, N'Cơm dùng kèm', 1),
+('MM022', 'LM03', N'Bún tươi', N'buntuoi.png', 12000, N'Bún dùng kèm', 1),
+('MM023', 'LM03', N'Rau sống', N'rausong.png', 20000, N'Rau ăn kèm', 1),
+('MM024', 'LM03', N'Kim chi', N'kimchi.png', 25000, N'Món phụ ăn kèm', 1),
+('MM025', 'LM03', N'Bánh mì', N'banhmi.png', 10000, N'Bánh mì nóng giòn', 1),
 
 -- LM04: Tráng miệng
-('MM026', 'LM04', N'Bánh flan', N'banhflan.jpg', 30000, N'Tráng miệng mềm mịn', 1),
-('MM027', 'LM04', N'Trái cây thập cẩm', N'traicay.jpg', 50000, N'Trái cây theo mùa', 1),
-('MM028', 'LM04', N'Rau câu dừa', N'raucaudua.jpg', 28000, N'Mát lạnh', 1),
+('MM026', 'LM04', N'Bánh flan', N'banhflan.png', 30000, N'Tráng miệng mềm mịn', 1),
+('MM027', 'LM04', N'Trái cây thập cẩm', N'traicay.png', 50000, N'Trái cây theo mùa', 1),
+('MM028', 'LM04', N'Rau câu dừa', N'raucaudua.png', 28000, N'Mát lạnh', 1),
 
 -- LM05: Nước uống
-('MM029', 'LM05', N'Coca Cola', N'coca.jpg', 20000, N'Nước ngọt có gas', 1),
-('MM030', 'LM05', N'Nước suối', N'nuocsuoi.jpg', 15000, N'Nước suối chai', 1),
-('MM031', 'LM05', N'Trà đào', N'tradao.jpg', 35000, N'Trà đào cam sả', 1),
-('MM032', 'LM05', N'Nước cam', N'nuoccam.jpg', 30000, N'Nước cam tươi', 1),
-('MM033', 'LM05', N'Pepsi', N'pepsi.jpg', 20000, N'Nước ngọt có gas', 1),
-('MM034', 'LM05', N'7 Up', N'7up.jpg', 20000, N'Nước ngọt chanh', 1),
-('MM035', 'LM04', N'Kem vani', N'kemvani.jpg', 35000, N'Kem lạnh tráng miệng', 1);
+('MM029', 'LM05', N'Coca Cola', N'coca.png', 20000, N'Nước ngọt có gas', 1),
+('MM030', 'LM05', N'Nước suối', N'nuocsuoi.png', 15000, N'Nước suối chai', 1),
+('MM031', 'LM05', N'Trà đào', N'tradao.png', 35000, N'Trà đào cam sả', 1),
+('MM032', 'LM05', N'Nước cam', N'nuoccam.png', 30000, N'Nước cam tươi', 1),
+('MM033', 'LM05', N'Pepsi', N'pepsi.png', 20000, N'Nước ngọt có gas', 1),
+('MM034', 'LM05', N'7 Up', N'7up.png', 20000, N'Nước ngọt chanh', 1),
+('MM035', 'LM04', N'Kem vani', N'kemvani.png', 35000, N'Kem lạnh tráng miệng', 1);
 GO
-GO
+
 
 ALTER SEQUENCE seq_MonAn RESTART WITH 36;
 GO
@@ -454,10 +469,10 @@ tên đăng nhập và mật khẩu theo bạn sửa
 ==========================================================*/
 INSERT INTO NhanVien (maNV, hoTen, anhNhanVien, ngaySinh, gioiTinh, cccd, email, sdt, chucVu, trangThai)
 VALUES
-('NV001', N'Lê Hoàng Anh', N'hoanganh.jpg', '2005-06-24', 1, '079205000001', 'hoanganh@hyv.com', '0901000001', N'Quản lý', N'Đang làm'),
-('NV002', N'Trần Quốc Dũng', N'quocdung.jpg', '2005-03-15', 1, '079205000002', 'quocdung@hyv.com', '0901000002', N'Lễ tân', N'Đang làm'),
-('NV003', N'Nguyễn Hạ Ánh Dương', N'anhduong.jpg', '2005-09-10', 0, '079205000003', 'anhduong@hyv.com', '0901000003', N'Lễ tân', N'Đang làm'),
-('NV004', N'Huỳnh Thị Ngọc Tiên', N'ngoctien.jpg', '2005-11-20', 0, '079205000004', 'ngoctien@hyv.com', '0901000004', N'Lễ tân', N'Đang làm');
+('NV001', N'Lê Hoàng Anh', N'hoanganh.png', '2005-06-24', 1, '079205000001', 'hoanganh@hyv.com', '0901000001', N'Quản lý', N'Đang làm'),
+('NV002', N'Trần Quốc Dũng', N'quocdung.png', '2005-03-15', 1, '079205000002', 'quocdung@hyv.com', '0901000002', N'Lễ tân', N'Đang làm'),
+('NV003', N'Nguyễn Hạ Ánh Dương', N'anhduong.png', '2005-09-10', 0, '079205000003', 'anhduong@hyv.com', '0901000003', N'Lễ tân', N'Đang làm'),
+('NV004', N'Huỳnh Thị Ngọc Tiên', N'ngoctien.png', '2005-11-20', 0, '079205000004', 'ngoctien@hyv.com', '0901000004', N'Lễ tân', N'Đang làm');
 GO
 
 INSERT INTO TaiKhoan (maTaiKhoan, tenDangNhap, matKhau, phanQuyen, trangThai, maNV)
@@ -468,11 +483,11 @@ VALUES
 ('TK04', 'NV004', 'phucvu', N'Lễ tân', 1, 'NV004');
 GO
 
-INSERT INTO CaLamViec (maCa, tenCa, thoiGianMoCa, thoiGianDongCa, maTaiKhoan)
+INSERT INTO CaLamViec (maCa, tenCa, thoiGianMoCa, thoiGianDongCa, tienMoCa, tienMatCuoiCa, tienChuyenKhoanCuoiCa, tienVisaCuoiCa, maTaiKhoan)
 VALUES
-('CL001', N'Ca sáng 07/04/2026', '2026-04-07 07:00:00', '2026-04-07 14:00:00', 'TK01'),
-('CL002', N'Ca chiều 07/04/2026', '2026-04-07 14:00:00', '2026-04-07 22:00:00', 'TK02'),
-('CL003', N'Ca sáng 08/04/2026', '2026-04-08 07:00:00', '2026-04-08 14:00:00', 'TK03');
+('CL001', N'Ca sáng', '2026-04-07 09:00:00', '2026-04-07 17:00:00', 1000000, 2000000, 1500000, 300000, 'TK01'),
+('CL002', N'Ca chiều', '2026-04-07 17:00:00', '2026-04-07 23:00:00', 1000000, 1800000, 1200000, 250000, 'TK02'),
+('CL003', N'Ca sáng', '2026-04-08 09:00:00', '2026-04-08 17:00:00', 1000000, 2200000, 1700000, 350000, 'TK03');
 GO
 
 ALTER SEQUENCE seq_NhanVien RESTART WITH 5;
@@ -621,16 +636,17 @@ GO
 /*==========================================================
 11. PHIẾU ĐẶT BÀN
 ==========================================================*/
-INSERT INTO PhieuDatBan (maPhieuDatBan, maBan, tenKhach, sdt, soLuongNguoi, thoiGianDen, tienCoc, ghiChu, trangThai)
+INSERT INTO PhieuDatBan (maPhieuDatBan, maBan, tenKhach, sdt, soLuongNguoi, thoiGianDen, tienCoc, ghiChu, trangThai,phuongThucHoanTien,lyDoHuy,tienHoanTra)
 VALUES
-('PDB00001', 'A01', N'Nguyễn Văn Nam', '0922000001', 2, '2026-04-08 18:30:00', 200000, N'Đặt bàn thường', N'Đang chờ'),
-('PDB00002', 'A05', N'Trần Thị Mai', '0922000002', 4, '2026-04-08 19:00:00', 450000, N'Có đặt món trước', N'Đang chờ'),
-('PDB00003', 'B10', N'Lê Quốc Bảo', '0922000003', 6, '2026-04-09 18:00:00', 200000, N'Nhóm bạn', N'Đang chờ'),
-('PDB00004', 'C15', N'Phạm Minh Thư', '0922000004', 8, '2026-04-09 20:00:00', 600000, N'Sinh nhật', N'Đang chờ'),
-('PDB00005', 'B03', N'Đặng Gia Hân', '0922000005', 2, '2026-04-10 17:45:00', 200000, N'Đặt trước', N'Đang chờ');
+('PDB00001', 'A01', N'Nguyễn Văn Nam', '0922000001', 2, '2026-04-08 18:30:00', 200000, N'Đặt bàn thường', N'Đang chờ', NULL, NULL, 0),
+('PDB00002', 'A05', N'Trần Thị Mai', '0922000002', 4, '2026-04-08 19:00:00', 450000, N'Có đặt món trước', N'Đang chờ', NULL, NULL, 0),
+('PDB00003', 'B10', N'Lê Quốc Bảo', '0922000003', 6, '2026-04-09 18:00:00', 200000, N'Nhóm bạn', N'Đang chờ', NULL, NULL, 0),
+('PDB00004', 'C15', N'Phạm Minh Thư', '0922000004', 8, '2026-04-09 20:00:00', 600000, N'Sinh nhật', N'Đang chờ', NULL, NULL, 0),
+('PDB00005', 'B03', N'Đặng Gia Hân', '0922000005', 2, '2026-04-10 17:45:00', 200000, N'Đặt trước', N'Đang chờ', NULL, NULL, 0),
+('PDB00006', 'A02', N'Hoàng Minh Anh', '0922000006', 4, '2026-04-11 19:00:00', 300000, N'Test hủy bàn', N'Đã hủy', N'Tiền mặt', N'Khách bận việc đột xuất', 210000);
 GO
 
-ALTER SEQUENCE seq_PhieuDatBan RESTART WITH 6;
+ALTER SEQUENCE seq_PhieuDatBan RESTART WITH 7;
 GO
 
 /*==========================================================
@@ -671,16 +687,9 @@ VALUES
 ('HD00002', 'MM012', 2, 35000, N'');
 GO
 
-/*==========================================================
-15. CẬP NHẬT TRẠNG THÁI BÀN MẪU
-==========================================================*/
-UPDATE Ban SET trangThai = N'Đã đặt' WHERE maBan IN ('A01', 'A05', 'B10', 'C15', 'B03');
-UPDATE Ban SET trangThai = N'Đang phục vụ' WHERE maBan IN ('A02', 'B01');
-GO
-
 
 /*==========================================================
-16. KIỂM TRA
+15. KIỂM TRA
 ==========================================================*/
 SELECT * FROM LoaiMonAn;
 SELECT * FROM MonAn;

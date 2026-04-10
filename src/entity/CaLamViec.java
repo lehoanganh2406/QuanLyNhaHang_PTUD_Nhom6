@@ -9,6 +9,10 @@ public class CaLamViec {
 	private LocalDateTime thoiGianMoCa;
 	private LocalDateTime thoiGianDongCa;
 	private TaiKhoan maTaiKhoan;
+	private double tienMoCa;
+	private double tienMatCuoiCa;
+	private double tienChuyenKhoanCuoiCa;
+	private double tienVisaCuoiCa;
 	public String getMaCa() {
 		return maCa;
 	}
@@ -39,19 +43,52 @@ public class CaLamViec {
 	public void setMaTaiKhoan(TaiKhoan maTaiKhoan) {
 		this.maTaiKhoan = maTaiKhoan;
 	}
+	public double getTienMoCa() {
+		return tienMoCa;
+	}
+	public void setTienMoCa(double tienMoCa) {
+		this.tienMoCa = tienMoCa;
+	}
+	public double getTienMatCuoiCa() {
+		return tienMatCuoiCa;
+	}
+	public void setTienMatCuoiCa(double tienMatCuoiCa) {
+		this.tienMatCuoiCa = tienMatCuoiCa;
+	}
+	public double getTienChuyenKhoanCuoiCa() {
+		return tienChuyenKhoanCuoiCa;
+	}
+	public void setTienChuyenKhoanCuoiCa(double tienChuyenKhoanCuoiCa) {
+		this.tienChuyenKhoanCuoiCa = tienChuyenKhoanCuoiCa;
+	}
+	public double getTienVisaCuoiCa() {
+		return tienVisaCuoiCa;
+	}
+	public void setTienVisaCuoiCa(double tienVisaCuoiCa) {
+		this.tienVisaCuoiCa = tienVisaCuoiCa;
+	}
 	public CaLamViec(String maCa, String tenCa, LocalDateTime thoiGianMoCa, LocalDateTime thoiGianDongCa,
-			TaiKhoan maTaiKhoan) {
+			TaiKhoan maTaiKhoan, double tienMoCa, double tienMatCuoiCa, double tienChuyenKhoanCuoiCa,
+			double tienVisaCuoiCa) {
 		super();
 		this.maCa = maCa;
 		this.tenCa = tenCa;
 		this.thoiGianMoCa = thoiGianMoCa;
 		this.thoiGianDongCa = thoiGianDongCa;
 		this.maTaiKhoan = maTaiKhoan;
+		this.tienMoCa = tienMoCa;
+		this.tienMatCuoiCa = tienMatCuoiCa;
+		this.tienChuyenKhoanCuoiCa = tienChuyenKhoanCuoiCa;
+		this.tienVisaCuoiCa = tienVisaCuoiCa;
 	}
 	@Override
 	public String toString() {
 		return "CaLamViec [maCa=" + maCa + ", tenCa=" + tenCa + ", thoiGianMoCa=" + thoiGianMoCa + ", thoiGianDongCa="
-				+ thoiGianDongCa + ", maTaiKhoan=" + maTaiKhoan + "]";
+				+ thoiGianDongCa + ", maTaiKhoan=" + maTaiKhoan + ", tienMoCa=" + tienMoCa + ", tienMatCuoiCa="
+				+ tienMatCuoiCa + ", tienChuyenKhoanCuoiCa=" + tienChuyenKhoanCuoiCa + ", tienVisaCuoiCa="
+				+ tienVisaCuoiCa + "]";
 	}
-	
+	public CaLamViec() {
+		// TODO Auto-generated constructor stub
+	}
 }

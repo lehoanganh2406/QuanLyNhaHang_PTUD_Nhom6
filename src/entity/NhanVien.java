@@ -94,5 +94,13 @@ public class NhanVien {
 				+ ", gioiTinh=" + gioiTinh + ", cccd=" + cccd + ", email=" + email + ", sdt=" + sdt + ", chucVu="
 				+ chucVu + ", trangThai=" + trangThai + "]";
 	}
+	public NhanVien(String maNV, String hoTen) {
+		super();
+		this.maNV = maNV;
+		this.hoTen = hoTen;
+	}
+	
+	
+	
 	
 }

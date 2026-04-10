@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 
-public class QLNhanVien_GUI extends JPanel {
+public class NhanVien_GUI extends JPanel {
 
     // Màu sắc 
     private static final Color CLR_HEADER_BG  = new Color(74, 55, 40);   // nâu đậm
@@ -38,7 +38,7 @@ public class QLNhanVien_GUI extends JPanel {
 
     private JButton btnThem, btnCapNhat, btnLamMoi, btnTraCuu;
 
-    public QLNhanVien_GUI() {
+    public NhanVien_GUI() {
         setLayout(new BorderLayout());
         setBackground(CLR_PANEL_BG);
 
@@ -513,7 +513,7 @@ public class QLNhanVien_GUI extends JPanel {
             JLayeredPane layeredPane = new JLayeredPane();
             frame.setContentPane(layeredPane);
 
-            QLNhanVien_GUI mainPanel = new QLNhanVien_GUI();
+            NhanVien_GUI mainPanel = new NhanVien_GUI();
             Pn_ThanhMenu   menuPanel = new Pn_ThanhMenu();
 
             // Layer thấp: content chính

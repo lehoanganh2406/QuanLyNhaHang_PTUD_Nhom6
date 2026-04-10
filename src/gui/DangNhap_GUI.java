@@ -12,9 +12,9 @@ public class DangNhap_GUI extends JFrame {
     private JTextField txtTenDangNhap;
     private JPasswordField txtMatKhau;
 
-//    public static void main(String[] args) {
-//        new DangNhap_GUI().setVisible(true);
-//    }
+    public static void main(String[] args) {
+        new DangNhap_GUI().setVisible(true);
+    }
 
     public DangNhap_GUI() {
         setTitle("Đăng nhập");

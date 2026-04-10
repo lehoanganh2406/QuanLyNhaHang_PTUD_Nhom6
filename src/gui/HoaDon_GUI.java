@@ -24,7 +24,7 @@ public class HoaDon_GUI extends JPanel {
     private static final Color CLR_BTN_CHITIET = new Color(100, 181, 246); // xanh dương
     private static final Color CLR_BTN_TRACUU  = new Color(102, 187, 106); // xanh lá
     private static final Color CLR_BTN_LAMMOI  = new Color(102, 187, 106); // xanh lá
-    private static final Color CLR_BTN_LOC     = new Color(255, 213, 79);  // vàng
+    private static final Color CLR_BTN_LOC     = new Color(250, 224, 187);  // vàng
     private static final Color CLR_BTN_CAPNHAT = new Color(255, 213, 79);  // vàng
 
     // ── Trường nhập liệu ─────────────────────────────────────────────────────

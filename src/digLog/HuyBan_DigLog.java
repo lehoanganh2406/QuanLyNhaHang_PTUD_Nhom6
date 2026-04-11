@@ -2,6 +2,7 @@ package digLog;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -13,14 +14,18 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -33,8 +38,11 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.plaf.basic.BasicComboBoxUI;
 
 import dao.PhieuDatBan_DAO;
+import dao.PhieuDatMon_DAO;
+import entity.PhieuDatMon;
 
 public class HuyBan_DigLog extends JDialog {
     private static final long serialVersionUID = 1L;
@@ -48,16 +56,23 @@ public class HuyBan_DigLog extends JDialog {
     private JButton btnDongY;
 
     private final String maPhieuDatBan;
-    private final double tienCoc;
-    private final Timestamp thoiGianDen;
-    private final boolean coDatMon;
     private final boolean cheDoChiXem;
+
+    private final double tienCocTruyenVao;
+    private final Timestamp thoiGianDenTruyenVao;
+    private final boolean coDatMonTruyenVao;
+
+    private double tienCoc = 0;
+    private Timestamp thoiGianDen = null;
+    private boolean coDatMon = false;
 
     private boolean huyThanhCong = false;
 
-    private final Color BG_MAIN = new Color(239, 239, 239);
-    private final Color BORDER = new Color(170, 170, 170);
-    private final Color DISABLED_BG = new Color(236, 236, 236);
+    private final Color BG_MAIN = Color.WHITE;
+    private final Color BORDER = new Color(205, 210, 218);
+    private final Color DISABLED_BG = new Color(240, 240, 240);
+    private final Color TEXT_COLOR = new Color(40, 40, 40);
+    private final Color SUB_LINE = new Color(185, 185, 185);
 
     public HuyBan_DigLog(
             Frame owner,
@@ -69,15 +84,18 @@ public class HuyBan_DigLog extends JDialog {
     ) {
         super(owner, "Xác nhận hủy đặt bàn", true);
         this.maPhieuDatBan = maPhieuDatBan;
+        this.tienCocTruyenVao = tienCoc;
+        this.thoiGianDenTruyenVao = thoiGianDen;
+        this.coDatMonTruyenVao = coDatMon;
+        this.cheDoChiXem = cheDoChiXem;
+
         this.tienCoc = tienCoc;
         this.thoiGianDen = thoiGianDen;
         this.coDatMon = coDatMon;
-        this.cheDoChiXem = cheDoChiXem;
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(820, 500));
-        setSize(930, 560);
-        setLocationRelativeTo(owner);
+        setResizable(true);
+        apDungKichThuocDialog(owner);
 
         initUI();
         initData();
@@ -88,161 +106,293 @@ public class HuyBan_DigLog extends JDialog {
         return huyThanhCong;
     }
 
+    private void apDungKichThuocDialog(Frame owner) {
+        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+
+        int width = (int) (screen.width * 0.22);
+        int height = (int) (screen.height * 0.60);
+
+        width = Math.max(720, Math.min(width, 200));
+        height = Math.max(520, Math.min(height, 580));
+
+        setMinimumSize(new Dimension(720, 520));
+        setSize(width, height);
+        setLocationRelativeTo(owner);
+    }
+
     private void initUI() {
         JPanel contentPane = new JPanel(new BorderLayout());
         contentPane.setBackground(BG_MAIN);
         setContentPane(contentPane);
 
-        JPanel pnlTitle = new JPanel(new BorderLayout());
-        pnlTitle.setBackground(BG_MAIN);
-        pnlTitle.setBorder(new EmptyBorder(18, 20, 18, 20));
+        contentPane.add(createHeader(), BorderLayout.NORTH);
+        contentPane.add(createCenterArea(), BorderLayout.CENTER);
+        contentPane.add(createFooter(), BorderLayout.SOUTH);
+    }
 
-        JLabel lblTitle = new JLabel("Xác nhận hủy đặt bàn");
-        lblTitle.setFont(new Font("Arial", Font.BOLD, 30));
-        lblTitle.setHorizontalAlignment(SwingConstants.LEFT);
-        pnlTitle.add(lblTitle, BorderLayout.CENTER);
+    private JPanel createHeader() {
+        JPanel topWrap = new JPanel(new BorderLayout());
+        topWrap.setBackground(BG_MAIN);
+        topWrap.setBorder(new EmptyBorder(16, 22, 8, 22));
+
+        JLabel lblTitle = new JLabel("Xác nhận hủy đặt bàn", SwingConstants.CENTER);
+        lblTitle.setFont(new Font("Arial", Font.BOLD, 26));
+        lblTitle.setForeground(TEXT_COLOR);
 
         JPanel line = new JPanel();
         line.setPreferredSize(new Dimension(0, 1));
-        line.setBackground(new Color(165, 165, 165));
+        line.setBackground(SUB_LINE);
 
-        JPanel topWrap = new JPanel(new BorderLayout());
-        topWrap.setBackground(BG_MAIN);
-        topWrap.add(pnlTitle, BorderLayout.CENTER);
+        topWrap.add(lblTitle, BorderLayout.CENTER);
         topWrap.add(line, BorderLayout.SOUTH);
 
-        contentPane.add(topWrap, BorderLayout.NORTH);
+        return topWrap;
+    }
+
+    private Component createCenterArea() {
+        JPanel outer = new JPanel(new BorderLayout());
+        outer.setBackground(BG_MAIN);
+        outer.setBorder(new EmptyBorder(10, 24, 6, 24));
 
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(BG_MAIN);
-        formPanel.setBorder(new EmptyBorder(26, 26, 12, 26));
 
-        Font lblFont = new Font("Arial", Font.PLAIN, 19);
-        Font inputFont = new Font("Arial", Font.PLAIN, 18);
+        Font lblFont = new Font("Arial", Font.PLAIN, 15);
+        Font inputFont = new Font("Arial", Font.PLAIN, 15);
 
         txtMaPhieu = createReadOnlyField(inputFont);
         txtTienCoc = createReadOnlyField(inputFont);
         txtHoanTraCoc = createReadOnlyField(inputFont);
+        txtHoanTraCoc.setEditable(false);
 
-        cboPhuongThuc = new JComboBox<>(new String[] {
-                "Vui lòng chọn phương thức",
-                "Tiền mặt",
-                "Chuyển khoản"
-        });
-        cboPhuongThuc.setFont(inputFont);
-        cboPhuongThuc.setPreferredSize(new Dimension(470, 44));
-        cboPhuongThuc.setBackground(Color.WHITE);
-        cboPhuongThuc.setBorder(new LineBorder(BORDER, 1));
-        cboPhuongThuc.setFocusable(false);
-        cboPhuongThuc.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        txtLyDo = new JTextArea(6, 20);
-        txtLyDo.setFont(inputFont);
-        txtLyDo.setLineWrap(true);
-        txtLyDo.setWrapStyleWord(true);
-        txtLyDo.setBorder(new EmptyBorder(10, 12, 10, 12));
-        txtLyDo.setBackground(Color.WHITE);
+        cboPhuongThuc = createComboBox(inputFont);
+        txtLyDo = createTextArea(inputFont);
 
         JScrollPane scrLyDo = new JScrollPane(txtLyDo);
-        scrLyDo.setPreferredSize(new Dimension(470, 120));
-        scrLyDo.setBorder(new LineBorder(BORDER, 1));
+        scrLyDo.setBorder(new LineBorder(BORDER, 1, true));
+        scrLyDo.setBackground(Color.WHITE);
+        scrLyDo.getViewport().setBackground(Color.WHITE);
+        scrLyDo.setPreferredSize(new Dimension(100, 135));
+        scrLyDo.setMinimumSize(new Dimension(100, 135));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(7, 4, 7, 4);
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.CENTER;
 
-        addFormRow(formPanel, gbc, 0, "Mã phiếu", lblFont, txtMaPhieu);
-        addFormRow(formPanel, gbc, 1, "Tiền cọc", lblFont, txtTienCoc);
-        addFormRow(formPanel, gbc, 2, "Hoàn trả cọc", lblFont, txtHoanTraCoc);
-        addFormRow(formPanel, gbc, 3, "Phương thức hoàn tiền", lblFont, cboPhuongThuc);
+        addFormRow(formPanel, gbc, 0, "Mã phiếu đặt bàn", lblFont, wrapField(txtMaPhieu));
+        addFormRow(formPanel, gbc, 1, "Tiền cọc", lblFont, wrapField(txtTienCoc));
+        addFormRow(formPanel, gbc, 2, "Hoàn trả cọc", lblFont, wrapField(txtHoanTraCoc));
+        addFormRow(formPanel, gbc, 3, "Phương thức hoàn tiền", lblFont, wrapField(cboPhuongThuc));
 
         gbc.gridx = 0;
         gbc.gridy = 4;
-        gbc.weightx = 0.34;
-        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.weightx = 0.30;
+        gbc.weighty = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         formPanel.add(createLabel("Lý do hủy", lblFont), gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 4;
-        gbc.weightx = 0.66;
+        gbc.weightx = 0.70;
+        gbc.weighty = 1;
         gbc.fill = GridBagConstraints.BOTH;
         formPanel.add(scrLyDo, gbc);
 
-        contentPane.add(formPanel, BorderLayout.CENTER);
+        outer.add(formPanel, BorderLayout.NORTH);
 
-        JPanel pnlButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 14, 12));
-        pnlButtons.setBackground(BG_MAIN);
-        pnlButtons.setBorder(new EmptyBorder(0, 0, 4, 18));
+        JScrollPane scroll = new JScrollPane(outer);
+        scroll.setBorder(null);
+        scroll.getViewport().setBackground(BG_MAIN);
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        return scroll;
+    }
+
+    private JPanel createFooter() {
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 12));
+        footer.setBackground(BG_MAIN);
+        footer.setBorder(new EmptyBorder(0, 18, 14, 18));
 
         btnThoat = new ColoredButton("Thoát", new Color(219, 167, 69));
-        btnThoat.setFont(new Font("Arial", Font.PLAIN, 18));
-        btnThoat.setPreferredSize(new Dimension(120, 50));
+        btnThoat.setFont(new Font("Arial", Font.PLAIN, 16));
+        btnThoat.setPreferredSize(new Dimension(118, 42));
 
         btnDongY = new ColoredButton("Xác nhận hủy", new Color(74, 144, 206));
-        btnDongY.setFont(new Font("Arial", Font.PLAIN, 18));
-        btnDongY.setPreferredSize(new Dimension(170, 50));
+        btnDongY.setFont(new Font("Arial", Font.PLAIN, 16));
+        btnDongY.setPreferredSize(new Dimension(165, 42));
 
-        pnlButtons.add(btnThoat);
-        pnlButtons.add(btnDongY);
-
-        contentPane.add(pnlButtons, BorderLayout.SOUTH);
+        footer.add(btnThoat);
+        footer.add(btnDongY);
+        return footer;
     }
 
     private JTextField createReadOnlyField(Font font) {
         JTextField txt = new JTextField();
         txt.setEditable(false);
         txt.setFont(font);
-        txt.setPreferredSize(new Dimension(470, 44));
         txt.setBackground(DISABLED_BG);
-        txt.setForeground(Color.DARK_GRAY);
-        txt.setBorder(new LineBorder(BORDER, 1));
-        txt.setMargin(new Insets(0, 12, 0, 12));
+        txt.setForeground(TEXT_COLOR);
+        txt.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(BORDER, 1, true),
+                new EmptyBorder(0, 12, 0, 12)
+        ));
+        txt.setPreferredSize(new Dimension(100, 40));
+        txt.setMinimumSize(new Dimension(100, 40));
         return txt;
     }
 
-    private void addFormRow(JPanel panel, GridBagConstraints gbc, int row, String label, Font lblFont, java.awt.Component comp) {
+    private JComboBox<String> createComboBox(Font font) {
+        JComboBox<String> combo = new JComboBox<>(new String[] {
+                "Vui lòng chọn phương thức",
+                "Tiền mặt",
+                "Chuyển khoản"
+        });
+
+        combo.setFont(font);
+        combo.setFocusable(false);
+        combo.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        combo.setBackground(Color.WHITE);
+        combo.setOpaque(true);
+        combo.setEditable(false);
+        combo.setBorder(new LineBorder(BORDER, 1, true));
+        combo.setPreferredSize(new Dimension(100, 40));
+        combo.setMinimumSize(new Dimension(100, 40));
+        combo.setUI(new BasicComboBoxUI());
+
+        DefaultListCellRenderer renderer = new DefaultListCellRenderer() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public Component getListCellRendererComponent(
+                    javax.swing.JList<?> list, Object value, int index,
+                    boolean isSelected, boolean cellHasFocus) {
+                JLabel lb = (JLabel) super.getListCellRendererComponent(
+                        list, value, index, isSelected, cellHasFocus);
+                lb.setBorder(new EmptyBorder(6, 12, 6, 12));
+                lb.setFont(font);
+                return lb;
+            }
+        };
+        renderer.setHorizontalAlignment(SwingConstants.LEFT);
+        combo.setRenderer(renderer);
+
+        return combo;
+    }
+
+    private JTextArea createTextArea(Font font) {
+        JTextArea area = new JTextArea();
+        area.setFont(font);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setBackground(Color.WHITE);
+        area.setForeground(TEXT_COLOR);
+        area.setBorder(new EmptyBorder(10, 12, 10, 12));
+        return area;
+    }
+
+    private JPanel wrapField(Component comp) {
+        JPanel p = new JPanel();
+        p.setOpaque(false);
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        p.add(comp);
+        return p;
+    }
+
+    private void addFormRow(JPanel panel, GridBagConstraints gbc, int row,
+                            String label, Font lblFont, Component comp) {
         gbc.gridx = 0;
         gbc.gridy = row;
-        gbc.weightx = 0.34;
+        gbc.weightx = 0.30;
         gbc.weighty = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.CENTER;
         panel.add(createLabel(label, lblFont), gbc);
 
         gbc.gridx = 1;
         gbc.gridy = row;
-        gbc.weightx = 0.66;
+        gbc.weightx = 0.70;
         panel.add(comp, gbc);
     }
 
     private JLabel createLabel(String text, Font font) {
-        JLabel lbl = new JLabel(text, SwingConstants.RIGHT);
+        JLabel lbl = new JLabel(text);
         lbl.setFont(font);
-        lbl.setForeground(Color.BLACK);
+        lbl.setForeground(TEXT_COLOR);
+        lbl.setHorizontalAlignment(SwingConstants.RIGHT);
+        lbl.setVerticalAlignment(SwingConstants.CENTER);
         return lbl;
     }
 
     private void initData() {
         txtMaPhieu.setText(maPhieuDatBan);
-        txtTienCoc.setText(formatTienVND(tienCoc));
 
         if (cheDoChiXem) {
             loadThongTinHuyTuCSDL();
 
-            btnDongY.setEnabled(false);   // không cho bấm
-            // nếu muốn ẩn hẳn thì dùng:
-            // btnDongY.setVisible(false);
-
+            btnDongY.setEnabled(false);
             cboPhuongThuc.setEnabled(false);
             cboPhuongThuc.setBackground(DISABLED_BG);
 
             txtLyDo.setEditable(false);
             txtLyDo.setBackground(DISABLED_BG);
         } else {
-            double tienHoan = tinhTienHoanCoc(tienCoc, thoiGianDen, coDatMon);
+            loadThongTinTuCSDLVaTinhHoanCoc();
+        }
+    }
+
+    private void loadThongTinTuCSDLVaTinhHoanCoc() {
+        try {
+            PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
+            String[] row = dao.timTheoMaPhieu(maPhieuDatBan);
+
+            double tienCocDB = tienCocTruyenVao;
+            Timestamp thoiGianDenDB = thoiGianDenTruyenVao;
+
+            if (row != null) {
+                try {
+                    tienCocDB = Double.parseDouble(row[6]);
+                } catch (Exception e) {
+                    tienCocDB = tienCocTruyenVao;
+                }
+
+                try {
+                    thoiGianDenDB = Timestamp.valueOf(row[5]);
+                } catch (Exception e) {
+                    thoiGianDenDB = thoiGianDenTruyenVao;
+                }
+            }
+
+            boolean coDatMonDB = coDatMonTruyenVao;
+            try {
+                PhieuDatMon_DAO pdmDao = new PhieuDatMon_DAO();
+                ArrayList<PhieuDatMon> dsMon = pdmDao.getDanhSachTheoMaPhieu(maPhieuDatBan);
+                coDatMonDB = dsMon != null && !dsMon.isEmpty();
+            } catch (Exception e) {
+                coDatMonDB = coDatMonTruyenVao;
+            }
+
+            this.tienCoc = tienCocDB;
+            this.thoiGianDen = thoiGianDenDB;
+            this.coDatMon = coDatMonDB;
+
+            txtTienCoc.setText(formatTienVND(tienCocDB));
+
+            double tienHoan = tinhTienHoanCoc(tienCocDB, thoiGianDenDB, coDatMonDB);
             txtHoanTraCoc.setText(formatTienVND(tienHoan));
+
+            cboPhuongThuc.setSelectedIndex(0);
+            txtLyDo.setText("");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            this.tienCoc = tienCocTruyenVao;
+            this.thoiGianDen = thoiGianDenTruyenVao;
+            this.coDatMon = coDatMonTruyenVao;
+
+            txtTienCoc.setText(formatTienVND(tienCocTruyenVao));
+            txtHoanTraCoc.setText(formatTienVND(
+                    tinhTienHoanCoc(tienCocTruyenVao, thoiGianDenTruyenVao, coDatMonTruyenVao)
+            ));
         }
     }
 
@@ -252,6 +402,7 @@ public class HuyBan_DigLog extends JDialog {
             String[] row = dao.timTheoMaPhieu(maPhieuDatBan);
 
             if (row == null) {
+                txtTienCoc.setText(formatTienVND(0));
                 txtHoanTraCoc.setText(formatTienVND(0));
                 cboPhuongThuc.setSelectedIndex(0);
                 txtLyDo.setText("");
@@ -272,6 +423,7 @@ public class HuyBan_DigLog extends JDialog {
 
             txtLyDo.setText(row[10] == null ? "" : row[10]);
             txtLyDo.setCaretPosition(0);
+
         } catch (Exception e) {
             e.printStackTrace();
             txtHoanTraCoc.setText(formatTienVND(0));
@@ -341,17 +493,22 @@ public class HuyBan_DigLog extends JDialog {
             return 0;
         }
 
-        if (!coDatMon) {
-            if (soGioConLai >= 24) return tienCoc * 0.70;
-            return tienCoc * 0.50;
-        } else {
-            if (soGioConLai >= 24) return tienCoc * 0.30;
-            return 0;
+        if (soGioConLai >= 24) {
+            if (coDatMon) {
+                return tienCoc * 0.30;
+            }
+            return tienCoc * 0.70;
         }
+
+        if (!coDatMon) {
+            return tienCoc * 0.50;
+        }
+
+        return 0;
     }
 
     private String formatTienVND(double soTien) {
-        DecimalFormat df = new DecimalFormat("#,##0");
+        java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0");
         return df.format(soTien).replace(",", ".") + " VNĐ";
     }
 
@@ -367,6 +524,7 @@ public class HuyBan_DigLog extends JDialog {
     private long parseTien(String text) {
         if (text == null) return 0;
         String so = text.replace("VNĐ", "")
+                .replace("vnđ", "")
                 .replace("đ", "")
                 .replace("Đ", "")
                 .replace(".", "")
@@ -394,13 +552,11 @@ public class HuyBan_DigLog extends JDialog {
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setColor(bgColor);
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
-            super.paintComponent(g);
             g2.dispose();
+            super.paintComponent(g);
         }
     }
-   
 }

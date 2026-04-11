@@ -58,12 +58,16 @@ import com.toedter.calendar.JDateChooser;
 import connectDB.ConnectDB;
 import dao.Ban_DAO;
 import dao.PhieuDatBan_DAO;
+import dao.PhieuDatMon_DAO;
+import digLog.HuyBan_DigLog;
 import digLog.PhieuDatBan_DigLog;
 import entity.Ban;
+import entity.PhieuDatMon;
 import entity.TaiKhoan;
 
 public class DatBan_GUI extends JFrame {
     private static final long serialVersionUID = 1L;
+    
 
     private TaiKhoan taiKhoanDangNhap;
 
@@ -223,14 +227,80 @@ public class DatBan_GUI extends JFrame {
             this.addComponentListener(resizeHandler);
             cardPanel.addComponentListener(resizeHandler);
         }
+        private double parseMoney(String text) {
+            if (text == null) return 0;
+            String so = text.trim()
+                    .replace("VNĐ", "")
+                    .replace("vnđ", "")
+                    .replace("đ", "")
+                    .replace("Đ", "")
+                    .replace(".", "")
+                    .replace(",", "")
+                    .trim();
+            if (so.isEmpty()) return 0;
+            try {
+                return Double.parseDouble(so);
+            } catch (Exception e) {
+                return 0;
+            }
+        }
+
+        private boolean coDatMonTheoPhieu(String maPhieu) {
+            try {
+                PhieuDatMon_DAO dao = new PhieuDatMon_DAO();
+                ArrayList<PhieuDatMon> ds = dao.getDanhSachTheoMaPhieu(maPhieu);
+                return ds != null && !ds.isEmpty();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
 
         private void moChiTietPhieu(BookingDisplayItem item) {
             try {
-                PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(DatBan_GUI.this, item.maPhieu);
-                dialog.setLocationRelativeTo(DatBan_GUI.this);
-                dialog.setVisible(true);
+                boolean daHuy = item.trangThai != null
+                        && item.trangThai.trim().equalsIgnoreCase("Đã hủy");
+
+                if (daHuy) {
+                    PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
+                    String[] row = dao.timTheoMaPhieu(item.maPhieu);
+
+                    if (row == null) {
+                        JOptionPane.showMessageDialog(
+                                DatBan_GUI.this,
+                                "Không tìm thấy phiếu đặt bàn!",
+                                "Lỗi",
+                                JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    double tienCoc = parseMoney(row[6]);
+                    Timestamp thoiGianDen = Timestamp.valueOf(row[5]);
+                    boolean coDatMon = coDatMonTheoPhieu(item.maPhieu);
+
+                    HuyBan_DigLog dialog = new HuyBan_DigLog(
+                            DatBan_GUI.this,
+                            item.maPhieu,
+                            tienCoc,
+                            thoiGianDen,
+                            coDatMon,
+                            true
+                    );
+                    dialog.setLocationRelativeTo(DatBan_GUI.this);
+                    dialog.setVisible(true);
+
+                } else {
+                    PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(
+                            DatBan_GUI.this,
+                            item.maPhieu
+                    );
+                    dialog.setLocationRelativeTo(DatBan_GUI.this);
+                    dialog.setVisible(true);
+                }
+
                 clearBookingCache();
                 refreshView();
+
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(
@@ -1016,16 +1086,24 @@ public class DatBan_GUI extends JFrame {
             bodyScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             bodyScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-            bodyScroll.getHorizontalScrollBar().addAdjustmentListener(e ->
-                    headerScroll.getHorizontalScrollBar().setValue(e.getValue()));
+            bodyScroll.getHorizontalScrollBar().addAdjustmentListener(e -> {
+                JViewport hv = headerScroll.getViewport();
+                Point p = hv.getViewPosition();
+                hv.setViewPosition(new Point(e.getValue(), p.y));
+            });
 
-            bodyScroll.getVerticalScrollBar().addAdjustmentListener(e ->
-                    leftBodyScroll.getViewport().setViewPosition(
-                            new Point(0, bodyScroll.getVerticalScrollBar().getValue())));
+            bodyScroll.getVerticalScrollBar().addAdjustmentListener(e -> {
+                JViewport lv = leftBodyScroll.getViewport();
+                Point p = lv.getViewPosition();
+                lv.setViewPosition(new Point(p.x, e.getValue()));
+            });
 
             topLeftScroll.setPreferredSize(new Dimension(fixedWidth, headerHeight));
             headerScroll.setPreferredSize(new Dimension(0, headerHeight));
             leftBodyScroll.setPreferredSize(new Dimension(fixedWidth, 0));
+
+            int vScrollWidth = bodyScroll.getVerticalScrollBar().getPreferredSize().width;
+            headerScroll.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, vScrollWidth));
 
             JPanel topPanel = new JPanel(new BorderLayout());
             topPanel.add(topLeftScroll, BorderLayout.WEST);
@@ -1043,43 +1121,44 @@ public class DatBan_GUI extends JFrame {
         }
 
         private JPanel buildDayGrid() {
-            JPanel topLeftPanel = new JPanel(new java.awt.GridBagLayout());
-            JPanel headerPanel = new JPanel(new java.awt.GridBagLayout());
-            JPanel leftBodyPanel = new JPanel(new java.awt.GridBagLayout());
-            JPanel bodyPanel = new JPanel(new java.awt.GridBagLayout());
+            JPanel topLeftPanel = new JPanel(new GridBagLayout());
+            JPanel headerPanel = new JPanel(new GridBagLayout());
+            JPanel leftBodyPanel = new JPanel(new GridBagLayout());
+            JPanel bodyPanel = new JPanel(new GridBagLayout());
 
             topLeftPanel.setBackground(Color.WHITE);
             headerPanel.setBackground(Color.WHITE);
             leftBodyPanel.setBackground(Color.WHITE);
             bodyPanel.setBackground(Color.WHITE);
 
-            java.awt.GridBagConstraints gbcTL = new java.awt.GridBagConstraints();
-            gbcTL.fill = java.awt.GridBagConstraints.BOTH;
+            GridBagConstraints gbcTL = new GridBagConstraints();
+            gbcTL.fill = GridBagConstraints.BOTH;
             gbcTL.gridx = 0;
 
-            java.awt.GridBagConstraints gbcH = new java.awt.GridBagConstraints();
-            gbcH.fill = java.awt.GridBagConstraints.BOTH;
+            GridBagConstraints gbcH = new GridBagConstraints();
+            gbcH.fill = GridBagConstraints.BOTH;
 
-            java.awt.GridBagConstraints gbcL = new java.awt.GridBagConstraints();
-            gbcL.fill = java.awt.GridBagConstraints.BOTH;
+            GridBagConstraints gbcL = new GridBagConstraints();
+            gbcL.fill = GridBagConstraints.BOTH;
             gbcL.gridx = 0;
 
-            java.awt.GridBagConstraints gbcB = new java.awt.GridBagConstraints();
-            gbcB.fill = java.awt.GridBagConstraints.BOTH;
+            GridBagConstraints gbcB = new GridBagConstraints();
+            gbcB.fill = GridBagConstraints.BOTH;
 
             java.util.List<Integer> hours = createHourValuesDay();
             java.util.List<String> visibleTables = new ArrayList<>(tableNames);
             Map<String, BookingDisplayItem> daySlotMap = buildDaySlotMap(currentCalendar.getTime());
 
             int availableWidth = getCenterAvailableWidth();
-            int leftColWidth = clamp((int) (availableWidth * 0.12), 110, 170);
-
-            int totalHourColumns = hours.size();
-            int hourWidth = (availableWidth - leftColWidth) / totalHourColumns;
-            hourWidth = clamp(hourWidth, 72, 170);
-
-            int rowHeight = 48;
+            int rowHeight = 52;
             int headerHeight = rowHeight * 2;
+
+            int leftColWidth = clamp((int) (availableWidth * 0.16), 170, 230);
+            int gridWidth = Math.max(1200, availableWidth - leftColWidth);
+            int[] hourWidths = buildEqualWidths(gridWidth, hours.size(), 110);
+
+            int totalGridWidth = 0;
+            for (int w : hourWidths) totalGridWidth += w;
 
             gbcTL.gridy = 0;
             topLeftPanel.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbcTL);
@@ -1090,20 +1169,26 @@ public class DatBan_GUI extends JFrame {
             gbcH.gridy = 0;
             gbcH.gridwidth = hours.size();
             headerPanel.add(
-                    createCell(formatDayHeaderFull(currentCalendar), hourWidth * hours.size(), rowHeight, true,
-                            SwingConstants.LEFT),
-                    gbcH);
+                    createCell(formatDayHeaderFull(currentCalendar), totalGridWidth, rowHeight, true, SwingConstants.LEFT),
+                    gbcH
+            );
 
             for (int i = 0; i < hours.size(); i++) {
                 gbcH.gridx = i;
                 gbcH.gridy = 1;
                 gbcH.gridwidth = 1;
-                headerPanel.add(createCell(formatHour24(hours.get(i)), hourWidth, rowHeight, true, SwingConstants.CENTER), gbcH);
+                headerPanel.add(
+                        createCell(formatHour24(hours.get(i)), hourWidths[i], rowHeight, true, SwingConstants.CENTER),
+                        gbcH
+                );
             }
 
             for (int r = 0; r < visibleTables.size(); r++) {
                 gbcL.gridy = r;
-                leftBodyPanel.add(createCell(visibleTables.get(r), leftColWidth, rowHeight, false, SwingConstants.LEFT), gbcL);
+                leftBodyPanel.add(
+                        createCell(visibleTables.get(r), leftColWidth, rowHeight, false, SwingConstants.LEFT),
+                        gbcL
+                );
             }
 
             for (int r = 0; r < visibleTables.size(); r++) {
@@ -1114,42 +1199,63 @@ public class DatBan_GUI extends JFrame {
 
                     String key = visibleTables.get(r).toLowerCase() + "_" + hours.get(c);
                     BookingDisplayItem item = daySlotMap.get(key);
-                    bodyPanel.add(createBookingSlotCell(item, hourWidth, rowHeight), gbcB);
+                    bodyPanel.add(createBookingSlotCell(item, hourWidths[c], rowHeight), gbcB);
                 }
             }
 
             topLeftPanel.setPreferredSize(new Dimension(leftColWidth, headerHeight));
-            headerPanel.setPreferredSize(new Dimension(hours.size() * hourWidth, headerHeight));
+            headerPanel.setPreferredSize(new Dimension(totalGridWidth, headerHeight));
             leftBodyPanel.setPreferredSize(new Dimension(leftColWidth, Math.max(1, visibleTables.size()) * rowHeight));
-            bodyPanel.setPreferredSize(new Dimension(hours.size() * hourWidth, Math.max(1, visibleTables.size()) * rowHeight));
+            bodyPanel.setPreferredSize(new Dimension(totalGridWidth, Math.max(1, visibleTables.size()) * rowHeight));
 
             return createFrozenTablePanel(topLeftPanel, headerPanel, leftBodyPanel, bodyPanel, leftColWidth, headerHeight);
         }
+        private int[] buildEqualWidths(int totalWidth, int columnCount, int minWidth) {
+            int[] widths = new int[columnCount];
+            if (columnCount <= 0) return widths;
+
+            int base = Math.max(minWidth, totalWidth / columnCount);
+            int used = base * columnCount;
+            int remain = totalWidth - used;
+
+            for (int i = 0; i < columnCount; i++) {
+                widths[i] = base;
+            }
+
+            int i = 0;
+            while (remain > 0) {
+                widths[i % columnCount]++;
+                remain--;
+                i++;
+            }
+
+            return widths;
+        }
 
         private JPanel buildWeekGridLikeImage() {
-            JPanel topLeftPanel = new JPanel(new java.awt.GridBagLayout());
-            JPanel headerPanel = new JPanel(new java.awt.GridBagLayout());
-            JPanel leftBodyPanel = new JPanel(new java.awt.GridBagLayout());
-            JPanel bodyPanel = new JPanel(new java.awt.GridBagLayout());
+            JPanel topLeftPanel = new JPanel(new GridBagLayout());
+            JPanel headerPanel = new JPanel(new GridBagLayout());
+            JPanel leftBodyPanel = new JPanel(new GridBagLayout());
+            JPanel bodyPanel = new JPanel(new GridBagLayout());
 
             topLeftPanel.setBackground(Color.WHITE);
             headerPanel.setBackground(Color.WHITE);
             leftBodyPanel.setBackground(Color.WHITE);
             bodyPanel.setBackground(Color.WHITE);
 
-            java.awt.GridBagConstraints gbcTL = new java.awt.GridBagConstraints();
-            gbcTL.fill = java.awt.GridBagConstraints.BOTH;
+            GridBagConstraints gbcTL = new GridBagConstraints();
+            gbcTL.fill = GridBagConstraints.BOTH;
             gbcTL.gridx = 0;
 
-            java.awt.GridBagConstraints gbcH = new java.awt.GridBagConstraints();
-            gbcH.fill = java.awt.GridBagConstraints.BOTH;
+            GridBagConstraints gbcH = new GridBagConstraints();
+            gbcH.fill = GridBagConstraints.BOTH;
 
-            java.awt.GridBagConstraints gbcL = new java.awt.GridBagConstraints();
-            gbcL.fill = java.awt.GridBagConstraints.BOTH;
+            GridBagConstraints gbcL = new GridBagConstraints();
+            gbcL.fill = GridBagConstraints.BOTH;
             gbcL.gridx = 0;
 
-            java.awt.GridBagConstraints gbcB = new java.awt.GridBagConstraints();
-            gbcB.fill = java.awt.GridBagConstraints.BOTH;
+            GridBagConstraints gbcB = new GridBagConstraints();
+            gbcB.fill = GridBagConstraints.BOTH;
 
             java.util.List<Integer> hours = createHourValuesWeek();
             Calendar weekStart = getWeekStart(currentCalendar);
@@ -1157,10 +1263,17 @@ public class DatBan_GUI extends JFrame {
             Map<String, BookingDisplayItem> weekSlotMap = buildWeekSlotMap(weekStart, hours);
 
             int availableWidth = getCenterAvailableWidth();
-            int leftColWidth = clamp((int) (availableWidth * 0.12), 110, 170);
-            int hourWidth = clamp((int) (availableWidth * 0.11), 88, 130);
             int rowHeight = 48;
             int headerHeight = rowHeight * 2;
+
+            int leftColWidth = clamp((int) (availableWidth * 0.11), 120, 160);
+            int totalHourColumns = 7 * hours.size();
+
+            int gridWidth = Math.max(980, availableWidth - leftColWidth);
+            int[] hourWidths = buildEqualWidths(gridWidth, totalHourColumns, 72);
+
+            int totalGridWidth = 0;
+            for (int w : hourWidths) totalGridWidth += w;
 
             gbcTL.gridy = 0;
             topLeftPanel.add(createCell("", leftColWidth, rowHeight, true, SwingConstants.CENTER), gbcTL);
@@ -1172,28 +1285,41 @@ public class DatBan_GUI extends JFrame {
                 Calendar day = (Calendar) weekStart.clone();
                 day.add(Calendar.DAY_OF_MONTH, d);
 
+                int dayWidth = 0;
+                for (int h = 0; h < hours.size(); h++) {
+                    dayWidth += hourWidths[colIndex + h];
+                }
+
                 gbcH.gridx = colIndex;
                 gbcH.gridy = 0;
                 gbcH.gridwidth = hours.size();
                 headerPanel.add(
-                        createCell(formatDayHeader(day), hourWidth * hours.size(), rowHeight, true, SwingConstants.LEFT),
-                        gbcH);
+                        createCell(formatDayHeader(day), dayWidth, rowHeight, true, SwingConstants.LEFT),
+                        gbcH
+                );
                 colIndex += hours.size();
             }
 
             colIndex = 0;
             for (int d = 0; d < 7; d++) {
-                for (Integer hour : hours) {
-                    gbcH.gridx = colIndex++;
+                for (int h = 0; h < hours.size(); h++) {
+                    gbcH.gridx = colIndex;
                     gbcH.gridy = 1;
                     gbcH.gridwidth = 1;
-                    headerPanel.add(createCell(formatHour24(hour), hourWidth, rowHeight, true, SwingConstants.CENTER), gbcH);
+                    headerPanel.add(
+                            createCell(formatHour24(hours.get(h)), hourWidths[colIndex], rowHeight, true, SwingConstants.CENTER),
+                            gbcH
+                    );
+                    colIndex++;
                 }
             }
 
             for (int r = 0; r < visibleTables.size(); r++) {
                 gbcL.gridy = r;
-                leftBodyPanel.add(createCell(visibleTables.get(r), leftColWidth, rowHeight, false, SwingConstants.LEFT), gbcL);
+                leftBodyPanel.add(
+                        createCell(visibleTables.get(r), leftColWidth, rowHeight, false, SwingConstants.LEFT),
+                        gbcL
+                );
             }
 
             colIndex = 0;
@@ -1208,16 +1334,16 @@ public class DatBan_GUI extends JFrame {
 
                         String key = d + "_" + visibleTables.get(r).toLowerCase() + "_" + startHour;
                         BookingDisplayItem item = weekSlotMap.get(key);
-                        bodyPanel.add(createBookingSlotCell(item, hourWidth, rowHeight), gbcB);
+                        bodyPanel.add(createBookingSlotCell(item, hourWidths[colIndex], rowHeight), gbcB);
                     }
                     colIndex++;
                 }
             }
 
             topLeftPanel.setPreferredSize(new Dimension(leftColWidth, headerHeight));
-            headerPanel.setPreferredSize(new Dimension(7 * hours.size() * hourWidth, headerHeight));
+            headerPanel.setPreferredSize(new Dimension(totalGridWidth, headerHeight));
             leftBodyPanel.setPreferredSize(new Dimension(leftColWidth, Math.max(1, visibleTables.size()) * rowHeight));
-            bodyPanel.setPreferredSize(new Dimension(7 * hours.size() * hourWidth, Math.max(1, visibleTables.size()) * rowHeight));
+            bodyPanel.setPreferredSize(new Dimension(totalGridWidth, Math.max(1, visibleTables.size()) * rowHeight));
 
             return createFrozenTablePanel(topLeftPanel, headerPanel, leftBodyPanel, bodyPanel, leftColWidth, headerHeight);
         }
@@ -1543,15 +1669,26 @@ public class DatBan_GUI extends JFrame {
         private int getCenterAvailableWidth() {
             int width = 0;
 
-            if (currentMainScrollPane != null && currentMainScrollPane.getParent() != null) {
-                width = currentMainScrollPane.getParent().getWidth();
+            if (cardPanel != null && cardPanel.isShowing()) {
+                width = cardPanel.getWidth();
             }
 
-            if (width <= 0) width = cardPanel.getWidth();
-            if (width <= 0) width = DatBanMainPanel.this.getWidth() - 24;
-            if (width <= 0) width = Toolkit.getDefaultToolkit().getScreenSize().width - 320;
+            if (width <= 0 && currentMainScrollPane != null) {
+                JViewport vp = currentMainScrollPane.getViewport();
+                if (vp != null) {
+                    width = vp.getWidth();
+                }
+            }
 
-            return Math.max(980, width - 8);
+            if (width <= 0 && DatBanMainPanel.this.getParent() != null) {
+                width = DatBanMainPanel.this.getParent().getWidth() - 24;
+            }
+
+            if (width <= 0) {
+                width = DatBanMainPanel.this.getWidth() - 24;
+            }
+
+            return Math.max(900, width);
         }
 
         private int clamp(int value, int min, int max) {
@@ -1643,12 +1780,13 @@ public class DatBan_GUI extends JFrame {
             });
         }
 
-        private void configScroll(JScrollPane scroll) {
-            scroll.setBorder(null);
-            scroll.getViewport().setBackground(Color.WHITE);
-            scroll.getVerticalScrollBar().setUnitIncrement(16);
-            scroll.getHorizontalScrollBar().setUnitIncrement(16);
-            scroll.setWheelScrollingEnabled(true);
+        private void configScroll(JScrollPane sp) {
+            sp.setBorder(null);
+            sp.getViewport().setBackground(Color.WHITE);
+            sp.setOpaque(false);
+            sp.getViewport().setOpaque(true);
+            sp.getVerticalScrollBar().setUnitIncrement(16);
+            sp.getHorizontalScrollBar().setUnitIncrement(16);
         }
 
         enum ViewMode {

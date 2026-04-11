@@ -294,4 +294,115 @@ public class Ban_DAO {
 
 	    return ds;
 	}
+	public ArrayList<String[]> getDanhSachBanTheoNgay(java.sql.Date ngayChon) {
+	    ArrayList<String[]> ds = new ArrayList<>();
+	    Connection con = ConnectDB.getConnection();
+
+	    String sql = """
+	        SELECT 
+	            b.maBan,
+	            b.tenBan,
+	            kv.tenKhuVuc,
+	            CASE
+	                WHEN EXISTS (
+	                    SELECT 1
+	                    FROM HoaDon hd
+	                    WHERE hd.maBan = b.maBan
+	                      AND CAST(hd.thoiGianVao AS DATE) = ?
+	                      AND (hd.trangThai IS NULL OR hd.trangThai <> N'Đã hủy')
+	                      AND hd.thoiGianRa IS NULL
+	                ) THEN N'Đang phục vụ'
+
+	                WHEN EXISTS (
+	                    SELECT 1
+	                    FROM PhieuDatBan pdb
+	                    WHERE pdb.maBan = b.maBan
+	                      AND CAST(pdb.thoiGianDen AS DATE) = ?
+	                      AND (pdb.trangThai IS NULL OR pdb.trangThai <> N'Đã hủy')
+	                ) THEN N'Đã đặt'
+
+	                ELSE N'Trống'
+	            END AS trangThaiHienTai
+	        FROM Ban b
+	        JOIN KhuVuc kv ON b.maKhuVuc = kv.maKhuVuc
+	        ORDER BY b.maBan
+	    """;
+
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        stmt.setDate(1, ngayChon);
+	        stmt.setDate(2, ngayChon);
+
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            while (rs.next()) {
+	                ds.add(new String[] {
+	                    rs.getString("maBan"),
+	                    rs.getString("tenBan"),
+	                    rs.getString("tenKhuVuc"),
+	                    rs.getString("trangThaiHienTai")
+	                });
+	            }
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+
+	    return ds;
+	}
+	public ArrayList<String[]> getDanhSachBanTheoNgayVaTuKhoa(java.sql.Date ngayChon, String tuKhoa) {
+	    ArrayList<String[]> ds = new ArrayList<>();
+	    Connection con = ConnectDB.getConnection();
+
+	    String sql = """
+	        SELECT 
+	            b.maBan,
+	            b.tenBan,
+	            kv.tenKhuVuc,
+	            CASE
+	                WHEN EXISTS (
+	                    SELECT 1
+	                    FROM HoaDon hd
+	                    WHERE hd.maBan = b.maBan
+	                      AND CAST(hd.thoiGianVao AS DATE) = ?
+	                      AND (hd.trangThai IS NULL OR hd.trangThai <> N'Đã hủy')
+	                      AND hd.thoiGianRa IS NULL
+	                ) THEN N'Đang phục vụ'
+
+	                WHEN EXISTS (
+	                    SELECT 1
+	                    FROM PhieuDatBan pdb
+	                    WHERE pdb.maBan = b.maBan
+	                      AND CAST(pdb.thoiGianDen AS DATE) = ?
+	                      AND (pdb.trangThai IS NULL OR pdb.trangThai <> N'Đã hủy')
+	                ) THEN N'Đã đặt'
+
+	                ELSE N'Trống'
+	            END AS trangThaiHienTai
+	        FROM Ban b
+	        JOIN KhuVuc kv ON b.maKhuVuc = kv.maKhuVuc
+	        WHERE b.maBan LIKE ? OR b.tenBan LIKE ?
+	        ORDER BY b.maBan
+	    """;
+
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        stmt.setDate(1, ngayChon);
+	        stmt.setDate(2, ngayChon);
+	        stmt.setString(3, "%" + tuKhoa + "%");
+	        stmt.setString(4, "%" + tuKhoa + "%");
+
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            while (rs.next()) {
+	                ds.add(new String[] {
+	                    rs.getString("maBan"),
+	                    rs.getString("tenBan"),
+	                    rs.getString("tenKhuVuc"),
+	                    rs.getString("trangThaiHienTai")
+	                });
+	            }
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+
+	    return ds;
+	}
 }

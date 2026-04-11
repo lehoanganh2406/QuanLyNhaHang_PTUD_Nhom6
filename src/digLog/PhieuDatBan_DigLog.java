@@ -107,6 +107,12 @@ public class PhieuDatBan_DigLog extends JDialog {
     private final Color BORDER = new Color(170, 170, 170);
     private final Color DISABLED_BG = new Color(222, 222, 222);
     private final Color PLACEHOLDER = new Color(145, 145, 145);
+    
+    private static final Dimension SIZE_KHONG_MON_THEM = new Dimension(700, 680);
+    private static final Dimension SIZE_CO_MON_THEM = new Dimension(700, 800);
+
+    private static final Dimension SIZE_KHONG_MON_CHI_TIET = new Dimension(700, 660);
+    private static final Dimension SIZE_CO_MON_CHI_TIET = new Dimension(700, 780);
 
     private static final String PH_KHACH = "Nhập tên khách hàng";
     private static final String PH_SDT = "Nhập số điện thoại";
@@ -127,8 +133,8 @@ public class PhieuDatBan_DigLog extends JDialog {
     public PhieuDatBan_DigLog(Frame owner) {
         super(owner, "Phiếu đặt bàn", true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(620, 800));
-        setSize(620, 800);
+        setMinimumSize(new Dimension(700, 760));
+        setSize(700, 820);
         setLocationRelativeTo(owner);
 
         initUI();
@@ -142,8 +148,8 @@ public class PhieuDatBan_DigLog extends JDialog {
     public PhieuDatBan_DigLog(Frame owner, String maPhieuDatBan) {
         super(owner, "Phiếu đặt bàn", true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(620, 500));
-        setSize(620, 760);
+        setMinimumSize(new Dimension(700, 720));
+        setSize(700, 800);
         setLocationRelativeTo(owner);
 
         this.maPhieuHienTai = maPhieuDatBan;
@@ -387,6 +393,19 @@ public class PhieuDatBan_DigLog extends JDialog {
         initPopupBan();
         chanNhapKhacChoSoDienThoai();
     }
+    private void capNhatKichThuocTheoMonDatTruoc(boolean coMon) {
+        Dimension size;
+
+        if (cheDoChiTiet) {
+            size = coMon ? SIZE_CO_MON_CHI_TIET : SIZE_KHONG_MON_CHI_TIET;
+        } else {
+            size = coMon ? SIZE_CO_MON_THEM : SIZE_KHONG_MON_THEM;
+        }
+
+        setSize(size);
+        setMinimumSize(new Dimension(680, 640));
+        setLocationRelativeTo(getOwner());
+    }
 
     private void setModeChiTiet() {
         btnDatBan.setVisible(false);
@@ -428,6 +447,11 @@ public class PhieuDatBan_DigLog extends JDialog {
 
         if (dsMonDatTam == null || dsMonDatTam.isEmpty()) {
             scrMonDatTruoc.setVisible(false);
+            scrMonDatTruoc.setPreferredSize(new Dimension(300, 0));
+            scrMonDatTruoc.setMinimumSize(new Dimension(300, 0));
+
+            capNhatKichThuocTheoMonDatTruoc(false);
+
             revalidate();
             repaint();
             return;
@@ -452,10 +476,23 @@ public class PhieuDatBan_DigLog extends JDialog {
         scrMonDatTruoc.setVisible(coMon);
 
         if (coMon) {
+            int soDong = modelMonDatTruoc.getRowCount();
+            int rowHeight = tblMonDatTruoc.getRowHeight();
+            int headerHeight = tblMonDatTruoc.getTableHeader().getPreferredSize().height;
+
+            int chieuCaoBang = headerHeight + (Math.min(soDong, 4) * rowHeight) + 6;
+            chieuCaoBang = Math.max(90, Math.min(chieuCaoBang, 140));
+
+            scrMonDatTruoc.setPreferredSize(new Dimension(300, chieuCaoBang));
+            scrMonDatTruoc.setMinimumSize(new Dimension(300, chieuCaoBang));
             scrMonDatTruoc.setBorder(new LineBorder(new Color(150, 150, 150), 1, true));
         } else {
+            scrMonDatTruoc.setPreferredSize(new Dimension(300, 0));
+            scrMonDatTruoc.setMinimumSize(new Dimension(300, 0));
             scrMonDatTruoc.setBorder(new LineBorder(BORDER, 1));
         }
+
+        capNhatKichThuocTheoMonDatTruoc(coMon);
 
         revalidate();
         repaint();

@@ -227,7 +227,7 @@ public class PhieuDatBan_DAO {
             stmt.setString(1, "Đã hủy");
             stmt.setString(2, phuongThucHoanTien);
             stmt.setString(3, lyDoHuy);
-            stmt.setBigDecimal(4, tienHoanTra);
+            stmt.setBigDecimal(4, tienHoanTra == null ? BigDecimal.ZERO : tienHoanTra);
             stmt.setString(5, maPhieuDatBan);
 
             return stmt.executeUpdate() > 0;

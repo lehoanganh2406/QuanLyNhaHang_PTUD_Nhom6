@@ -97,4 +97,9 @@ public class NhanVien {
 	public NhanVien() {
 		// TODO Auto-generated constructor stub
 	}
+	public NhanVien(String maNV) {
+		super();
+		this.maNV = maNV;
+	}
+	
 }

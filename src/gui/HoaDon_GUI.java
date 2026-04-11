@@ -485,7 +485,7 @@ public class HoaDon_GUI extends JPanel {
     	
 //    	chỉnh font
     	UIManager.put("Label.font",   scaledFontStatic("Times New Roman", Font.PLAIN, 12));
-    	UIManager.put("Button.font",  scaledFontStatic("Times New Roman", Font.BOLD, 10));
+    	UIManager.put("Button.font",  scaledFontStatic("Times New Roman", Font.BOLD, 8));
     	UIManager.put("TextField.font", scaledFontStatic("Times New Roman", Font.PLAIN, 12));
     	UIManager.put("Table.font",   scaledFontStatic("Times New Roman", Font.PLAIN, 12));
     	UIManager.put("TableHeader.font", scaledFontStatic("Times New Roman", Font.BOLD, 12));

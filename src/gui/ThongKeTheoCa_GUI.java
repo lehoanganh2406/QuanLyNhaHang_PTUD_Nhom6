@@ -397,4 +397,7 @@ public class ThongKeTheoCa_GUI extends JFrame {
             g2.drawString("19h", tx - 4, padTop + 2);
         }
     }
+    public static void main(String[] args) {
+		new ThongKeTheoCa_GUI(null).setVisible(true);
+	}
 }

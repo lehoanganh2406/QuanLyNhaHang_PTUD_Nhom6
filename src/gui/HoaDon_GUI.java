@@ -2,6 +2,8 @@ package gui;
 
 import com.toedter.calendar.JDateChooser;
 
+import connectDB.ConnectDB;
+import dao.HoaDon_DAO;
 import entity.TaiKhoan;
 
 import javax.swing.*;
@@ -11,6 +13,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
+import java.sql.Connection;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -27,7 +31,7 @@ public class HoaDon_GUI extends JPanel {
     private static final Color CLR_BTN_CHITIET = new Color(100, 181, 246); // xanh dương
     private static final Color CLR_BTN_TRACUU  = new Color(102, 187, 106); // xanh lá
     private static final Color CLR_BTN_LAMMOI  = new Color(102, 187, 106); // xanh lá
-    private static final Color CLR_BTN_LOC     = new Color(255, 213, 79);  // vàng
+    private static final Color CLR_BTN_LOC     = new Color(250, 224, 187);  // vàng
     private static final Color CLR_BTN_CAPNHAT = new Color(255, 213, 79);  // vàng
 
     // ── Trường nhập liệu ─────────────────────────────────────────────────────
@@ -39,15 +43,23 @@ public class HoaDon_GUI extends JPanel {
     // ── Bảng ─────────────────────────────────────────────────────────────────
     private JTable            table;
     private DefaultTableModel tableModel;
+    
+    private HoaDon_DAO hd_dao= new HoaDon_DAO();
 
     // ── Nút ──────────────────────────────────────────────────────────────────
     private JButton btnChiTiet, btnTraCuu, btnLamMoi, btnLoc, btnCapNhat;
+	private JComboBox<String> cbTrangThai;
+	private Connection con;
     private static TaiKhoan taiKhoanDangNhap;
     public HoaDon_GUI(TaiKhoan tk) {
         setLayout(new BorderLayout());
         setBackground(CLR_PANEL_BG);
         add(buildTitlePanel(),  BorderLayout.NORTH);
         add(buildCenterPanel(), BorderLayout.CENTER);
+        
+        con = ConnectDB.getConnection();
+        
+        loadData();
     }
 
     // =========================================================================
@@ -96,7 +108,7 @@ public class HoaDon_GUI extends JPanel {
         JPanel pnlFields = new JPanel(new GridBagLayout());
         pnlFields.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 4, 5, 4);
+        gbc.insets = new Insets(8, 8, 8, 8); // 🔥 tăng đều khoảng cách
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill   = GridBagConstraints.HORIZONTAL;
 
@@ -123,21 +135,20 @@ public class HoaDon_GUI extends JPanel {
         addRow(pnlFields, gbc, 3, "Thời gian vào", dtThoiGianVao, "Thời gian ra", dtThoiGianRa);
 
         // Hàng 4: Trạng thái
-//        txtTrangThai = createTextField();
-//        gbc.gridx = 0; gbc.gridy = 4; gbc.weightx = 0;
-//        pnlFields.add(createLabel("Trạng thái"), gbc);
-//        gbc.gridx = 1; gbc.weightx = 1;
-//        pnlFields.add(txtTrangThai, gbc);
-        
-        txtTrangThai  = createTextField();
-        txtKhuyenMai  = new JComboBox<String>(new String[] {"ưu đãi hạng vàng","ưu đãi hạng kim cương","khuyến mãi thường"});
-//        txtKhuyenMai.setFont(new Font("Times New Roman", Font.PLAIN, 13));
+
+        cbTrangThai= createComboBox(new String[] {
+        		"Đã thanh toán","Hủy","Chưa Thanh toán"
+        });
+        txtKhuyenMai = createComboBox(new String[]{
+        	    "ưu đãi hạng vàng",
+        	    "ưu đãi hạng kim cương",
+        	    "khuyến mãi thường"
+        	});
         txtKhuyenMai.setBackground(Color.WHITE);
         
         
-//        txtKhuyenMai.setPreferredSize(new Dimension(100, 28));
         
-        addRow(pnlFields, gbc, 4, "Trạng thái", txtTrangThai, "Khuyến mãi", txtKhuyenMai);
+        addRow(pnlFields, gbc, 4, "Trạng thái", cbTrangThai, "Khuyến mãi", txtKhuyenMai);
 
         outer.add(pnlFields, BorderLayout.CENTER);
 
@@ -157,7 +168,7 @@ public class HoaDon_GUI extends JPanel {
         GraphicsConfiguration gc = gd.getDefaultConfiguration();
         AffineTransform at = gc.getDefaultTransform();
 
-        SCALE = at.getScaleX(); // hoặc getScaleY()
+        SCALE = at.getScaleX(); 
     }
     private static Font scaledFontStatic(String name, int style, int size) {
         GraphicsDevice gd = GraphicsEnvironment
@@ -202,6 +213,10 @@ public class HoaDon_GUI extends JPanel {
         btn.setIconTextGap(10);
         btn.setMargin(new Insets(2, 8, 2, 8));
 //        btn.setPreferredSize(new Dimension(0, 36));
+        btn.setPreferredSize(new Dimension(
+        	    (int)(140 * SCALE),
+        	    (int)(45 * SCALE)
+        	));
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
 
         if (iconPath != null) {
@@ -212,43 +227,7 @@ public class HoaDon_GUI extends JPanel {
     }
 
     // ── Nút bên phải form ────────────────────────────────────────────────────
-//    private JPanel buildRightButtons() {
-//
-//        btnChiTiet = createFuncButton("CHI TIẾT HÓA ĐƠN", CLR_BTN_CHITIET, "img/chitiethoadon.png");
-//        btnTraCuu  = createFuncButton("TRA CỨU",           CLR_BTN_TRACUU,  "img/mm_tracuu.png");
-//        btnLamMoi  = createFuncButton("LÀM MỚI",           CLR_BTN_LAMMOI,  "img/mn_xuly.png");
-//        btnLoc     = createFuncButton("LỌC",               CLR_BTN_LOC,     "img/cn_loc.png");
-//        btnCapNhat = createFuncButton("CẬP NHẬT",           CLR_BTN_CAPNHAT, null);
-//
-//        JPanel top = new JPanel(new GridLayout(1, 1));
-//        top.setOpaque(false);
-//        top.add(btnChiTiet);
-//
-//        JPanel mid = new JPanel(new GridLayout(1, 2, 6, 0));
-//        mid.setOpaque(false);
-//        mid.add(btnTraCuu);
-//        mid.add(btnLamMoi);
-//
-//        JPanel bot = new JPanel(new GridLayout(1, 2, 6, 0));
-//        bot.setOpaque(false);
-//        bot.add(btnLoc);
-//        bot.add(btnCapNhat);
-//
-//        JPanel wrapper = new JPanel(new GridLayout(3, 1, 0, 6));
-//        wrapper.setOpaque(false);
-//        wrapper.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 0));
-//        wrapper.setPreferredSize(new Dimension(320, 100)); // ← chỉnh width/height ở đây
-//        wrapper.add(top);
-//        wrapper.add(mid);
-//        wrapper.add(bot);
-//
-//        btnLamMoi.addActionListener(e  -> lamMoi());
-//        btnCapNhat.addActionListener(e -> capNhatHoaDon());
-//        btnTraCuu.addActionListener(e  -> traCuu());
-//
-//        return wrapper;
-//    }
-    
+
     private JPanel buildRightButtons() {
 
         btnChiTiet = createFuncButton("CHI TIẾT HÓA ĐƠN", CLR_BTN_CHITIET, "img/chitiethoadon.png");
@@ -317,7 +296,7 @@ public class HoaDon_GUI extends JPanel {
 
         table = new JTable(tableModel);
 //        table.setFont(new Font("Times New Roman", Font.PLAIN, 13));
-        table.setRowHeight(26);
+        table.setRowHeight((int)(32 * SCALE));
         table.setShowGrid(true);
         table.setGridColor(CLR_BORDER);
         table.setSelectionBackground(new Color(180, 210, 230));
@@ -338,11 +317,7 @@ public class HoaDon_GUI extends JPanel {
             if (!e.getValueIsAdjusting()) loadRowToForm();
         });
 
-        // Dữ liệu mẫu
-        tableModel.addRow(new Object[]{
-            "HD0001", "8:00 03-02-2026","8:01 03-02-2026", "Minh",
-            "Ngọc Tiến", "0123456789", "ưu đãi hàng vàng", "B0001", "110.000", "Hoàn thành"
-        });
+      
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createLineBorder(CLR_BORDER, 1));
@@ -360,7 +335,7 @@ public class HoaDon_GUI extends JPanel {
         txtTongTien.setText("");
         txtSDT.setText("");
         txtKhuyenMai.setSelectedIndex(0);
-        txtTrangThai.setText("");
+        cbTrangThai.setSelectedIndex(0);
         dtThoiGianVao.setDate(null);
         dtThoiGianRa.setDate(null);
         table.clearSelection();
@@ -384,7 +359,7 @@ public class HoaDon_GUI extends JPanel {
         tableModel.setValueAt(txtKhuyenMai.getSelectedItem(),   row, 6);
         tableModel.setValueAt(txtBan.getText().trim(),   row, 7);
         tableModel.setValueAt(txtTongTien.getText().trim(),    row, 8);
-        tableModel.setValueAt(txtTrangThai.getText().trim(),   row, 9);
+        tableModel.setValueAt(cbTrangThai.getSelectedItem(),   row, 9);
         lamMoi();
     }
 
@@ -415,7 +390,8 @@ public class HoaDon_GUI extends JPanel {
         txtKhuyenMai.setSelectedItem(tableModel.getValueAt(row, 6).toString());
         txtBan.setText(tableModel.getValueAt(row, 7).toString());
         txtTongTien.setText(tableModel.getValueAt(row, 8).toString());
-        txtTrangThai.setText(tableModel.getValueAt(row, 9).toString());
+        String trangThai = tableModel.getValueAt(row, 9).toString();
+        cbTrangThai.setSelectedItem(trangThai);
         // Thời gian vào
         try {
             Date d1 = new SimpleDateFormat("HH:mm dd-MM-yyyy")
@@ -429,6 +405,32 @@ public class HoaDon_GUI extends JPanel {
             dtThoiGianRa.setDate(d2);
         } catch (Exception ignored) {}
     }
+    
+    
+    private void loadData() {
+        tableModel.setRowCount(0);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd-MM-yyyy");
+
+        for (Object[] row : hd_dao.getAllHoaDon()) {
+
+            Timestamp vao = (Timestamp) row[1];
+            Timestamp ra  = (Timestamp) row[2];
+
+            tableModel.addRow(new Object[]{
+                    row[0],
+                    vao != null ? sdf.format(vao) : "",
+                    ra  != null ? sdf.format(ra)  : "",
+                    row[3],
+                    row[4],
+                    row[5],
+                    row[6],
+                    row[7],
+                    row[8],
+                    row[9]
+            });
+        }
+    }
 
     // =========================================================================
     // 6. HELPER
@@ -441,37 +443,93 @@ public class HoaDon_GUI extends JPanel {
 
     private JTextField createTextField() {
         JTextField tf = new JTextField();
-//        tf.setFont(new Font("Times New Roman", Font.PLAIN, 13));
+
+        int padV = (int)(6 * SCALE);
+        int padH = (int)(8 * SCALE);
+
         tf.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(CLR_BORDER),
-                BorderFactory.createEmptyBorder(2, 4, 2, 4)
+                BorderFactory.createEmptyBorder(padV, padH, padV, padH)
         ));
-//        tf.setPreferredSize(new Dimension(160, 30));
-        tf.setPreferredSize(null);
+
+        int height = (int)(36 * SCALE);
+
+        tf.setPreferredSize(new Dimension(0, height)); 
+        // 🔥 width để 0 để layout tự co giãn
 
         return tf;
+    }
+    
+    private JComboBox<String> createComboBox(String[] items) {
+        JComboBox<String> cb = new JComboBox<>(items);
+
+        cb.setFont(scaledFontStatic("Segoe UI", Font.PLAIN, 15));
+        cb.setBackground(Color.WHITE);
+
+        int height = (int)(36 * SCALE);
+
+        cb.setPreferredSize(new Dimension(0, height));
+
+        // padding giống textfield
+        cb.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(CLR_BORDER),
+                BorderFactory.createEmptyBorder(4, 6, 4, 6)
+        ));
+
+        return cb;
     }
 
     /** JDateChooser – chỉ chọn từ lịch**/
     private JDateChooser createDateChooser() {
         JDateChooser dc = new JDateChooser();
         dc.setDateFormatString("HH:mm dd/MM/yyyy");
-//        dc.setPreferredSize(new Dimension(160, 28));
-        dc.setPreferredSize(null);
+        dc.setPreferredSize(new Dimension(0, (int)(36 * SCALE)));
+//        dc.setPreferredSize(null);
         dc.getDateEditor().getUiComponent().setEnabled(false); // không gõ tay
         ((JTextField) dc.getDateEditor().getUiComponent())
         .setFont(scaledFontStatic("Times New Roman", Font.PLAIN, 13));
         return dc;
     }
 
-    private void addRow(JPanel p, GridBagConstraints gbc, int row,
-                        String lbl1, JComponent c1, String lbl2, JComponent c2) {
-        gbc.gridx = 0; gbc.gridy = row; gbc.weightx = 0; p.add(createLabel(lbl1), gbc);
-        gbc.gridx = 1; gbc.weightx = 1;                  p.add(c1, gbc);
-        gbc.gridx = 2; gbc.weightx = 0;                  p.add(createLabel(lbl2), gbc);
-        gbc.gridx = 3; gbc.weightx = 1;                  p.add(c2, gbc);
-    }
+//    private void addRow(JPanel p, GridBagConstraints gbc, int row,
+//                        String lbl1, JComponent c1, String lbl2, JComponent c2) {
+//        gbc.gridx = 0; gbc.gridy = row; gbc.weightx = 0; p.add(createLabel(lbl1), gbc);
+//        gbc.gridx = 1; gbc.weightx = 1;                  p.add(c1, gbc);
+//        gbc.gridx = 2; gbc.weightx = 0;                  p.add(createLabel(lbl2), gbc);
+//        gbc.gridx = 3; gbc.weightx = 1;                  p.add(c2, gbc);
+//    }
     
+    
+    private void addRow(JPanel p, GridBagConstraints gbc, int row,
+            String lbl1, JComponent c1, String lbl2, JComponent c2) {
+
+gbc.gridy = row;
+
+// LABEL 1
+gbc.gridx = 0;
+gbc.weightx = 0;
+gbc.gridwidth = 1;
+gbc.anchor = GridBagConstraints.EAST;
+p.add(createLabel(lbl1), gbc);
+
+// FIELD 1
+gbc.gridx = 1;
+gbc.weightx = 1;
+gbc.anchor = GridBagConstraints.WEST;
+p.add(c1, gbc);
+
+// LABEL 2
+gbc.gridx = 2;
+gbc.weightx = 0;
+gbc.anchor = GridBagConstraints.EAST;
+p.add(createLabel(lbl2), gbc);
+
+// FIELD 2
+gbc.gridx = 3;
+gbc.weightx = 1;
+gbc.anchor = GridBagConstraints.WEST;
+p.add(c2, gbc);
+}
  
 
     
@@ -482,15 +540,16 @@ public class HoaDon_GUI extends JPanel {
     // =========================================================================
     public static void main(String[] args) {
     	System.setProperty("sun.java2d.uiScale", "auto");
-    	
-//    	chỉnh font
-    	UIManager.put("Label.font",   scaledFontStatic("Times New Roman", Font.PLAIN, 12));
-    	UIManager.put("Button.font",  scaledFontStatic("Times New Roman", Font.BOLD, 8));
-    	UIManager.put("TextField.font", scaledFontStatic("Times New Roman", Font.PLAIN, 12));
-    	UIManager.put("Table.font",   scaledFontStatic("Times New Roman", Font.PLAIN, 12));
-    	UIManager.put("TableHeader.font", scaledFontStatic("Times New Roman", Font.BOLD, 12));
-    	UIManager.put("ComboBox.font", scaledFontStatic("Times New Roman", Font.PLAIN, 13));
-    	UIManager.put("ComboBox.listFont", scaledFontStatic("Times New Roman", Font.PLAIN, 13)); // 👈 QUAN TRỌNG    	
+    	 	
+    	String fontName = "SansSerif"; 
+
+    	UIManager.put("Label.font",   scaledFontStatic(fontName, Font.PLAIN, 13));
+    	UIManager.put("Button.font",  scaledFontStatic(fontName, Font.BOLD, 13));
+    	UIManager.put("TextField.font", scaledFontStatic(fontName, Font.PLAIN, 13));
+    	UIManager.put("Table.font",   scaledFontStatic(fontName, Font.PLAIN, 13));
+    	UIManager.put("TableHeader.font", scaledFontStatic(fontName, Font.BOLD, 13));
+    	UIManager.put("ComboBox.font", scaledFontStatic(fontName, Font.PLAIN, 13));
+    	UIManager.put("ComboBox.listFont", scaledFontStatic(fontName, Font.PLAIN, 13));
     	
         SwingUtilities.invokeLater(() -> {
             try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }

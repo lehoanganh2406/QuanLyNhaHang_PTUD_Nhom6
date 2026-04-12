@@ -277,15 +277,34 @@ public class TraCuu_GUI extends JFrame {
         JToggleButton btnKhach = createLeftButton("Tìm kiếm khách hàng", false);
         JToggleButton btnKM = createLeftButton("Tìm kiếm khuyến mãi", false);
 
-        btnMon.addActionListener(e -> cardLayout.show(pnlCards, "MON_AN"));
-        btnBan.addActionListener(e -> cardLayout.show(pnlCards, "BAN"));
-        btnKhach.addActionListener(e -> cardLayout.show(pnlCards, "KHACH_HANG"));
-        btnKM.addActionListener(e -> cardLayout.show(pnlCards, "KHUYEN_MAI"));
-
         group.add(btnMon);
         group.add(btnBan);
         group.add(btnKhach);
         group.add(btnKM);
+
+        btnMon.addActionListener(e -> {
+            btnMon.setSelected(true);
+            cardLayout.show(pnlCards, "MON_AN");
+            pnlLeft.repaint();
+        });
+
+        btnBan.addActionListener(e -> {
+            btnBan.setSelected(true);
+            cardLayout.show(pnlCards, "BAN");
+            pnlLeft.repaint();
+        });
+
+        btnKhach.addActionListener(e -> {
+            btnKhach.setSelected(true);
+            cardLayout.show(pnlCards, "KHACH_HANG");
+            pnlLeft.repaint();
+        });
+
+        btnKM.addActionListener(e -> {
+            btnKM.setSelected(true);
+            cardLayout.show(pnlCards, "KHUYEN_MAI");
+            pnlLeft.repaint();
+        });
 
         pnlLeft.add(btnMon);
         pnlLeft.add(btnBan);
@@ -297,7 +316,7 @@ public class TraCuu_GUI extends JFrame {
     }
 
     private JToggleButton createLeftButton(String text, boolean selected) {
-        JToggleButton btn = new JToggleButton(text);
+        JToggleButton btn = new JToggleButton(text, selected);
         btn.setFocusPainted(false);
         btn.setFont(new Font("SansSerif", Font.PLAIN, 20));
         btn.setForeground(Color.BLACK);
@@ -305,11 +324,20 @@ public class TraCuu_GUI extends JFrame {
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 104));
         btn.setPreferredSize(new Dimension(250, 104));
         btn.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 1, new Color(236, 236, 236)));
-        btn.setBackground(selected ? BG_LEFT_SELECTED : BG_LEFT);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setMargin(new Insets(0, 26, 0, 10));
+
         btn.setOpaque(true);
-        btn.addItemListener(e -> btn.setBackground(btn.isSelected() ? BG_LEFT_SELECTED : BG_LEFT));
+        btn.setContentAreaFilled(true);
+        btn.setBorderPainted(true);
+
+        btn.setBackground(selected ? BG_LEFT_SELECTED : BG_LEFT);
+
+        btn.addChangeListener(e -> {
+            btn.setBackground(btn.isSelected() ? BG_LEFT_SELECTED : BG_LEFT);
+            btn.repaint();
+        });
+
         return btn;
     }
 
@@ -1371,7 +1399,7 @@ public class TraCuu_GUI extends JFrame {
     private void locDuLieuKhuyenMai() {
         if (pnlDanhSachKM == null) return;
 
-        String tuKhoa = safe(txtTimKiemKM == null ? "" : txtTimKiemKM.getText()).toLowerCase();
+        String tuKhoa = safe(txtTimKiemKM == null ? "" : txtTimKiemKM.getText()).toLowerCase().trim();
         Date tuNgay = dcTuNgayKM == null ? null : dcTuNgayKM.getDate();
         Date denNgay = dcDenNgayKM == null ? null : dcDenNgayKM.getDate();
 
@@ -1410,21 +1438,31 @@ public class TraCuu_GUI extends JFrame {
             if (!hopTrangThai) continue;
 
             LocalDateTime batDau = km.getThoiGianBatDau();
-            if (batDau == null) continue;
+            LocalDateTime ketThuc = km.getThoiGianKetThuc();
 
-            Calendar cal = Calendar.getInstance();
-            cal.set(batDau.getYear(), batDau.getMonthValue() - 1, batDau.getDayOfMonth(), 0, 0, 0);
-            cal.set(Calendar.MILLISECOND, 0);
-            Date ngayBatDau = cal.getTime();
+            if (batDau == null || ketThuc == null) continue;
+
+            Calendar calBD = Calendar.getInstance();
+            calBD.set(batDau.getYear(), batDau.getMonthValue() - 1, batDau.getDayOfMonth(), 0, 0, 0);
+            calBD.set(Calendar.MILLISECOND, 0);
+            Date ngayBatDau = calBD.getTime();
+
+            Calendar calKT = Calendar.getInstance();
+            calKT.set(ketThuc.getYear(), ketThuc.getMonthValue() - 1, ketThuc.getDayOfMonth(), 0, 0, 0);
+            calKT.set(Calendar.MILLISECOND, 0);
+            Date ngayKetThuc = calKT.getTime();
 
             boolean hopNgay = true;
 
             if (d1 != null && d2 == null) {
-                hopNgay = !ngayBatDau.before(d1); // >= từ ngày
+                // Chỉ chọn "từ ngày": lấy KM mà ngày này nằm trong khoảng hiệu lực
+                hopNgay = !d1.before(ngayBatDau) && !d1.after(ngayKetThuc);
             } else if (d1 == null && d2 != null) {
-                hopNgay = !ngayBatDau.after(d2);  // <= đến ngày
+                // Chỉ chọn "đến ngày": lấy KM mà ngày này nằm trong khoảng hiệu lực
+                hopNgay = !d2.before(ngayBatDau) && !d2.after(ngayKetThuc);
             } else if (d1 != null && d2 != null) {
-                hopNgay = !ngayBatDau.before(d1) && !ngayBatDau.after(d2);
+                // Có cả từ-ngày đến-ngày: chỉ cần khoảng user chọn giao với khoảng KM là lấy
+                hopNgay = !(ngayKetThuc.before(d1) || ngayBatDau.after(d2));
             }
 
             if (hopNgay) {
@@ -1502,7 +1540,6 @@ public class TraCuu_GUI extends JFrame {
 
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
             setBackground(BG_WHITE);
-            setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, GRID));
             setOpaque(true);
 
             pnlRow = new JPanel(new GridBagLayout());
@@ -1511,6 +1548,7 @@ public class TraCuu_GUI extends JFrame {
             pnlRow.setPreferredSize(new Dimension(100, KM_ROW_HEIGHT));
             pnlRow.setMinimumSize(new Dimension(100, KM_ROW_HEIGHT));
             pnlRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, KM_ROW_HEIGHT));
+            pnlRow.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, GRID));
 
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.gridy = 0;
@@ -1825,9 +1863,10 @@ public class TraCuu_GUI extends JFrame {
 
         ButtonGroup group = new ButtonGroup();
 
-        JToggleButton btnTatCa = createTabButton("Tất cả", true);
+        JToggleButton btnTatCa = createTabButton("Tất cả", "ALL".equals(maLoaiDangChon));
         btnTatCa.addActionListener(e -> {
             maLoaiDangChon = "ALL";
+            btnTatCa.setSelected(true);
             locDuLieuMonAn();
         });
         group.add(btnTatCa);
@@ -1839,9 +1878,10 @@ public class TraCuu_GUI extends JFrame {
             String maLoai = safe(loai.getMaLoaiMonAn());
             String tenLoai = safe(loai.getTenLoaiMonAn());
 
-            JToggleButton btnLoai = createTabButton(tenLoai, false);
+            JToggleButton btnLoai = createTabButton(tenLoai, maLoai.equals(maLoaiDangChon));
             btnLoai.addActionListener(e -> {
                 maLoaiDangChon = maLoai;
+                btnLoai.setSelected(true);
                 locDuLieuMonAn();
             });
 
@@ -1854,18 +1894,25 @@ public class TraCuu_GUI extends JFrame {
     }
 
     private JToggleButton createTabButton(String text, boolean selected) {
-        JToggleButton btn = new JToggleButton(text);
+        JToggleButton btn = new JToggleButton(text, selected);
         btn.setFocusPainted(false);
         btn.setFont(new Font("SansSerif", Font.PLAIN, 17));
         btn.setForeground(Color.BLACK);
-        btn.setBackground(selected ? BG_TAB_SELECTED : BG_TAB);
         btn.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER),
                 new EmptyBorder(9, 20, 9, 20)
         ));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
         btn.setOpaque(true);
-        btn.addItemListener(e -> btn.setBackground(btn.isSelected() ? BG_TAB_SELECTED : BG_TAB));
+        btn.setContentAreaFilled(true);
+        btn.setBackground(selected ? BG_TAB_SELECTED : BG_TAB);
+
+        btn.addChangeListener(e -> {
+            btn.setBackground(btn.isSelected() ? BG_TAB_SELECTED : BG_TAB);
+            btn.repaint();
+        });
+
         return btn;
     }
 
@@ -2256,7 +2303,6 @@ public class TraCuu_GUI extends JFrame {
 
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
             setBackground(BG_WHITE);
-            setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, GRID));
             setOpaque(true);
 
             pnlRow = new JPanel(new GridBagLayout());
@@ -2265,6 +2311,7 @@ public class TraCuu_GUI extends JFrame {
             pnlRow.setPreferredSize(new Dimension(100, ROW_HEIGHT));
             pnlRow.setMinimumSize(new Dimension(100, ROW_HEIGHT));
             pnlRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, ROW_HEIGHT));
+            pnlRow.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, GRID));
 
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.gridy = 0;

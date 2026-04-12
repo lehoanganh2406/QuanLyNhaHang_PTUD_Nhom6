@@ -1,3 +1,4 @@
+
 package gui;
 
 import java.awt.BorderLayout;
@@ -47,17 +48,7 @@ public class TrangChu_GUI extends JFrame {
         setLocationRelativeTo(null);
     }
 
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            TrangChu_GUI frame = new TrangChu_GUI();
-            frame.setVisible(true);
-        });
-        
-    }
-
     public TaiKhoan getTaiKhoanDangNhap() {
         return taiKhoanDangNhap;
-
     }
 }

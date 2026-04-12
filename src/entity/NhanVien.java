@@ -1,6 +1,7 @@
 package entity;
 
-import java.sql.Date;
+//import java.sql.Date;
+import java.util.Date;
 
 public class NhanVien {
 	private static final long serialVersionUID = 1L;
@@ -103,7 +104,7 @@ public class NhanVien {
 	
 	
 	
-//	public NhanVien() {
-//		// TODO Auto-generated constructor stub
-//	}
+	public NhanVien() {
+		// TODO Auto-generated constructor stub
+	}
 }

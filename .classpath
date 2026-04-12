@@ -6,13 +6,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="lib/jcalendar-1.4.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Ngoc Tien/Documents/HeThongNhaHang_PTUD/QuanLyNhaHang_PTUD_Nhom6/lib/mssql-jdbc-12.10.0.jre11.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
-
 	<classpathentry kind="lib" path="libs/mssql-jdbc-12.10.0.jre11.jar"/>
 	<classpathentry kind="lib" path="libs/jcalendar-1.4.jar"/>
 	<classpathentry kind="output" path="bin"/>

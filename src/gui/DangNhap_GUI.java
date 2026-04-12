@@ -48,8 +48,6 @@ public class DangNhap_GUI extends JFrame {
     private RoundedButton btnDangNhap;
     private JCheckBox chkForgot;
 
-    public static void main(String[] args) {
-        new DangNhap_GUI().setVisible(true);
     private String maTamThoi = null;
     private String tenDangNhapMaTam = null;
     private long thoiGianHetHanMaTam = 0;

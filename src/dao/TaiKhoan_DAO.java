@@ -3,13 +3,10 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-<<<<<<< HEAD
 import java.util.ArrayList;
 import java.util.List;
-=======
 import java.sql.SQLException;
 import java.util.ArrayList;
->>>>>>> 7410f637571f781b5592cefa4094490c4190adc4
 
 import connectDB.ConnectDB;
 import entity.NhanVien;
@@ -17,58 +14,7 @@ import entity.TaiKhoan;
 
 public class TaiKhoan_DAO {
 
-    public List<TaiKhoan> getAllTaiKhoan() {
-        List<TaiKhoan> ds = new ArrayList<>();
-
-        try {
-            Connection con = ConnectDB.getConnection();
-
-            // ⚠️ JOIN để lấy tên nhân viên
-            String sql = """
-                    SELECT tk.*, nv.hoTen AS tenNhanVien
-                    FROM TaiKhoan tk
-                    JOIN NhanVien nv ON tk.maNV = nv.maNV
-                    """;
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                String maTK = rs.getString("maTaiKhoan");
-                String tenDN = rs.getString("tenDangNhap");
-                String matKhau = rs.getString("matKhau");
-                String phanQuyen = rs.getString("phanQuyen");
-                boolean trangThai = rs.getBoolean("trangThai");
-
-                // ⚠️ lấy mã NV + tên NV
-                String maNV = rs.getString("maNV");
-                String tenNV = rs.getString("tenNhanVien");
-
-                // ⚠️ tạo object nhân viên
-                NhanVien nv = new NhanVien(maNV, tenNV);
-
-                // tạo tài khoản
-                TaiKhoan tk = new TaiKhoan(
-                        maTK,
-                        tenDN,
-                        matKhau,
-                        phanQuyen,
-                        trangThai,
-                        nv
-                );
-
-                ds.add(tk);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     
-
-        return ds;
-        
-    }
-    public TaiKhoan_DAO() {
-    }
 
     public ArrayList<TaiKhoan> getAllTaiKhoan() {
         ArrayList<TaiKhoan> dsTK = new ArrayList<TaiKhoan>();
@@ -76,10 +22,15 @@ public class TaiKhoan_DAO {
         PreparedStatement stmt = null;
         ResultSet rs = null;
 
+//        String sql = "SELECT tk.maTaiKhoan, tk.tenDangNhap, tk.matKhau, tk.phanQuyen, tk.trangThai, " +
+//                     "tk.maNV, nv.hoTen, nv.chucVu " +
+//                     "FROM TaiKhoan tk " +
+//                     "JOIN NhanVien nv ON tk.maNV = nv.maNV";
+        
         String sql = "SELECT tk.maTaiKhoan, tk.tenDangNhap, tk.matKhau, tk.phanQuyen, tk.trangThai, " +
-                     "tk.maNV, nv.hoTen, nv.chucVu " +
-                     "FROM TaiKhoan tk " +
-                     "JOIN NhanVien nv ON tk.maNV = nv.maNV";
+                "tk.maNV, nv.hoTen, nv.chucVu, nv.anhNhanVien " +
+                "FROM TaiKhoan tk " +
+                "JOIN NhanVien nv ON tk.maNV = nv.maNV";
 
         try {
             stmt = con.prepareStatement(sql);
@@ -94,11 +45,13 @@ public class TaiKhoan_DAO {
                 String maNhanVien = rs.getString("maNV");
                 String hoTen = rs.getString("hoTen");
                 String chucVu = rs.getString("chucVu");
+                String anh= rs.getString("anhNhanVien");
 
                 NhanVien nv = new NhanVien();
                 nv.setMaNV(maNhanVien);
                 nv.setHoTen(hoTen);
                 nv.setChucVu(chucVu);
+                nv.setAnhNhanVien(anh);
 
                 TaiKhoan tk = new TaiKhoan(maTaiKhoan, tenDangNhap, matKhau, phanQuyen, trangThai, nv);
                 dsTK.add(tk);
@@ -108,6 +61,37 @@ public class TaiKhoan_DAO {
         }
 
         return dsTK;
+    }
+    
+    
+    public boolean doiMatKhau(String maNV, String mkCu, String mkMoi) {
+        try {
+            Connection con = ConnectDB.getConnection();
+
+            // 1. kiểm tra mật khẩu cũ
+            String sqlCheck = "SELECT * FROM TaiKhoan WHERE maNV = ? AND matKhau = ?";
+            PreparedStatement psCheck = con.prepareStatement(sqlCheck);
+            psCheck.setString(1, maNV);
+            psCheck.setString(2, mkCu);
+
+            ResultSet rs = psCheck.executeQuery();
+
+            if (!rs.next()) {
+                return false; // sai mật khẩu cũ
+            }
+
+            // 2. update mật khẩu mới
+            String sqlUpdate = "UPDATE TaiKhoan SET matKhau = ? WHERE maNV = ?";
+            PreparedStatement psUpdate = con.prepareStatement(sqlUpdate);
+            psUpdate.setString(1, mkMoi);
+            psUpdate.setString(2, maNV);
+
+            return psUpdate.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public TaiKhoan getTaiKhoanTheoMa(String maTKCanTim) {

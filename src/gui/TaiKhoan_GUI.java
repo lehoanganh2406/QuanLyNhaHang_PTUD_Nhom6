@@ -7,6 +7,7 @@ import javax.swing.table.*;
 import connectDB.ConnectDB;
 import dao.NhanVien_DAO;
 import dao.TaiKhoan_DAO;
+import digLog.DoiMatKhau;
 import entity.NhanVien;
 import entity.TaiKhoan;
 
@@ -17,7 +18,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.sql.Connection;
 import java.util.List;
 
-public class TaiKhoan_GUI extends JPanel {
+public class TaiKhoan_GUI extends JFrame {
 
     // ── Màu sắc ──────────────────────────────────────────────────────────────
     private static final Color CLR_HEADER_BG  = new Color(74, 55, 40);
@@ -65,13 +66,56 @@ public class TaiKhoan_GUI extends JPanel {
 	private Connection con;
 	private TaiKhoan_DAO tk_dao= new TaiKhoan_DAO();
 	private NhanVien_DAO nv_dao= new NhanVien_DAO();
+	private List<NhanVien> dsNV;
+	private List<TaiKhoan> dsTK;
 
+    
+    
     public TaiKhoan_GUI() {
-        setLayout(new BorderLayout());
-        setBackground(CLR_PANEL_BG);
-        add(buildTitlePanel(),  BorderLayout.NORTH);
-        add(buildCenterPanel(), BorderLayout.CENTER);
-        con= ConnectDB.getConnection();
+        setTitle("Quản Lý Tài Khoản");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        JLayeredPane layeredPane = new JLayeredPane();
+        layeredPane.setLayout(null);
+        setContentPane(layeredPane);
+
+        Pn_ThanhMenu menu = new Pn_ThanhMenu(null);
+
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(CLR_PANEL_BG);
+        mainPanel.add(buildTitlePanel(), BorderLayout.NORTH);
+        mainPanel.add(buildCenterPanel(), BorderLayout.CENTER);
+
+        layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
+        layeredPane.add(menu, JLayeredPane.PALETTE_LAYER);
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                int w = getContentPane().getWidth();
+                int h = getContentPane().getHeight();
+
+                mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
+                menu.setBounds(0, 0, w, h);
+
+                layeredPane.revalidate();
+                layeredPane.repaint();
+            }
+        });
+
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setMinimumSize(new Dimension(1280, 720));
+        setLocationRelativeTo(null);
+
+        SwingUtilities.invokeLater(() -> {
+            int w = getContentPane().getWidth();
+            int h = getContentPane().getHeight();
+
+            mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
+            menu.setBounds(0, 0, w, h);
+        });
+
+        con = ConnectDB.getConnection();
         loadData();
     }
 
@@ -83,7 +127,7 @@ public class TaiKhoan_GUI extends JPanel {
         pnl.setBackground(CLR_HEADER_BG);
         pnl.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         JLabel lbl = new JLabel("QUẢN LÝ TÀI KHOẢN", SwingConstants.CENTER);
-        lbl.setFont(scaledFont("Times New Roman", Font.BOLD, 26));
+        lbl.setFont(scaledFont("SansSerif", Font.BOLD, 26));
         lbl.setForeground(CLR_HEADER_FG);
         pnl.add(lbl, BorderLayout.CENTER);
         return pnl;
@@ -106,10 +150,18 @@ public class TaiKhoan_GUI extends JPanel {
         pnl.add(buildTablePanel(), BorderLayout.CENTER);
         return pnl;
     }
+    
+    
 
     // =========================================================================
     // 3. FORM NHẬP LIỆU
     // =========================================================================
+    
+    private static final Dimension FIELD_SIZE =
+            new Dimension((int)(320 * SCALE), (int)(32 * SCALE));
+    
+    
+    
     private JPanel buildFormPanel() {
         JPanel outer = new JPanel(new BorderLayout(8, 0));
         outer.setBackground(CLR_FORM_BG);
@@ -121,6 +173,8 @@ public class TaiKhoan_GUI extends JPanel {
         JPanel pnlFields = new JPanel(new GridBagLayout());
         pnlFields.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
+        gbc.weightx = 1;
+        gbc.ipady = 0;
         gbc.insets = new Insets(6 ,6 ,6 ,6 );
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill   = GridBagConstraints.HORIZONTAL;
@@ -129,27 +183,45 @@ public class TaiKhoan_GUI extends JPanel {
         txtMaDangNhap = createTextField();
         txtMaDangNhap.setEnabled(false);
         txtMaDangNhap.setDisabledTextColor(new Color(60, 60, 60));
-        cbVaiTro = new JComboBox<>(new String[]{"Quản lý", "Nhân viên lễ tân"});
+        cbVaiTro = new JComboBox<>(new String[]{"Quản lý", "Lễ tân"});
         styleComboBox(cbVaiTro);
         addRow(pnlFields, gbc, 0, "Mã tài khoản", txtMaDangNhap, "Vai trò", cbVaiTro);
 
         // Hàng 1: Tên đăng nhập / Nhân viên
         txtTenDangNhap = createTextField();
+        txtTenDangNhap.setEditable(false);
         cbNhanVien = new JComboBox<>();
         styleComboBox(cbNhanVien);
         cbNhanVien.addItem("--Chọn nhân viên ---");
-        List<NhanVien> ds= nv_dao.getTenNhanVien();
-        for (NhanVien nv : ds) {
+        dsNV= nv_dao.getTenNhanVien();
+        for (NhanVien nv : dsNV) {
 			cbNhanVien.addItem(nv.getHoTen());
 		}
+        
+        cbNhanVien.addActionListener(e -> {
+            int index = cbNhanVien.getSelectedIndex();
+
+            if (index > 0) {
+                NhanVien nv = dsNV.get(index - 1);
+
+                //tên đăng nhập = mã NV
+                txtTenDangNhap.setText(nv.getMaNV());
+
+                //load ảnh luôn
+                loadAnhNhanVien(nv.getAnhNhanVien());
+            }
+        });
         addRow(pnlFields, gbc, 1, "Tên đăng nhập", txtTenDangNhap, "Nhân viên:", cbNhanVien);
 
         // Hàng 2: Mật khẩu / Trạng thái
         txtMatKhau = new JPasswordField();
-        txtMatKhau.setEnabled(false);
+//        txtMatKhau.setEnabled(false);
+        txtMatKhau.setPreferredSize(FIELD_SIZE);
+        txtMatKhau.setMinimumSize(FIELD_SIZE);
         txtMatKhau.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(CLR_BORDER),
-                BorderFactory.createEmptyBorder(4,6,4,6)
+//                BorderFactory.createEmptyBorder(6, 6, 6, 6)
+                BorderFactory.createEmptyBorder(3, 8, 3, 8)
         ));
         
  
@@ -181,7 +253,7 @@ public class TaiKhoan_GUI extends JPanel {
         
 
         
-        cbTrangThai = new JComboBox<>(new String[]{"Hoạt động", "Khoá"});
+        cbTrangThai = new JComboBox<>(new String[]{"Hoạt động", "Khóa"});
         styleComboBox(cbTrangThai);
         addRow(pnlFields, gbc, 2, "Mật khẩu", pnlPwd, "Trạng thái", cbTrangThai);
 
@@ -197,7 +269,7 @@ public class TaiKhoan_GUI extends JPanel {
         lblAnh = new JLabel() {};
         lblAnh.setPreferredSize(new Dimension(
         	    (int)(140 * SCALE),
-        	    (int)(100 * SCALE)
+        	    (int)(140 * SCALE)
         	));
         lblAnh.setBorder(BorderFactory.createLineBorder(CLR_BORDER, 1));
         lblAnh.setHorizontalAlignment(SwingConstants.CENTER);
@@ -209,14 +281,6 @@ public class TaiKhoan_GUI extends JPanel {
 
         return outer;
     }
-
-//    private void addRow(JPanel p, GridBagConstraints gbc, int row,
-//                        String lbl1, JComponent c1, String lbl2, JComponent c2) {
-//        gbc.gridx = 0; gbc.gridy = row; gbc.weightx = 0; p.add(createLabel(lbl1), gbc);
-//        gbc.gridx = 1; gbc.weightx = 1;                  p.add(c1, gbc);
-//        gbc.gridx = 2; gbc.weightx = 0;                  p.add(createLabel(lbl2), gbc);
-//        gbc.gridx = 3; gbc.weightx = 1;                  p.add(c2, gbc);
-//    }
     
     private void addRow(JPanel p, GridBagConstraints gbc, int row,
             String lbl1, JComponent c1, String lbl2, JComponent c2) {
@@ -269,19 +333,9 @@ p.add(c2, gbc);
         btnLamMoi.addActionListener(e    -> lamMoi());
         btnTraCuu.addActionListener(e    -> traCuu());
         btnXoa.addActionListener(e       -> xoaTaiKhoan());
-        btnCapNhatMK.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row < 0) {
-                JOptionPane.showMessageDialog(this, "Chọn tài khoản trước!");
-                return;
-            }
+        btnCapNhatMK.addActionListener(e -> moDoiMatKhau());
 
-            String maNV = tableModel.getValueAt(row, 4).toString();
-
-            JFrame parent = (JFrame) SwingUtilities.getWindowAncestor(this);
-            new DoiMatKhau(parent, maNV).setVisible(true);
-        });
-        return pnl;
+		return pnl;
     }
 
     // =========================================================================
@@ -303,6 +357,36 @@ p.add(c2, gbc);
         table.setSelectionBackground(new Color(180, 210, 230));
         table.setSelectionForeground(Color.BLACK);
         table.setFillsViewportHeight(true);
+        
+        
+        table.getColumnModel().getColumn(5).setCellRenderer(
+        	    new DefaultTableCellRenderer() {
+        	        @Override
+        	        public Component getTableCellRendererComponent(JTable table, Object value,
+        	                boolean isSelected, boolean hasFocus, int row, int column) {
+
+        	            Component c = super.getTableCellRendererComponent(
+        	                    table, value, isSelected, hasFocus, row, column);
+
+        	            String trangThai = value.toString();
+
+        	            // 🔥 ƯU TIÊN selection trước
+        	            if (isSelected) {
+        	                c.setBackground(table.getSelectionBackground());
+        	                c.setForeground(table.getSelectionForeground());
+        	            } else {
+        	                if (trangThai.equalsIgnoreCase("Khóa")) {
+        	                    c.setBackground(new Color(255, 200, 200));
+        	                } else {
+        	                    c.setBackground(Color.WHITE);
+        	                }
+        	                c.setForeground(Color.BLACK);
+        	            }
+
+        	            return c;
+        	        }
+        	    }
+        	);
 
         JTableHeader header = table.getTableHeader();
         header.setBackground(CLR_TABLE_HDR);
@@ -341,77 +425,190 @@ p.add(c2, gbc);
     // 6. LOGIC
     // =========================================================================
     private void themTaiKhoan() {
-        if (txtTenDangNhap.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập tên đăng nhập!", "Thông báo", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        tableModel.addRow(new Object[]{
-            txtMaDangNhap.getText().trim(),
-            txtTenDangNhap.getText().trim(),
-            cbVaiTro.getSelectedItem(),
-//            new String(txtMatKhau.getPassword()).isEmpty() ? "" : "******",
-            new String(txtMatKhau.getPassword()),
-            cbNhanVien.getSelectedItem(),
-            "",
-            cbTrangThai.getSelectedItem()
-        });
-        lamMoi();
-    }
 
-    private void capNhatTaiKhoan() {
-        int row = table.getSelectedRow();
-        if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Chọn một dòng để cập nhật!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+        if (cbNhanVien.getSelectedIndex() == 0) {
+            JOptionPane.showMessageDialog(this, "Phải chọn nhân viên!");
             return;
         }
-        tableModel.setValueAt(txtMaDangNhap.getText().trim(),  row, 0);
-        tableModel.setValueAt(txtTenDangNhap.getText().trim(), row, 1);
-        tableModel.setValueAt(cbVaiTro.getSelectedItem(),      row, 2);
-        tableModel.setValueAt(new String(txtMatKhau.getPassword()), // FIX
-        	                       row, 3);
-        tableModel.setValueAt(cbNhanVien.getSelectedItem(),    row, 4);
-        tableModel.setValueAt(cbTrangThai.getSelectedItem(),   row, 5);
-        lamMoi();
-    }
 
-    private void xoaTaiKhoan() {
-        int row = table.getSelectedRow();
-        if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Chọn một dòng để xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+        String tenDangNhap = txtTenDangNhap.getText().trim();
+
+        if (tenDangNhap.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Tên đăng nhập không được rỗng!");
             return;
         }
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Bạn có chắc muốn xóa tài khoản này?", "Xác nhận xóa",
-                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        if (confirm == JOptionPane.YES_OPTION) {
-            tableModel.removeRow(row);
+
+        //  CHECK TRÙNG USERNAME
+        for (TaiKhoan tk : dsTK) {
+            if (tk.getTenDangNhap().equalsIgnoreCase(tenDangNhap)) {
+                JOptionPane.showMessageDialog(this, "Tên đăng nhập đã tồn tại!");
+                lamMoi();
+                return;
+            }
+        }
+
+        // mật khẩu
+        String matKhau = new String(txtMatKhau.getPassword()).trim();
+        if (matKhau.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Phải nhập mật khẩu!");
+            return;
+        }
+
+        int index = cbNhanVien.getSelectedIndex() - 1;
+        NhanVien nv = dsNV.get(index);
+
+        String maTK = taoMaTK();
+
+        TaiKhoan tk = new TaiKhoan(
+                maTK,
+                tenDangNhap,
+                matKhau,
+                cbVaiTro.getSelectedItem().toString(),
+                cbTrangThai.getSelectedItem().toString().equals("Hoạt động"),
+                nv
+        );
+
+        if (tk_dao.themTaiKhoan(tk)) {
+            JOptionPane.showMessageDialog(this, "Thêm thành công!");
+            loadData();
+            lamMoi();
+        } else {
+            JOptionPane.showMessageDialog(this, "Thêm thất bại!");
             lamMoi();
         }
     }
 
-//    private void capNhatMatKhau() {
-//        int row = table.getSelectedRow();
-//        if (row < 0) {
-//            JOptionPane.showMessageDialog(this, "Chọn tài khoản cần đổi mật khẩu!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+    private void capNhatTaiKhoan() {
+        int row = table.getSelectedRow();
+
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Chọn một dòng để cập nhật!");
+            return;
+        }
+
+        try {
+            // lấy tài khoản cũ
+            TaiKhoan tkCu = dsTK.get(row);
+
+            // chỉ sửa vai trò + trạng thái (đúng nghiệp vụ)
+            String vaiTro = cbVaiTro.getSelectedItem().toString();
+            boolean trangThai = cbTrangThai.getSelectedItem().toString().equals("Hoạt động");
+
+            TaiKhoan tkMoi = new TaiKhoan(
+                    tkCu.getMaTaiKhoan(),
+                    tkCu.getTenDangNhap(),
+                    tkCu.getMatKhau(),
+                    vaiTro,
+                    trangThai,
+                    tkCu.getMaNV()
+            );
+
+            if (tk_dao.capNhatTaiKhoan(tkMoi)) {
+
+                // reload giống NhanVien_GUI
+                loadData();
+
+                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+                lamMoi();
+
+            } else {
+                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void xoaTaiKhoan() {
+        int row = table.getSelectedRow();
+
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Chọn tài khoản cần xóa!");
+            return;
+        }
+
+        // lấy tài khoản đang chọn
+        TaiKhoan tk = dsTK.get(row);
+        String maTK = tk.getMaTaiKhoan();
+
+        // ===== NGHIỆP VỤ 1: không cho xóa chính mình =====
+        // 👉 bạn cần có biến lưu tài khoản đang đăng nhập
+        // ví dụ:
+//        String maTKDangNhap = TaiKhoan_DangNhap.getMaTaiKhoan(); // 🔥 bạn thay theo project của bạn
+
+//        if (maTK.equals(maTKDangNhap)) {
+//            JOptionPane.showMessageDialog(this, "Không thể xóa tài khoản đang đăng nhập!");
 //            return;
 //        }
-//        String newPwd = new String(txtMatKhau.getPassword()).trim();
-//        if (newPwd.isEmpty()) {
-//            JOptionPane.showMessageDialog(this, "Vui lòng nhập mật khẩu mới!", "Thông báo", JOptionPane.WARNING_MESSAGE);
-//            return;
-//        }
-//        tableModel.setValueAt(newPwd, row, 3);
-//        JOptionPane.showMessageDialog(this, "Cập nhật mật khẩu thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-//        lamMoi();
-//    }
+
+        // ===== NGHIỆP VỤ 2: phải còn ít nhất 1 quản lý =====
+        long soLuongQuanLy = dsTK.stream()
+                .filter(t -> t.getPhanQuyen().equalsIgnoreCase("Quản lý"))
+                .count();
+
+        if (soLuongQuanLy == 1 && tk.getPhanQuyen().equalsIgnoreCase("Quản lý")) {
+            JOptionPane.showMessageDialog(this, "Phải có ít nhất 1 tài khoản quản lý!");
+            return;
+        }
+
+        // ===== XÁC NHẬN =====
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Bạn có chắc muốn xóa tài khoản này?",
+                "Xác nhận xóa",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        // ===== GỌI DAO =====
+        if (tk_dao.xoaTaiKhoan(maTK)) {
+
+            loadData(); // 🔥 reload lại
+
+            JOptionPane.showMessageDialog(this, "Xóa thành công!");
+            lamMoi();
+
+        } else {
+            JOptionPane.showMessageDialog(this, "Xóa thất bại!");
+        }
+    }
+
+    private void moDoiMatKhau() {
+        int row = table.getSelectedRow();
+
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Chọn tài khoản cần đổi mật khẩu!");
+            return;
+        }
+
+        // lấy mã nhân viên từ object (chuẩn hơn lấy từ table)
+        TaiKhoan tk = dsTK.get(row);
+        String maNV = tk.getMaNV().getMaNV();
+
+        // mở dialog
+        DoiMatKhau dialog = new DoiMatKhau(this, maNV);
+       
+        dialog.setVisible(true);
+        
+        loadData();
+    }
 
     private void lamMoi() {
         txtMaDangNhap.setText("");
         txtTenDangNhap.setText("");
         txtMatKhau.setText("");
+
+        txtTenDangNhap.setEnabled(true);
+        txtMatKhau.setEnabled(true);
+        cbNhanVien.setEnabled(true);
+
         cbVaiTro.setSelectedIndex(0);
         cbNhanVien.setSelectedIndex(0);
         cbTrangThai.setSelectedIndex(0);
+
+        lblAnh.setIcon(null);
         table.clearSelection();
     }
 
@@ -435,27 +632,39 @@ p.add(c2, gbc);
     private void loadRowToForm() {
         int row = table.getSelectedRow();
         if (row < 0) return;
+
         txtMaDangNhap.setText(tableModel.getValueAt(row, 0).toString());
         txtTenDangNhap.setText(tableModel.getValueAt(row, 1).toString());
         cbVaiTro.setSelectedItem(tableModel.getValueAt(row, 2).toString());
         txtMatKhau.setText(tableModel.getValueAt(row, 3).toString());
+
+        txtTenDangNhap.setEnabled(false);
+        txtMatKhau.setEnabled(false);
+        cbNhanVien.setEnabled(false);
+
         cbNhanVien.setSelectedItem(tableModel.getValueAt(row, 4).toString());
         cbTrangThai.setSelectedItem(tableModel.getValueAt(row, 5).toString());
+
+        // 🔥 THÊM ĐOẠN NÀY
+        TaiKhoan tk = dsTK.get(row);
+        NhanVien nv = tk.getMaNV();
+
+        loadAnhNhanVien(nv.getAnhNhanVien());
     }
     
     private void loadData() {
-        List<TaiKhoan> ds = tk_dao.getAllTaiKhoan();
+        dsTK = tk_dao.getAllTaiKhoan();
 
         tableModel.setRowCount(0); // xoá dữ liệu cũ
 
-        for (TaiKhoan tk : ds) {
+        for (TaiKhoan tk : dsTK) {
             tableModel.addRow(new Object[]{
                     tk.getMaTaiKhoan(),
                     tk.getTenDangNhap(),
                     tk.getPhanQuyen(),
                     tk.getMatKhau(),
-                    tk.getMaNV().getHoTen(), // ⚠️ lấy từ object
-                    tk.isTrangThai() ? "Hoạt động" : "Khoá"
+                    tk.getMaNV().getHoTen(), 
+                    tk.isTrangThai() ? "Hoạt động" : "Khóa"
             });
         }
     }
@@ -467,13 +676,44 @@ p.add(c2, gbc);
         JLabel lbl = new JLabel(text);
         return lbl;
     }
+    
+    
+    
+    private String taoMaTK() {
+        int max = 0;
 
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            String ma = tableModel.getValueAt(i, 0).toString();
+            int num = Integer.parseInt(ma.substring(2));
+            if (num > max) max = num;
+        }
+
+        return String.format("TK%02d", max + 1);
+    }
+
+    
+    private void loadAnhNhanVien(String fileName) {
+        if (fileName != null && !fileName.isEmpty()) {
+            String path = System.getProperty("user.dir") + "/img/" + fileName;
+
+            ImageIcon icon = new ImageIcon(path);
+            Image img = icon.getImage().getScaledInstance(140, 140, Image.SCALE_SMOOTH);
+
+            lblAnh.setIcon(new ImageIcon(img));
+        } else {
+            lblAnh.setIcon(null);
+        }
+    }
+    
+    
     private JTextField createTextField() {
         JTextField tf = new JTextField();
 //        tf.setPreferredSize(new Dimension(0, (int)(38 * SCALE)));
+        tf.setPreferredSize(FIELD_SIZE);
+        tf.setMinimumSize(FIELD_SIZE);
         tf.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(CLR_BORDER),
-                BorderFactory.createEmptyBorder(4,6,4,6)
+                BorderFactory.createEmptyBorder(3, 8, 3, 8)
                 
         ));
         return tf;
@@ -481,9 +721,30 @@ p.add(c2, gbc);
 
     private void styleComboBox(JComboBox<?> cb) {
         cb.setBackground(Color.WHITE);
-        cb.setBorder(BorderFactory.createLineBorder(CLR_BORDER));
-        cb.setPreferredSize(new Dimension(0, (int)(30 * SCALE)));
+        cb.setFocusable(false);
 
+        cb.setPreferredSize(FIELD_SIZE);
+        cb.setMinimumSize(FIELD_SIZE);
+        cb.setMaximumSize(new Dimension(Integer.MAX_VALUE, FIELD_SIZE.height));
+
+        cb.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(CLR_BORDER),
+                BorderFactory.createEmptyBorder(1, 6, 1, 6)
+        ));
+
+        cb.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(
+                    JList<?> list, Object value, int index,
+                    boolean isSelected, boolean cellHasFocus) {
+
+                JLabel lbl = (JLabel) super.getListCellRendererComponent(
+                        list, value, index, isSelected, false);
+
+                lbl.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
+                return lbl;
+            }
+        });
     }
 
     private ImageIcon loadIcon(String path, int w, int h) {
@@ -528,54 +789,35 @@ p.add(c2, gbc);
         return btn;
     }
     
-    private Dimension getFieldSize() {
-        return new Dimension((int)(520 * SCALE), (int)(32 * SCALE));
-    }
+    
 
     // =========================================================================
     // 8. MAIN
     // =========================================================================
+    
+    
     public static void main(String[] args) {
-        System.setProperty("sun.java2d.uiScale", "auto");
-
-        UIManager.put("Label.font",       scaledFont("Times New Roman", Font.PLAIN,  12));
-        UIManager.put("Button.font",      scaledFont("Times New Roman", Font.BOLD,   12));
-        UIManager.put("TextField.font",   scaledFont("Times New Roman", Font.PLAIN,  12));
-        UIManager.put("PasswordField.font", scaledFont("Times New Roman", Font.PLAIN, 12));
-        UIManager.put("Table.font",       scaledFont("Times New Roman", Font.PLAIN,  12));
-        UIManager.put("TableHeader.font", scaledFont("Times New Roman", Font.BOLD,   12));
-        UIManager.put("ComboBox.font",    scaledFont("Times New Roman", Font.PLAIN,  12));
-        
-        ConnectDB.getInstance().connect();
-
         SwingUtilities.invokeLater(() -> {
-            try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
-            catch (Exception ignored) {}
+            try {
+                System.setProperty("sun.java2d.uiScale", "auto");
 
-            JFrame frame = new JFrame("Quản Lý Tài Khoản");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+                UIManager.put("Label.font",         scaledFont("SansSerif", Font.PLAIN, 12));
+                UIManager.put("Button.font",        scaledFont("SansSerif", Font.BOLD, 12));
+                UIManager.put("TextField.font",     scaledFont("SansSerif", Font.PLAIN, 12));
+                UIManager.put("PasswordField.font", scaledFont("SansSerif", Font.PLAIN, 12));
+                UIManager.put("Table.font",         scaledFont("SansSerif", Font.PLAIN, 12));
+                UIManager.put("TableHeader.font",   scaledFont("SansSerif", Font.BOLD, 12));
+                UIManager.put("ComboBox.font",      scaledFont("SansSerif", Font.PLAIN, 12));
 
-            JLayeredPane layeredPane = new JLayeredPane();
-            frame.setContentPane(layeredPane);
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
-            TaiKhoan_GUI mainPanel = new TaiKhoan_GUI();
-            Pn_ThanhMenu   menuPanel = new Pn_ThanhMenu();
+                ConnectDB.getInstance().connect();
 
-            layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
-            layeredPane.add(menuPanel, JLayeredPane.PALETTE_LAYER);
+                new TaiKhoan_GUI().setVisible(true);
 
-            layeredPane.addComponentListener(new java.awt.event.ComponentAdapter() {
-                @Override public void componentResized(java.awt.event.ComponentEvent e) {
-                    int w = layeredPane.getWidth();
-                    int h = layeredPane.getHeight();
-                    int menuH = 42;
-                    menuPanel.setBounds(0, 0, w, 400);
-                    mainPanel.setBounds(0, menuH, w, h - menuH);
-                }
-            });
-
-            frame.setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
     }
 }

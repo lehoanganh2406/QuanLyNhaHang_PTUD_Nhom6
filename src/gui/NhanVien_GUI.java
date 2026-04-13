@@ -904,45 +904,7 @@ p.add(comp2, gbc);
         SwingUtilities.invokeLater(() -> {
             try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
             catch (Exception ignored) {}
-
-            JFrame frame = new JFrame("Quản Lý Nhân Viên");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-
-            // ── Dùng JLayeredPane để menu đè lên content, không đẩy content xuống ──
-            JLayeredPane layeredPane = new JLayeredPane();
-            frame.setContentPane(layeredPane);
-
-
-            NhanVien_GUI mainPanel = new NhanVien_GUI(null);
-            mainPanel.setVisible(true);
-//            Pn_ThanhMenu   menuPanel = new Pn_ThanhMenu();
-//            NhanVien_GUI mainPanel = new NhanVien_GUI(null);
-            Pn_ThanhMenu menuPanel = new Pn_ThanhMenu(taiKhoanDangNhap);
-
-
-            // Layer thấp: content chính
-            layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
-            // Layer cao: menu đè lên trên
-            layeredPane.add(menuPanel, JLayeredPane.PALETTE_LAYER);
-
-            // Resize cả 2 theo kích thước frame
-            layeredPane.addComponentListener(new java.awt.event.ComponentAdapter() {
-                @Override
-                public void componentResized(java.awt.event.ComponentEvent e) {
-                    int w = layeredPane.getWidth();
-                    int h = layeredPane.getHeight();
-                    int menuHeaderH = 42; // chiều cao cố định phần header menu
-
-                    // Menu trải full width, đủ cao để popup hiện không bị cắt
-                    menuPanel.setBounds(0, 0, w, 400);
-
-                    // Content bắt đầu từ dưới header menu, không bị đẩy khi popup mở
-                    mainPanel.setBounds(0, menuHeaderH, w, h - menuHeaderH);
-                }
-            });
-
-            frame.setVisible(true);
+            new NhanVien_GUI(null).setVisible(true);
         });
     }
 }

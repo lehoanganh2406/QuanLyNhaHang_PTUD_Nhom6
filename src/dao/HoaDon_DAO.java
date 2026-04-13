@@ -44,7 +44,7 @@ public class HoaDon_DAO {
                         rs.getString("tenKH"),
                         rs.getString("tenNV"),
                         rs.getString("sdt"),
-                        rs.getString("tenKM"),
+                        rs.getString("tenKM") != null ? rs.getString("tenKM") : "",
                         rs.getString("maBan"),
                         rs.getBigDecimal("tienKhachTra"),
                         rs.getString("trangThai")
@@ -159,6 +159,86 @@ public class HoaDon_DAO {
         }
 
         return ds;
+    }
+    
+    public List<String> getAllTenNhanVien() {
+        List<String> ds = new ArrayList<>();
+
+        try {
+            Connection con = ConnectDB.getConnection();
+            String sql = "SELECT hoTen FROM NhanVien";
+            PreparedStatement ps = con.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                ds.add(rs.getString("hoTen"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return ds;
+    }
+    
+    
+    public List<String> getAllTenKhuyenMai() {
+        List<String> ds = new ArrayList<>();
+
+        try {
+            Connection con = ConnectDB.getConnection();
+
+            String sql = """
+                SELECT tenKhuyenMai 
+                FROM KhuyenMai
+                WHERE trangThai = N'Đang áp dụng'
+            """;
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                ds.add(rs.getString("tenKhuyenMai"));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return ds;
+    }
+    
+    public boolean updateHoaDon(
+            String maHD,
+            String tenNV,
+            String tenKM,
+            String trangThai,
+            Timestamp thoiGianRa
+    ) {
+        try {
+            Connection con = ConnectDB.getConnection();
+
+            String sql = """
+                UPDATE HoaDon
+                SET maNV = (SELECT maNV FROM NhanVien WHERE hoTen = ?),
+                    maKM = (SELECT maKM FROM KhuyenMai WHERE tenKhuyenMai = ?),
+                    trangThai = ?,
+                    thoiGianRa = ?
+                WHERE maHD = ?
+            """;
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, tenNV);
+            ps.setString(2, tenKM);
+            ps.setString(3, trangThai);
+            ps.setTimestamp(4, thoiGianRa);
+            ps.setString(5, maHD);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     

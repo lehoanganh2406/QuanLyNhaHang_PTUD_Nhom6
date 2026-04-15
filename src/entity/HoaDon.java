@@ -124,6 +124,10 @@ public class HoaDon {
 				+ ", maNV=" + maNV + ", tienKhachTra=" + tienKhachTra + ", thueVAT=" + thueVAT + ", tienThua="
 				+ tienThua + ", trangThai=" + trangThai + ", lyDoHuy=" + lyDoHuy + "]";
 	}
+	public HoaDon(String maHD) {
+		super();
+		this.maHD = maHD;
+	}
 	
 	
 	

@@ -260,4 +260,60 @@ public class HoaDon_DAO {
         }
         return false;
     }
+    public String taoMaHoaDonMoi() {
+        Connection con = ConnectDB.getConnection();
+        String sql = "SELECT NEXT VALUE FOR seq_HoaDon AS nextVal";
+
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                int so = rs.getInt("nextVal");
+                return String.format("HD%05d", so);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean themHoaDonMoi(String maHD, String maBan, String maNV, String maPhieuDatBan, String maKH, String trangThai) {
+        Connection con = ConnectDB.getConnection();
+
+        String sql = """
+            INSERT INTO HoaDon
+            (maHD, thoiGianVao, thoiGianRa, maPhieuDatBan, maKH, maKM, maBan, maNV, tienKhachTra, thueVAT, tienThua, trangThai)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, maHD);
+            ps.setTimestamp(2, new java.sql.Timestamp(System.currentTimeMillis()));
+            ps.setNull(3, java.sql.Types.TIMESTAMP);
+
+            if (maPhieuDatBan == null || maPhieuDatBan.trim().isEmpty()) ps.setNull(4, java.sql.Types.VARCHAR);
+            else ps.setString(4, maPhieuDatBan);
+
+            if (maKH == null || maKH.trim().isEmpty()) ps.setNull(5, java.sql.Types.VARCHAR);
+            else ps.setString(5, maKH);
+
+            ps.setNull(6, java.sql.Types.VARCHAR); // maKM
+            ps.setString(7, maBan);
+
+            if (maNV == null || maNV.trim().isEmpty()) ps.setNull(8, java.sql.Types.VARCHAR);
+            else ps.setString(8, maNV);
+
+            ps.setDouble(9, 0);
+            ps.setDouble(10, 0);
+            ps.setDouble(11, 0);
+            ps.setString(12, trangThai);
+
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }

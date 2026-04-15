@@ -51,11 +51,13 @@ public class NhanVien_DAO {
                 String sdt = rs.getString("sdt");
                 String chucVu = rs.getString("chucVu");
                 String trangThai = rs.getString("trangThai");
+                String lyDo = rs.getString("lyDoNghi");
 
                 NhanVien nv = new NhanVien(
                         maNV, hoTen, anh, ngaySinh,
                         gioiTinh, cccd, email, sdt,
-                        chucVu, trangThai
+                        chucVu, trangThai,
+                        lyDo
                 );
 
                 ds.add(nv);
@@ -76,8 +78,8 @@ public class NhanVien_DAO {
         try {
             Connection con = ConnectDB.getConnection();
 
-            String sql = "INSERT INTO NhanVien (maNV, hoTen, anhNhanVien, ngaySinh, gioiTinh, cccd, email, sdt, chucVu, trangThai) "
-                       + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO NhanVien (maNV, hoTen, anhNhanVien, ngaySinh, gioiTinh, cccd, email, sdt, chucVu, trangThai, lyDoNghi) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             PreparedStatement ps = con.prepareStatement(sql);
 
@@ -95,6 +97,7 @@ public class NhanVien_DAO {
             ps.setString(8, nv.getSdt());
             ps.setString(9, nv.getChucVu());
             ps.setString(10, nv.getTrangThai());
+            ps.setString(11, nv.getLyDo());
 
             n = ps.executeUpdate();
 
@@ -113,8 +116,8 @@ public class NhanVien_DAO {
             Connection con = ConnectDB.getConnection();
 
             String sql = "UPDATE NhanVien SET hoTen=?, anhNhanVien=?, ngaySinh=?, gioiTinh=?, "
-                       + "cccd=?, email=?, sdt=?, chucVu=?, trangThai=? "
-                       + "WHERE maNV=?";
+                    + "cccd=?, email=?, sdt=?, chucVu=?, trangThai=?, lyDoNghi=? "
+                    + "WHERE maNV=?";
 
             PreparedStatement ps = con.prepareStatement(sql);
 
@@ -131,7 +134,8 @@ public class NhanVien_DAO {
             ps.setString(8, nv.getChucVu());
             ps.setString(9, nv.getTrangThai());
 
-            ps.setString(10, nv.getMaNV());
+            ps.setString(10, nv.getLyDo());
+            ps.setString(11, nv.getMaNV());
 
             n = ps.executeUpdate();
 

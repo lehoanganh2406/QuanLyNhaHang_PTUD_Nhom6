@@ -708,3 +708,10 @@ SELECT * FROM PhieuDatMon;
 SELECT * FROM HoaDon;
 SELECT * FROM ChiTietHoaDon;
 GO
+
+ALTER TABLE NhanVien
+ADD lyDoNghi NVARCHAR(100) NULL;
+
+UPDATE HoaDon
+SET tienKhachTra = 1000000
+WHERE maHD = 'HD00001';

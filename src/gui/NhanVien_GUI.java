@@ -67,55 +67,76 @@ public class NhanVien_GUI extends JFrame {
 	private JComponent lblEmpty;
 
    
-    public NhanVien_GUI(TaiKhoan tk) {
-        setTitle("Quản Lý Nhân Viên");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	public NhanVien_GUI(TaiKhoan tk) {
 
-        JLayeredPane layeredPane = new JLayeredPane();
-        layeredPane.setLayout(null);
-        setContentPane(layeredPane);
+	    // 🔥 FIX 1: UI SCALE + FONT (QUAN TRỌNG NHẤT)
+	    System.setProperty("sun.java2d.uiScale", "auto");
 
-        Pn_ThanhMenu menu = new Pn_ThanhMenu(tk);
+	    UIManager.put("Label.font",   scaledFontStatic("SansSerif", Font.PLAIN, 12));
+	    UIManager.put("Button.font",  scaledFontStatic("SansSerif", Font.BOLD, 12));
+	    UIManager.put("TextField.font", scaledFontStatic("SansSerif", Font.PLAIN, 13));
+	    UIManager.put("Table.font",   scaledFontStatic("SansSerif", Font.PLAIN, 12));
+	    UIManager.put("TableHeader.font", scaledFontStatic("SansSerif", Font.BOLD, 12));
+	    UIManager.put("ComboBox.font", scaledFontStatic("SansSerif", Font.PLAIN, 12));
+	    UIManager.put("ComboBox.listFont", scaledFontStatic("SansSerif", Font.PLAIN, 12));
+	    UIManager.put("RadioButton.font", scaledFontStatic("SansSerif", Font.PLAIN, 13));
 
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(CLR_PANEL_BG);
-        mainPanel.add(buildTitlePanel(), BorderLayout.NORTH);
-        mainPanel.add(buildCenterPanel(), BorderLayout.CENTER);
+	    // 🔥 FIX 2: LookAndFeel
+	    try {
+	        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
 
-        layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
-        layeredPane.add(menu, JLayeredPane.PALETTE_LAYER);
+	    setTitle("Quản Lý Nhân Viên");
+	    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                int w = getContentPane().getWidth();
-                int h = getContentPane().getHeight();
+	    JLayeredPane layeredPane = new JLayeredPane();
+	    layeredPane.setLayout(null);
+	    setContentPane(layeredPane);
 
-                mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
-                menu.setBounds(0, 0, w, h);
+	    Pn_ThanhMenu menu = new Pn_ThanhMenu(tk);
 
-                layeredPane.revalidate();
-                layeredPane.repaint();
-            }
-        });
+	    JPanel mainPanel = new JPanel(new BorderLayout());
+	    mainPanel.setBackground(CLR_PANEL_BG);
+	    mainPanel.add(buildTitlePanel(), BorderLayout.NORTH);
+	    mainPanel.add(buildCenterPanel(), BorderLayout.CENTER);
 
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setMinimumSize(new Dimension(1280, 720));
-        setLocationRelativeTo(null);
+	    layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
+	    layeredPane.add(menu, JLayeredPane.PALETTE_LAYER);
 
-        SwingUtilities.invokeLater(() -> {
-            int w = getContentPane().getWidth();
-            int h = getContentPane().getHeight();
+	    addComponentListener(new ComponentAdapter() {
+	        @Override public void componentResized(ComponentEvent e) {
+	            int w = getWidth();
+	            int h = getHeight();
+	            mainPanel.setBounds(0, 42, w, h - 42);
+	            menu.setBounds(0, 0, w, 42);
+	            layeredPane.revalidate();
+	            layeredPane.repaint();
+	        }
+	    });
 
-            mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
-            menu.setBounds(0, 0, w, h);
-        });
+	    setExtendedState(JFrame.MAXIMIZED_BOTH);
+	    setMinimumSize(new Dimension(1280, 720));
+	    setLocationRelativeTo(null);
 
-        con = ConnectDB.getConnection();
-        loadData();
-        txtMaNV.setText(nv_dao.getNextMaNV());
-        loadLyDoFromFile();
-    }
+	    // 🔥 FIX 3: đảm bảo layout chạy ngay lần đầu
+	    SwingUtilities.invokeLater(() -> {
+	        int w = getWidth();
+	        int h = getHeight();
+
+	        mainPanel.setBounds(0, 42, w, h - 42);
+	        menu.setBounds(0, 0, w, 42);
+
+	        layeredPane.revalidate();
+	        layeredPane.repaint();
+	    });
+
+	    con = ConnectDB.getConnection();
+	    loadData();
+	    txtMaNV.setText(nv_dao.getNextMaNV());
+	    loadLyDoFromFile();
+	}
     
     
     private static final double SCALE;
@@ -533,15 +554,41 @@ p.add(comp2, gbc);
         }
 
         try {
-        	
-        	NhanVien nvCu = dsNV.get(row); // lấy dữ liệu cũ
 
-        	String anh = duongDanAnh;
+            // ===== LẤY DỮ LIỆU CŨ =====
+            NhanVien nvCu = dsNV.get(row);
 
-        	// nếu chưa chọn ảnh mới → giữ ảnh cũ
-        	if (anh == null || anh.isEmpty()) {
-        	    anh = nvCu.getAnhNhanVien();
-        	}
+            String anh = duongDanAnh;
+
+            // nếu chưa chọn ảnh mới → giữ ảnh cũ
+            if (anh == null || anh.isEmpty()) {
+                anh = nvCu.getAnhNhanVien();
+            }
+
+            // ===== TRẠNG THÁI + LÝ DO =====
+            String trangThaiCu = nvCu.getTrangThai();
+            String trangThaiMoi = cbTrangThai.getSelectedItem().toString();
+
+            String lyDo = nvCu.getLyDo(); // mặc định giữ lý do cũ
+
+            // chỉ hỏi khi chuyển từ Đang làm → Nghỉ việc
+            if (trangThaiCu.equalsIgnoreCase("Đang làm")
+                    && trangThaiMoi.equalsIgnoreCase("Nghỉ việc")) {
+
+                lyDo = JOptionPane.showInputDialog(this, "Nhập lý do nghỉ việc:");
+
+                if (lyDo == null || lyDo.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Phải nhập lý do!");
+                    return;
+                }
+            }
+
+            // nếu chuyển lại Đang làm → xóa lý do
+            if (trangThaiMoi.equalsIgnoreCase("Đang làm")) {
+                lyDo = null;
+            }
+
+            // ===== TẠO OBJECT (QUAN TRỌNG NHẤT) =====
             NhanVien nv = new NhanVien(
                     txtMaNV.getText().trim(),
                     txtHoTen.getText().trim(),
@@ -552,10 +599,11 @@ p.add(comp2, gbc);
                     txtEmail.getText().trim(),
                     txtSDT.getText().trim(),
                     cbChucVu.getSelectedItem().toString(),
-                    cbTrangThai.getSelectedItem().toString()
+                    trangThaiMoi,
+                    lyDo // 🔥 LƯU DB Ở ĐÂY
             );
 
-          
+            // ===== UPDATE DATABASE =====
             if (nv_dao.capNhatNhanVien(nv)) {
 
                 String ngaySinh = "";
@@ -563,24 +611,8 @@ p.add(comp2, gbc);
                     ngaySinh = new SimpleDateFormat("dd/MM/yyyy")
                             .format(nv.getNgaySinh());
                 }
-                
-                String trangThai = cbTrangThai.getSelectedItem().toString();
 
-             //  nếu chuyển sang nghỉ việc
-                if (trangThai.equalsIgnoreCase("Nghỉ việc")) {
-
-                	String lyDo = JOptionPane.showInputDialog(this, "Nhập lý do nghỉ việc:");
-
-                if (lyDo == null || lyDo.trim().isEmpty()) {
-                     JOptionPane.showMessageDialog(this, "Phải nhập lý do!");
-                     return;
-                 }
-
-                 lyDoMap.put(txtMaNV.getText(), lyDo);
-                 saveLyDoToFile();
-             }
-
-                // UPDATE TABLE (ĐÚNG INDEX)
+                // ===== UPDATE TABLE =====
                 tableModel.setValueAt(nv.getMaNV(), row, 0);
                 tableModel.setValueAt(nv.getHoTen(), row, 1);
                 tableModel.setValueAt(nv.isGioiTinh() ? "Nam" : "Nữ", row, 2);
@@ -590,7 +622,8 @@ p.add(comp2, gbc);
                 tableModel.setValueAt(nv.getEmail(), row, 6);
                 tableModel.setValueAt(nv.getChucVu(), row, 7);
                 tableModel.setValueAt(nv.getTrangThai(), row, 8);
-                
+
+                // reload lại dữ liệu (để lấy luôn lý do từ DB)
                 loadData();
 
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
@@ -665,15 +698,15 @@ p.add(comp2, gbc);
         
         String maNV = txtMaNV.getText();
 
-        if ("Nghỉ việc".equalsIgnoreCase(cbTrangThai.getSelectedItem().toString())) {
-            String lyDo = lyDoMap.get(maNV);
+        if ("Nghỉ việc".equalsIgnoreCase(nv.getTrangThai())) {
 
-            if (lyDo != null) {
-                lblLyDo.setText("Lý do: " + lyDo);
+            if (nv.getLyDo() != null && !nv.getLyDo().isEmpty()) {
+                lblLyDo.setText("Lý do: " + nv.getLyDo());
                 lblLyDo.setForeground(Color.RED);
             } else {
                 lblLyDo.setText("");
             }
+
         } else {
             lblLyDo.setText("");
         }
@@ -904,7 +937,7 @@ p.add(comp2, gbc);
         SwingUtilities.invokeLater(() -> {
             try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
             catch (Exception ignored) {}
-            new NhanVien_GUI(null).setVisible(true);
+            new NhanVien_GUI(taiKhoanDangNhap).setVisible(true);
         });
     }
 }

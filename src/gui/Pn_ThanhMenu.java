@@ -151,7 +151,7 @@ public class Pn_ThanhMenu extends JPanel {
         mnHeThong.addSubItem("Hỗ trợ", "__HOTRO__");
 
         MenuItemPanel mnDanhMuc = new MenuItemPanel("Danh mục", "img/mn_danhmuc.png");
-        mnDanhMuc.addSubItem("Thực đơn", "ThucDon_gui");
+        mnDanhMuc.addSubItem("Thực đơn", "ThucDon_GUI");
         mnDanhMuc.addSubItem("Khu vực", "KhuVuc_GUI");
         mnDanhMuc.addSubItem("Nhân viên", "NhanVien_GUI");
         mnDanhMuc.addSubItem("Khách hàng", "KhachHang_GUI");
@@ -164,7 +164,7 @@ public class Pn_ThanhMenu extends JPanel {
         mnXuLy.addSubItem("Hóa đơn", "HoaDon_GUI");
 
         MenuItemPanel mnTraCuu = new MenuItemPanel("Tra cứu", "img/mn_tracuu.png");
-        mnTraCuu.addDirectPage("TraCuuBan_GUI");
+        mnTraCuu.addDirectPage("TraCuu_GUI");
 
         MenuItemPanel mnThongKe = new MenuItemPanel("Thống kê", "img/mn_thongke.png");
         mnThongKe.addSubItem("Thống kê theo ca", "ThongKeTheoCa_GUI");

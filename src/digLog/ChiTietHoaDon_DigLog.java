@@ -13,17 +13,20 @@ public class ChiTietHoaDon_DigLog extends JDialog {
 
     private String maHD;
 
-    // ── Màu sắc (giống HoaDon_GUI) ──────────────────────────────────────────
+    // ── Màu sắc ──────────────────────────────────────────────────────────────
     private static final Color CLR_HEADER    = new Color(74, 55, 40);
     private static final Color CLR_SECTION   = new Color(50, 40, 30);
     private static final Color CLR_TABLE_HDR = new Color(160, 100, 60);
     private static final Color CLR_RED       = new Color(200, 50, 50);
+    private static final Color CLR_GREEN     = new Color(40, 130, 60);
     private static final Color CLR_BTN       = new Color(210, 150, 70);
     private static final Color CLR_BG        = Color.WHITE;
     private static final Color CLR_DIVIDER   = new Color(200, 190, 175);
 
-    // ── Labels thông tin ─────────────────────────────────────────────────────
+    // ── Labels thông tin chung ────────────────────────────────────────────────
     private JLabel lblMaHD, lblThoiGian, lblKhach, lblNV, lblSDT, lblMaPhieu;
+
+    // ── Labels thanh toán ────────────────────────────────────────────────────
     private JLabel lblTongTien, lblKhuyenMai, lblDiemTichLuy;
     private JLabel lblThanhToan, lblKhachTra, lblTienThoi;
 
@@ -31,6 +34,7 @@ public class ChiTietHoaDon_DigLog extends JDialog {
     private JTable            table;
     private DefaultTableModel model;
 
+    // =========================================================================
     public ChiTietHoaDon_DigLog(JFrame parent, String maHD) {
         super(parent, "Chi tiết hóa đơn", true);
         this.maHD = maHD;
@@ -39,16 +43,15 @@ public class ChiTietHoaDon_DigLog extends JDialog {
         setLocationRelativeTo(parent);
         setResizable(false);
 
-        // BorderLayout để title THỰC SỰ sát viền trên
         setLayout(new BorderLayout());
-        add(buildHeader(), BorderLayout.NORTH);
+        add(buildHeader(),     BorderLayout.NORTH);
         add(buildScrollBody(), BorderLayout.CENTER);
 
         loadData();
     }
 
     // =========================================================================
-    // HEADER – sát viền, không padding
+    // HEADER – sát viền
     // =========================================================================
     private JLabel buildHeader() {
         JLabel title = new JLabel("CHI TIẾT HÓA ĐƠN", SwingConstants.CENTER);
@@ -57,35 +60,29 @@ public class ChiTietHoaDon_DigLog extends JDialog {
         title.setForeground(Color.WHITE);
         title.setFont(new Font("SansSerif", Font.BOLD, 28));
         title.setPreferredSize(new Dimension(0, 64));
-        title.setBorder(null); // KHÔNG có border để sát viền
+        title.setBorder(null);
         return title;
     }
 
     // =========================================================================
-    // BODY (có scroll nếu nội dung dài)
+    // BODY
     // =========================================================================
     private JScrollPane buildScrollBody() {
         JPanel body = new JPanel();
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setBackground(CLR_BG);
 
-        // ── Thông tin chung
         body.add(sectionTitle("THÔNG TIN CHUNG"));
         body.add(buildInfoPanel());
-
         body.add(divider());
 
-        // ── Danh sách món ăn
         body.add(sectionTitle("DANH SÁCH MÓN ĂN"));
         body.add(buildTablePanel());
-
         body.add(divider());
 
-        // ── Thanh toán
         body.add(sectionTitle("THANH TOÁN"));
         body.add(buildPayPanel());
 
-        // ── Nút Thoát
         body.add(buildCloseButton());
 
         JScrollPane scroll = new JScrollPane(body);
@@ -98,31 +95,30 @@ public class ChiTietHoaDon_DigLog extends JDialog {
     // THÔNG TIN CHUNG
     // =========================================================================
     private JPanel buildInfoPanel() {
-        lblMaHD    = valueLabel();
+        lblMaHD     = valueLabel();
         lblThoiGian = valueLabel();
-        lblKhach   = valueLabel();
-        lblNV      = valueLabel();
-        lblSDT     = valueLabel();
-        lblMaPhieu = valueLabel();
+        lblKhach    = valueLabel();
+        lblNV       = valueLabel();
+        lblSDT      = valueLabel();
+        lblMaPhieu  = valueLabel();
 
         JPanel p = new JPanel(new GridBagLayout());
         p.setBackground(CLR_BG);
         p.setAlignmentX(LEFT_ALIGNMENT);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets  = new Insets(4, 20, 4, 8);
-        gbc.anchor  = GridBagConstraints.WEST;
-        gbc.fill    = GridBagConstraints.NONE;
+        gbc.insets = new Insets(4, 20, 4, 8);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill   = GridBagConstraints.NONE;
 
         int y = 0;
-        addInfoRow(p, gbc, y++, "Mã hóa đơn :",  lblMaHD);
+        addInfoRow(p, gbc, y++, "Mã hóa đơn :",   lblMaHD);
         addInfoRow(p, gbc, y++, "Thời gian tạo :", lblThoiGian);
-        addInfoRow(p, gbc, y++, "Khách hàng :",   lblKhach);
+        addInfoRow(p, gbc, y++, "Khách hàng :",    lblKhach);
         addInfoRow(p, gbc, y++, "Nhân viên :",     lblNV);
         addInfoRow(p, gbc, y++, "SĐT :",           lblSDT);
-        addInfoRow(p, gbc, y,   "Mã P.Đặt bàn :", lblMaPhieu); // bên dưới SĐT
+        addInfoRow(p, gbc, y,   "Mã P.Đặt bàn :", lblMaPhieu);
 
-        // căn chiều cao
         p.setMaximumSize(new Dimension(Integer.MAX_VALUE, p.getPreferredSize().height + 10));
         return p;
     }
@@ -150,7 +146,6 @@ public class ChiTietHoaDon_DigLog extends JDialog {
         header.setReorderingAllowed(false);
         header.setPreferredSize(new Dimension(0, 34));
 
-        // Căn giữa các cột số
         DefaultTableCellRenderer center = new DefaultTableCellRenderer();
         center.setHorizontalAlignment(JLabel.CENTER);
         for (int i : new int[]{0, 2}) table.getColumnModel().getColumn(i).setCellRenderer(center);
@@ -190,19 +185,19 @@ public class ChiTietHoaDon_DigLog extends JDialog {
         p.setAlignmentX(LEFT_ALIGNMENT);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets  = new Insets(4, 20, 4, 20);
-        gbc.anchor  = GridBagConstraints.WEST;
-        gbc.fill    = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 20, 5, 20);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill   = GridBagConstraints.HORIZONTAL;
 
         int y = 0;
-        addPayRow(p, gbc, y++, "Tổng tiền :",            lblTongTien,    false, false);
-        addPayRow(p, gbc, y++, "Khuyến mãi",              lblKhuyenMai,   false, false);
-        addPayRow(p, gbc, y++, "Điểm tích lũy:",          lblDiemTichLuy, false, false);
-        addPayRow(p, gbc, y++, "Số tiền cần thanh toán",  lblThanhToan,   true,  true);
-        addPayRow(p, gbc, y++, "Khách trả :",             lblKhachTra,    false, false);
-        addPayRow(p, gbc, y,   "Tiền thối :",             lblTienThoi,    false, false);
+        addPayRow(p, gbc, y++, "Tổng tiền :",            lblTongTien,    false, true);
+        addPayRow(p, gbc, y++, "Khuyến mãi",             lblKhuyenMai,   false, false);
+        addPayRow(p, gbc, y++, "Điểm tích lũy :",        lblDiemTichLuy, false, false);
+        addPayRow(p, gbc, y++, "Số tiền cần thanh toán", lblThanhToan,   true,  true);
+        addPayRow(p, gbc, y++, "Khách trả :",            lblKhachTra,    false, false);
+        addPayRow(p, gbc, y,   "Tiền thối :",            lblTienThoi,    false, false);
 
-        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, p.getPreferredSize().height + 10));
+        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, p.getPreferredSize().height + 16));
         return p;
     }
 
@@ -237,71 +232,13 @@ public class ChiTietHoaDon_DigLog extends JDialog {
     }
 
     // =========================================================================
-    // HELPERS
-    // =========================================================================
-    private JLabel sectionTitle(String text) {
-        JLabel lbl = new JLabel(text, SwingConstants.CENTER);
-        lbl.setFont(new Font("SansSerif", Font.BOLD, 17));
-        lbl.setForeground(CLR_SECTION);
-        lbl.setBorder(new EmptyBorder(10, 0, 6, 0));
-        lbl.setAlignmentX(LEFT_ALIGNMENT);
-        lbl.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
-        return lbl;
-    }
-
-    private JSeparator divider() {
-        JSeparator sep = new JSeparator();
-        sep.setForeground(CLR_DIVIDER);
-        sep.setAlignmentX(LEFT_ALIGNMENT);
-        sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 2));
-        return sep;
-    }
-
-    private JLabel valueLabel() {
-        JLabel lbl = new JLabel();
-        lbl.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        return lbl;
-    }
-
-    private void addInfoRow(JPanel p, GridBagConstraints gbc, int y, String labelText, JLabel value) {
-        gbc.gridy = y;
-
-        gbc.gridx = 0; gbc.weightx = 0;
-        JLabel lbl = new JLabel(labelText);
-        lbl.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        p.add(lbl, gbc);
-
-        gbc.gridx = 1; gbc.weightx = 1;
-        p.add(value, gbc);
-    }
-
-    private void addPayRow(JPanel p, GridBagConstraints gbc, int y,
-                           String labelText, JLabel value,
-                           boolean bold, boolean red) {
-        gbc.gridy = y;
-
-        gbc.gridx = 0; gbc.weightx = 0;
-        JLabel lbl = new JLabel(labelText);
-        lbl.setFont(new Font("SansSerif", bold ? Font.BOLD : Font.PLAIN, 13));
-        p.add(lbl, gbc);
-
-        gbc.gridx = 1; gbc.weightx = 1;
-        value.setFont(new Font("SansSerif", bold ? Font.BOLD : Font.PLAIN, 13));
-        value.setHorizontalAlignment(JLabel.RIGHT);
-        if (red) value.setForeground(CLR_RED);
-        p.add(value, gbc);
-    }
-
-    // =========================================================================
     // LOAD DATA TỪ DATABASE
     // =========================================================================
     private void loadData() {
         try {
             Connection con = ConnectDB.getConnection();
 
-            // ── Thông tin hóa đơn + khuyến mãi ──────────────────────────────
-            // Lấy cả loaiKM và giaTri để hiển thị đúng kiểu giảm giá
-            // Không lấy loaiKM vì tên cột có thể khác nhau tùy DB
+            // ── Thông tin hóa đơn ────────────────────────────────────────────
             String sql = """
                 SELECT hd.maHD,
                        hd.thoiGianVao,
@@ -330,20 +267,18 @@ public class ChiTietHoaDon_DigLog extends JDialog {
                 lblMaHD.setText(rs.getString("maHD"));
 
                 Timestamp ts = rs.getTimestamp("thoiGianVao");
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm 'Ngày' dd-MM-yyyy");
-                lblThoiGian.setText(ts != null ? sdf.format(ts) : "");
+                lblThoiGian.setText(ts != null
+                        ? new SimpleDateFormat("HH:mm 'Ngày' dd-MM-yyyy").format(ts) : "");
 
-                lblKhach.setText(nullToEmpty(rs.getString("tenKH")));
-                lblNV.setText(nullToEmpty(rs.getString("hoTen")));
-                lblSDT.setText(nullToEmpty(rs.getString("sdt")));
+                lblKhach.setText(nullSafe(rs.getString("tenKH")));
+                lblNV   .setText(nullSafe(rs.getString("hoTen")));
+                lblSDT  .setText(nullSafe(rs.getString("sdt")));
 
-                // Mã phiếu đặt bàn: để trống nếu không có
                 String maPhieu = rs.getString("maPhieuDatBan");
-                lblMaPhieu.setText(maPhieu != null ? maPhieu : "");
-                // Ẩn hàng nếu không có phiếu đặt bàn
-                lblMaPhieu.setVisible(maPhieu != null && !maPhieu.isEmpty());
+                lblMaPhieu.setText(nullSafe(maPhieu));
+                lblMaPhieu.setVisible(maPhieu != null && !maPhieu.isBlank());
 
-                tenKM    = nullToEmpty(rs.getString("tenKhuyenMai"));
+                tenKM    = nullSafe(rs.getString("tenKhuyenMai"));
                 giaTriKM = rs.getDouble("giaTri");
             }
 
@@ -376,12 +311,10 @@ public class ChiTietHoaDon_DigLog extends JDialog {
             }
 
             // ── Tính khuyến mãi ──────────────────────────────────────────────
+            // giaTri <= 100 → phần trăm | giaTri > 100 → tiền cố định
             double soTienGiam = 0;
 
             if (!tenKM.isEmpty()) {
-                // Tự nhận dạng kiểu KM:
-                //   giaTri <= 100  → coi là % (vd: 10 = giảm 10%)
-                //   giaTri >  100  → coi là tiền VND (vd: 50000 = giảm 50.000 VND)
                 if (giaTriKM > 0 && giaTriKM <= 100) {
                     soTienGiam = tongTien * giaTriKM / 100.0;
                     lblKhuyenMai.setText(tenKM + "  (-" + (int) giaTriKM + "%)");
@@ -389,7 +322,7 @@ public class ChiTietHoaDon_DigLog extends JDialog {
                     soTienGiam = giaTriKM;
                     lblKhuyenMai.setText(tenKM + "  (-" + formatTien(giaTriKM) + ")");
                 }
-                lblKhuyenMai.setForeground(new Color(40, 130, 60));
+                lblKhuyenMai.setForeground(CLR_GREEN);
             } else {
                 lblKhuyenMai.setText("Không có");
                 lblKhuyenMai.setForeground(Color.GRAY);
@@ -397,20 +330,16 @@ public class ChiTietHoaDon_DigLog extends JDialog {
 
             double thanhToan = tongTien - soTienGiam;
 
-            // Tổng tiền (đỏ)
             lblTongTien.setText(formatTien(tongTien));
             lblTongTien.setForeground(CLR_RED);
 
-            // Điểm tích lũy: 1 điểm / 1.000 VND (điều chỉnh tỉ lệ nếu cần)
             long diem = (long) (thanhToan / 1000);
             lblDiemTichLuy.setText("+" + diem + " điểm");
             lblDiemTichLuy.setForeground(new Color(30, 100, 200));
 
-            // Số tiền cần thanh toán (đỏ + đậm)
             lblThanhToan.setText(formatTien(thanhToan));
-            // màu đã set trong addPayRow khi red=true
 
-            // ── Tiền khách trả & tiền thối (nếu DB có cột tienKhachTra) ─────
+            // ── Tiền khách trả: đọc từ DB + ràng buộc hiển thị ──────────────
             try {
                 String sqlTra = "SELECT tienKhachTra FROM HoaDon WHERE maHD = ?";
                 PreparedStatement psTra = con.prepareStatement(sqlTra);
@@ -418,18 +347,36 @@ public class ChiTietHoaDon_DigLog extends JDialog {
                 ResultSet rsTra = psTra.executeQuery();
 
                 if (rsTra.next()) {
-                    double tienTra = rsTra.getDouble(1);
+                    double tienTra = rsTra.getDouble("tienKhachTra");
+
                     if (tienTra > 0) {
                         lblKhachTra.setText(formatTien(tienTra));
-                        double tienThoi = tienTra - thanhToan;
-                        lblTienThoi.setText(tienThoi >= 0 ? formatTien(tienThoi) : formatTien(0));
+
+                        // ── RÀNG BUỘC: tienKhachTra phải >= thanhToan ────────
+                        if (tienTra < thanhToan) {
+                            // Dữ liệu vi phạm → cảnh báo đỏ + tooltip
+                            lblKhachTra.setForeground(CLR_RED);
+                            lblKhachTra.setToolTipText(
+                                    "⚠ Tiền khách trả (" + formatTien(tienTra)
+                                    + ") nhỏ hơn số tiền cần thanh toán!");
+                            lblTienThoi.setText("⚠ Không hợp lệ");
+                            lblTienThoi.setForeground(CLR_RED);
+                        } else {
+                            // Hợp lệ → tính tiền thối bình thường
+                            lblKhachTra.setForeground(Color.BLACK);
+                            lblTienThoi.setText(formatTien(tienTra - thanhToan));
+                            lblTienThoi.setForeground(Color.BLACK);
+                        }
+
                     } else {
-                        lblKhachTra.setText("—");
+                        lblKhachTra.setText("Chưa thanh toán");
+                        lblKhachTra.setForeground(Color.GRAY);
                         lblTienThoi.setText("—");
+                        lblTienThoi.setForeground(Color.GRAY);
                     }
                 }
             } catch (Exception ignored) {
-                // Nếu DB chưa có cột tienKhachTra thì bỏ qua
+                // Cột tienKhachTra chưa có trong DB → để trống, không crash
                 lblKhachTra.setText("—");
                 lblTienThoi.setText("—");
             }
@@ -442,9 +389,62 @@ public class ChiTietHoaDon_DigLog extends JDialog {
         }
     }
 
-    private String nullToEmpty(String s) {
-        return s != null ? s : "";
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
+    private JLabel sectionTitle(String text) {
+        JLabel lbl = new JLabel(text, SwingConstants.CENTER);
+        lbl.setFont(new Font("SansSerif", Font.BOLD, 17));
+        lbl.setForeground(CLR_SECTION);
+        lbl.setBorder(new EmptyBorder(10, 0, 6, 0));
+        lbl.setAlignmentX(LEFT_ALIGNMENT);
+        lbl.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        return lbl;
     }
+
+    private JSeparator divider() {
+        JSeparator sep = new JSeparator();
+        sep.setForeground(CLR_DIVIDER);
+        sep.setAlignmentX(LEFT_ALIGNMENT);
+        sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 2));
+        return sep;
+    }
+
+    private JLabel valueLabel() {
+        JLabel lbl = new JLabel();
+        lbl.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        return lbl;
+    }
+
+    private void addInfoRow(JPanel p, GridBagConstraints gbc, int y,
+                            String labelText, JLabel value) {
+        gbc.gridy = y;
+        gbc.gridx = 0; gbc.weightx = 0;
+        JLabel lbl = new JLabel(labelText);
+        lbl.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        p.add(lbl, gbc);
+
+        gbc.gridx = 1; gbc.weightx = 1;
+        p.add(value, gbc);
+    }
+
+    private void addPayRow(JPanel p, GridBagConstraints gbc, int y,
+                           String labelText, JLabel value,
+                           boolean bold, boolean red) {
+        gbc.gridy = y;
+        gbc.gridx = 0; gbc.weightx = 0;
+        JLabel lbl = new JLabel(labelText);
+        lbl.setFont(new Font("SansSerif", bold ? Font.BOLD : Font.PLAIN, 13));
+        p.add(lbl, gbc);
+
+        gbc.gridx = 1; gbc.weightx = 1;
+        value.setFont(new Font("SansSerif", bold ? Font.BOLD : Font.PLAIN, 13));
+        value.setHorizontalAlignment(JLabel.RIGHT);
+        if (red) value.setForeground(CLR_RED);
+        p.add(value, gbc);
+    }
+
+    private String nullSafe(String s) { return s != null ? s : ""; }
 
     private String formatTien(double t) {
         return String.format("%,.0f", t).replace(",", ".") + " VND";

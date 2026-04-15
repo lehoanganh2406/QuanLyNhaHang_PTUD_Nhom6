@@ -14,6 +14,28 @@ public class MonAn_DAO {
 
 	public MonAn_DAO() {
 	}
+	
+	
+	
+	public String getNextMaMon() {
+        Connection con = ConnectDB.getInstance().getConnection();
+        // Lấy số thứ tự lớn nhất từ các mã có dạng MM + số
+        String sql = "SELECT MAX(CAST(SUBSTRING(maMon, 3, LEN(maMon)) AS INT)) "
+                   + "FROM MonAn WHERE maMon LIKE 'MM%' "
+                   + "AND ISNUMERIC(SUBSTRING(maMon, 3, LEN(maMon))) = 1";
+ 
+        try (PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                int maxNum = rs.getInt(1);
+                return String.format("MM%03d", maxNum + 1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+ 
+        return "MM001"; // fallback
+    }
 
 	public ArrayList<MonAn> getAllMonAn() {
 		ArrayList<MonAn> dsMon = new ArrayList<>();

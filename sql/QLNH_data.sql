@@ -61,7 +61,8 @@ CREATE TABLE NhanVien (
     email VARCHAR(100) NULL UNIQUE,
     sdt VARCHAR(15) NULL UNIQUE,
     chucVu NVARCHAR(100) NULL,
-    trangThai NVARCHAR(50) NULL
+    trangThai NVARCHAR(50) NULL,
+    lyDoNghi NVARCHAR(255) NULL
 );
 
 CREATE TABLE TaiKhoan (
@@ -189,11 +190,14 @@ CREATE TABLE HoaDon (
     thueVAT DECIMAL(18,2) NOT NULL DEFAULT 0,
     tienThua DECIMAL(18,2) NOT NULL DEFAULT 0,
     trangThai NVARCHAR(255) NULL,
+    lyDoHuy NVARCHAR(255) NULL,
+
     CONSTRAINT FK_HoaDon_PhieuDatBan FOREIGN KEY (maPhieuDatBan) REFERENCES PhieuDatBan(maPhieuDatBan),
     CONSTRAINT FK_HoaDon_KhachHang FOREIGN KEY (maKH) REFERENCES KhachHang(maKH),
     CONSTRAINT FK_HoaDon_KhuyenMai FOREIGN KEY (maKM) REFERENCES KhuyenMai(maKM),
     CONSTRAINT FK_HoaDon_Ban FOREIGN KEY (maBan) REFERENCES Ban(maBan),
     CONSTRAINT FK_HoaDon_NhanVien FOREIGN KEY (maNV) REFERENCES NhanVien(maNV),
+
     CONSTRAINT CK_HoaDon_TienKhachTra CHECK (tienKhachTra >= 0),
     CONSTRAINT CK_HoaDon_ThueVAT CHECK (thueVAT >= 0),
     CONSTRAINT CK_HoaDon_TienThua CHECK (tienThua >= 0),
@@ -207,12 +211,17 @@ CREATE TABLE ChiTietHoaDon (
     soLuong INT NOT NULL,
     donGia DECIMAL(18,2) NOT NULL,
     ghiChu NVARCHAR(255) NULL,
+    trangThai NVARCHAR(50) NULL,
+    lyDoHuy NVARCHAR(255) NULL,
+    soLuongHuy INT NOT NULL DEFAULT 0,
+    thoiGianHuy DATETIME NULL,
     thanhTien AS (soLuong * donGia),
     CONSTRAINT PK_ChiTietHoaDon PRIMARY KEY (maHD, maMon),
     CONSTRAINT FK_ChiTietHoaDon_HoaDon FOREIGN KEY (maHD) REFERENCES HoaDon(maHD),
     CONSTRAINT FK_ChiTietHoaDon_MonAn FOREIGN KEY (maMon) REFERENCES MonAn(maMon),
     CONSTRAINT CK_ChiTietHoaDon_SoLuong CHECK (soLuong > 0),
-    CONSTRAINT CK_ChiTietHoaDon_DonGia CHECK (donGia >= 0)
+    CONSTRAINT CK_ChiTietHoaDon_DonGia CHECK (donGia >= 0),
+    CONSTRAINT CK_ChiTietHoaDon_SoLuongHuy CHECK (soLuongHuy >= 0 AND soLuongHuy <= soLuong)
 );
 GO
 
@@ -467,20 +476,22 @@ GO
 7. NHÂN VIÊN / TÀI KHOẢN / CA LÀM
 tên đăng nhập và mật khẩu theo bạn sửa
 ==========================================================*/
-INSERT INTO NhanVien (maNV, hoTen, anhNhanVien, ngaySinh, gioiTinh, cccd, email, sdt, chucVu, trangThai)
+INSERT INTO NhanVien (
+    maNV, hoTen, anhNhanVien, ngaySinh, gioiTinh, cccd, email, sdt, chucVu, trangThai, lyDoNghi
+)
 VALUES
-('NV001', N'Lê Hoàng Anh', N'hoanganh.png', '2005-06-24', 1, '079205000001', 'hoanganh@hyv.com', '0901000001', N'Quản lý', N'Đang làm'),
-('NV002', N'Trần Quốc Dũng', N'quocdung.png', '2005-03-15', 1, '079205000002', 'quocdung@hyv.com', '0901000002', N'Lễ tân', N'Đang làm'),
-('NV003', N'Nguyễn Hạ Ánh Dương', N'anhduong.png', '2005-09-10', 0, '079205000003', 'anhduong@hyv.com', '0901000003', N'Lễ tân', N'Đang làm'),
-('NV004', N'Huỳnh Thị Ngọc Tiên', N'ngoctien.png', '2005-11-20', 0, '079205000004', 'ngoctien@hyv.com', '0901000004', N'Lễ tân', N'Đang làm');
+('NV001', N'Lê Hoàng Anh', N'hoanganh.png', '2005-06-24', 1, '079205000001', 'hoanganh@hyv.com', '0901000001', N'Quản lý', N'Đang làm', NULL),
+('NV002', N'Trần Quốc Dũng', N'quocdung.png', '2005-03-15', 1, '079205000002', 'quocdung@hyv.com', '0901000002', N'Lễ tân', N'Đang làm', NULL),
+('NV003', N'Nguyễn Hạ Ánh Dương', N'anhduong.png', '2005-09-10', 0, '079205000003', 'anhduong@hyv.com', '0901000003', N'Lễ tân', N'Đang làm', NULL),
+('NV004', N'Huỳnh Thị Ngọc Tiên', N'ngoctien.png', '2005-11-20', 0, '079205000004', 'ngoctien@hyv.com', '0901000004', N'Lễ tân', N'Đang làm', NULL);
 GO
 
 INSERT INTO TaiKhoan (maTaiKhoan, tenDangNhap, matKhau, phanQuyen, trangThai, maNV)
 VALUES
 ('TK01', 'NV001', 'quanly', N'Quản lý', 1, 'NV001'),
 ('TK02', 'NV002', 'nhanvien', N'Lễ tân', 1, 'NV002'),
-('TK03', 'NV003', 'thungan', N'Lễ tân', 1, 'NV003'),
-('TK04', 'NV004', 'phucvu', N'Lễ tân', 1, 'NV004');
+('TK03', 'NV003', 'nhanvien', N'Lễ tân', 1, 'NV003'),
+('TK04', 'NV004', 'nhanvien', N'Lễ tân', 1, 'NV004');
 GO
 
 INSERT INTO CaLamViec (maCa, tenCa, thoiGianMoCa, thoiGianDongCa, tienMoCa, tienMatCuoiCa, tienChuyenKhoanCuoiCa, tienVisaCuoiCa, maTaiKhoan)
@@ -664,11 +675,11 @@ GO
 13. HÓA ĐƠN
 ==========================================================*/
 INSERT INTO HoaDon
-(maHD, thoiGianVao, thoiGianRa, maPhieuDatBan, maKH, maKM, maBan, maNV, tienKhachTra, thueVAT, tienThua, trangThai)
+(maHD, thoiGianVao, thoiGianRa, maPhieuDatBan, maKH, maKM, maBan, maNV, tienKhachTra, thueVAT, tienThua, trangThai, lyDoHuy)
 VALUES
-('HD00001', '2026-04-06 18:00:00', '2026-04-06 19:30:00', NULL, 'KH00001', 'KM001', 'A02', 'NV003', 500000, 35000, 45000, N'Đã thanh toán'),
-('HD00002', '2026-04-06 19:00:00', '2026-04-06 21:00:00', 'PDB00002', 'KH00002', NULL, 'A05', 'NV003', 700000, 49000, 81000, N'Đã thanh toán'),
-('HD00003', '2026-04-07 12:00:00', NULL, NULL, 'KH00003', NULL, 'B01', 'NV002', 0, 0, 0, N'Chưa thanh toán');
+('HD00001', '2026-04-06 18:00:00', '2026-04-06 19:30:00', NULL, 'KH00001', 'KM001', 'A02', 'NV003', 500000, 35000, 45000, N'Đã thanh toán', NULL),
+('HD00002', '2026-04-06 19:00:00', '2026-04-06 21:00:00', 'PDB00002', 'KH00002', NULL, 'A05', 'NV003', 700000, 49000, 81000, N'Đã thanh toán', NULL),
+('HD00003', '2026-04-07 12:00:00', NULL, NULL, 'KH00003', NULL, 'B01', 'NV002', 0, 0, 0, N'Chưa thanh toán', NULL);
 GO
 
 ALTER SEQUENCE seq_HoaDon RESTART WITH 4;
@@ -677,14 +688,15 @@ GO
 /*==========================================================
 14. CHI TIẾT HÓA ĐƠN
 ==========================================================*/
-INSERT INTO ChiTietHoaDon (maHD, maMon, soLuong, donGia, ghiChu)
+INSERT INTO ChiTietHoaDon
+(maHD, maMon, soLuong, donGia, ghiChu, trangThai, lyDoHuy, soLuongHuy, thoiGianHuy)
 VALUES
-('HD00001', 'MM001', 1, 45000, N''),
-('HD00001', 'MM004', 1, 165000, N''),
-('HD00001', 'MM010', 2, 20000, N''),
-('HD00002', 'MM003', 2, 120000, N''),
-('HD00002', 'MM006', 1, 280000, N''),
-('HD00002', 'MM012', 2, 35000, N'');
+('HD00001', 'MM001', 1, 45000, N'', N'Đã gọi', NULL, 0, NULL),
+('HD00001', 'MM004', 1, 165000, N'', N'Đã gọi', NULL, 0, NULL),
+('HD00001', 'MM010', 2, 20000, N'', N'Đã gọi', NULL, 0, NULL),
+('HD00002', 'MM003', 2, 120000, N'', N'Đã gọi', NULL, 0, NULL),
+('HD00002', 'MM006', 1, 280000, N'', N'Đã gọi', NULL, 0, NULL),
+('HD00002', 'MM012', 2, 35000, N'', N'Đã gọi', NULL, 0, NULL);
 GO
 
 

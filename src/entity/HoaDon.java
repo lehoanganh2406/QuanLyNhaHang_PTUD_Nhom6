@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 public class HoaDon {
 	private static final long serialVersionUID = 1L;
+
 	private String maHD;
 	private LocalDateTime thoiGianVao;
 	private LocalDateTime thoiGianRa;
@@ -16,6 +17,7 @@ public class HoaDon {
 	private double thueVAT;
 	private double tienThua;
 	private String trangThai;
+	private String lyDoHuy;
 	public String getMaHD() {
 		return maHD;
 	}
@@ -88,9 +90,15 @@ public class HoaDon {
 	public void setTrangThai(String trangThai) {
 		this.trangThai = trangThai;
 	}
+	public String getLyDoHuy() {
+		return lyDoHuy;
+	}
+	public void setLyDoHuy(String lyDoHuy) {
+		this.lyDoHuy = lyDoHuy;
+	}
 	public HoaDon(String maHD, LocalDateTime thoiGianVao, LocalDateTime thoiGianRa, PhieuDatBan maPhieuDatBan,
 			KhachHang maKH, KhuyenMai maKM, Ban maBan, NhanVien maNV, double tienKhachTra, double thueVAT,
-			double tienThua, String trangThai) {
+			double tienThua, String trangThai, String lyDoHuy) {
 		super();
 		this.maHD = maHD;
 		this.thoiGianVao = thoiGianVao;
@@ -104,13 +112,19 @@ public class HoaDon {
 		this.thueVAT = thueVAT;
 		this.tienThua = tienThua;
 		this.trangThai = trangThai;
+		this.lyDoHuy = lyDoHuy;
+	}
+	public HoaDon() {
+		// TODO Auto-generated constructor stub
 	}
 	@Override
 	public String toString() {
 		return "HoaDon [maHD=" + maHD + ", thoiGianVao=" + thoiGianVao + ", thoiGianRa=" + thoiGianRa
 				+ ", maPhieuDatBan=" + maPhieuDatBan + ", maKH=" + maKH + ", maKM=" + maKM + ", maBan=" + maBan
 				+ ", maNV=" + maNV + ", tienKhachTra=" + tienKhachTra + ", thueVAT=" + thueVAT + ", tienThua="
-				+ tienThua + ", trangThai=" + trangThai + "]";
+				+ tienThua + ", trangThai=" + trangThai + ", lyDoHuy=" + lyDoHuy + "]";
 	}
+	
+	
 	
 }

@@ -25,7 +25,8 @@ public class HoaDon_DAO {
                        km.tenKhuyenMai AS tenKM,
                        hd.maBan,
                        hd.tienKhachTra,
-                       hd.trangThai
+                       hd.trangThai,
+                       hd.lyDoHuy
                 FROM HoaDon hd
                 LEFT JOIN KhachHang kh ON hd.maKH = kh.maKH
                 LEFT JOIN NhanVien nv ON hd.maNV = nv.maNV
@@ -47,7 +48,8 @@ public class HoaDon_DAO {
                         rs.getString("tenKM") != null ? rs.getString("tenKM") : "",
                         rs.getString("maBan"),
                         rs.getBigDecimal("tienKhachTra"),
-                        rs.getString("trangThai")
+                        rs.getString("trangThai"),
+                        rs.getString("lyDoHuy")
                 });
             }
 
@@ -73,7 +75,8 @@ public class HoaDon_DAO {
                        km.tenKhuyenMai,
                        hd.maBan,
                        hd.tienKhachTra,
-                       hd.trangThai
+                       hd.trangThai,
+                       hd.lyDoHuy
                 FROM HoaDon hd
                 LEFT JOIN KhachHang kh ON hd.maKH = kh.maKH
                 LEFT JOIN NhanVien nv ON hd.maNV = nv.maNV
@@ -97,7 +100,8 @@ public class HoaDon_DAO {
                         rs.getString("tenKhuyenMai"),
                         rs.getString("maBan"),
                         rs.getBigDecimal("tienKhachTra"),
-                        rs.getString("trangThai")
+                        rs.getString("trangThai"),
+                        rs.getString("lyDoHuy")
                 };
             }
 
@@ -125,7 +129,8 @@ public class HoaDon_DAO {
                        km.tenKhuyenMai,
                        hd.maBan,
                        hd.tienKhachTra,
-                       hd.trangThai
+                       hd.trangThai,
+                       hd.lyDoHuy
                 FROM HoaDon hd
                 LEFT JOIN KhachHang kh ON hd.maKH = kh.maKH
                 LEFT JOIN NhanVien nv ON hd.maNV = nv.maNV
@@ -150,7 +155,8 @@ public class HoaDon_DAO {
                         rs.getString("tenKhuyenMai"),
                         rs.getString("maBan"),
                         rs.getBigDecimal("tienKhachTra"),
-                        rs.getString("trangThai")
+                        rs.getString("trangThai"),
+                        rs.getString("lyDoHuy")
                 });
             }
 
@@ -160,7 +166,7 @@ public class HoaDon_DAO {
 
         return ds;
     }
-    
+
     public List<String> getAllTenNhanVien() {
         List<String> ds = new ArrayList<>();
 
@@ -179,8 +185,7 @@ public class HoaDon_DAO {
 
         return ds;
     }
-    
-    
+
     public List<String> getAllTenKhuyenMai() {
         List<String> ds = new ArrayList<>();
 
@@ -188,7 +193,7 @@ public class HoaDon_DAO {
             Connection con = ConnectDB.getConnection();
 
             String sql = """
-                SELECT tenKhuyenMai 
+                SELECT tenKhuyenMai
                 FROM KhuyenMai
                 WHERE trangThai = N'Đang áp dụng'
             """;
@@ -206,12 +211,13 @@ public class HoaDon_DAO {
 
         return ds;
     }
-    
+
     public boolean updateHoaDon(
             String maHD,
             String tenNV,
             String tenKM,
             String trangThai,
+            String lyDoHuy,
             Timestamp thoiGianRa
     ) {
         try {
@@ -222,16 +228,30 @@ public class HoaDon_DAO {
                 SET maNV = (SELECT maNV FROM NhanVien WHERE hoTen = ?),
                     maKM = (SELECT maKM FROM KhuyenMai WHERE tenKhuyenMai = ?),
                     trangThai = ?,
+                    lyDoHuy = ?,
                     thoiGianRa = ?
                 WHERE maHD = ?
             """;
 
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, tenNV);
-            ps.setString(2, tenKM);
+
+            if (tenKM == null || tenKM.trim().isEmpty()) {
+                ps.setNull(2, Types.VARCHAR);
+            } else {
+                ps.setString(2, tenKM);
+            }
+
             ps.setString(3, trangThai);
-            ps.setTimestamp(4, thoiGianRa);
-            ps.setString(5, maHD);
+
+            if (lyDoHuy == null || lyDoHuy.trim().isEmpty()) {
+                ps.setNull(4, Types.NVARCHAR);
+            } else {
+                ps.setString(4, lyDoHuy);
+            }
+
+            ps.setTimestamp(5, thoiGianRa);
+            ps.setString(6, maHD);
 
             return ps.executeUpdate() > 0;
 
@@ -240,6 +260,4 @@ public class HoaDon_DAO {
         }
         return false;
     }
-
-    
 }

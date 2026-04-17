@@ -37,6 +37,7 @@ import connectDB.ConnectDB;
 import dao.TaiKhoan_DAO;
 import digLog.TienMoCa_DigLog;
 import entity.TaiKhoan;
+import dao.CaLamViec_DAO;
 
 public class DangNhap_GUI extends JFrame {
 
@@ -308,6 +309,17 @@ public class DangNhap_GUI extends JFrame {
     private void moTienMoCaSauDangNhap(TaiKhoan tk) {
         setVisible(false);
 
+        CaLamViec_DAO caDAO = new CaLamViec_DAO();
+
+        // Nếu đã có ca chưa đóng thì vào luôn, không nhập tiền mở ca nữa
+        if (caDAO.layCaDangMo() != null) {
+            TrangChu_GUI trangChu = new TrangChu_GUI(tk);
+            trangChu.setVisible(true);
+            dispose();
+            return;
+        }
+
+        // Nếu chưa có ca mở thì mới hiện dialog nhập tiền mở ca
         TienMoCa_DigLog dlg = new TienMoCa_DigLog(this, tk);
         dlg.setVisible(true);
 
@@ -315,6 +327,9 @@ public class DangNhap_GUI extends JFrame {
             TrangChu_GUI trangChu = new TrangChu_GUI(tk);
             trangChu.setVisible(true);
             dispose();
+        } else {
+            // nếu đóng dialog mà không vào tiếp thì hiện lại form đăng nhập
+            setVisible(true);
         }
     }
 

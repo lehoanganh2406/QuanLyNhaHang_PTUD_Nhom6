@@ -3,8 +3,6 @@ package gui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -54,10 +52,13 @@ import dao.ChiTietHoaDon_DAO;
 import dao.HoaDon_DAO;
 import dao.LoaiMonAn_DAO;
 import dao.MonAn_DAO;
+import dao.PhieuDatBan_DAO;
+import dao.PhieuDatMon_DAO;
 import entity.ChiTietHoaDon;
 import entity.HoaDon;
 import entity.LoaiMonAn;
 import entity.MonAn;
+import entity.PhieuDatMon;
 import entity.TaiKhoan;
 
 public class Order_Mon_GUI extends JFrame {
@@ -83,7 +84,7 @@ public class Order_Mon_GUI extends JFrame {
     private final Color BTN_SPLIT = new Color(120, 170, 205);
     private final Color BTN_PREVIEW = new Color(205, 185, 150);
 
-    // ===== SIZE MÓN: giữ như DatMon_DigLog =====
+    // ===== SIZE MÓN =====
     private static final int CARD_W = 245;
     private static final int CARD_H = 285;
     private static final int FOOD_HGAP = 16;
@@ -110,6 +111,11 @@ public class Order_Mon_GUI extends JFrame {
 
     private final LoaiMonAn_DAO loaiMonAnDAO = new LoaiMonAn_DAO();
     private final MonAn_DAO monAnDAO = new MonAn_DAO();
+    private final Ban_DAO banDAO = new Ban_DAO();
+    private final HoaDon_DAO hoaDonDAO = new HoaDon_DAO();
+    private final ChiTietHoaDon_DAO chiTietHoaDonDAO = new ChiTietHoaDon_DAO();
+    private final PhieuDatBan_DAO phieuDatBanDAO = new PhieuDatBan_DAO();
+    private final PhieuDatMon_DAO phieuDatMonDAO = new PhieuDatMon_DAO();
 
     private List<LoaiMonAn> dsLoai = new ArrayList<>();
     private List<MonAn> dsMon = new ArrayList<>();
@@ -124,7 +130,7 @@ public class Order_Mon_GUI extends JFrame {
     private JLabel lblTongSoLuong;
     private JLabel lblTongTien;
     private JCheckBox chkMangVe;
-    
+
     private String maBan;
     private String maHoaDonHienTai;
     private boolean daGuiThucDon = false;
@@ -134,21 +140,24 @@ public class Order_Mon_GUI extends JFrame {
     private JButton btnThanhToan;
     private JButton btnTachBan;
     private JButton btnChuyenBan;
+    private JButton btnQuayLai;
 
-    private Ban_DAO banDAO = new Ban_DAO();
-    private HoaDon_DAO hoaDonDAO = new HoaDon_DAO();
-    private ChiTietHoaDon_DAO chiTietHoaDonDAO = new ChiTietHoaDon_DAO();
+    private String maPhieuDatBan;
+    private boolean laBanDangPhucVu;
 
-	private JButton btnQuayLai;
+    public Order_Mon_GUI(TaiKhoan tk, String maBan, String tenBan) {
+        this(tk, maBan, tenBan, null, false);
+    }
 
-
-    public Order_Mon_GUI(TaiKhoan taiKhoanDangNhap, String maBan, String tenBan) {
-        this.taiKhoanDangNhap = taiKhoanDangNhap;
+    public Order_Mon_GUI(TaiKhoan tk, String maBan, String tenBan, String maPhieuDatBan, boolean laBanDangPhucVu) {
+        this.taiKhoanDangNhap = tk;
         this.maBan = maBan;
-        if (tenBan != null && !tenBan.trim().isEmpty()) {
-            this.tenBan = tenBan;
-        }
+        this.tenBan = tenBan;
+        this.maPhieuDatBan = maPhieuDatBan;
+        this.laBanDangPhucVu = laBanDangPhucVu;
+
         init();
+        napDuLieuBanKhiMoForm();
     }
 
     private void init() {
@@ -165,9 +174,9 @@ public class Order_Mon_GUI extends JFrame {
         layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
         layeredPane.add(pnMenu, JLayeredPane.PALETTE_LAYER);
 
-        addComponentListener(new ComponentAdapter() {
+        addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
-            public void componentResized(ComponentEvent e) {
+            public void componentResized(java.awt.event.ComponentEvent e) {
                 int w = getContentPane().getWidth();
                 int h = getContentPane().getHeight();
 
@@ -194,6 +203,20 @@ public class Order_Mon_GUI extends JFrame {
         });
     }
 
+    private void napDuLieuBanKhiMoForm() {
+        try {
+            if (maPhieuDatBan != null && !maPhieuDatBan.trim().isEmpty()) {
+                loadMonDatTheoPhieu(maPhieuDatBan);
+                return;
+            }
+
+            if (laBanDangPhucVu) {
+                loadMonDangPhucVuTheoBan();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     private JPanel createMainPanel() {
         JPanel root = new JPanel(new BorderLayout());
@@ -261,7 +284,6 @@ public class Order_Mon_GUI extends JFrame {
         JPanel centerWrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         centerWrap.setOpaque(false);
         centerWrap.add(lblTenBan);
-
 
         topPanel.add(leftTop, BorderLayout.WEST);
         topPanel.add(centerWrap, BorderLayout.CENTER);
@@ -405,7 +427,6 @@ public class Order_Mon_GUI extends JFrame {
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
 
-        // Hàng 1
         chkMangVe = new JCheckBox("Mang về");
         chkMangVe.setFocusPainted(false);
         chkMangVe.setOpaque(true);
@@ -417,7 +438,6 @@ public class Order_Mon_GUI extends JFrame {
         btnGuiThucDon = new JButton("GỬI THỰC ĐƠN [F9]");
         styleMainButton(btnGuiThucDon, BTN_ORDER, Color.BLACK, 14, true);
 
-        // Hàng 2
         btnChuyenBan = new JButton("↔ CHUYỂN BÀN");
         styleMainButton(btnChuyenBan, new Color(249, 232, 198), Color.BLACK, 14, false);
 
@@ -427,16 +447,16 @@ public class Order_Mon_GUI extends JFrame {
         btnTamTinh = new JButton("TẠM TÍNH [F3]");
         styleMainButton(btnTamTinh, BTN_PREVIEW, Color.BLACK, 14, false);
 
-        // Hàng 3
         btnQuayLai = new JButton("↩ Quay lại");
         styleMainButton(btnQuayLai, BTN_BACK, Color.BLACK, 17, false);
 
         btnThanhToan = new JButton("Thanh toán [F4]");
         styleMainButton(btnThanhToan, BTN_PAY, Color.BLACK, 20, true);
-        
-        
 
-        btnQuayLai.addActionListener(e -> dispose());
+        btnQuayLai.addActionListener(e -> {
+            dispose();
+            new Order_Ban_GUI(taiKhoanDangNhap).setVisible(true);
+        });
 
         btnGuiThucDon.addActionListener(e -> guiThucDonVaLuuCSDL());
 
@@ -471,7 +491,6 @@ public class Order_Mon_GUI extends JFrame {
             JOptionPane.showMessageDialog(this, msg);
         });
 
-        // HÀNG 1: Mang về | Gửi thực đơn
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -482,7 +501,6 @@ public class Order_Mon_GUI extends JFrame {
         gbc.gridwidth = 2;
         actionPanel.add(btnGuiThucDon, gbc);
 
-        // HÀNG 2: Chuyển bàn | Tách bàn | Tạm tính
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
@@ -498,7 +516,6 @@ public class Order_Mon_GUI extends JFrame {
         gbc.gridwidth = 1;
         actionPanel.add(btnTamTinh, gbc);
 
-        // HÀNG 3: Quay lại | Thanh toán
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
@@ -519,6 +536,7 @@ public class Order_Mon_GUI extends JFrame {
         capNhatTrangThaiNutTheoGuiMon();
         return right;
     }
+
     private void capNhatTrangThaiNutTheoGuiMon() {
         if (btnTamTinh != null) {
             btnTamTinh.setEnabled(daGuiThucDon);
@@ -530,6 +548,7 @@ public class Order_Mon_GUI extends JFrame {
             btnGuiThucDon.setEnabled(!gioHang.isEmpty() && !daGuiThucDon);
         }
     }
+
     private boolean guiThucDonVaLuuCSDL() {
         if (gioHang.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Chưa có món nào để gửi.");
@@ -537,6 +556,11 @@ public class Order_Mon_GUI extends JFrame {
         }
 
         try {
+            if (daGuiThucDon && maHoaDonHienTai != null && !maHoaDonHienTai.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Bàn này đã gửi thực đơn trước đó.");
+                return false;
+            }
+
             String maHD = hoaDonDAO.taoMaHoaDonMoi();
             if (maHD == null || maHD.trim().isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Không tạo được mã hóa đơn.");
@@ -588,6 +612,14 @@ public class Order_Mon_GUI extends JFrame {
                 return false;
             }
 
+            if (maPhieuDatBan != null && !maPhieuDatBan.trim().isEmpty()) {
+                try {
+                    phieuDatBanDAO.capNhatTrangThai(maPhieuDatBan, "Đã nhận bàn");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
             maHoaDonHienTai = maHD;
             daGuiThucDon = true;
             capNhatTrangThaiNutTheoGuiMon();
@@ -602,6 +634,114 @@ public class Order_Mon_GUI extends JFrame {
             JOptionPane.showMessageDialog(this, "Lỗi khi gửi thực đơn.");
             return false;
         }
+    }
+
+    private void loadData() {
+        try {
+            dsLoai = loaiMonAnDAO.getAllLoaiMonAn();
+            dsMon = monAnDAO.getAllMonAn();
+            taoTabsLoai();
+            locDanhSachMon();
+            renderOrderList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Không tải được dữ liệu món ăn.");
+        }
+    }
+
+    private void loadMonDatTheoPhieu(String maPhieu) {
+        try {
+            ArrayList<PhieuDatMon> dsMonDat = phieuDatMonDAO.getDanhSachTheoMaPhieu(maPhieu);
+            gioHang.clear();
+
+            if (dsMonDat != null) {
+                for (PhieuDatMon pdm : dsMonDat) {
+                    if (pdm == null || pdm.getMaMon() == null) continue;
+
+                    MonAn mon = timMonTheoMaLocal(pdm.getMaMon().getMaMon());
+                    if (mon == null) {
+                        mon = new MonAn();
+                        mon.setMaMon(pdm.getMaMon().getMaMon());
+                        mon.setTenMon(pdm.getMaMon().getTenMon());
+                        mon.setDonGia(pdm.getDonGia());
+                    }
+
+                    gioHang.put(mon.getMaMon(), new OrderItem(
+                            mon,
+                            pdm.getSoLuong(),
+                            pdm.getGhiChu() == null ? "" : pdm.getGhiChu()
+                    ));
+                }
+            }
+
+            renderOrderList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Không tải được món đặt trước.");
+        }
+    }
+
+    private void loadMonDangPhucVuTheoBan() {
+        try {
+            HoaDon hd = null;
+            try {
+                hd = hoaDonDAO.timHoaDonChuaThanhToanTheoBan(maBan);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+            if (hd == null) return;
+
+            maHoaDonHienTai = hd.getMaHD();
+            daGuiThucDon = true;
+            gioHang.clear();
+
+            List<ChiTietHoaDon> dsCT = chiTietHoaDonDAO.getChiTietTheoMaHD(maHoaDonHienTai);
+            if (dsCT != null) {
+                for (ChiTietHoaDon ct : dsCT) {
+                    if (ct == null || ct.getMaMon() == null) continue;
+
+                    MonAn mon = timMonTheoMaLocal(ct.getMaMon().getMaMon());
+                    if (mon == null) {
+                        mon = new MonAn();
+                        mon.setMaMon(ct.getMaMon().getMaMon());
+                        mon.setTenMon(ct.getMaMon().getTenMon());
+                        mon.setDonGia(ct.getDonGia());
+                    }
+
+                    gioHang.put(mon.getMaMon(), new OrderItem(
+                            mon,
+                            ct.getSoLuong(),
+                            ct.getGhiChu() == null ? "" : ct.getGhiChu()
+                    ));
+                }
+            }
+
+            renderOrderList();
+            capNhatTrangThaiNutTheoGuiMon();
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Không tải được món đang phục vụ.");
+        }
+    }
+
+    private MonAn timMonTheoMaLocal(String maMon) {
+        if (maMon == null || maMon.trim().isEmpty()) return null;
+
+        for (MonAn mon : dsMon) {
+            if (mon != null && maMon.equalsIgnoreCase(mon.getMaMon())) {
+                return mon;
+            }
+        }
+
+        try {
+            if (monAnDAO.getMonAnTheoMa(maMon) != null) {
+                return monAnDAO.getMonAnTheoMa(maMon);
+            }
+        } catch (Exception e) {
+        }
+
+        return null;
     }
 
     private JLabel createHeaderCell(String text, int width, boolean rightBorder) {
@@ -631,19 +771,6 @@ public class Order_Mon_GUI extends JFrame {
         btn.setHorizontalTextPosition(SwingConstants.CENTER);
         btn.setVerticalTextPosition(SwingConstants.CENTER);
         btn.setIconTextGap(4);
-    }
-
-    private void loadData() {
-        try {
-            dsLoai = loaiMonAnDAO.getAllLoaiMonAn();
-            dsMon = monAnDAO.getAllMonAn();
-            taoTabsLoai();
-            locDanhSachMon();
-            renderOrderList();
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Không tải được dữ liệu món ăn.");
-        }
     }
 
     private void taoTabsLoai() {
@@ -1150,6 +1277,7 @@ public class Order_Mon_GUI extends JFrame {
             this.ghiChu = ghiChu;
         }
     }
+
     static class WrapLayout extends FlowLayout {
         private static final long serialVersionUID = 1L;
 
@@ -1243,9 +1371,9 @@ public class Order_Mon_GUI extends JFrame {
             setLayout(new WrapLayout(FlowLayout.LEFT, FOOD_HGAP, FOOD_VGAP));
             setOpaque(false);
 
-            addComponentListener(new ComponentAdapter() {
+            addComponentListener(new java.awt.event.ComponentAdapter() {
                 @Override
-                public void componentResized(ComponentEvent e) {
+                public void componentResized(java.awt.event.ComponentEvent e) {
                     revalidate();
                     repaint();
                 }
@@ -1320,6 +1448,7 @@ public class Order_Mon_GUI extends JFrame {
             super.paintComponent(g);
         }
     }
+
     private void moDialogHuyMon(OrderItem item) {
         JTextField txtLyDo = new JTextField();
         Object[] message = {

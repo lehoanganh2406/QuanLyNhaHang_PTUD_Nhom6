@@ -59,6 +59,26 @@ public class HoaDon_GUI extends JFrame {
     }
 
     public HoaDon_GUI(TaiKhoan tk) {
+    	
+    	System.setProperty("sun.java2d.uiScale", "auto");
+
+        String fontName = "SansSerif";
+
+        UIManager.put("Label.font",   scaledFontStatic(fontName, Font.PLAIN, 13));
+        UIManager.put("Button.font",  scaledFontStatic(fontName, Font.BOLD, 13));
+        UIManager.put("TextField.font", scaledFontStatic(fontName, Font.PLAIN, 13));
+        UIManager.put("Table.font",   scaledFontStatic(fontName, Font.PLAIN, 13));
+        UIManager.put("TableHeader.font", scaledFontStatic(fontName, Font.BOLD, 13));
+        UIManager.put("ComboBox.font", scaledFontStatic(fontName, Font.PLAIN, 13));
+        UIManager.put("ComboBox.listFont", scaledFontStatic(fontName, Font.PLAIN, 13));
+
+        // 🔥 FIX 2: LookAndFeel
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    	
         setTitle("Danh Sách Hóa Đơn");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -538,10 +558,30 @@ public class HoaDon_GUI extends JFrame {
             } else {
                 dtThoiGianRa.setDate(null);
             }
-        } catch (Exception e) {
-            dtThoiGianRa.setDate(null);
-        }
+
+        } catch (Exception e) {}
+        disableFormFields();
     }
+    
+    private void disableFormFields() {
+
+        txtTenKhach.setEnabled(false);
+        txtMaHoaDon.setEnabled(false);
+        txtBan.setEnabled(false);
+        txtTongTien.setEnabled(false);
+        txtSDT.setEnabled(false);
+
+        cbNhanVien.setEnabled(false);
+        txtKhuyenMai.setEnabled(false);
+
+        dtThoiGianVao.setEnabled(false);
+        dtThoiGianRa.setEnabled(false);
+
+        // 🔥 CHỈ CHO PHÉP TRẠNG THÁI
+        cbTrangThai.setEnabled(true);
+    }
+    
+
 
     private void loadData() {
         if (tableModel == null) return;
@@ -575,6 +615,7 @@ public class HoaDon_GUI extends JFrame {
 
     private JTextField createTextField() {
         JTextField tf = new JTextField();
+        tf.setFont(scaledFontStatic("SansSerif", Font.PLAIN, 13));
 
         int padV = (int) (6 * SCALE);
         int padH = (int) (8 * SCALE);
@@ -591,7 +632,9 @@ public class HoaDon_GUI extends JFrame {
 
     private JComboBox<String> createComboBox(String[] items) {
         JComboBox<String> cb = new JComboBox<>(items);
-        cb.setFont(scaledFontStatic("Segoe UI", Font.PLAIN, 15));
+
+
+        cb.setFont(scaledFontStatic("SansSerif", Font.PLAIN, 15));
         cb.setBackground(Color.WHITE);
 
         int height = (int) (36 * SCALE);
@@ -608,10 +651,12 @@ public class HoaDon_GUI extends JFrame {
     private JDateChooser createDateChooser() {
         JDateChooser dc = new JDateChooser();
         dc.setDateFormatString("HH:mm dd/MM/yyyy");
-        dc.setPreferredSize(new Dimension(0, (int) (36 * SCALE)));
-        dc.getDateEditor().getUiComponent().setEnabled(false);
-        ((JTextField) dc.getDateEditor().getUiComponent())
-                .setFont(scaledFontStatic("Times New Roman", Font.PLAIN, 13));
+
+        dc.setPreferredSize(new Dimension(0, (int)(36 * SCALE)));
+//        dc.setPreferredSize(null);
+        dc.getDateEditor().getUiComponent().setEnabled(false); // không gõ tay
+        JTextField editor = (JTextField) dc.getDateEditor().getUiComponent();
+        editor.setFont(scaledFontStatic("SansSerif", Font.PLAIN, 13));
         return dc;
     }
 

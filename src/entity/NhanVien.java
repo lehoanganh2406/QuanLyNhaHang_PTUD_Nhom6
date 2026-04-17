@@ -3,143 +3,160 @@ package entity;
 import java.util.Date;
 
 public class NhanVien {
-	private static final long serialVersionUID = 1L;
 
-	private String maNV;
-	private String hoTen;
-	private String anhNhanVien;
-	private Date ngaySinh;
-	private boolean gioiTinh;
-	private String cccd;
-	private String email;
-	private String sdt;
-	private String chucVu;
-	private String trangThai;
-	private String lyDoNghi;
+    private static final long serialVersionUID = 1L;
 
-	public NhanVien() {
-	}
+    private String maNV;
+    private String hoTen;
+    private String anhNhanVien;
+    private Date ngaySinh;
+    private boolean gioiTinh;
+    private String cccd;
+    private String email;
+    private String sdt;
+    private String chucVu;
+    private String trangThai;
+    private String lyDo; // 🔥 THÊM DÒNG NÀY
 
-	public NhanVien(String maNV) {
-		super();
-		this.maNV = maNV;
-	}
+    // ================= GET / SET =================
+    public String getMaNV() {
+        return maNV;
+    }
 
-	public NhanVien(String maNV, String hoTen) {
-		super();
-		this.maNV = maNV;
-		this.hoTen = hoTen;
-	}
+    public void setMaNV(String maNV) {
+        this.maNV = maNV;
+    }
 
-	public NhanVien(String maNV, String hoTen, String anhNhanVien, Date ngaySinh, boolean gioiTinh, String cccd,
-			String email, String sdt, String chucVu, String trangThai, String lyDoNghi) {
-		super();
-		this.maNV = maNV;
-		this.hoTen = hoTen;
-		this.anhNhanVien = anhNhanVien;
-		this.ngaySinh = ngaySinh;
-		this.gioiTinh = gioiTinh;
-		this.cccd = cccd;
-		this.email = email;
-		this.sdt = sdt;
-		this.chucVu = chucVu;
-		this.trangThai = trangThai;
-		this.lyDoNghi = lyDoNghi;
-	}
+    public String getHoTen() {
+        return hoTen;
+    }
 
-	public String getMaNV() {
-		return maNV;
-	}
+    public void setHoTen(String hoTen) {
+        this.hoTen = hoTen;
+    }
 
-	public void setMaNV(String maNV) {
-		this.maNV = maNV;
-	}
+    public String getAnhNhanVien() {
+        return anhNhanVien;
+    }
 
-	public String getHoTen() {
-		return hoTen;
-	}
+    public void setAnhNhanVien(String anhNhanVien) {
+        this.anhNhanVien = anhNhanVien;
+    }
 
-	public void setHoTen(String hoTen) {
-		this.hoTen = hoTen;
-	}
+    public Date getNgaySinh() {
+        return ngaySinh;
+    }
 
-	public String getAnhNhanVien() {
-		return anhNhanVien;
-	}
+    public void setNgaySinh(Date ngaySinh) {
+        this.ngaySinh = ngaySinh;
+    }
 
-	public void setAnhNhanVien(String anhNhanVien) {
-		this.anhNhanVien = anhNhanVien;
-	}
+    public boolean isGioiTinh() {
+        return gioiTinh;
+    }
 
-	public Date getNgaySinh() {
-		return ngaySinh;
-	}
+    public void setGioiTinh(boolean gioiTinh) {
+        this.gioiTinh = gioiTinh;
+    }
 
-	public void setNgaySinh(Date ngaySinh) {
-		this.ngaySinh = ngaySinh;
-	}
+    public String getCccd() {
+        return cccd;
+    }
 
-	public boolean isGioiTinh() {
-		return gioiTinh;
-	}
+    public void setCccd(String cccd) {
+        this.cccd = cccd;
+    }
 
-	public void setGioiTinh(boolean gioiTinh) {
-		this.gioiTinh = gioiTinh;
-	}
+    public String getEmail() {
+        return email;
+    }
 
-	public String getCccd() {
-		return cccd;
-	}
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-	public void setCccd(String cccd) {
-		this.cccd = cccd;
-	}
+    public String getSdt() {
+        return sdt;
+    }
 
-	public String getEmail() {
-		return email;
-	}
+    public void setSdt(String sdt) {
+        this.sdt = sdt;
+    }
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
+    public String getChucVu() {
+        return chucVu;
+    }
 
-	public String getSdt() {
-		return sdt;
-	}
+    public void setChucVu(String chucVu) {
+        this.chucVu = chucVu;
+    }
 
-	public void setSdt(String sdt) {
-		this.sdt = sdt;
-	}
+    public String getTrangThai() {
+        return trangThai;
+    }
 
-	public String getChucVu() {
-		return chucVu;
-	}
+    public void setTrangThai(String trangThai) {
+        this.trangThai = trangThai;
+    }
 
-	public void setChucVu(String chucVu) {
-		this.chucVu = chucVu;
-	}
+    public String getLyDo() {
+        return lyDo;
+    }
 
-	public String getTrangThai() {
-		return trangThai;
-	}
+    public void setLyDo(String lyDo) {
+        this.lyDo = lyDo;
+    }
 
-	public void setTrangThai(String trangThai) {
-		this.trangThai = trangThai;
-	}
+    // ================= CONSTRUCTOR =================
 
-	public String getLyDoNghi() {
-		return lyDoNghi;
-	}
+    // 🔥 Constructor đầy đủ (quan trọng nhất)
+    public NhanVien(String maNV, String hoTen, String anhNhanVien, Date ngaySinh,
+                    boolean gioiTinh, String cccd, String email, String sdt,
+                    String chucVu, String trangThai, String lyDo) {
+        this.maNV = maNV;
+        this.hoTen = hoTen;
+        this.anhNhanVien = anhNhanVien;
+        this.ngaySinh = ngaySinh;
+        this.gioiTinh = gioiTinh;
+        this.cccd = cccd;
+        this.email = email;
+        this.sdt = sdt;
+        this.chucVu = chucVu;
+        this.trangThai = trangThai;
+        this.lyDo = lyDo;
+    }
 
-	public void setLyDoNghi(String lyDoNghi) {
-		this.lyDoNghi = lyDoNghi;
-	}
+    // Constructor cũ (giữ lại để không lỗi code cũ)
+    public NhanVien(String maNV, String hoTen, String anhNhanVien, Date ngaySinh,
+                    boolean gioiTinh, String cccd, String email, String sdt,
+                    String chucVu, String trangThai) {
+        this(maNV, hoTen, anhNhanVien, ngaySinh, gioiTinh, cccd, email, sdt, chucVu, trangThai, null);
+    }
 
-	@Override
-	public String toString() {
-		return "NhanVien [maNV=" + maNV + ", hoTen=" + hoTen + ", anhNhanVien=" + anhNhanVien + ", ngaySinh="
-				+ ngaySinh + ", gioiTinh=" + gioiTinh + ", cccd=" + cccd + ", email=" + email + ", sdt=" + sdt
-				+ ", chucVu=" + chucVu + ", trangThai=" + trangThai + ", lyDoNghi=" + lyDoNghi + "]";
-	}
-	
+    public NhanVien(String maNV, String hoTen) {
+        this.maNV = maNV;
+        this.hoTen = hoTen;
+    }
+
+    public NhanVien(String maNV) {
+        this.maNV = maNV;
+    }
+
+    public NhanVien() {
+    }
+
+    // ================= TO STRING =================
+    @Override
+    public String toString() {
+        return "NhanVien [maNV=" + maNV 
+                + ", hoTen=" + hoTen 
+                + ", ngaySinh=" + ngaySinh
+                + ", gioiTinh=" + gioiTinh
+                + ", cccd=" + cccd 
+                + ", email=" + email 
+                + ", sdt=" + sdt
+                + ", chucVu=" + chucVu 
+                + ", trangThai=" + trangThai
+                + ", lyDo=" + lyDo + "]";
+    }
 }

@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import connectDB.ConnectDB;
+import entity.Ban;
+import entity.HoaDon;
 
 public class HoaDon_DAO {
 
@@ -58,6 +60,38 @@ public class HoaDon_DAO {
         }
 
         return ds;
+    }
+    public HoaDon timHoaDonChuaThanhToanTheoBan(String maBan) {
+        try {
+            Connection con = ConnectDB.getConnection();
+
+            String sql = """
+                SELECT TOP 1 maHD, maPhieuDatBan, maKH, maKM, maBan, maNV,
+                       thoiGianVao, thoiGianRa, tienKhachTra, thueVAT, tienThua,
+                       trangThai, lyDoHuy
+                FROM HoaDon
+                WHERE maBan = ? AND trangThai = N'Chưa thanh toán'
+                ORDER BY thoiGianVao DESC
+            """;
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, maBan);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                HoaDon hd = new HoaDon();
+                hd.setMaHD(rs.getString("maHD"));
+                Ban ban = new Ban();
+                ban.setMaBan(rs.getString("maBan"));
+                hd.setMaBan(ban);
+                hd.setTrangThai(rs.getString("trangThai"));
+                return hd;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     // ================== LOAD THEO MÃ HÓA ĐƠN ==================

@@ -36,7 +36,7 @@ import entity.CaLamViec;
 import entity.TaiKhoan;
 import java.time.format.DateTimeFormatter;
 
-public class ThongKeTheoCa_GUI extends JFrame {
+public class ThongKeTheoCa_GUI extends JPanel {
 
     private TaiKhoan taiKhoanDangNhap;
     private JPanel rightFormContainer;
@@ -44,36 +44,14 @@ public class ThongKeTheoCa_GUI extends JFrame {
     public ThongKeTheoCa_GUI(TaiKhoan tk) {
         this.taiKhoanDangNhap = tk;
 
-        setTitle("Thống kê theo ca");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+        setBackground(Color.WHITE);
 
-        JLayeredPane layeredPane = new JLayeredPane();
-        layeredPane.setLayout(null);
-        setContentPane(layeredPane);
+        add(createMainPanel(), BorderLayout.CENTER);
+    }
 
-        Pn_ThanhMenu menu = new Pn_ThanhMenu(taiKhoanDangNhap);
-        JPanel mainPanel = createMainPanel();
-
-        layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
-        layeredPane.add(menu, JLayeredPane.PALETTE_LAYER);
-
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                int w = getContentPane().getWidth();
-                int h = getContentPane().getHeight();
-
-                mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
-                menu.setBounds(0, 0, w, h);
-
-                layeredPane.revalidate();
-                layeredPane.repaint();
-            }
-        });
-
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setMinimumSize(new Dimension(1200, 750));
-        setLocationRelativeTo(null);
+    public ThongKeTheoCa_GUI() {
+        this(null);
     }
 
     private JPanel createMainPanel() {
@@ -393,7 +371,4 @@ public class ThongKeTheoCa_GUI extends JFrame {
             g2.drawString("19h", tx - 4, padTop + 2);
         }
     }
-    public static void main(String[] args) {
-		new ThongKeTheoCa_GUI(null).setVisible(true);
-	}
-}
+    }

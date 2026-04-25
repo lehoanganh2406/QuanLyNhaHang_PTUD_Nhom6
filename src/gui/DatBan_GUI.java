@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.swing.JFrame;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -33,15 +34,12 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JLayeredPane;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
-import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JViewport;
 import javax.swing.ScrollPaneConstants;
@@ -65,7 +63,7 @@ import entity.Ban;
 import entity.PhieuDatMon;
 import entity.TaiKhoan;
 
-public class DatBan_GUI extends JFrame {
+public class DatBan_GUI extends JPanel {
     private static final long serialVersionUID = 1L;
     
 
@@ -74,54 +72,11 @@ public class DatBan_GUI extends JFrame {
     public DatBan_GUI(TaiKhoan tk) {
         this.taiKhoanDangNhap = tk;
 
-        setTitle("Đặt bàn");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+        setBackground(Color.WHITE);
 
-        JLayeredPane layeredPane = new JLayeredPane();
-        layeredPane.setLayout(null);
-        setContentPane(layeredPane);
-
-        Pn_ThanhMenu menu = new Pn_ThanhMenu(taiKhoanDangNhap);
         DatBanMainPanel mainPanel = new DatBanMainPanel();
-
-        layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
-        layeredPane.add(menu, JLayeredPane.PALETTE_LAYER);
-
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                int w = getContentPane().getWidth();
-                int h = getContentPane().getHeight();
-
-                mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
-                menu.setBounds(0, 0, w, h);
-
-                layeredPane.revalidate();
-                layeredPane.repaint();
-            }
-        });
-
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setMinimumSize(new Dimension(1280, 720));
-        setLocationRelativeTo(null);
-
-        SwingUtilities.invokeLater(() -> {
-            int w = getContentPane().getWidth();
-            int h = getContentPane().getHeight();
-            mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
-            menu.setBounds(0, 0, w, h);
-        });
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                ConnectDB.getInstance().connect();
-                new DatBan_GUI(null).setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        add(mainPanel, BorderLayout.CENTER);
     }
 
     class DatBanMainPanel extends JPanel {
@@ -211,7 +166,10 @@ public class DatBan_GUI extends JFrame {
         }
 
         private void initResponsiveEvents() {
-            resizeTimer = new Timer(220, e -> refreshView());
+            resizeTimer = new Timer(220, e -> {
+                revalidate();
+                repaint();
+            });
             resizeTimer.setRepeats(false);
 
             ComponentAdapter resizeHandler = new ComponentAdapter() {
@@ -223,8 +181,7 @@ public class DatBan_GUI extends JFrame {
                 }
             };
 
-            DatBan_GUI.this.addComponentListener(resizeHandler);
-            this.addComponentListener(resizeHandler);
+            DatBanMainPanel.this.addComponentListener(resizeHandler);
             cardPanel.addComponentListener(resizeHandler);
         }
         private double parseMoney(String text) {
@@ -279,23 +236,23 @@ public class DatBan_GUI extends JFrame {
                     boolean coDatMon = coDatMonTheoPhieu(item.maPhieu);
 
                     HuyBan_DigLog dialog = new HuyBan_DigLog(
-                            DatBan_GUI.this,
+                            (JFrame) SwingUtilities.getWindowAncestor(DatBan_GUI.this),
                             item.maPhieu,
                             tienCoc,
                             thoiGianDen,
                             coDatMon,
                             true
                     );
-                    dialog.setLocationRelativeTo(DatBan_GUI.this);
+                    dialog.setLocationRelativeTo(SwingUtilities.getWindowAncestor(DatBan_GUI.this));
                     dialog.setVisible(true);
 
                 } else {
-                    PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(
-                            DatBan_GUI.this,
-                            item.maPhieu
-                    );
-                    dialog.setLocationRelativeTo(DatBan_GUI.this);
-                    dialog.setVisible(true);
+                	PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(
+                	        (JFrame) SwingUtilities.getWindowAncestor(DatBan_GUI.this),
+                	        item.maPhieu
+                	);
+                	dialog.setLocationRelativeTo(SwingUtilities.getWindowAncestor(DatBan_GUI.this));
+                	dialog.setVisible(true);
                 }
 
                 clearBookingCache();
@@ -853,18 +810,23 @@ public class DatBan_GUI extends JFrame {
 
             btnAdd.addActionListener(e -> {
                 try {
-                    PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(DatBan_GUI.this);
-                    dialog.setLocationRelativeTo(DatBan_GUI.this);
+                    JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(DatBan_GUI.this);
+
+                    PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(parentFrame);
+                    dialog.setLocationRelativeTo(parentFrame);
                     dialog.setVisible(true);
+
                     clearBookingCache();
                     refreshView();
+
                 } catch (Exception ex) {
                     ex.printStackTrace();
                     JOptionPane.showMessageDialog(
                             DatBan_GUI.this,
                             "Không mở được phiếu đặt bàn!",
                             "Lỗi",
-                            JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.ERROR_MESSAGE
+                    );
                 }
             });
 

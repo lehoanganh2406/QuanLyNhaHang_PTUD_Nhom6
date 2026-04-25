@@ -14,6 +14,7 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ import entity.TaiKhoan;
 
 import java.sql.Timestamp;
 
-public class Order_Ban_GUI extends JFrame {
+public class Order_Ban_GUI extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private TaiKhoan taiKhoanDangNhap;
@@ -114,25 +115,18 @@ public class Order_Ban_GUI extends JFrame {
     }
 
     private void initUI() {
-        setTitle("Order bàn");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setMinimumSize(new Dimension(1200, 720));
-        setLocationRelativeTo(null);
-
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        setLayout(new BorderLayout());
+        setBackground(BG_APP);
+
         contentPane = new JPanel(new BorderLayout());
         contentPane.setBackground(BG_APP);
-        setContentPane(contentPane);
-
-        Pn_ThanhMenu pnThanhMenu = new Pn_ThanhMenu(taiKhoanDangNhap);
-        pnThanhMenu.setPreferredSize(new Dimension(100, 42));
-        contentPane.add(pnThanhMenu, BorderLayout.NORTH);
+        add(contentPane, BorderLayout.CENTER);
 
         pnlBody = new JPanel(new BorderLayout());
         pnlBody.setBackground(BG_APP);
@@ -534,7 +528,54 @@ public class Order_Ban_GUI extends JFrame {
 
         return null;
     }
+    private String[] timPhieuDatGanNhatCuaBan(String maBan) {
+        try {
+            if (dcNgayChon.getDate() == null) return null;
 
+            java.sql.Date ngaySql = new java.sql.Date(boTime(dcNgayChon.getDate()).getTime());
+            ArrayList<String[]> dsPhieu = phieuDatBanDAO.getPhieuDatBanTheoNgay(ngaySql);
+            if (dsPhieu == null || dsPhieu.isEmpty()) return null;
+
+            Timestamp now = new Timestamp(System.currentTimeMillis());
+            String[] ketQua = null;
+            long khoangCachNhoNhat = Long.MAX_VALUE;
+
+            for (String[] phieu : dsPhieu) {
+                if (phieu == null || phieu.length < 9) continue;
+
+                String maBanPhieu = phieu[1];
+                String trangThaiPhieu = phieu[8];
+                String thoiGianDenStr = phieu[5];
+
+                if (maBanPhieu == null || !maBanPhieu.equalsIgnoreCase(maBan)) continue;
+
+                if (!"Đang chờ".equalsIgnoreCase(trangThaiPhieu)
+                        && !"Đã đặt".equalsIgnoreCase(trangThaiPhieu)) {
+                    continue;
+                }
+
+                if (thoiGianDenStr == null || thoiGianDenStr.trim().isEmpty()) continue;
+
+                Timestamp thoiGianDen;
+                try {
+                    thoiGianDen = Timestamp.valueOf(thoiGianDenStr);
+                } catch (Exception e) {
+                    continue;
+                }
+
+                long kc = Math.abs(thoiGianDen.getTime() - now.getTime());
+                if (kc < khoangCachNhoNhat) {
+                    khoangCachNhoNhat = kc;
+                    ketQua = phieu;
+                }
+            }
+
+            return ketQua;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
     private void doDuLieuBanLenGiaoDien() {
         pnlBanContainer.removeAll();
         pnlBanContainer.setLayout(new WrapLayout(FlowLayout.LEFT, 42, 34));
@@ -702,39 +743,121 @@ public class Order_Ban_GUI extends JFrame {
 
             return width;
         }
+        private void moOrderMon(String maBan, String tenBan, String maPhieuDatBan, boolean laBanDangPhucVu) {
+            Window w = SwingUtilities.getWindowAncestor(Order_Ban_GUI.this);
 
-        private void xuLyChonBan() {
-            String[] phieuCanhBao = timPhieuCanhBaoSapDat(ban.getMaBan());
-
-            if (phieuCanhBao != null) {
-                String tenKhach = phieuCanhBao[2] == null ? "" : phieuCanhBao[2];
-                String thoiGianDen = phieuCanhBao[5] == null ? "" : phieuCanhBao[5];
-
-                int chon = JOptionPane.showConfirmDialog(
-                        Order_Ban_GUI.this,
-                        "Bàn này sắp có khách đặt.\n"
-                                + "Khách: " + tenKhach + "\n"
-                                + "Giờ đến: " + thoiGianDen + "\n\n"
-                                + "Bạn có chắc chắn muốn tiếp tục mở bàn không?",
-                        "Cảnh báo bàn sắp đặt",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE
+            if (w instanceof TrangChu_GUI) {
+                Order_Mon_GUI orderPanel = new Order_Mon_GUI(
+                        taiKhoanDangNhap,
+                        maBan,
+                        tenBan,
+                        maPhieuDatBan,
+                        laBanDangPhucVu
                 );
 
-                if (chon != JOptionPane.YES_OPTION) {
+                ((TrangChu_GUI) w).showCustomPage("Order_Mon_GUI", orderPanel);
+            } else {
+                JOptionPane.showMessageDialog(
+                        Order_Ban_GUI.this,
+                        "Không tìm thấy TrangChu_GUI để chuyển sang Order món.",
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+        }
+        private void xuLyChonBan() {
+            try {
+                String trangThai = ban.getTrangThai();
+
+                // 1. Bàn đang phục vụ -> mở order và load món đang phục vụ
+                if ("Bàn đang phục vụ".equalsIgnoreCase(trangThai)) {
+                    moOrderMon(
+                            ban.getMaBan(),
+                            ban.getTenBan(),
+                            null,
+                            true
+                    );
                     return;
                 }
-            }
 
-            // mở Order_Mon_GUI
-            try {
-            	Order_Mon_GUI orderMonGUI = new Order_Mon_GUI(
-            	        taiKhoanDangNhap,
-            	        ban.getMaBan(),
-            	        ban.getTenBan()
-            	);
-            	orderMonGUI.setVisible(true);
-            	dispose();
+                // 2. Bàn đã đặt -> hỏi xác nhận nhận bàn
+                if ("Bàn đặt".equalsIgnoreCase(trangThai)) {
+                    String[] phieu = timPhieuDatGanNhatCuaBan(ban.getMaBan());
+
+                    if (phieu == null) {
+                        JOptionPane.showMessageDialog(
+                                Order_Ban_GUI.this,
+                                "Không tìm thấy phiếu đặt của bàn này.",
+                                "Thông báo",
+                                JOptionPane.WARNING_MESSAGE
+                        );
+                        return;
+                    }
+
+                    String maPhieu = phieu[0];
+                    String tenKhach = phieu[2] == null ? "" : phieu[2];
+                    String sdt = phieu[3] == null ? "" : phieu[3];
+                    String soLuongNguoi = phieu[4] == null ? "" : phieu[4];
+                    String thoiGianDen = phieu[5] == null ? "" : phieu[5];
+
+                    int chon = JOptionPane.showConfirmDialog(
+                            Order_Ban_GUI.this,
+                            "Xác nhận nhận bàn?\n\n"
+                                    + "Khách: " + tenKhach + "\n"
+                                    + "SĐT: " + sdt + "\n"
+                                    + "Số lượng người: " + soLuongNguoi + "\n"
+                                    + "Giờ đến: " + thoiGianDen,
+                            "Xác nhận nhận bàn",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.QUESTION_MESSAGE
+                    );
+
+                    if (chon != JOptionPane.YES_OPTION) {
+                        return;
+                    }
+
+                    phieuDatBanDAO.capNhatTrangThai(maPhieu, "Đang phục vụ");
+
+                    moOrderMon(
+                            ban.getMaBan(),
+                            ban.getTenBan(),
+                            maPhieu,
+                            false
+                    );
+                    return;
+                }
+
+                // 3. Bàn trống nhưng sắp tới giờ đặt -> cảnh báo
+                String[] phieuCanhBao = timPhieuCanhBaoSapDat(ban.getMaBan());
+
+                if (phieuCanhBao != null) {
+                    String tenKhach = phieuCanhBao[2] == null ? "" : phieuCanhBao[2];
+                    String thoiGianDen = phieuCanhBao[5] == null ? "" : phieuCanhBao[5];
+
+                    int chon = JOptionPane.showConfirmDialog(
+                            Order_Ban_GUI.this,
+                            "Bàn này sắp có khách đặt.\n"
+                                    + "Khách: " + tenKhach + "\n"
+                                    + "Giờ đến: " + thoiGianDen + "\n\n"
+                                    + "Bạn có chắc chắn muốn tiếp tục mở bàn không?",
+                            "Cảnh báo bàn sắp đặt",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE
+                    );
+
+                    if (chon != JOptionPane.YES_OPTION) {
+                        return;
+                    }
+                }
+
+                // 4. Bàn trống -> mở order món bình thường
+                moOrderMon(
+                        ban.getMaBan(),
+                        ban.getTenBan(),
+                        null,
+                        false
+                );
+
             } catch (Exception ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(
@@ -759,19 +882,13 @@ public class Order_Ban_GUI extends JFrame {
         }
     }
 
-    @Override
-    public void dispose() {
+    private void stopTimers() {
         if (timerDongHo != null) {
             timerDongHo.stop();
         }
         if (timerReloadBan != null) {
             timerReloadBan.stop();
         }
-        super.dispose();
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Order_Ban_GUI().setVisible(true));
     }
 
     public static class WrapLayout extends FlowLayout {

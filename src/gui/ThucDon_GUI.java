@@ -1,310 +1,321 @@
 package gui;
 
-import gui.Pn_ThanhMenu;
-import javax.swing.*;
-import javax.swing.border.*;
+
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import connectDB.ConnectDB;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.plaf.basic.BasicComboBoxUI;
+
 import dao.LoaiMonAn_DAO;
 import dao.MonAn_DAO;
 import digLog.XuLyMonAn_DigLog;
 import entity.LoaiMonAn;
 import entity.MonAn;
 
-public class ThucDon_GUI extends JFrame {
+public class ThucDon_GUI extends JPanel {
 
-    private static final Color C_NAV      = new Color(188, 165, 110);
-    private static final Color C_BG       = new Color(242, 236, 218);
-    private static final Color C_TAB_BAR  = new Color(228, 218, 192);
-    private static final Color C_TAB_ACT  = Color.WHITE;
-    private static final Color C_CARD     = Color.WHITE;
-    private static final Color C_BORDER   = new Color(215, 208, 190);
-    private static final Color C_SELECTED = new Color(100, 162, 232);
-    private static final Color C_BROWN    = new Color(90, 65, 35);
-    private static final Color C_BTN_ADD  = new Color(45, 170, 75);
-    private static final Color C_BTN_UPD  = new Color(210, 165, 35);
-    private static final Color C_BTN_DTL  = new Color(55, 130, 210);
-    private static final Color C_BTN_REF  = new Color(230, 120, 40);
-    private static final Color C_BTN_LOC  = new Color(155, 110, 50);
-    private static final Color C_STOP     = new Color(255, 55, 55);
 
-    private static final int CARD_W = 280;
-    private static final int CARD_H = 360;
-    private static final int IMG_W  = 250;
-    private static final int IMG_H  = 210;
-    private static final int GAP    = 12;
-    private static final int PAD    = 16;
+    private static final long serialVersionUID = 1L;
 
-    private String currentCategory = null;
+    private static final Color C_BG = new Color(246, 242, 231);
+    private static final Color C_TOP = Color.WHITE;
+    private static final Color C_TAB_BAR = new Color(232, 224, 202);
+    private static final Color C_TAB_ACTIVE = Color.WHITE;
+    private static final Color C_CARD = Color.WHITE;
+    private static final Color C_CARD_IMG = new Color(239, 234, 218);
+    private static final Color C_BORDER = new Color(214, 207, 189);
+    private static final Color C_TEXT = new Color(45, 35, 25);
+    private static final Color C_MUTED = new Color(120, 110, 95);
+    private static final Color C_SELECTED = new Color(86, 153, 232);
+    private static final Color C_STOP = new Color(218, 64, 64);
+
+    private static final Color C_BTN_ADD = new Color(42, 170, 76);
+    private static final Color C_BTN_UPD = new Color(212, 166, 28);
+    private static final Color C_BTN_DTL = new Color(58, 135, 220);
+    private static final Color C_BTN_REF = new Color(230, 116, 35);
+    private static final Color C_BTN_LOC = new Color(150, 106, 48);
+
+    private static final int CARD_W = 235;
+    private static final int CARD_H = 315;
+    private static final int IMG_W = 205;
+    private static final int IMG_H = 160;
+    private static final int GAP = 18;
+    private static final int PAD = 22;
 
     private final MonAn_DAO monDAO = new MonAn_DAO();
-    private JPanel     pCards;
-    private CardLayout cardLayout = new CardLayout();
-    private JTextField txtSearch;
-    private JButton    btnThem, btnCapNhat, btnChiTiet, btnLamMoi;
-    private JPanel     pTabBar;
-    private JButton    activeTabBtn;
-    private MonAn  selectedMon  = null;
-    private JPanel selectedCard = null;
     private final Map<String, List<MonAn>> cache = new HashMap<>();
+
+    private String currentCategory = null;
+    private MonAn selectedMon = null;
+    private JPanel selectedCard = null;
+
+    private CardLayout cardLayout = new CardLayout();
+    private JPanel pCards;
+    private JPanel pTabBar;
+    private JButton activeTabBtn;
+
+    private JTextField txtSearch;
+    private RoundedComboBox cboGiaTu;
+    private RoundedComboBox cboGiaDen;
     private JTextField txtGiaTu;
     private JTextField txtGiaDen;
-    private JButton    btnLoc;
+    private JButton btnThem;
+    private JButton btnCapNhat;
+    private JButton btnChiTiet;
+    private JButton btnLamMoi;
+    private JButton btnLoc;
+   
+
+
+    private Timer searchTimer;
+
+    private static final double UI_SCALE = calcUiScale();
+
+    private static double calcUiScale() {
+        try {
+            AffineTransform at = GraphicsEnvironment
+                    .getLocalGraphicsEnvironment()
+                    .getDefaultScreenDevice()
+                    .getDefaultConfiguration()
+                    .getDefaultTransform();
+
+            double raw = at.getScaleX();
+
+            // Java Swing trên Mac Retina đã tự scale rồi.
+            // Không nhân 2 lần để tránh UI quá to.
+            if (raw >= 1.5) {
+                return 1.0;
+            }
+
+            Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+            double byWidth = screen.width / 1440.0;
+
+            return Math.max(0.88, Math.min(1.12, byWidth));
+        } catch (Exception e) {
+            return 1.0;
+        }
+    }
+    private final String[] GOI_Y_GIA = {
+            "", "30000", "50000", "70000", "100000",
+            "150000", "200000", "300000", "500000"
+    };
+
+    private static int sc(int value) {
+        return (int) Math.round(value * UI_SCALE);
+    }
 
     public ThucDon_GUI() {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
+        setLayout(new BorderLayout());
+        setBackground(C_BG);
 
-        Pn_ThanhMenu menu = new Pn_ThanhMenu(null);
-        JLayeredPane layeredPane = new JLayeredPane();
-        layeredPane.setLayout(null);
-        setContentPane(layeredPane);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        add(buildTopBar(), BorderLayout.NORTH);
+        add(buildContent(), BorderLayout.CENTER);
 
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(C_BG);
-        mainPanel.add(buildTopBar(),  BorderLayout.NORTH);
-        mainPanel.add(buildContent(), BorderLayout.CENTER);
+        searchTimer = new Timer(280, e -> doSearch());
+        searchTimer.setRepeats(false);
 
-        layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
-        layeredPane.add(menu,      JLayeredPane.PALETTE_LAYER);
 
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                int w = getWidth();
-                int h = getHeight();
-                mainPanel.setBounds(0, 42, w, h - 42);
-                menu.setBounds(0, 0, w, 42);
-                layeredPane.revalidate();
-                layeredPane.repaint();
-            }
-        });
+        loadAllFirstTime();
+    }
 
-        SwingUtilities.invokeLater(() -> {
-            int w = getWidth();
-            int h = getHeight();
-            mainPanel.setBounds(0, 42, w, h - 42);
-            menu.setBounds(0, 0, w, 42);
-        });
-
+    private void loadAllFirstTime() {
         List<MonAn> list = monDAO.getAllMonAn();
         cache.put("ALL", list);
+
         JScrollPane scroll = buildGridScroll(list, "ALL");
         pCards.add(scroll, "ALL");
         cardLayout.show(pCards, "ALL");
     }
 
-    private JButton createBigButton(String text, Color bg) {
-        JButton btn = new JButton(text) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getModel().isPressed() ? bg.darker()
-                        : getModel().isRollover() ? bg.brighter() : bg);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        btn.setForeground(Color.WHITE);
-        btn.setFont(new Font("Times New Roman", Font.BOLD, 16));
-        btn.setFocusPainted(false);
-        btn.setContentAreaFilled(false);
-        btn.setBorderPainted(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return btn;
-    }
 
     private JPanel buildTopBar() {
-        final int FIELD_H = 42;
-        final int LABEL_W = 150;
-        final int WIDTH   = 130;
-
-        JPanel actionRow = new JPanel(new BorderLayout(20, 0));
-        actionRow.setBackground(Color.WHITE);
-        actionRow.setBorder(BorderFactory.createCompoundBorder(
+        JPanel root = new JPanel(new BorderLayout(sc(18), 0));
+        root.setBackground(C_TOP);
+        root.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, C_BORDER),
-                BorderFactory.createEmptyBorder(12, 40, 12, 20)));
+                new EmptyBorder(sc(18), sc(26), sc(16), sc(26))
+        ));
 
-        // ===== LEFT =====
-        JPanel left = new JPanel();
-        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+        JPanel left = new JPanel(new GridBagLayout());
         left.setOpaque(false);
 
-        // ROW 1
-        JPanel row1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        row1.setOpaque(false);
-        row1.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(0, 0, sc(10), sc(10));
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JLabel lblTitle = new JLabel("Thực đơn");
-        lblTitle.setFont(new Font("Times New Roman", Font.BOLD, 34));
-        lblTitle.setPreferredSize(new Dimension(LABEL_W, FIELD_H));
+        lblTitle.setFont(new Font("Times New Roman", Font.BOLD, sc(34)));
+        lblTitle.setForeground(Color.BLACK);
 
-        JPanel searchWrapper = new JPanel(new BorderLayout(6, 0));
-        searchWrapper.setOpaque(false);
-//        searchWrapper.setPreferredSize(new Dimension(380, 36));
-        searchWrapper.setMaximumSize(new Dimension(700, 36));
-        searchWrapper.setPreferredSize(new Dimension(750, 36));
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.gridwidth = 1;
+        left.add(lblTitle, gbc);
 
-        txtSearch = new JTextField("Nhập tên món ăn cần tìm ...");
-        txtSearch.setFont(new Font("Arial", Font.PLAIN, 15));
-        txtSearch.setForeground(Color.GRAY);
-        txtSearch.addFocusListener(new FocusAdapter() {
-            public void focusGained(FocusEvent e) {
-                if (txtSearch.getText().equals("Nhập tên món ăn cần tìm ...")) {
-                    txtSearch.setText("");
-                    txtSearch.setForeground(Color.BLACK);
-                }
-            }
-            public void focusLost(FocusEvent e) {
-                if (txtSearch.getText().isEmpty()) {
-                    txtSearch.setText("Nhập tên món ăn cần tìm ...");
-                    txtSearch.setForeground(Color.GRAY);
-                }
-            }
-        });
-        txtSearch.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(190, 185, 170)),
-                BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+        JPanel searchWrap = new RoundedPanel(new BorderLayout(sc(8), 0), sc(16));
+        searchWrap.setPreferredSize(new Dimension(sc(560), sc(44)));
+        searchWrap.setMinimumSize(new Dimension(sc(300), sc(44)));
+        searchWrap.setBorder(new EmptyBorder(0, sc(14), 0, sc(12)));
+        searchWrap.setMinimumSize(new Dimension(sc(260), sc(42)));
+
+        txtSearch = createSearchField("Nhập tên món ăn cần tìm ...");
 
         JButton btnSearch = new JButton();
+        btnSearch.setIcon(loadIcon("img/mn_tracuu.png", sc(24), sc(24)));
         btnSearch.setFocusPainted(false);
         btnSearch.setContentAreaFilled(false);
         btnSearch.setBorderPainted(false);
         btnSearch.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        ImageIcon icon = new ImageIcon("img/mn_tracuu.png");
-        Image img = icon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-        btnSearch.setIcon(new ImageIcon(img));
 
-        searchWrapper.add(txtSearch,  BorderLayout.CENTER);
-        searchWrapper.add(btnSearch,  BorderLayout.EAST);
-
-        row1.add(lblTitle);
-        row1.add(searchWrapper);
-
-        // ROW 2
-        JPanel row2 = new JPanel(new BorderLayout(6, 0));
-        row2.setOpaque(false);
-
-        JLabel lblGia = new JLabel("Tìm theo Giá", SwingConstants.RIGHT);
-        lblGia.setFont(new Font("Times New Roman", Font.PLAIN, 21));
-        lblGia.setPreferredSize(new Dimension(120, FIELD_H));
-
-        JPanel filterInner = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        filterInner.setOpaque(false);
-
-        txtGiaTu  = new JTextField();
-        txtGiaDen = new JTextField();
-        txtGiaTu.setFont(new Font("Arial", Font.PLAIN, 15));
-        txtGiaDen.setFont(new Font("Arial", Font.PLAIN, 15));
-
-        txtGiaTu.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(190, 185, 170)), "Từ"));
-        txtGiaDen.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(new Color(190, 185, 170)), "Đến"));
-
-        txtGiaTu.setPreferredSize(new Dimension(WIDTH, FIELD_H));
-        txtGiaDen.setPreferredSize(new Dimension(WIDTH, FIELD_H));
-
-        btnLoc = new JButton("Lọc") {
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setColor(C_BTN_LOC);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
-                super.paintComponent(g);
-            }
-        };
-        btnLoc.setFont(new Font("Arial", Font.BOLD, 15));
-        btnLoc.setForeground(Color.WHITE);
-        btnLoc.setFocusPainted(false);
-        btnLoc.setBorderPainted(false);
-        btnLoc.setContentAreaFilled(true);
-        btnLoc.setOpaque(true);
-        btnLoc.setPreferredSize(new Dimension(WIDTH, FIELD_H));
-
-        filterInner.add(txtGiaTu);
-        filterInner.add(txtGiaDen);
-        filterInner.add(btnLoc);
-
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setOpaque(false);
-        wrapper.setBorder(BorderFactory.createEmptyBorder(0, 36, 0, 0));
-        wrapper.add(filterInner, BorderLayout.WEST);
-
-        row2.add(lblGia,   BorderLayout.WEST);
-        row2.add(wrapper,  BorderLayout.CENTER);
-
-        left.add(row1);
-        left.add(Box.createVerticalStrut(14));
-        left.add(row2);
-
-        // ===== RIGHT =====
-        JPanel right = new JPanel();
-        right.setLayout(new BoxLayout(right, BoxLayout.Y_AXIS));
-        right.setOpaque(false);
-        right.setPreferredSize(new Dimension(450, 120)); // 👈 THÊM DÒNG NÀY
-        
-
-        JPanel rowTop    = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 8));
-        JPanel rowBottom = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 8));
-        rowTop.setOpaque(false);
-        rowBottom.setOpaque(false);
-
-        btnThem    = createBigButton("+ Thêm",    C_BTN_ADD);
-        btnCapNhat = createBigButton("Cập nhật",  C_BTN_UPD);
-        btnChiTiet = createBigButton("Chi tiết",  C_BTN_DTL);
-        btnLamMoi  = createBigButton("Làm mới",   C_BTN_REF);
-
-        for (JButton b : new JButton[]{btnThem, btnCapNhat, btnChiTiet, btnLamMoi}) {
-            b.setFont(new Font("Times New Roman", Font.BOLD, 17));
-            b.setMargin(new Insets(12, 35, 12, 35));
-            b.setPreferredSize(new Dimension(180, 45)); // 👈 THÊM DÒNG NÀY
-        }
-
-        rowTop.add(btnThem);
-        rowTop.add(btnCapNhat);
-        rowBottom.add(btnChiTiet);
-        rowBottom.add(btnLamMoi);
-
-        right.add(rowTop);
-        right.add(rowBottom);
-
-        actionRow.add(left,  BorderLayout.CENTER);
-        actionRow.add(right, BorderLayout.EAST);
-
-        // ===== EVENTS =====
-        btnLoc.addActionListener(e    -> locTheoGiaVaTen());
         btnSearch.addActionListener(e -> doSearch());
+
+        searchWrap.add(txtSearch, BorderLayout.CENTER);
+        searchWrap.add(btnSearch, BorderLayout.EAST);
+
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.gridwidth = 2;
+        left.add(searchWrap, gbc);
+
+        JLabel lblGia = new JLabel("Tìm theo giá");
+        lblGia.setFont(new Font("Times New Roman", Font.BOLD, sc(22)));
+        lblGia.setForeground(Color.BLACK);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0;
+        gbc.gridwidth = 1;
+        gbc.insets = new Insets(0, 0, 0, sc(10));
+        left.add(lblGia, gbc);
+
+        cboGiaTu = createGiaCombo();
+        cboGiaDen = createGiaCombo();
+
+        txtGiaTu = (JTextField) cboGiaTu.getEditor().getEditorComponent();
+        txtGiaDen = (JTextField) cboGiaDen.getEditor().getEditorComponent();
+
+        btnLoc = createSmallButton("Lọc", C_BTN_LOC);
+        btnLoc.addActionListener(e -> locTheoGiaVaTen(true));
+
+        JPanel priceWrap = new JPanel(new FlowLayout(FlowLayout.LEFT, sc(10), 0));
+        priceWrap.setOpaque(false);
+
+        JLabel lblTu = new JLabel("Từ");
+        lblTu.setFont(new Font("SansSerif", Font.BOLD, sc(17)));
+
+
+        JLabel lblDen = new JLabel("Đến");
+        lblDen.setFont(new Font("SansSerif", Font.BOLD, sc(17)));
+
+        priceWrap.add(lblTu);
+        priceWrap.add(cboGiaTu);
+        priceWrap.add(lblDen);
+        priceWrap.add(cboGiaDen);
+        priceWrap.add(btnLoc);
+
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.weightx = 1;
+        gbc.gridwidth = 2;
+        left.add(priceWrap, gbc);
+
+        JPanel right = new JPanel(new GridLayout(2, 2, sc(12), sc(12)));
+        right.setOpaque(false);
+        right.setPreferredSize(new Dimension(sc(430), sc(122)));
+
+        btnThem = createBigButton("+ Thêm", C_BTN_ADD);
+        btnCapNhat = createBigButton("Cập nhật", C_BTN_UPD);
+        btnChiTiet = createBigButton("Chi tiết", C_BTN_DTL);
+        btnLamMoi = createBigButton("Làm mới", C_BTN_REF);
+
+        right.add(btnThem);
+        right.add(btnCapNhat);
+        right.add(btnChiTiet);
+        right.add(btnLamMoi);
+
+        root.add(left, BorderLayout.CENTER);
+        root.add(right, BorderLayout.EAST);
+
+        initTopEvents();
+
+        return root;
+    }
+
+
+    private void initTopEvents() {
         txtSearch.addActionListener(e -> doSearch());
+
+        txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                searchTimer.restart();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                searchTimer.restart();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                searchTimer.restart();
+            }
+        });
+
         btnLamMoi.addActionListener(e -> refreshAll());
 
         btnThem.addActionListener(e -> {
+            JFrame parentFrame = getParentFrame();
             String maMoi = monDAO.getNextMaMon();
             XuLyMonAn_DigLog dlg = new XuLyMonAn_DigLog(
-                    this, XuLyMonAn_DigLog.Mode.THEM, null, maMoi);
+
+                    parentFrame,
+                    XuLyMonAn_DigLog.Mode.THEM,
+                    null,
+                    maMoi
+            );
+
+            dlg.setLocationRelativeTo(parentFrame);
             dlg.setVisible(true);
             if (dlg.isSaved()) refreshAll();
         });
+
 
         btnCapNhat.addActionListener(e -> {
             if (selectedMon == null) {
                 JOptionPane.showMessageDialog(this, "Vui lòng chọn món!");
                 return;
             }
+
+            JFrame parentFrame = getParentFrame();
+
             XuLyMonAn_DigLog dlg = new XuLyMonAn_DigLog(
-                    this, XuLyMonAn_DigLog.Mode.CAP_NHAT, selectedMon, null);
+                    parentFrame,
+                    XuLyMonAn_DigLog.Mode.CAP_NHAT,
+                    selectedMon,
+                    null
+            );
+
+            dlg.setLocationRelativeTo(parentFrame);
             dlg.setVisible(true);
-            if (dlg.isSaved()) refreshAll();
+
+            if (dlg.isSaved()) {
+                refreshAll();
+            }
         });
 
         btnChiTiet.addActionListener(e -> {
@@ -314,34 +325,140 @@ public class ThucDon_GUI extends JFrame {
                         "Thông báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            new XuLyMonAn_DigLog(
-                    this, XuLyMonAn_DigLog.Mode.CHI_TIET, selectedMon, null)
-                    .setVisible(true);
-        });
 
-        return actionRow;
+
+            JFrame parentFrame = getParentFrame();
+
+            XuLyMonAn_DigLog dlg = new XuLyMonAn_DigLog(
+                    parentFrame,
+                    XuLyMonAn_DigLog.Mode.CHI_TIET,
+                    selectedMon,
+                    null
+            );
+
+            dlg.setLocationRelativeTo(parentFrame);
+            dlg.setVisible(true);
+        });
     }
 
+    private JFrame getParentFrame() {
+        Window w = SwingUtilities.getWindowAncestor(this);
+        if (w instanceof JFrame) {
+            return (JFrame) w;
+        }
+        return null;
+    }
+
+    private JTextField createSearchField(String placeholder) {
+        JTextField txt = new JTextField(placeholder);
+        txt.setFont(new Font("SansSerif", Font.PLAIN, sc(15)));
+        txt.setForeground(Color.GRAY);
+        txt.setOpaque(false);
+        txt.setBorder(new EmptyBorder(0, sc(14), 0, sc(14)));
+
+        txt.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (txt.getText().equals(placeholder)) {
+                    txt.setText("");
+                    txt.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (txt.getText().trim().isEmpty()) {
+                    txt.setText(placeholder);
+                    txt.setForeground(Color.GRAY);
+                }
+            }
+        });
+
+        return txt;
+    }
+
+    private JTextField createPriceField(String title) {
+        JTextField txt = new JTextField();
+        txt.setPreferredSize(new Dimension(sc(150), sc(42)));
+        txt.setFont(new Font("SansSerif", Font.PLAIN, sc(14)));
+        txt.setBorder(BorderFactory.createTitledBorder(
+                new LineBorder(new Color(190, 185, 170), 1),
+                title
+        ));
+        return txt;
+    }
+
+    private JButton createBigButton(String text, Color bg) {
+        JButton btn = new JButton(text) {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                Color c = bg;
+                if (getModel().isPressed()) {
+                    c = bg.darker();
+                } else if (getModel().isRollover()) {
+                    c = bg.brighter();
+                }
+
+                g2.setColor(c);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), sc(14), sc(14));
+                g2.dispose();
+
+                super.paintComponent(g);
+            }
+        };
+
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("Times New Roman", Font.BOLD, sc(23)));
+        btn.setFocusPainted(false);
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setOpaque(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        return btn;
+    }
+
+    private JButton createSmallButton(String text, Color bg) {
+        JButton btn = createBigButton(text, bg);
+        btn.setFont(new Font("SansSerif", Font.BOLD, sc(16)));
+        btn.setPreferredSize(new Dimension(sc(95), sc(40)));
+        return btn;
+    }
     private JPanel buildContent() {
         JPanel main = new JPanel(new BorderLayout());
         main.setBackground(C_BG);
 
-        pTabBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        pTabBar = new JPanel(new FlowLayout(FlowLayout.LEFT, sc(8), sc(6)));
         pTabBar.setBackground(C_TAB_BAR);
         pTabBar.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 2, 0, C_BORDER),
-                BorderFactory.createEmptyBorder(0, PAD + 2, 0, 0)));
 
-        LoaiMonAn_DAO loaiDAO = new LoaiMonAn_DAO();
-        List<LoaiMonAn> dsLoai = loaiDAO.getAllLoaiMonAn();
+                BorderFactory.createMatteBorder(0, 0, 1, 0, C_BORDER),
+                new EmptyBorder(0, sc(18), 0, sc(18))
+        ));
 
-        JButton btnAll = new JButton("Tất cả");
-        btnAll.setFont(new Font("Times New Roman", Font.BOLD, 16));
-        btnAll.setBackground(C_TAB_ACT);
-        btnAll.setBorderPainted(false);
-        btnAll.setFocusPainted(false);
-        btnAll.setOpaque(true);
-        btnAll.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        buildTabs();
+
+
+        pCards = new JPanel(cardLayout);
+        pCards.setBackground(C_BG);
+        pCards.add(makeLoadingPanel("Đang tải dữ liệu..."), "LOADING");
+        cardLayout.show(pCards, "LOADING");
+
+        main.add(pTabBar, BorderLayout.NORTH);
+        main.add(pCards, BorderLayout.CENTER);
+
+        return main;
+    }
+
+    private void buildTabs() {
+        pTabBar.removeAll();
+
+        JButton btnAll = createTabButton("Tất cả", true);
         btnAll.addActionListener(e -> {
             currentCategory = null;
             setActiveTab(btnAll);
@@ -351,63 +468,12 @@ public class ThucDon_GUI extends JFrame {
         pTabBar.add(btnAll);
         activeTabBtn = btnAll;
 
-        for (LoaiMonAn loai : dsLoai) {
-            JButton btn = new JButton(loai.getTenLoaiMonAn());
-            btn.setFont(new Font("Times New Roman", Font.PLAIN, 16));
-            btn.setBackground(C_TAB_BAR);
-            btn.setBorderPainted(false);
-            btn.setFocusPainted(false);
-            btn.setOpaque(true);
-            btn.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
-
-            String maLoai = loai.getMaLoaiMonAn();
-            btn.addActionListener(e -> {
-                currentCategory = maLoai;
-                setActiveTab(btn);
-                showOrLoadCategory(maLoai);
-            });
-            pTabBar.add(btn);
-        }
-
-        pCards = new JPanel(cardLayout);
-        pCards.setBackground(C_BG);
-        pCards.add(makeLoadingPanel("Đang tải dữ liệu..."), "LOADING");
-        cardLayout.show(pCards, "LOADING");
-
-        main.add(pTabBar, BorderLayout.NORTH);
-        main.add(pCards,  BorderLayout.CENTER);
-        return main;
-    }
-
-    public void reloadTabs() {
-        pTabBar.removeAll();
 
         LoaiMonAn_DAO loaiDAO = new LoaiMonAn_DAO();
         List<LoaiMonAn> dsLoai = loaiDAO.getAllLoaiMonAn();
 
-        JButton btnAll = new JButton("Tất cả");
-        btnAll.setFont(new Font("Times New Roman", Font.BOLD, 16));
-        btnAll.setBackground(C_TAB_ACT);
-        btnAll.setBorderPainted(false);
-        btnAll.setFocusPainted(false);
-        btnAll.setOpaque(true);
-        btnAll.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
-        btnAll.addActionListener(e -> {
-            currentCategory = null;
-            setActiveTab(btnAll);
-            showOrLoadCategory("ALL");
-        });
-        pTabBar.add(btnAll);
-
         for (LoaiMonAn loai : dsLoai) {
-            JButton btn = new JButton(loai.getTenLoaiMonAn());
-            btn.setFont(new Font("Times New Roman", Font.PLAIN, 16));
-            btn.setBackground(C_TAB_BAR);
-            btn.setBorderPainted(false);
-            btn.setFocusPainted(false);
-            btn.setOpaque(true);
-            btn.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
-
+            JButton btn = createTabButton(loai.getTenLoaiMonAn(), false);
             String maLoai = loai.getMaLoaiMonAn();
             btn.addActionListener(e -> {
                 currentCategory = maLoai;
@@ -421,296 +487,455 @@ public class ThucDon_GUI extends JFrame {
         pTabBar.repaint();
     }
 
-    private void locTheoGiaVaTen() {
-        String ten = txtSearch.getText().trim();
-        if (ten.equalsIgnoreCase("Nhập tên món ăn cần tìm ...")) ten = "";
-        ten = ten.toLowerCase();
 
-        double giaTu = 0, giaDen = Double.MAX_VALUE;
-        String rawTu  = txtGiaTu.getText().trim();
-        String rawDen = txtGiaDen.getText().trim();
-        if (!rawTu.matches("\\d*") || !rawDen.matches("\\d*")) {
-            JOptionPane.showMessageDialog(this,
-                    "Giá phải là số! Vui lòng nhập lại.",
-                    "Lỗi nhập liệu",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        try {
-            if (!rawTu.isEmpty())  giaTu  = Double.parseDouble(rawTu);
-            if (!rawDen.isEmpty()) giaDen = Double.parseDouble(rawDen);
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Giá không hợp lệ! Vui lòng nhập số.",
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+    private JButton createTabButton(String text, boolean active) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Times New Roman", active ? Font.BOLD : Font.PLAIN, sc(20)));
+        btn.setForeground(Color.BLACK);
+        btn.setBackground(active ? C_TAB_ACTIVE : C_TAB_BAR);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setOpaque(true);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setBorder(new EmptyBorder(sc(8), sc(14), sc(8), sc(14)));
 
-        if (!rawTu.isEmpty() && !rawDen.isEmpty() && giaDen < giaTu) {
-            JOptionPane.showMessageDialog(this, "Giá đến không được nhỏ hơn giá từ!",
-                    "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
-            txtGiaDen.requestFocus();
-            txtGiaDen.selectAll();
-            return;
+        return btn;
+    }
+
+    private void setActiveTab(JButton btn) {
+        for (Component c : pTabBar.getComponents()) {
+            if (c instanceof JButton) {
+                JButton b = (JButton) c;
+                b.setBackground(C_TAB_BAR);
+                b.setFont(new Font("Times New Roman", Font.PLAIN, sc(20)));
+            }
         }
 
-        List<MonAn> all = cache.getOrDefault("ALL", new ArrayList<>());
-        if (all.isEmpty()) { all = monDAO.getAllMonAn(); cache.put("ALL", all); }
+        btn.setBackground(C_TAB_ACTIVE);
+        btn.setFont(new Font("Times New Roman", Font.BOLD, sc(20)));
+        activeTabBtn = btn;
+    }
 
-        List<MonAn> result = new ArrayList<>();
-        for (MonAn mon : all) {
-            String tenMon = mon.getTenMon() == null ? "" : mon.getTenMon().toLowerCase();
-            boolean matchTen  = ten.isEmpty() || tenMon.contains(ten);
-            double  gia       = mon.getDonGia();
-            boolean matchGia  = gia >= giaTu && gia <= giaDen;
-            boolean matchLoai = currentCategory == null
-                    || mon.getMaLoaiMonAn().getMaLoaiMonAn().equals(currentCategory);
-            if (matchTen && matchGia && matchLoai) result.add(mon);
-        }
+    public void reloadTabs() {
+        buildTabs();
+    }
 
-        for (Component c : pCards.getComponents())
-            if ("FILTER".equals(c.getName())) { pCards.remove(c); break; }
-
-        JScrollPane scroll = buildGridScroll(result, "FILTER");
-        pCards.add(scroll, "FILTER");
-        pCards.revalidate();
-        pCards.repaint();
-        cardLayout.show(pCards, "FILTER");
-
-        if (result.isEmpty())
-            JOptionPane.showMessageDialog(this, "Không tìm thấy món ăn phù hợp.",
-                    "Kết quả", JOptionPane.INFORMATION_MESSAGE);
+    private void showOrLoadCategory(String key) {
+        selectedMon = null;
+        selectedCard = null;
+        preloadCategory(key);
     }
 
     private void preloadCategory(final String key) {
-        if (cache.containsKey(key)) { ensureCardPanelExists(key); cardLayout.show(pCards, key); return; }
+        if (cache.containsKey(key)) {
+            ensureCardPanelExists(key);
+            cardLayout.show(pCards, key);
+            return;
+        }
+
+        pCards.add(makeLoadingPanel("Đang tải dữ liệu..."), "LOADING");
+        cardLayout.show(pCards, "LOADING");
+
         new SwingWorker<List<MonAn>, Void>() {
-            @Override protected List<MonAn> doInBackground() {
-                return "ALL".equals(key) ? monDAO.getAllMonAn() : monDAO.getMonTheoLoai(key);
+            @Override
+            protected List<MonAn> doInBackground() {
+                if ("ALL".equals(key)) {
+                    return monDAO.getAllMonAn();
+                }
+                return monDAO.getMonTheoLoai(key);
             }
-            @Override protected void done() {
+
+            @Override
+            protected void done() {
                 try {
                     List<MonAn> list = get();
                     cache.put(key, list);
                     ensureCardPanelExists(key);
                     cardLayout.show(pCards, key);
-                } catch (Exception ex) { ex.printStackTrace(); }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
             }
         }.execute();
     }
 
     private void ensureCardPanelExists(String key) {
-        for (Component c : pCards.getComponents()) if (key.equals(c.getName())) return;
-        pCards.add(buildGridScroll(cache.getOrDefault(key, Collections.emptyList()), key), key);
+        for (Component c : pCards.getComponents()) {
+            if (key.equals(c.getName())) {
+                return;
+            }
+        }
+
+        JScrollPane scroll = buildGridScroll(cache.getOrDefault(key, Collections.emptyList()), key);
+        pCards.add(scroll, key);
         pCards.revalidate();
+        pCards.repaint();
     }
 
     private JScrollPane buildGridScroll(List<MonAn> list, String key) {
         JPanel grid = new JPanel(new FlowLayout(FlowLayout.LEFT, GAP, GAP)) {
+
+            private static final long serialVersionUID = 1L;
+
             @Override
             public Dimension getPreferredSize() {
                 int total = getComponentCount();
-                if (total == 0) return new Dimension(200, 200);
-                int vw   = (getParent() != null) ? getParent().getWidth() : 900;
-                int cols = Math.max(1, vw / (CARD_W + GAP));
+                if (total == 0) {
+                    return new Dimension(400, 240);
+                }
+
+                int vw = 1000;
+                if (getParent() != null) {
+                    vw = Math.max(700, getParent().getWidth());
+                }
+
+                int cols = Math.max(1, (vw - PAD * 2) / (CARD_W + GAP));
                 int rows = (int) Math.ceil((double) total / cols);
-                return new Dimension(vw, rows * (CARD_H + GAP) + 2 * PAD);
+                int height = rows * (CARD_H + GAP) + PAD * 2;
+
+                return new Dimension(vw, height);
             }
         };
-        grid.setBackground(C_BG);
-        grid.setBorder(BorderFactory.createEmptyBorder(PAD, PAD, PAD, PAD));
-        grid.setName(key);
-        for (MonAn mon : list) grid.add(buildCard(mon));
 
-        JScrollPane scroll = new JScrollPane(grid,
+        grid.setName(key);
+
+        grid.setBackground(C_BG);
+        grid.setBorder(new EmptyBorder(PAD, PAD, PAD, PAD));
+
+        for (MonAn mon : list) {
+            grid.add(buildCard(mon));
+        }
+
+        JScrollPane scroll = new JScrollPane(
+                grid,
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scroll.getVerticalScrollBar().setUnitIncrement(24);
-        scroll.setBorder(null);
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+        );
+
         scroll.setName(key);
+        scroll.setBorder(null);
+        scroll.getViewport().setBackground(C_BG);
+        scroll.getVerticalScrollBar().setUnitIncrement(24);
+
         scroll.getViewport().addComponentListener(new ComponentAdapter() {
-            @Override public void componentResized(ComponentEvent e) { grid.revalidate(); }
+            @Override
+            public void componentResized(ComponentEvent e) {
+                grid.revalidate();
+                grid.repaint();
+            }
         });
+
         return scroll;
     }
 
-    private void showOrLoadCategory(String key) {
-        selectedCard = null; selectedMon = null; preloadCategory(key);
-    }
-
     private JPanel buildCard(MonAn mon) {
-        boolean isStop = !mon.isTrangThai();
+
+        boolean stop = !mon.isTrangThai();
 
         JPanel card = new JPanel(new BorderLayout());
         card.setPreferredSize(new Dimension(CARD_W, CARD_H));
-        Color bgColor = isStop ? C_STOP : C_CARD;
-        card.setBackground(bgColor);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(C_BORDER, 1),
-                BorderFactory.createEmptyBorder(8, 8, 8, 8)));
+        card.setBackground(stop ? C_STOP : C_CARD);
+        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        JPanel imgWrapper = new JPanel(new BorderLayout());
-        imgWrapper.setBackground(isStop ? C_STOP : new Color(237, 230, 213));
-        imgWrapper.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(C_BORDER, 1),
+                new EmptyBorder(8, 8, 8, 8)
+        ));
+
+        JPanel imgWrap = new JPanel(new BorderLayout());
+        imgWrap.setBackground(stop ? C_STOP : C_CARD_IMG);
+        imgWrap.setBorder(new EmptyBorder(8, 8, 8, 8));
 
         JLabel lblImg = new JLabel("Không có ảnh", SwingConstants.CENTER);
         lblImg.setPreferredSize(new Dimension(IMG_W, IMG_H));
-        lblImg.setFont(new Font("Arial", Font.PLAIN, 13));
+        lblImg.setFont(new Font("SansSerif", Font.PLAIN, sc(12)));
+        lblImg.setForeground(C_MUTED);
+
         loadImgAsync(lblImg, mon.getAnhMon(), IMG_W, IMG_H);
-        imgWrapper.add(lblImg, BorderLayout.CENTER);
+
+        imgWrap.add(lblImg, BorderLayout.CENTER);
 
         JPanel info = new JPanel();
+        info.setBackground(stop ? C_STOP : C_CARD);
         info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
-        info.setBackground(bgColor);
-        info.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        info.setBorder(new EmptyBorder(8, 6, 4, 6));
 
-        JLabel lblName = new JLabel("<html><b>" + mon.getTenMon() + "</b></html>");
-        lblName.setFont(new Font("Times New Roman", Font.BOLD, 17));
-        lblName.setForeground(isStop ? Color.WHITE : new Color(50, 40, 25));
+
+        JLabel lblName = new JLabel(
+                "<html><div style='text-align:center; width:190px;'><b>"
+                        + safeHtml(mon.getTenMon()) +
+                "</b></div></html>",
+                SwingConstants.CENTER
+        );
+        lblName.setFont(new Font("Times New Roman", Font.BOLD, sc(16)));
+        lblName.setForeground(stop ? Color.WHITE : C_TEXT);
         lblName.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblName.setHorizontalAlignment(SwingConstants.CENTER);
+        lblName.setMaximumSize(new Dimension(Integer.MAX_VALUE, sc(42)));
 
-        String desc = (mon.getMoTa() != null && !mon.getMoTa().isEmpty()) ? mon.getMoTa() : " ";
-        JLabel lblDesc = new JLabel("<html><i>" + truncate(desc, 35) + "</i></html>");
-        lblDesc.setFont(new Font("Arial", Font.ITALIC, 13));
-        lblDesc.setForeground(isStop ? Color.WHITE : new Color(130, 120, 100));
+
+
+        String desc = mon.getMoTa() == null ? "" : mon.getMoTa().trim();
+
+        JLabel lblDesc = new JLabel(
+                "<html><div style='text-align:center; width:190px;'><i>"
+                        + safeHtml(truncate(desc, 32)) +
+                "</i></div></html>",
+                SwingConstants.CENTER
+        );
+        lblDesc.setFont(new Font("SansSerif", Font.ITALIC, sc(12)));
+        lblDesc.setForeground(stop ? Color.WHITE : C_MUTED);
+
+
         lblDesc.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblDesc.setHorizontalAlignment(SwingConstants.CENTER);
+        lblDesc.setMaximumSize(new Dimension(Integer.MAX_VALUE, sc(28)));
 
-        JLabel lblPrice = new JLabel(String.format("%,.0f", mon.getDonGia()));
-        lblPrice.setFont(new Font("Times New Roman", Font.BOLD, 20));
-        lblPrice.setForeground(isStop ? Color.WHITE : C_BROWN);
+
+
+        JLabel lblPrice = new JLabel(
+                String.format("%,.0f", mon.getDonGia()).replace(",", ".") + " VNĐ",
+                SwingConstants.CENTER
+        );
+        lblPrice.setFont(new Font("Times New Roman", Font.BOLD, sc(17)));
+        lblPrice.setForeground(stop ? Color.WHITE : new Color(90, 65, 35));
+
+
         lblPrice.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblPrice.setHorizontalAlignment(SwingConstants.CENTER);
+        lblPrice.setMaximumSize(new Dimension(Integer.MAX_VALUE, sc(28)));
 
-        info.add(Box.createVerticalStrut(6));
+
+
         info.add(lblName);
         info.add(Box.createVerticalStrut(4));
         info.add(lblDesc);
         info.add(Box.createVerticalStrut(6));
         info.add(lblPrice);
 
-        card.add(imgWrapper, BorderLayout.CENTER);
-        card.add(info,       BorderLayout.SOUTH);
+
+
+        card.add(imgWrap, BorderLayout.CENTER);
+        card.add(info, BorderLayout.SOUTH);
+
+        card.putClientProperty("mon", mon);
+        card.putClientProperty("imgWrap", imgWrap);
+        card.putClientProperty("info", info);
 
         card.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                if (selectedCard != null && selectedCard != card) {
+                    deselect(selectedCard);
+                }
+                select(card, mon);
+            }
 
-                // DOUBLE CLICK → bỏ chọn
-                if (e.getClickCount() == 2 && card == selectedCard) {
-                    deselect(card);
-                    selectedCard = null;
-                    selectedMon = null;
-                    return;
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (selectedCard != card) {
+                    card.setBorder(BorderFactory.createCompoundBorder(
+                            new LineBorder(new Color(170, 160, 135), 2),
+                            new EmptyBorder(7, 7, 7, 7)
+                    ));
+                }
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (selectedCard != card) {
+                    resetCardBorder(card);
                 }
 
-                // SINGLE CLICK → chọn
-                if (e.getClickCount() == 1) {
-                    if (selectedCard != null && selectedCard != card) {
-                        deselect(selectedCard);
-                    }
-                    select(card, mon, imgWrapper, info);
-                }
+
             }
         });
         return card;
     }
-
-    private void select(JPanel card, MonAn mon, JPanel imgWrapper, JPanel info) {
+    
+    private void select(JPanel card, MonAn mon) {
         selectedCard = card;
         selectedMon  = mon;
 
-        imgWrapper.setBackground(C_SELECTED);
+
+
+        JPanel imgWrap = (JPanel) card.getClientProperty("imgWrap");
+        JPanel info = (JPanel) card.getClientProperty("info");
+
+        imgWrap.setBackground(C_SELECTED);
         info.setBackground(C_SELECTED);
 
         card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(50, 100, 185), 3),
-                BorderFactory.createEmptyBorder(6, 6, 6, 6)));
+                new LineBorder(new Color(45, 105, 200), 3),
+                new EmptyBorder(6, 6, 6, 6)
+        ));
+
         card.repaint();
     }
 
     private void deselect(JPanel card) {
-        if (card == null) return;
-        MonAn mon = selectedMon;
-        Color bgColor = (mon != null && !mon.isTrangThai()) ? C_STOP : C_CARD;
-        card.setBackground(bgColor);
-        Component[] c = card.getComponents();
-        if (c.length > 0 && c[0] instanceof JPanel)
-            c[0].setBackground(mon != null && !mon.isTrangThai()
-                    ? C_STOP : new Color(237, 230, 213));
-        if (c.length > 1 && c[1] instanceof JPanel)
-            c[1].setBackground(bgColor);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(C_BORDER, 1),
-                BorderFactory.createEmptyBorder(8, 8, 8, 8)));
+
+
+        MonAn mon = (MonAn) card.getClientProperty("mon");
+        boolean stop = mon != null && !mon.isTrangThai();
+
+        JPanel imgWrap = (JPanel) card.getClientProperty("imgWrap");
+        JPanel info = (JPanel) card.getClientProperty("info");
+
+        card.setBackground(stop ? C_STOP : C_CARD);
+        imgWrap.setBackground(stop ? C_STOP : C_CARD_IMG);
+        info.setBackground(stop ? C_STOP : C_CARD);
+
+        resetCardBorder(card);
+
         card.repaint();
     }
 
-    private void loadImgAsync(JLabel lbl, String path, int w, int h) {
-        new SwingWorker<ImageIcon, Void>() {
-            @Override
-            protected ImageIcon doInBackground() {
-                try {
-                    if (path == null || path.trim().isEmpty()) return null;
-                    String name = path.trim();
-                    if (name.contains(".")) name = name.substring(0, name.lastIndexOf("."));
-                    String baseDir = System.getProperty("user.dir") + File.separator + "img";
-                    for (String ext : new String[]{".png", ".jpg", ".jpeg"}) {
-                        File file = new File(baseDir + File.separator + name + ext);
-                        if (file.exists()) {
-                            Image img = new ImageIcon(file.getAbsolutePath())
-                                    .getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
-                            return new ImageIcon(img);
-                        }
-                    }
-                    return null;
-                } catch (Exception e) { e.printStackTrace(); return null; }
-            }
-            @Override
-            protected void done() {
-                try {
-                    ImageIcon ic = get();
-                    if (ic != null) { lbl.setIcon(ic); lbl.setText(""); }
-                    else lbl.setText("Không có ảnh");
-                } catch (Exception e) { lbl.setText("Lỗi ảnh"); }
-            }
-        }.execute();
+    private void resetCardBorder(JPanel card) {
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(C_BORDER, 1),
+                new EmptyBorder(8, 8, 8, 8)
+        ));
     }
 
     private void doSearch() {
         String kw = txtSearch.getText().trim();
 
-        if (kw.isEmpty() || kw.equals("Nhập tên món ăn cần tìm ...")) {
-            cardLayout.show(pCards, "ALL");
+        if (kw.equalsIgnoreCase("Nhập tên món ăn cần tìm ...")) {
+            kw = "";
+        }
+
+        if (kw.isEmpty()) {
+            if (currentCategory == null) {
+                showOrLoadCategory("ALL");
+            } else {
+                showOrLoadCategory(currentCategory);
+            }
             return;
         }
 
-        // Lấy kết quả
-        List<MonAn> result = monDAO.timMonTheoTen(kw);
-
-        // ❗ Nếu không có kết quả → báo
-        if (result == null || result.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Không tìm thấy món ăn nào!",
-                    "Thông báo",
-                    JOptionPane.INFORMATION_MESSAGE);
+        List<MonAn> all = cache.get("ALL");
+        if (all == null || all.isEmpty()) {
+            all = monDAO.getAllMonAn();
+            cache.put("ALL", all);
         }
 
-        // Xóa panel SEARCH cũ nếu có
-        for (Component c : pCards.getComponents()) {
-            if ("SEARCH".equals(c.getName())) {
-                pCards.remove(c);
-                break;
+        String keyword = kw.toLowerCase();
+        List<MonAn> result = new ArrayList<>();
+
+        for (MonAn mon : all) {
+            String tenMon = mon.getTenMon() == null ? "" : mon.getTenMon().toLowerCase();
+
+            boolean matchName = tenMon.contains(keyword);
+            boolean matchLoai = currentCategory == null
+                    || (mon.getMaLoaiMonAn() != null
+                    && currentCategory.equals(mon.getMaLoaiMonAn().getMaLoaiMonAn()));
+
+            if (matchName && matchLoai) {
+                result.add(mon);
             }
         }
 
-        // Hiển thị kết quả (kể cả rỗng)
-        JScrollPane scroll = buildGridScroll(result, "SEARCH");
-        pCards.add(scroll, "SEARCH");
+        showTempResult(result, "SEARCH", false);
+    }
+
+    private void locTheoGiaVaTen(boolean canShowError) {
+        String ten = txtSearch.getText().trim();
+        if (ten.equalsIgnoreCase("Nhập tên món ăn cần tìm ...")) {
+            ten = "";
+        }
+        ten = ten.toLowerCase();
+
+        double giaTu = 0;
+        double giaDen = Double.MAX_VALUE;
+
+        String rawTu = txtGiaTu.getText().trim().replaceAll("[^0-9]", "");
+        String rawDen = txtGiaDen.getText().trim().replaceAll("[^0-9]", "");
+
+        try {
+            if (!rawTu.isEmpty()) {
+                giaTu = Double.parseDouble(rawTu);
+            }
+            if (!rawDen.isEmpty()) {
+                giaDen = Double.parseDouble(rawDen);
+            }
+        } catch (NumberFormatException ex) {
+            if (canShowError) {
+                JOptionPane.showMessageDialog(this, "Giá không hợp lệ! Vui lòng nhập số.");
+            }
+            return;
+        }
+
+        if (!rawTu.isEmpty() && !rawDen.isEmpty() && giaDen < giaTu) {
+            if (canShowError) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Giá đến không được nhỏ hơn giá từ!",
+                        "Lỗi nhập liệu",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                txtGiaDen.requestFocus();
+                txtGiaDen.selectAll();
+            }
+            return;
+        }
+
+        List<MonAn> all = cache.get("ALL");
+        if (all == null || all.isEmpty()) {
+            all = monDAO.getAllMonAn();
+            cache.put("ALL", all);
+        }
+
+        List<MonAn> result = new ArrayList<>();
+
+        for (MonAn mon : all) {
+            String tenMon = mon.getTenMon() == null ? "" : mon.getTenMon().toLowerCase();
+
+            boolean matchTen = ten.isEmpty() || tenMon.contains(ten);
+            boolean matchGia = mon.getDonGia() >= giaTu && mon.getDonGia() <= giaDen;
+
+            boolean matchLoai = currentCategory == null
+                    || (mon.getMaLoaiMonAn() != null
+                    && currentCategory.equals(mon.getMaLoaiMonAn().getMaLoaiMonAn()));
+
+            if (matchTen && matchGia && matchLoai) {
+                result.add(mon);
+            }
+        }
+
+        showTempResult(result, "FILTER", canShowError);
+    }
+
+    private void showTempResult(List<MonAn> result, String key, boolean showEmptyMessage) {
+        removeCard(key);
+
+        JScrollPane scroll = buildGridScroll(result, key);
+        pCards.add(scroll, key);
         pCards.revalidate();
         pCards.repaint();
-        cardLayout.show(pCards, "SEARCH");
+
+        cardLayout.show(pCards, key);
+
+        selectedCard = null;
+        selectedMon = null;
+
+        if (showEmptyMessage && result.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Không tìm thấy món ăn phù hợp.",
+                    "Kết quả",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        }
+    }
+
+    private void removeCard(String key) {
+        for (Component c : pCards.getComponents()) {
+            if (key.equals(c.getName())) {
+                pCards.remove(c);
+                return;
+            }
+        }
     }
 
     private void refreshAll() {
@@ -718,56 +943,287 @@ public class ThucDon_GUI extends JFrame {
         txtSearch.setForeground(Color.GRAY);
         txtGiaTu.setText("");
         txtGiaDen.setText("");
-        selectedMon  = null;
+
+        selectedMon = null;
         selectedCard = null;
+        currentCategory = null;
 
-        List<MonAn> all = monDAO.getAllMonAn();
-        cache.put("ALL", all);
+        cache.clear();
+        pCards.removeAll();
 
-        for (Component c : pCards.getComponents())
-            if ("FILTER".equals(c.getName())) { pCards.remove(c); break; }
+        pCards.add(makeLoadingPanel("Đang tải dữ liệu..."), "LOADING");
+        cardLayout.show(pCards, "LOADING");
 
-        JScrollPane scroll = buildGridScroll(all, "ALL");
-        pCards.add(scroll, "ALL");
+        buildTabs();
+        loadAllFirstTime();
+
         pCards.revalidate();
         pCards.repaint();
-        cardLayout.show(pCards, "ALL");
     }
 
     private JPanel makeLoadingPanel(String msg) {
         JPanel p = new JPanel(new BorderLayout());
-        p.setBackground(C_BG);
         p.setName("LOADING");
-        JLabel l = new JLabel(msg, SwingConstants.CENTER);
-        l.setFont(new Font("Times New Roman", Font.ITALIC, 20));
-        l.setForeground(new Color(150, 140, 120));
-        p.add(l, BorderLayout.CENTER);
+        p.setBackground(C_BG);
+
+        JLabel lbl = new JLabel(msg, SwingConstants.CENTER);
+        lbl.setFont(new Font("Times New Roman", Font.ITALIC, sc(20)));
+        lbl.setForeground(C_MUTED);
+
+        p.add(lbl, BorderLayout.CENTER);
         return p;
     }
 
-    private void setActiveTab(JButton btn) {
-        for (Component c : pTabBar.getComponents()) {
-            if (c instanceof JButton) {
-                c.setBackground(C_TAB_BAR);
-                ((JButton) c).setForeground(Color.BLACK);
-                ((JButton) c).setFont(new Font("Times New Roman", Font.PLAIN, 16));
+    private void loadImgAsync(JLabel lbl, String path, int w, int h) {
+        new SwingWorker<ImageIcon, Void>() {
+            @Override
+            protected ImageIcon doInBackground() {
+                try {
+
+
+                    if (path == null || path.trim().isEmpty()) {
+                        return null;
+                    }
+
+                    String name = path.trim();
+
+                    if (name.contains(".")) {
+                        name = name.substring(0, name.lastIndexOf("."));
+                    }
+
+                    String baseDir = System.getProperty("user.dir") + File.separator + "img";
+                    String[] exts = {".png", ".jpg", ".jpeg"};
+
+                    for (String ext : exts) {
+                        File file = new File(baseDir + File.separator + name + ext);
+
+
+                        if (file.exists()) {
+                            Image img = new ImageIcon(file.getAbsolutePath())
+                                    .getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+                            return new ImageIcon(img);
+                        }
+                    }
+
+
+
+                    return null;
+                } catch (Exception e) {
+                    return null;
+                }
+
             }
+            @Override
+            protected void done() {
+                try {
+
+
+                    ImageIcon icon = get();
+
+                    if (icon != null) {
+                        lbl.setIcon(icon);
+                        lbl.setText("");
+                    } else {
+                        lbl.setIcon(null);
+                        lbl.setText("Không có ảnh");
+                    }
+                } catch (Exception e) {
+                    lbl.setIcon(null);
+                    lbl.setText("Lỗi ảnh");
+                }
+
+            }
+        }.execute();
+    }
+
+
+
+    private ImageIcon loadIcon(String path, int w, int h) {
+        try {
+            ImageIcon icon = new ImageIcon(path);
+            if (icon.getIconWidth() <= 0) {
+                return null;
+            }
+            Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            return new ImageIcon(img);
+        } catch (Exception e) {
+            return null;
         }
-        btn.setBackground(C_TAB_ACT);
-        btn.setFont(new Font("Times New Roman", Font.BOLD, 16));
-        activeTabBtn = btn;
+
     }
 
     private String truncate(String s, int max) {
-        return (s != null && s.length() > max) ? s.substring(0, max) + "..." : s;
+        if (s == null) {
+            return "";
+        }
+        return s.length() > max ? s.substring(0, max) + "..." : s;
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {}
-            new ThucDon_GUI().setVisible(true);
+
+
+    private String safeHtml(String s) {
+        if (s == null) {
+            return "";
+        }
+
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+    }
+    private RoundedComboBox createGiaCombo() {
+        RoundedComboBox cbo = new RoundedComboBox();
+        cbo.setModel(new DefaultComboBoxModel<>(GOI_Y_GIA));
+        cbo.setEditable(true);
+        cbo.setFont(new Font("SansSerif", Font.PLAIN, sc(16)));
+        cbo.setPreferredSize(new Dimension(sc(125), sc(42)));
+        cbo.setOpaque(false);
+        cbo.setBorder(BorderFactory.createEmptyBorder());
+        cbo.setUI(new NoArrowComboUI());
+
+        JTextField editor = (JTextField) cbo.getEditor().getEditorComponent();
+        editor.setFont(new Font("SansSerif", Font.PLAIN, sc(16)));
+        editor.setBorder(new EmptyBorder(0, sc(10), 0, sc(10)));
+        editor.setBackground(Color.WHITE);
+        editor.setForeground(C_TEXT);
+        editor.setOpaque(false);
+        editor.setCaretColor(C_TEXT);
+        editor.setHorizontalAlignment(SwingConstants.LEFT);
+
+//        editor.addActionListener(e -> locTheoGiaVaTen());
+
+        editor.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+            	if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+            	    locTheoGiaVaTen(true); // Enter mới báo lỗi
+            	    return;
+            	}
+
+                if (e.getKeyCode() == KeyEvent.VK_UP
+                        || e.getKeyCode() == KeyEvent.VK_DOWN
+                        || e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    return;
+                }
+
+                SwingUtilities.invokeLater(() -> {
+                    locGoiYGia(cbo, editor.getText());
+                    cbo.showPopup();
+                    editor.requestFocus();
+                    editor.setCaretPosition(editor.getText().length());
+                    locTheoGiaVaTen(false); // gõ thường vẫn lọc nhưng không báo lỗi
+                });
+            }
+
         });
+
+        editor.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                SwingUtilities.invokeLater(() -> {
+                    locGoiYGia(cbo, editor.getText());
+                    cbo.showPopup();
+                    editor.requestFocus();
+                    editor.setCaretPosition(editor.getText().length());
+                });
+            }
+        });
+
+        return cbo;
+    }
+    private class RoundedPanel extends JPanel {
+        private final int arc;
+
+        public RoundedPanel(LayoutManager layout, int arc) {
+            super(layout);
+            this.arc = arc;
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            g2.setColor(Color.WHITE);
+            g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
+
+            g2.setColor(new Color(190, 185, 170));
+            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, arc, arc);
+
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    private class RoundedComboBox extends JComboBox<String> {
+        public RoundedComboBox() {
+            setOpaque(false);
+            setBorder(BorderFactory.createEmptyBorder());
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            g2.setColor(Color.WHITE);
+            g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, sc(14), sc(14));
+
+            g2.setColor(new Color(190, 185, 170));
+            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, sc(14), sc(14));
+
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    private class NoArrowComboUI extends BasicComboBoxUI {
+        @Override
+        protected JButton createArrowButton() {
+            JButton btn = new JButton() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setStroke(new BasicStroke(3f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    g2.setColor(new Color(120, 120, 120));
+
+                    int cx = getWidth() / 2;
+                    int cy = getHeight() / 2;
+
+                    g2.drawLine(cx - sc(7), cy - sc(4), cx, cy + sc(4));
+                    g2.drawLine(cx, cy + sc(4), cx + sc(7), cy - sc(4));
+
+                    g2.dispose();
+                }
+            };
+
+            btn.setPreferredSize(new Dimension(sc(38), sc(38)));
+            btn.setBorder(null);
+            btn.setOpaque(false);
+            btn.setContentAreaFilled(false);
+            btn.setFocusPainted(false);
+            return btn;
+        }
+
+        @Override
+        public void paintCurrentValueBackground(Graphics g, Rectangle bounds, boolean hasFocus) {
+        }
+    }
+    private void locGoiYGia(JComboBox<String> cbo, String text) {
+        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+
+        String keyword = text.trim();
+
+        for (String s : GOI_Y_GIA) {
+            if (keyword.isEmpty() || s.startsWith(keyword)) {
+                model.addElement(s);
+            }
+        }
+
+        cbo.setModel(model);
+        cbo.setSelectedItem(text);
     }
 }

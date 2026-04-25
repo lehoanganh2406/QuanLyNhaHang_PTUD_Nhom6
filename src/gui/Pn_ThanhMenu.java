@@ -38,6 +38,15 @@ public class Pn_ThanhMenu extends JPanel {
     private JPopupMenu currentPopupMenu;
 
     private final TaiKhoan taiKhoanDangNhap;
+    public interface Navigator {
+        void goTo(String pageName);
+    }
+
+    private Navigator navigator;
+
+    public void setNavigator(Navigator navigator) {
+        this.navigator = navigator;
+    }
 
     public Pn_ThanhMenu(TaiKhoan taiKhoanDangNhap) {
         this.taiKhoanDangNhap = taiKhoanDangNhap;
@@ -159,7 +168,7 @@ public class Pn_ThanhMenu extends JPanel {
         mnDanhMuc.addSubItem("Bàn", "Ban_GUI");
 
         MenuItemPanel mnXuLy = new MenuItemPanel("Xử lý", "img/mn_xuly.png");
-        mnXuLy.addSubItem("Order", "Order_GUI");
+        mnXuLy.addSubItem("Order", "Order_Ban_GUI");
         mnXuLy.addSubItem("Đặt bàn", "DatBan_GUI");
         mnXuLy.addSubItem("Hóa đơn", "HoaDon_GUI");
 
@@ -398,46 +407,16 @@ public class Pn_ThanhMenu extends JPanel {
                     "Hỗ trợ",
                     JOptionPane.INFORMATION_MESSAGE
             );
+            hideSubMenu();
             return;
         }
 
-        Window currentWindow = SwingUtilities.getWindowAncestor(this);
-        if (currentWindow instanceof JFrame) {
-            String currentClassName = currentWindow.getClass().getSimpleName();
-            if (currentClassName.equals(targetClassName)) {
-                hideSubMenu();
-                return;
-            }
-        }
+        hideSubMenu();
 
-        try {
-            JFrame nextFrame = createFrame(targetClassName);
-            if (nextFrame == null) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Không mở được trang " + targetClassName,
-                        "Lỗi điều hướng",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-
-            nextFrame.setVisible(true);
-
-            Window oldWindow = SwingUtilities.getWindowAncestor(this);
-            if (oldWindow != null) {
-                oldWindow.dispose();
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Không mở được trang " + targetClassName,
-                    "Lỗi điều hướng",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        } finally {
-            hideSubMenu();
+        if (navigator != null) {
+            navigator.goTo(targetClassName);
+        } else {
+            Toolkit.getDefaultToolkit().beep();
         }
     }
 

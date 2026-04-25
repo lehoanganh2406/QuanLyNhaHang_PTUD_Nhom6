@@ -1,8 +1,11 @@
 package gui;
 
 import javax.swing.*;
+
+
 import javax.swing.border.*;
 import javax.swing.plaf.basic.BasicComboBoxUI;
+
 import javax.swing.table.*;
 
 import connectDB.ConnectDB;
@@ -19,7 +22,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.sql.Connection;
 import java.util.List;
 
-public class TaiKhoan_GUI extends JPanel {
+public class TaiKhoan_GUI extends JFrame {
 
     private static final long serialVersionUID = 1L;
 
@@ -35,6 +38,8 @@ public class TaiKhoan_GUI extends JPanel {
     private static final Color CLR_BTN_CHPWD  = new Color(206, 147, 216);
     private static final Color CLR_TABLE_HDR  = new Color(200, 192, 175);
     private static final Color CLR_BORDER     = new Color(170, 155, 130);
+
+
 
     private static final double SCALE = calcScale();
 
@@ -66,12 +71,15 @@ public class TaiKhoan_GUI extends JPanel {
     }
 
     private JTextField txtMaDangNhap, txtTenDangNhap;
+
     private JPasswordField txtMatKhau;
     private JComboBox<String> cbVaiTro, cbNhanVien, cbTrangThai;
     private JLabel lblAnh;
 
     private JButton btnTogglePwd;
     private boolean isShowPassword = false;
+
+
 
     private JTable table;
     private DefaultTableModel tableModel;
@@ -84,10 +92,14 @@ public class TaiKhoan_GUI extends JPanel {
     private List<NhanVien> dsNV;
     private List<TaiKhoan> dsTK;
 
+	private TableCellRenderer headerRenderer;
+
+
     private static final Dimension FIELD_SIZE = new Dimension(sc(330), sc(45));
     public TaiKhoan_GUI(TaiKhoan tk) {
         setLayout(new BorderLayout());
         setBackground(CLR_PANEL_BG);
+
 
         add(buildTitlePanel(), BorderLayout.NORTH);
         add(buildCenterPanel(), BorderLayout.CENTER);
@@ -95,6 +107,8 @@ public class TaiKhoan_GUI extends JPanel {
         con = ConnectDB.getConnection();
         loadData();
     }
+
+
 
     public TaiKhoan_GUI() {
         this(null);
@@ -106,7 +120,10 @@ public class TaiKhoan_GUI extends JPanel {
         pnl.setBorder(new EmptyBorder(sc(16), sc(10), sc(16), sc(10)));
 
         JLabel lbl = new JLabel("QUẢN LÝ TÀI KHOẢN", SwingConstants.CENTER);
+
+
         lbl.setFont(f("SansSerif", Font.BOLD, 34));
+
         lbl.setForeground(CLR_HEADER_FG);
 
         pnl.add(lbl, BorderLayout.CENTER);
@@ -140,6 +157,8 @@ public class TaiKhoan_GUI extends JPanel {
         JPanel pnlFields = new JPanel(new GridBagLayout());
         pnlFields.setOpaque(false);
 
+
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(sc(6), sc(8), sc(6), sc(10));
         gbc.anchor = GridBagConstraints.WEST;
@@ -155,8 +174,11 @@ public class TaiKhoan_GUI extends JPanel {
         txtTenDangNhap = createTextField();
         txtTenDangNhap.setEditable(false);
 
+
+
         cbNhanVien = createRoundedComboBox(new String[]{});
         cbNhanVien.addItem("--Chọn nhân viên---");
+
 
         dsNV = nv_dao.getTenNhanVien();
         for (NhanVien nv : dsNV) cbNhanVien.addItem(nv.getHoTen());
@@ -173,6 +195,8 @@ public class TaiKhoan_GUI extends JPanel {
         addRow(pnlFields, gbc, 1, "Tên đăng nhập", txtTenDangNhap, "Nhân viên", cbNhanVien);
 
         txtMatKhau = new JPasswordField();
+
+
         txtMatKhau.setEchoChar('•');
         txtMatKhau.setFont(f("SansSerif", Font.PLAIN, 14));
         txtMatKhau.setBorder(new EmptyBorder(0, sc(12), 0, sc(4)));
@@ -183,12 +207,15 @@ public class TaiKhoan_GUI extends JPanel {
         btnTogglePwd.setBorder(null);
         btnTogglePwd.setContentAreaFilled(false);
         btnTogglePwd.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+
         btnTogglePwd.setPreferredSize(new Dimension(sc(38), sc(36)));
 
         JPanel pnlPwd = new RoundedFieldPanel(new BorderLayout());
         pnlPwd.setPreferredSize(FIELD_SIZE);
         pnlPwd.setMinimumSize(FIELD_SIZE);
         pnlPwd.add(txtMatKhau, BorderLayout.CENTER);
+
         pnlPwd.add(btnTogglePwd, BorderLayout.EAST);
 
         btnTogglePwd.addActionListener(e -> {
@@ -202,14 +229,19 @@ public class TaiKhoan_GUI extends JPanel {
             isShowPassword = !isShowPassword;
         });
 
+
+
         cbTrangThai = createRoundedComboBox(new String[]{"Hoạt động", "Khóa"});
         addRow(pnlFields, gbc, 2, "Mật khẩu", pnlPwd, "Trạng thái", cbTrangThai);
 
         outer.add(pnlFields, BorderLayout.CENTER);
         outer.add(buildImagePanel(), BorderLayout.EAST);
 
+
         return outer;
     }
+
+
 
     private JPanel buildImagePanel() {
         JPanel pnlAnh = new JPanel();
@@ -263,11 +295,15 @@ public class TaiKhoan_GUI extends JPanel {
 
         gbc.gridx = 3;
         gbc.weightx = 0.50;
+
+
         gbc.fill = GridBagConstraints.HORIZONTAL;
         p.add(c2, gbc);
     }
 
     private JPanel buildButtonPanel() {
+
+
         JPanel pnl = new JPanel(new FlowLayout(FlowLayout.LEFT, sc(20), 0));
         pnl.setBackground(CLR_PANEL_BG);
         pnl.setBorder(new EmptyBorder(sc(4), sc(22), sc(4), 0));
@@ -279,6 +315,16 @@ public class TaiKhoan_GUI extends JPanel {
         btnXoa       = createFuncButton("Xóa", CLR_BTN_DELETE, null);
         btnCapNhatMK = createFuncButton("Cập nhật mật khẩu", CLR_BTN_CHPWD, null);
 
+        // 👉 fix kích thước tối thiểu (QUAN TRỌNG)
+        Dimension btnSize = new Dimension(150, 40);
+
+        btnThem.setPreferredSize(btnSize);
+        btnCapNhat.setPreferredSize(btnSize);
+        btnLamMoi.setPreferredSize(btnSize);
+        btnTraCuu.setPreferredSize(btnSize);
+        btnXoa.setPreferredSize(btnSize);
+        btnCapNhatMK.setPreferredSize(new Dimension(200, 40)); // nút dài hơn
+
         pnl.add(btnThem);
         pnl.add(btnCapNhat);
         pnl.add(btnLamMoi);
@@ -286,11 +332,14 @@ public class TaiKhoan_GUI extends JPanel {
         pnl.add(btnXoa);
         pnl.add(btnCapNhatMK);
 
+
+
         btnThem.addActionListener(e -> themTaiKhoan());
         btnCapNhat.addActionListener(e -> capNhatTaiKhoan());
         btnLamMoi.addActionListener(e -> lamMoi());
         btnTraCuu.addActionListener(e -> traCuu());
         btnXoa.addActionListener(e -> xoaTaiKhoan());
+
         btnCapNhatMK.addActionListener(e -> moDoiMatKhau());
 
         return pnl;
@@ -310,13 +359,17 @@ public class TaiKhoan_GUI extends JPanel {
         };
 
         table = new JTable(tableModel);
+
+
         table.setFont(f("SansSerif", Font.PLAIN, 14));
         table.setRowHeight(sc(32));
+
         table.setShowGrid(true);
         table.setGridColor(CLR_BORDER);
         table.setSelectionBackground(new Color(190, 220, 245));
         table.setSelectionForeground(Color.BLACK);
         table.setFillsViewportHeight(true);
+
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         JTableHeader header = table.getTableHeader();
@@ -324,7 +377,14 @@ public class TaiKhoan_GUI extends JPanel {
         header.setBackground(CLR_TABLE_HDR);
         header.setForeground(new Color(50, 40, 30));
         header.setPreferredSize(new Dimension(0, sc(34)));
+
         header.setReorderingAllowed(false);
+        header.setPreferredSize(new Dimension(100, 38));
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
+        }
+
+
 
         int[] widths = {130, 160, 120, 150, 220, 120};
         for (int i = 0; i < widths.length; i++) {
@@ -361,6 +421,7 @@ public class TaiKhoan_GUI extends JPanel {
             }
         });
 
+
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) loadRowToForm();
         });
@@ -376,13 +437,14 @@ public class TaiKhoan_GUI extends JPanel {
             JOptionPane.showMessageDialog(this, "Phải chọn nhân viên!");
             return;
         }
-
         String tenDangNhap = txtTenDangNhap.getText().trim();
-
         if (tenDangNhap.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Tên đăng nhập không được rỗng!");
             return;
         }
+
+
+
 
         for (TaiKhoan tk : dsTK) {
             if (tk.getTenDangNhap().equalsIgnoreCase(tenDangNhap)) {
@@ -392,26 +454,22 @@ public class TaiKhoan_GUI extends JPanel {
             }
         }
 
+
+
+
         String matKhau = new String(txtMatKhau.getPassword()).trim();
         if (matKhau.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Phải nhập mật khẩu!");
             return;
         }
-
-        int index = cbNhanVien.getSelectedIndex() - 1;
-        NhanVien nv = dsNV.get(index);
-
+        NhanVien nv = dsNV.get(cbNhanVien.getSelectedIndex() - 1);
         String maTK = taoMaTK();
-
         TaiKhoan tk = new TaiKhoan(
-                maTK,
-                tenDangNhap,
-                matKhau,
+                maTK, tenDangNhap, matKhau,
                 cbVaiTro.getSelectedItem().toString(),
                 cbTrangThai.getSelectedItem().toString().equals("Hoạt động"),
                 nv
         );
-
         if (tk_dao.themTaiKhoan(tk)) {
             JOptionPane.showMessageDialog(this, "Thêm thành công!");
             loadData();
@@ -424,27 +482,25 @@ public class TaiKhoan_GUI extends JPanel {
 
     private void capNhatTaiKhoan() {
         int row = table.getSelectedRow();
-
         if (row < 0) {
             JOptionPane.showMessageDialog(this, "Chọn một dòng để cập nhật!");
             return;
         }
-
         try {
             TaiKhoan tkCu = dsTK.get(row);
+
+
 
             String vaiTro = cbVaiTro.getSelectedItem().toString();
             boolean trangThai = cbTrangThai.getSelectedItem().toString().equals("Hoạt động");
 
+
             TaiKhoan tkMoi = new TaiKhoan(
-                    tkCu.getMaTaiKhoan(),
-                    tkCu.getTenDangNhap(),
-                    tkCu.getMatKhau(),
-                    vaiTro,
-                    trangThai,
+                    tkCu.getMaTaiKhoan(), tkCu.getTenDangNhap(), tkCu.getMatKhau(),
+                    cbVaiTro.getSelectedItem().toString(),
+                    cbTrangThai.getSelectedItem().toString().equals("Hoạt động"),
                     tkCu.getMaNV()
             );
-
             if (tk_dao.capNhatTaiKhoan(tkMoi)) {
                 loadData();
                 JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
@@ -452,7 +508,6 @@ public class TaiKhoan_GUI extends JPanel {
             } else {
                 JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -460,11 +515,12 @@ public class TaiKhoan_GUI extends JPanel {
 
     private void xoaTaiKhoan() {
         int row = table.getSelectedRow();
-
         if (row < 0) {
             JOptionPane.showMessageDialog(this, "Chọn tài khoản cần xóa!");
             return;
         }
+
+
 
         TaiKhoan tk = dsTK.get(row);
         String maTK = tk.getMaTaiKhoan();
@@ -488,6 +544,7 @@ public class TaiKhoan_GUI extends JPanel {
         if (confirm != JOptionPane.YES_OPTION) return;
 
         if (tk_dao.xoaTaiKhoan(maTK)) {
+
             loadData();
             JOptionPane.showMessageDialog(this, "Xóa thành công!");
             lamMoi();
@@ -498,11 +555,12 @@ public class TaiKhoan_GUI extends JPanel {
 
     private void moDoiMatKhau() {
         int row = table.getSelectedRow();
-
         if (row < 0) {
             JOptionPane.showMessageDialog(this, "Chọn tài khoản cần đổi mật khẩu!");
             return;
         }
+
+
 
         TaiKhoan tk = dsTK.get(row);
         String maNV = tk.getMaNV().getMaNV();
@@ -515,6 +573,7 @@ public class TaiKhoan_GUI extends JPanel {
             dialog.setVisible(true);
         }
 
+
         loadData();
     }
 
@@ -522,21 +581,22 @@ public class TaiKhoan_GUI extends JPanel {
         txtMaDangNhap.setText("");
         txtTenDangNhap.setText("");
         txtMatKhau.setText("");
-
         txtTenDangNhap.setEnabled(true);
         txtMatKhau.setEnabled(true);
         cbNhanVien.setEnabled(true);
-
         cbVaiTro.setSelectedIndex(0);
+        cbVaiTro.setEnabled(true);
         cbNhanVien.setSelectedIndex(0);
         cbTrangThai.setSelectedIndex(0);
-
         lblAnh.setIcon(null);
         lblAnh.setText("Chưa có ảnh");
         table.clearSelection();
+        loadData();
     }
 
     private void traCuu() {
+
+
         String keyword = JOptionPane.showInputDialog(
                 this,
                 "Nhập từ khóa tìm kiếm:",
@@ -574,18 +634,19 @@ public class TaiKhoan_GUI extends JPanel {
         txtTenDangNhap.setEnabled(false);
         txtMatKhau.setEnabled(false);
         cbNhanVien.setEnabled(false);
+        cbVaiTro.setEnabled(false);
 
         cbNhanVien.setSelectedItem(tableModel.getValueAt(row, 4).toString());
         cbTrangThai.setSelectedItem(tableModel.getValueAt(row, 5).toString());
 
         TaiKhoan tk = dsTK.get(row);
-        NhanVien nv = tk.getMaNV();
-
-        loadAnhNhanVien(nv.getAnhNhanVien());
+        loadAnhNhanVien(tk.getMaNV().getAnhNhanVien());
     }
 
     private void loadData() {
         dsTK = tk_dao.getAllTaiKhoan();
+
+
 
         tableModel.setRowCount(0);
 
@@ -596,10 +657,14 @@ public class TaiKhoan_GUI extends JPanel {
                     tk.getPhanQuyen(),
                     tk.getMatKhau(),
                     tk.getMaNV().getHoTen(),
+
+
                     tk.isTrangThai() ? "Hoạt động" : "Khóa"
             });
         }
     }
+
+
 
     private JLabel createLabel(String text) {
         JLabel lbl = new JLabel(text);
@@ -634,11 +699,15 @@ public class TaiKhoan_GUI extends JPanel {
                 lblAnh.setIcon(null);
                 lblAnh.setText("Không tìm thấy ảnh");
             }
+
+
         } else {
             lblAnh.setIcon(null);
             lblAnh.setText("Chưa có ảnh");
         }
     }
+
+
 
     private JTextField createTextField() {
         JTextField tf = new JTextField() {
@@ -672,6 +741,7 @@ public class TaiKhoan_GUI extends JPanel {
         tf.setOpaque(false);
         tf.setBorder(new EmptyBorder(0, sc(12), 0, sc(12)));
 
+
         return tf;
     }
     private JComboBox<String> createRoundedComboBox(String[] items) {
@@ -681,13 +751,17 @@ public class TaiKhoan_GUI extends JPanel {
     }
 
     private void styleComboBox(JComboBox<?> cb) {
+
+
         cb.setFont(f("SansSerif", Font.PLAIN, 15));
         cb.setForeground(Color.BLACK);
-        cb.setFocusable(false);
 
+        cb.setFocusable(false);
         cb.setPreferredSize(FIELD_SIZE);
         cb.setMinimumSize(FIELD_SIZE);
         cb.setMaximumSize(new Dimension(Integer.MAX_VALUE, FIELD_SIZE.height));
+
+
 
         cb.setOpaque(false);
         cb.setBorder(new EmptyBorder(0, sc(14), 0, sc(8)));
@@ -695,11 +769,11 @@ public class TaiKhoan_GUI extends JPanel {
 
         cb.setRenderer(new DefaultListCellRenderer() {
             @Override
-            public Component getListCellRendererComponent(
-                    JList<?> list, Object value, int index,
-                    boolean isSelected, boolean cellHasFocus) {
-
+            public Component getListCellRendererComponent(JList<?> list, Object value,
+                    int index, boolean isSelected, boolean cellHasFocus) {
                 JLabel lbl = (JLabel) super.getListCellRendererComponent(
+
+
                         list, value, index, isSelected, cellHasFocus);
 
                 lbl.setFont(new Font("SansSerif", Font.PLAIN, 16));
@@ -718,6 +792,8 @@ public class TaiKhoan_GUI extends JPanel {
                 } else {
                     lbl.setOpaque(true);  // danh sách xổ xuống
                 }
+
+
 
                 return lbl;
             }
@@ -743,32 +819,49 @@ public class TaiKhoan_GUI extends JPanel {
                 Graphics2D g2 = (Graphics2D) g.create();
 
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
                 g2.setColor(getModel().isPressed() ? bg.darker() : bg);
+
+
                 g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), sc(12), sc(12)));
+
 
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
 
+
+
         int w = text.length() > 12 ? 210 : 135;
         btn.setPreferredSize(new Dimension(sc(w), sc(42)));
         btn.setForeground(new Color(30, 30, 30));
         btn.setFont(f("SansSerif", Font.BOLD, 14));
+
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
+        btn.setOpaque(false);
+
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+
         btn.setMargin(new Insets(sc(4), sc(10), sc(4), sc(10)));
+
 
         if (iconPath != null) {
             btn.setIcon(loadIcon(iconPath, sc(18), sc(18)));
             btn.setHorizontalTextPosition(SwingConstants.RIGHT);
+
+
             btn.setIconTextGap(sc(7));
+
         }
 
         return btn;
     }
+
+
 
     private class RoundedFieldPanel extends JPanel {
         public RoundedFieldPanel(LayoutManager layout) {

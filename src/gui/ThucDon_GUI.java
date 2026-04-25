@@ -1,5 +1,6 @@
 package gui;
 
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
@@ -24,6 +25,7 @@ import entity.LoaiMonAn;
 import entity.MonAn;
 
 public class ThucDon_GUI extends JPanel {
+
 
     private static final long serialVersionUID = 1L;
 
@@ -76,6 +78,7 @@ public class ThucDon_GUI extends JPanel {
     private JButton btnLoc;
    
 
+
     private Timer searchTimer;
 
     private static final double UI_SCALE = calcUiScale();
@@ -123,6 +126,7 @@ public class ThucDon_GUI extends JPanel {
         searchTimer = new Timer(280, e -> doSearch());
         searchTimer.setRepeats(false);
 
+
         loadAllFirstTime();
     }
 
@@ -134,6 +138,7 @@ public class ThucDon_GUI extends JPanel {
         pCards.add(scroll, "ALL");
         cardLayout.show(pCards, "ALL");
     }
+
 
     private JPanel buildTopBar() {
         JPanel root = new JPanel(new BorderLayout(sc(18), 0));
@@ -174,6 +179,7 @@ public class ThucDon_GUI extends JPanel {
         btnSearch.setContentAreaFilled(false);
         btnSearch.setBorderPainted(false);
         btnSearch.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
         btnSearch.addActionListener(e -> doSearch());
 
         searchWrap.add(txtSearch, BorderLayout.CENTER);
@@ -210,6 +216,7 @@ public class ThucDon_GUI extends JPanel {
 
         JLabel lblTu = new JLabel("Từ");
         lblTu.setFont(new Font("SansSerif", Font.BOLD, sc(17)));
+
 
         JLabel lblDen = new JLabel("Đến");
         lblDen.setFont(new Font("SansSerif", Font.BOLD, sc(17)));
@@ -248,6 +255,7 @@ public class ThucDon_GUI extends JPanel {
         return root;
     }
 
+
     private void initTopEvents() {
         txtSearch.addActionListener(e -> doSearch());
 
@@ -273,8 +281,8 @@ public class ThucDon_GUI extends JPanel {
         btnThem.addActionListener(e -> {
             JFrame parentFrame = getParentFrame();
             String maMoi = monDAO.getNextMaMon();
-
             XuLyMonAn_DigLog dlg = new XuLyMonAn_DigLog(
+
                     parentFrame,
                     XuLyMonAn_DigLog.Mode.THEM,
                     null,
@@ -283,11 +291,9 @@ public class ThucDon_GUI extends JPanel {
 
             dlg.setLocationRelativeTo(parentFrame);
             dlg.setVisible(true);
-
-            if (dlg.isSaved()) {
-                refreshAll();
-            }
+            if (dlg.isSaved()) refreshAll();
         });
+
 
         btnCapNhat.addActionListener(e -> {
             if (selectedMon == null) {
@@ -314,14 +320,12 @@ public class ThucDon_GUI extends JPanel {
 
         btnChiTiet.addActionListener(e -> {
             if (selectedMon == null) {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(this,
                         "Vui lòng chọn một món ăn trước!",
-                        "Thông báo",
-                        JOptionPane.WARNING_MESSAGE
-                );
+                        "Thông báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
+
 
             JFrame parentFrame = getParentFrame();
 
@@ -432,11 +436,13 @@ public class ThucDon_GUI extends JPanel {
         pTabBar = new JPanel(new FlowLayout(FlowLayout.LEFT, sc(8), sc(6)));
         pTabBar.setBackground(C_TAB_BAR);
         pTabBar.setBorder(BorderFactory.createCompoundBorder(
+
                 BorderFactory.createMatteBorder(0, 0, 1, 0, C_BORDER),
                 new EmptyBorder(0, sc(18), 0, sc(18))
         ));
 
         buildTabs();
+
 
         pCards = new JPanel(cardLayout);
         pCards.setBackground(C_BG);
@@ -462,25 +468,25 @@ public class ThucDon_GUI extends JPanel {
         pTabBar.add(btnAll);
         activeTabBtn = btnAll;
 
+
         LoaiMonAn_DAO loaiDAO = new LoaiMonAn_DAO();
         List<LoaiMonAn> dsLoai = loaiDAO.getAllLoaiMonAn();
 
         for (LoaiMonAn loai : dsLoai) {
             JButton btn = createTabButton(loai.getTenLoaiMonAn(), false);
             String maLoai = loai.getMaLoaiMonAn();
-
             btn.addActionListener(e -> {
                 currentCategory = maLoai;
                 setActiveTab(btn);
                 showOrLoadCategory(maLoai);
             });
-
             pTabBar.add(btn);
         }
 
         pTabBar.revalidate();
         pTabBar.repaint();
     }
+
 
     private JButton createTabButton(String text, boolean active) {
         JButton btn = new JButton(text);
@@ -568,6 +574,7 @@ public class ThucDon_GUI extends JPanel {
 
     private JScrollPane buildGridScroll(List<MonAn> list, String key) {
         JPanel grid = new JPanel(new FlowLayout(FlowLayout.LEFT, GAP, GAP)) {
+
             private static final long serialVersionUID = 1L;
 
             @Override
@@ -591,6 +598,7 @@ public class ThucDon_GUI extends JPanel {
         };
 
         grid.setName(key);
+
         grid.setBackground(C_BG);
         grid.setBorder(new EmptyBorder(PAD, PAD, PAD, PAD));
 
@@ -621,6 +629,7 @@ public class ThucDon_GUI extends JPanel {
     }
 
     private JPanel buildCard(MonAn mon) {
+
         boolean stop = !mon.isTrangThai();
 
         JPanel card = new JPanel(new BorderLayout());
@@ -651,6 +660,7 @@ public class ThucDon_GUI extends JPanel {
         info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
         info.setBorder(new EmptyBorder(8, 6, 4, 6));
 
+
         JLabel lblName = new JLabel(
                 "<html><div style='text-align:center; width:190px;'><b>"
                         + safeHtml(mon.getTenMon()) +
@@ -663,6 +673,8 @@ public class ThucDon_GUI extends JPanel {
         lblName.setHorizontalAlignment(SwingConstants.CENTER);
         lblName.setMaximumSize(new Dimension(Integer.MAX_VALUE, sc(42)));
 
+
+
         String desc = mon.getMoTa() == null ? "" : mon.getMoTa().trim();
 
         JLabel lblDesc = new JLabel(
@@ -673,9 +685,13 @@ public class ThucDon_GUI extends JPanel {
         );
         lblDesc.setFont(new Font("SansSerif", Font.ITALIC, sc(12)));
         lblDesc.setForeground(stop ? Color.WHITE : C_MUTED);
+
+
         lblDesc.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblDesc.setHorizontalAlignment(SwingConstants.CENTER);
         lblDesc.setMaximumSize(new Dimension(Integer.MAX_VALUE, sc(28)));
+
+
 
         JLabel lblPrice = new JLabel(
                 String.format("%,.0f", mon.getDonGia()).replace(",", ".") + " VNĐ",
@@ -683,15 +699,21 @@ public class ThucDon_GUI extends JPanel {
         );
         lblPrice.setFont(new Font("Times New Roman", Font.BOLD, sc(17)));
         lblPrice.setForeground(stop ? Color.WHITE : new Color(90, 65, 35));
+
+
         lblPrice.setAlignmentX(Component.CENTER_ALIGNMENT);
         lblPrice.setHorizontalAlignment(SwingConstants.CENTER);
         lblPrice.setMaximumSize(new Dimension(Integer.MAX_VALUE, sc(28)));
+
+
 
         info.add(lblName);
         info.add(Box.createVerticalStrut(4));
         info.add(lblDesc);
         info.add(Box.createVerticalStrut(6));
         info.add(lblPrice);
+
+
 
         card.add(imgWrap, BorderLayout.CENTER);
         card.add(info, BorderLayout.SOUTH);
@@ -724,15 +746,18 @@ public class ThucDon_GUI extends JPanel {
                 if (selectedCard != card) {
                     resetCardBorder(card);
                 }
+
+
             }
         });
-
         return card;
     }
     
     private void select(JPanel card, MonAn mon) {
         selectedCard = card;
-        selectedMon = mon;
+        selectedMon  = mon;
+
+
 
         JPanel imgWrap = (JPanel) card.getClientProperty("imgWrap");
         JPanel info = (JPanel) card.getClientProperty("info");
@@ -749,6 +774,8 @@ public class ThucDon_GUI extends JPanel {
     }
 
     private void deselect(JPanel card) {
+
+
         MonAn mon = (MonAn) card.getClientProperty("mon");
         boolean stop = mon != null && !mon.isTrangThai();
 
@@ -760,6 +787,7 @@ public class ThucDon_GUI extends JPanel {
         info.setBackground(stop ? C_STOP : C_CARD);
 
         resetCardBorder(card);
+
         card.repaint();
     }
 
@@ -951,6 +979,8 @@ public class ThucDon_GUI extends JPanel {
             @Override
             protected ImageIcon doInBackground() {
                 try {
+
+
                     if (path == null || path.trim().isEmpty()) {
                         return null;
                     }
@@ -967,22 +997,27 @@ public class ThucDon_GUI extends JPanel {
                     for (String ext : exts) {
                         File file = new File(baseDir + File.separator + name + ext);
 
+
                         if (file.exists()) {
-                            ImageIcon icon = new ImageIcon(file.getAbsolutePath());
-                            Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+                            Image img = new ImageIcon(file.getAbsolutePath())
+                                    .getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
                             return new ImageIcon(img);
                         }
                     }
+
+
 
                     return null;
                 } catch (Exception e) {
                     return null;
                 }
-            }
 
+            }
             @Override
             protected void done() {
                 try {
+
+
                     ImageIcon icon = get();
 
                     if (icon != null) {
@@ -996,9 +1031,12 @@ public class ThucDon_GUI extends JPanel {
                     lbl.setIcon(null);
                     lbl.setText("Lỗi ảnh");
                 }
+
             }
         }.execute();
     }
+
+
 
     private ImageIcon loadIcon(String path, int w, int h) {
         try {
@@ -1011,6 +1049,7 @@ public class ThucDon_GUI extends JPanel {
         } catch (Exception e) {
             return null;
         }
+
     }
 
     private String truncate(String s, int max) {
@@ -1019,6 +1058,8 @@ public class ThucDon_GUI extends JPanel {
         }
         return s.length() > max ? s.substring(0, max) + "..." : s;
     }
+
+
 
     private String safeHtml(String s) {
         if (s == null) {
@@ -1072,6 +1113,7 @@ public class ThucDon_GUI extends JPanel {
                     locTheoGiaVaTen(false); // gõ thường vẫn lọc nhưng không báo lỗi
                 });
             }
+
         });
 
         editor.addMouseListener(new MouseAdapter() {

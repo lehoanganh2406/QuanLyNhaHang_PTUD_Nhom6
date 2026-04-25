@@ -20,12 +20,15 @@ import java.sql.Connection;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-public class NhanVien_GUI extends JPanel {
+public class NhanVien_GUI extends JFrame {
 
     private static final long serialVersionUID = 1L;
 
     private static final Color CLR_HEADER_BG = new Color(74, 55, 40);
     private static final Color CLR_HEADER_FG = Color.WHITE;
+
+
+
     private static final Color CLR_FORM_BG = new Color(250, 248, 242);
     private static final Color CLR_PANEL_BG = new Color(242, 238, 225);
     private static final Color CLR_BTN_ADD = new Color(102, 187, 106);
@@ -36,6 +39,7 @@ public class NhanVien_GUI extends JPanel {
     private static final Color CLR_BORDER = new Color(175, 160, 135);
     
     private static final Dimension FIELD_SIZE = new Dimension(280, 38);
+
 
     private JTextField txtMaNV, txtHoTen, txtEmail, txtSDT, txtCCCD, txtLyDoNghi;
     private JDateChooser txtNgaySinh;
@@ -54,6 +58,8 @@ public class NhanVien_GUI extends JPanel {
     private String duongDanAnh = "";
     private List<NhanVien> dsNV;
 
+
+
     public NhanVien_GUI(TaiKhoan tk) {
         this.taiKhoanDangNhap = tk;
 
@@ -63,10 +69,13 @@ public class NhanVien_GUI extends JPanel {
         add(buildTitlePanel(), BorderLayout.NORTH);
         add(buildCenterPanel(), BorderLayout.CENTER);
 
+
         con = ConnectDB.getConnection();
         loadData();
         txtMaNV.setText(nv_dao.getNextMaNV());
     }
+
+
 
     public NhanVien_GUI() {
         this(null);
@@ -79,6 +88,7 @@ public class NhanVien_GUI extends JPanel {
 
         JLabel lbl = new JLabel("QUẢN LÝ NHÂN VIÊN", SwingConstants.CENTER);
         lbl.setFont(new Font("SansSerif", Font.BOLD, 34));
+
         lbl.setForeground(CLR_HEADER_FG);
 
         pnl.add(lbl, BorderLayout.CENTER);
@@ -92,10 +102,13 @@ public class NhanVien_GUI extends JPanel {
 
         JPanel topArea = new JPanel(new BorderLayout(0, 8));
         topArea.setOpaque(false);
+
+
         topArea.add(buildFormPanel(), BorderLayout.CENTER);
         topArea.add(buildButtonPanel(), BorderLayout.SOUTH);
 
-        pnl.add(topArea, BorderLayout.NORTH);
+
+        pnl.add(topArea,           BorderLayout.NORTH);
         pnl.add(buildTablePanel(), BorderLayout.CENTER);
 
         return pnl;
@@ -115,7 +128,7 @@ public class NhanVien_GUI extends JPanel {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(7, 8, 7, 8);
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.fill   = GridBagConstraints.HORIZONTAL;
 
         txtMaNV = createTextField();
         txtMaNV.setEnabled(false);
@@ -129,12 +142,17 @@ public class NhanVien_GUI extends JPanel {
         txtEmail = createTextField();
         addRow(pnlFields, gbc, 1, "Họ tên", txtHoTen, "Email", txtEmail);
 
+
+
         txtNgaySinh = new RoundedDateChooser();
+
         txtSDT = createTextField();
         addRow(pnlFields, gbc, 2, "Ngày sinh", txtNgaySinh, "SĐT", txtSDT);
 
         rdNam = new JRadioButton("Nam");
-        rdNu = new JRadioButton("Nữ");
+        rdNu  = new JRadioButton("Nữ");
+        rdNam.setFont(new Font("Arial", Font.PLAIN, 15));
+        rdNu.setFont(new Font("Arial", Font.PLAIN, 15));
         rdNam.setOpaque(false);
         rdNu.setOpaque(false);
         rdNam.setFont(new Font("SansSerif", Font.PLAIN, 17));
@@ -154,9 +172,12 @@ public class NhanVien_GUI extends JPanel {
         styleComboBox(cbTrangThai);
         cbTrangThai.addActionListener(e -> xuLyTrangThai());
 
+
+
         addRow(pnlFields, gbc, 3, "Giới tính", pnlGT, "Trạng thái", cbTrangThai);
 
         txtCCCD = createTextField();
+
         txtLyDoNghi = createTextField();
         txtLyDoNghi.setEnabled(false);
 
@@ -165,10 +186,13 @@ public class NhanVien_GUI extends JPanel {
         outer.add(pnlFields, BorderLayout.CENTER);
         outer.add(buildImagePanel(), BorderLayout.EAST);
 
+
+
         return outer;
     }
 
     private JPanel buildImagePanel() {
+
         JPanel pnlAnh = new JPanel();
         pnlAnh.setLayout(new BoxLayout(pnlAnh, BoxLayout.Y_AXIS));
         pnlAnh.setOpaque(false);
@@ -176,7 +200,10 @@ public class NhanVien_GUI extends JPanel {
         pnlAnh.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 
         JLabel lblTitle = new JLabel("Ảnh nhân viên");
+
+
         lblTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
+
         lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         lblAnh = new JLabel("Chọn ảnh", SwingConstants.CENTER);
@@ -190,24 +217,25 @@ public class NhanVien_GUI extends JPanel {
         lblAnh.setBorder(BorderFactory.createLineBorder(CLR_BORDER, 1));
         lblAnh.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         lblAnh.setToolTipText("Nhấn để chọn ảnh");
-
         lblAnh.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {
-                chonAnh();
-            }
+            public void mouseClicked(MouseEvent e) { chonAnh(); }
         });
 
         pnlAnh.add(lblTitle);
         pnlAnh.add(Box.createVerticalStrut(10));
         pnlAnh.add(lblAnh);
 
+
+
         return pnlAnh;
+
     }
 
     private void addRow(JPanel p, GridBagConstraints gbc, int row,
                         String lbl1, JComponent comp1,
                         String lbl2, JComponent comp2) {
+
 
         gbc.gridy = row;
 
@@ -230,41 +258,43 @@ public class NhanVien_GUI extends JPanel {
 
     private JPanel buildButtonPanel() {
         JPanel pnl = new JPanel(new FlowLayout(FlowLayout.LEFT, 18, 0));
+
         pnl.setBackground(CLR_PANEL_BG);
         pnl.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
 
-        btnThem = createFuncButton("Thêm", CLR_BTN_ADD, "img/cn_them.png");
-        btnCapNhat = createFuncButton("Cập nhật", CLR_BTN_UPDATE, "img/cn_capnhat.png");
-        btnLamMoi = createFuncButton("Làm mới", CLR_BTN_RESET, "img/mn_xuly.png");
-        btnTraCuu = createFuncButton("Tra cứu", CLR_BTN_SEARCH, "img/mn_tracuu.png");
+        btnThem     = createFuncButton("Thêm",     CLR_BTN_ADD,    "img/cn_them.png");
+        btnCapNhat  = createFuncButton("Cập nhật", CLR_BTN_UPDATE, "img/cn_capnhat.png");
+        btnLamMoi   = createFuncButton("Làm mới",  CLR_BTN_RESET,  "img/mn_xuly.png");
+        btnTraCuu   = createFuncButton("Tra cứu",  CLR_BTN_SEARCH, "img/mn_tracuu.png");
 
         pnl.add(btnThem);
         pnl.add(btnCapNhat);
         pnl.add(btnLamMoi);
         pnl.add(btnTraCuu);
 
-        btnThem.addActionListener(e -> themNhanVien());
+        btnThem.addActionListener(e    -> themNhanVien());
         btnCapNhat.addActionListener(e -> capNhatNhanVien());
-        btnLamMoi.addActionListener(e -> lamMoi());
-        btnTraCuu.addActionListener(e -> traCuu());
+        btnLamMoi.addActionListener(e  -> lamMoi());
+        btnTraCuu.addActionListener(e  -> traCuu());
 
         return pnl;
     }
 
     private JScrollPane buildTablePanel() {
         String[] cols = {
-                "Mã nhân viên", "Tên nhân viên", "Giới tính",
-                "Ngày sinh", "SĐT", "CCCD", "Email", "Chức vụ", "Trạng thái", "Lý do nghỉ"
+            "Mã nhân viên", "Tên nhân viên", "Giới tính",
+            "Ngày sinh", "SĐT", "CCCD", "Email",
+            "Chức vụ", "Trạng thái", "Lý do nghỉ"
         };
 
         tableModel = new DefaultTableModel(cols, 0) {
             @Override
-            public boolean isCellEditable(int r, int c) {
-                return false;
-            }
+            public boolean isCellEditable(int r, int c) { return false; }
         };
 
         table = new JTable(tableModel);
+
+
         table.setFont(new Font("SansSerif", Font.PLAIN, 15));
         table.setRowHeight(34);
         table.setShowGrid(true);
@@ -281,11 +311,14 @@ public class NhanVien_GUI extends JPanel {
         header.setPreferredSize(new Dimension(0, 36));
         header.setReorderingAllowed(false);
 
+
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             private static final long serialVersionUID = 1L;
 
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
+
+
                                                            boolean isSelected, boolean hasFocus, int row, int column) {
 
                 JLabel c = (JLabel) super.getTableCellRendererComponent(
@@ -299,6 +332,7 @@ public class NhanVien_GUI extends JPanel {
                 if (!isSelected) {
                     c.setForeground("Nghỉ việc".equalsIgnoreCase(trangThai) ? Color.RED : Color.BLACK);
                     c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(250, 248, 242));
+
                 }
 
                 if (column == 1 || column == 6 || column == 9) {
@@ -311,15 +345,16 @@ public class NhanVien_GUI extends JPanel {
             }
         });
 
+
+
         int[] widths = {110, 180, 80, 110, 120, 130, 210, 110, 110, 180};
+
         for (int i = 0; i < widths.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         }
 
         table.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                loadRowToForm();
-            }
+            if (!e.getValueIsAdjusting()) loadRowToForm();
         });
 
         JScrollPane scroll = new JScrollPane(table);
@@ -345,33 +380,50 @@ public class NhanVien_GUI extends JPanel {
     private void themNhanVien() {
         try {
             String maNV = nv_dao.getNextMaNV();
+
+            // ===== LẤY DỮ LIỆU =====
+            String hoTen = txtHoTen.getText().trim();
+            String email = txtEmail.getText().trim();
+            String sdt = txtSDT.getText().trim();
+            String cccd = txtCCCD.getText().trim();
             String trangThai = cbTrangThai.getSelectedItem().toString();
             String lyDoNghi = txtLyDoNghi.getText().trim();
 
-            if ("Nghỉ việc".equalsIgnoreCase(trangThai) && lyDoNghi.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập lý do nghỉ!");
-                txtLyDoNghi.requestFocus();
+            // ===== VALIDATE (ĐẶT Ở ĐÂY) =====
+            if (sdt.isEmpty() || !sdt.matches("\\d{10}")) {
+                JOptionPane.showMessageDialog(this, "SĐT phải có đúng 10 chữ số!");
+                txtSDT.requestFocus();
                 return;
             }
 
-            if (!"Nghỉ việc".equalsIgnoreCase(trangThai)) {
-                lyDoNghi = null;
+            if (cccd.isEmpty() || !cccd.matches("\\d{12}")) {
+                JOptionPane.showMessageDialog(this, "CCCD phải có đúng 12 chữ số!");
+                txtCCCD.requestFocus();
+                return;
             }
 
+            if ("Nghỉ việc".equalsIgnoreCase(trangThai)) {
+                JOptionPane.showMessageDialog(this, "Nhân viên mới không thể ở trạng thái nghỉ việc!");
+                cbTrangThai.requestFocus();
+                return;
+            }
+
+            // ===== TẠO ĐỐI TƯỢNG =====
             NhanVien nv = new NhanVien(
                     maNV,
-                    txtHoTen.getText().trim(),
+                    hoTen,
                     duongDanAnh,
                     txtNgaySinh.getDate(),
                     rdNam.isSelected(),
-                    txtCCCD.getText().trim(),
-                    txtEmail.getText().trim(),
-                    txtSDT.getText().trim(),
+                    cccd,
+                    email,
+                    sdt,
                     cbChucVu.getSelectedItem().toString(),
                     trangThai,
                     lyDoNghi
             );
 
+            // ===== INSERT =====
             if (nv_dao.themNhanVien(nv)) {
                 loadData();
                 JOptionPane.showMessageDialog(this, "Thêm thành công!");
@@ -396,32 +448,42 @@ public class NhanVien_GUI extends JPanel {
 
         try {
             NhanVien nvCu = dsNV.get(row);
-
             String anh = duongDanAnh;
+            if (anh == null || anh.isEmpty()) anh = nvCu.getAnhNhanVien();
+
+
 
             if (anh == null || anh.isEmpty()) {
                 anh = nvCu.getAnhNhanVien();
             }
 
             String trangThaiCu = nvCu.getTrangThai();
-            String trangThaiMoi = cbTrangThai.getSelectedItem().toString();
 
+            String trangThaiMoi = cbTrangThai.getSelectedItem().toString();
             String lyDo = nvCu.getLyDo();
+
+
+
+//            String lyDo = nvCu.getLyDo();
 
             if (trangThaiCu.equalsIgnoreCase("Đang làm")
                     && trangThaiMoi.equalsIgnoreCase("Nghỉ việc")) {
 
-                lyDo = JOptionPane.showInputDialog(this, "Nhập lý do nghỉ việc:");
 
+                lyDo = JOptionPane.showInputDialog(this, "Nhập lý do nghỉ việc:");
                 if (lyDo == null || lyDo.trim().isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Phải nhập lý do!");
                     return;
                 }
             }
+            if (trangThaiMoi.equalsIgnoreCase("Đang làm")) lyDo = null;
+
+
 
             if (trangThaiMoi.equalsIgnoreCase("Đang làm")) {
                 lyDo = null;
             }
+
 
             NhanVien nv = new NhanVien(
                     txtMaNV.getText().trim(),
@@ -444,7 +506,6 @@ public class NhanVien_GUI extends JPanel {
             } else {
                 JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
             }
-
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Lỗi cập nhật nhân viên!");
@@ -460,15 +521,14 @@ public class NhanVien_GUI extends JPanel {
         txtCCCD.setText("");
         txtLyDoNghi.setText("");
         txtLyDoNghi.setEnabled(false);
-
         cbChucVu.setSelectedIndex(0);
         cbTrangThai.setSelectedIndex(0);
         rdNam.setSelected(true);
-
         table.clearSelection();
         lblAnh.setIcon(null);
         lblAnh.setText("Chọn ảnh");
         duongDanAnh = "";
+        txtLyDoNghi.setEnabled(false);
     }
 
     private void traCuu() {
@@ -493,7 +553,6 @@ public class NhanVien_GUI extends JPanel {
                 }
             }
         }
-
         JOptionPane.showMessageDialog(this, "Không tìm thấy kết quả!", "Tra cứu", JOptionPane.INFORMATION_MESSAGE);
     }
 
@@ -507,18 +566,13 @@ public class NhanVien_GUI extends JPanel {
 
         txtMaNV.setText(nv.getMaNV());
         txtHoTen.setText(nv.getHoTen());
-
-        if (nv.isGioiTinh()) {
-            rdNam.setSelected(true);
-        } else {
-            rdNu.setSelected(true);
-        }
+        if (nv.isGioiTinh()) rdNam.setSelected(true);
+        else rdNu.setSelected(true);
 
         txtNgaySinh.setDate(nv.getNgaySinh());
         txtSDT.setText(nv.getSdt());
         txtCCCD.setText(nv.getCccd());
         txtEmail.setText(nv.getEmail());
-
         cbChucVu.setSelectedItem(nv.getChucVu());
         cbTrangThai.setSelectedItem(nv.getTrangThai());
 
@@ -537,10 +591,12 @@ public class NhanVien_GUI extends JPanel {
         if (fileName != null && !fileName.isEmpty()) {
             String fullPath = System.getProperty("user.dir") + "/img/" + fileName;
             File file = new File(fullPath);
-
             if (file.exists()) {
+
+
                 ImageIcon icon = new ImageIcon(fullPath);
                 Image img = icon.getImage().getScaledInstance(140, 160, Image.SCALE_SMOOTH);
+
                 lblAnh.setIcon(new ImageIcon(img));
                 lblAnh.setText("");
             } else {
@@ -559,31 +615,35 @@ public class NhanVien_GUI extends JPanel {
 
         if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File file = fc.getSelectedFile();
-
             try {
+
+
                 String projectPath = System.getProperty("user.dir");
                 File folder = new File(projectPath + "/img");
+
 
                 if (!folder.exists()) folder.mkdirs();
 
                 String fileName = System.currentTimeMillis() + "_" + file.getName();
                 File dest = new File(folder, fileName);
-
                 Files.copy(file.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
                 duongDanAnh = fileName;
+
+
 
                 ImageIcon icon = new ImageIcon(dest.getAbsolutePath());
                 Image img = icon.getImage().getScaledInstance(140, 160, Image.SCALE_SMOOTH);
+
                 lblAnh.setIcon(new ImageIcon(img));
                 lblAnh.setText("");
-
             } catch (Exception e) {
                 e.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Lỗi chọn ảnh!");
             }
         }
     }
+
+
 
     private JLabel createLabel(String text) {
         JLabel lbl = new JLabel(text);
@@ -619,6 +679,7 @@ public class NhanVien_GUI extends JPanel {
         };
 
         tf.setFont(new Font("SansSerif", Font.PLAIN, 16));
+
         tf.setPreferredSize(FIELD_SIZE);
         tf.setMinimumSize(new Dimension(180, 38));
         tf.setOpaque(false);
@@ -664,23 +725,29 @@ public class NhanVien_GUI extends JPanel {
         }
     }
     private void styleComboBox(JComboBox<?> cb) {
+
+
         cb.setFont(new Font("SansSerif", Font.PLAIN, 16));
         cb.setForeground(Color.BLACK);
+
         cb.setFocusable(false);
 
         cb.setPreferredSize(FIELD_SIZE);
+
+
         cb.setMinimumSize(new Dimension(180, 38));
         cb.setOpaque(false);
         cb.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 8));
         cb.setUI(new RoundedComboBoxUI());
 
+
         cb.setRenderer(new DefaultListCellRenderer() {
             @Override
-            public Component getListCellRendererComponent(
-                    JList<?> list, Object value, int index,
-                    boolean isSelected, boolean cellHasFocus) {
-
+            public Component getListCellRendererComponent(JList<?> list, Object value,
+                    int index, boolean isSelected, boolean cellHasFocus) {
                 JLabel lbl = (JLabel) super.getListCellRendererComponent(
+
+
                         list, value, index, isSelected, cellHasFocus);
 
                 lbl.setFont(new Font("SansSerif", Font.PLAIN, 16));
@@ -699,6 +766,7 @@ public class NhanVien_GUI extends JPanel {
                 } else {
                     lbl.setOpaque(true);  // danh sách xổ xuống
                 }
+
 
                 return lbl;
             }
@@ -748,6 +816,8 @@ public class NhanVien_GUI extends JPanel {
             return null;
         }
     }
+
+
 
     public void loadData() {
         if (tableModel == null) return;
@@ -829,5 +899,6 @@ public class NhanVien_GUI extends JPanel {
 
             super.paint(g, c);
         }
+
     }
 }

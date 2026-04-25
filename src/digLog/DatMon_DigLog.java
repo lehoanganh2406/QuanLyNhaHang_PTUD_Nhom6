@@ -12,6 +12,7 @@ import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -42,6 +43,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.JComponent;
 
 import dao.LoaiMonAn_DAO;
 import dao.MonAn_DAO;
@@ -73,6 +77,8 @@ public class DatMon_DigLog extends JDialog {
     private static final int COL_QTY_W = 120;
     private static final int COL_TOTAL_W = 130;
     private static final int RIGHT_W = COL_NAME_W + COL_PRICE_W + COL_QTY_W + COL_TOTAL_W;
+    private static final int HEADER_H = 58;
+    private static final int ORDER_ROW_H = 58;
 
     private static final int CARD_W = 245;
     private static final int CARD_H = 285;
@@ -331,8 +337,7 @@ public class DatMon_DigLog extends JDialog {
         JPanel header = new JPanel();
         header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
         header.setBackground(RIGHT_HEADER);
-        header.setPreferredSize(new Dimension(RIGHT_W, 82));
-
+        header.setPreferredSize(new Dimension(RIGHT_W, HEADER_H));
         header.add(createHeaderCell("Tên món", COL_NAME_W, true));
         header.add(createHeaderCell("Giá", COL_PRICE_W, true));
         header.add(createHeaderCell("Số lượng", COL_QTY_W, true));
@@ -420,10 +425,10 @@ public class DatMon_DigLog extends JDialog {
         JLabel lbl = new JLabel(text, SwingConstants.CENTER);
         lbl.setOpaque(true);
         lbl.setBackground(RIGHT_HEADER);
-        lbl.setFont(new Font("SansSerif", Font.BOLD, 18));
-        lbl.setPreferredSize(new Dimension(width, 82));
-        lbl.setMinimumSize(new Dimension(width, 82));
-        lbl.setMaximumSize(new Dimension(width, 82));
+        lbl.setFont(new Font("SansSerif", Font.BOLD, 17));
+        lbl.setPreferredSize(new Dimension(width, HEADER_H));
+        lbl.setMinimumSize(new Dimension(width, HEADER_H));
+        lbl.setMaximumSize(new Dimension(width, HEADER_H));
         lbl.setBorder(BorderFactory.createMatteBorder(0, 0, 1, rightBorder ? 1 : 0, BORDER));
         return lbl;
     }
@@ -732,101 +737,109 @@ public class DatMon_DigLog extends JDialog {
             this.item = item;
 
             setLayout(new BorderLayout());
-            setMaximumSize(new Dimension(RIGHT_W, 76));
-            setPreferredSize(new Dimension(RIGHT_W, 76));
+            setMaximumSize(new Dimension(RIGHT_W, ORDER_ROW_H));
+            setPreferredSize(new Dimension(RIGHT_W, ORDER_ROW_H));
+            setMinimumSize(new Dimension(RIGHT_W, ORDER_ROW_H));
             setBackground(new Color(246, 246, 246));
             setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 220, 220)));
 
             JPanel row = new JPanel();
             row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
             row.setOpaque(false);
-            row.setPreferredSize(new Dimension(RIGHT_W, 76));
+            row.setPreferredSize(new Dimension(RIGHT_W, ORDER_ROW_H));
 
-            JPanel colTen = new JPanel();
+            JPanel colTen = new JPanel(new BorderLayout(6, 0));
             colTen.setOpaque(false);
-            colTen.setLayout(new BoxLayout(colTen, BoxLayout.Y_AXIS));
-            colTen.setPreferredSize(new Dimension(COL_NAME_W, 76));
-            colTen.setMinimumSize(new Dimension(COL_NAME_W, 76));
-            colTen.setMaximumSize(new Dimension(COL_NAME_W, 76));
+            colTen.setPreferredSize(new Dimension(COL_NAME_W, ORDER_ROW_H));
+            colTen.setMinimumSize(new Dimension(COL_NAME_W, ORDER_ROW_H));
+            colTen.setMaximumSize(new Dimension(COL_NAME_W, ORDER_ROW_H));
             colTen.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createMatteBorder(0, 0, 0, 1, BORDER),
-                    new EmptyBorder(7, 10, 5, 8)
+                    new EmptyBorder(5, 8, 5, 8)
             ));
 
-            JPanel tenRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
-            tenRow.setOpaque(false);
-            tenRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-            JLabel lblXoa = new JLabel("🗑");
-            lblXoa.setFont(new Font("SansSerif", Font.PLAIN, 15));
+            JLabel lblXoa = new JLabel("🗑", SwingConstants.CENTER);
+            lblXoa.setFont(new Font("SansSerif", Font.PLAIN, 17));
             lblXoa.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            lblXoa.setPreferredSize(new Dimension(28, ORDER_ROW_H - 10));
+
+            JPanel tenNotePanel = new JPanel();
+            tenNotePanel.setOpaque(false);
+            tenNotePanel.setLayout(new BoxLayout(tenNotePanel, BoxLayout.Y_AXIS));
 
             JLabel lblTen = new JLabel(
-                    "<html><div style='width:195px;'>" + safe(item.mon.getTenMon()) + "</div></html>"
+                    "<html><div style='width:190px;'>" + safe(item.mon.getTenMon()) + "</div></html>"
             );
-            lblTen.setFont(new Font("SansSerif", Font.PLAIN, 14));
-
-            tenRow.add(lblXoa);
-            tenRow.add(lblTen);
+            lblTen.setFont(new Font("SansSerif", Font.BOLD, 14));
+            lblTen.setAlignmentX(Component.LEFT_ALIGNMENT);
 
             lblGhiChu = new JTextArea(getGhiChuDisplayText());
             lblGhiChu.setFont(new Font("SansSerif", Font.PLAIN, 11));
             lblGhiChu.setForeground(Color.GRAY);
             lblGhiChu.setOpaque(false);
             lblGhiChu.setEditable(false);
-            lblGhiChu.setLineWrap(true);
-            lblGhiChu.setWrapStyleWord(true);
-            lblGhiChu.setBorder(new EmptyBorder(0, 24, 0, 0));
+            lblGhiChu.setLineWrap(false);
+            lblGhiChu.setBorder(new EmptyBorder(1, 0, 0, 0));
             lblGhiChu.setCursor(new Cursor(Cursor.HAND_CURSOR));
             lblGhiChu.setFocusable(false);
-            lblGhiChu.setMaximumSize(new Dimension(210, 24));
+            lblGhiChu.setMaximumSize(new Dimension(200, 18));
             lblGhiChu.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-            colTen.add(tenRow);
-            colTen.add(Box.createVerticalStrut(2));
-            colTen.add(lblGhiChu);
+            tenNotePanel.add(Box.createVerticalGlue());
+            tenNotePanel.add(lblTen);
+            tenNotePanel.add(Box.createVerticalStrut(2));
+            tenNotePanel.add(lblGhiChu);
+            tenNotePanel.add(Box.createVerticalGlue());
+
+            colTen.add(lblXoa, BorderLayout.WEST);
+            colTen.add(tenNotePanel, BorderLayout.CENTER);
 
             JPanel colGia = new JPanel(new BorderLayout());
             colGia.setOpaque(false);
-            colGia.setPreferredSize(new Dimension(COL_PRICE_W, 76));
-            colGia.setMinimumSize(new Dimension(COL_PRICE_W, 76));
-            colGia.setMaximumSize(new Dimension(COL_PRICE_W, 76));
+            colGia.setPreferredSize(new Dimension(COL_PRICE_W, ORDER_ROW_H));
+            colGia.setMinimumSize(new Dimension(COL_PRICE_W, ORDER_ROW_H));
+            colGia.setMaximumSize(new Dimension(COL_PRICE_W, ORDER_ROW_H));
             colGia.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, BORDER));
 
             JLabel lblGia = new JLabel(formatTien(item.mon.getDonGia()), SwingConstants.CENTER);
             lblGia.setFont(new Font("SansSerif", Font.PLAIN, 14));
             colGia.add(lblGia, BorderLayout.CENTER);
 
-            JPanel colSL = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 16));
+            JPanel colSL = new JPanel(new GridBagLayout());
             colSL.setOpaque(false);
-            colSL.setPreferredSize(new Dimension(COL_QTY_W, 76));
-            colSL.setMinimumSize(new Dimension(COL_QTY_W, 76));
-            colSL.setMaximumSize(new Dimension(COL_QTY_W, 76));
+            colSL.setPreferredSize(new Dimension(COL_QTY_W, ORDER_ROW_H));
+            colSL.setMinimumSize(new Dimension(COL_QTY_W, ORDER_ROW_H));
+            colSL.setMaximumSize(new Dimension(COL_QTY_W, ORDER_ROW_H));
             colSL.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, BORDER));
 
-            JButton btnMinus = new JButton("⊖");
-            JButton btnPlus = new JButton("⊕");
-            JLabel lblSL = new JLabel(String.valueOf(item.soLuong), SwingConstants.CENTER);
+            JSpinner spinnerSL = new JSpinner(new SpinnerNumberModel(item.soLuong, 1, 999, 1));
+            spinnerSL.setFont(new Font("SansSerif", Font.PLAIN, 14));
+            spinnerSL.setPreferredSize(new Dimension(Math.max(70, COL_QTY_W - 24), 30));
 
-            styleQtyButton(btnMinus);
-            styleQtyButton(btnPlus);
+            JComponent editor = spinnerSL.getEditor();
+            if (editor instanceof JSpinner.DefaultEditor) {
+                JTextField txt = ((JSpinner.DefaultEditor) editor).getTextField();
+                txt.setHorizontalAlignment(JTextField.CENTER);
+                txt.setFont(new Font("SansSerif", Font.BOLD, 14));
+            }
 
-            lblSL.setFont(new Font("SansSerif", Font.PLAIN, 14));
-            lblSL.setBorder(new LineBorder(Color.GRAY, 1));
-            lblSL.setPreferredSize(new Dimension(34, 28));
-
-            btnMinus.addActionListener(e -> {
-                item.soLuong--;
-                if (item.soLuong <= 0) {
-                    gioHang.remove(item.mon.getMaMon());
-                }
+            spinnerSL.addChangeListener(e -> {
+                int newValue = (Integer) spinnerSL.getValue();
+                item.soLuong = newValue;
                 renderOrderList();
             });
 
-            btnPlus.addActionListener(e -> {
-                item.soLuong++;
-                renderOrderList();
-            });
+            colSL.add(spinnerSL);
+
+            JPanel colTotal = new JPanel(new BorderLayout());
+            colTotal.setOpaque(false);
+            colTotal.setPreferredSize(new Dimension(COL_TOTAL_W, ORDER_ROW_H));
+            colTotal.setMinimumSize(new Dimension(COL_TOTAL_W, ORDER_ROW_H));
+            colTotal.setMaximumSize(new Dimension(COL_TOTAL_W, ORDER_ROW_H));
+
+            JLabel lblTotal = new JLabel(formatTien(item.soLuong * item.mon.getDonGia()), SwingConstants.CENTER);
+            lblTotal.setFont(new Font("SansSerif", Font.BOLD, 14));
+            colTotal.add(lblTotal, BorderLayout.CENTER);
 
             lblXoa.addMouseListener(new java.awt.event.MouseAdapter() {
                 @Override
@@ -843,20 +856,6 @@ public class DatMon_DigLog extends JDialog {
                 }
             });
 
-            colSL.add(btnMinus);
-            colSL.add(lblSL);
-            colSL.add(btnPlus);
-
-            JPanel colTotal = new JPanel(new BorderLayout());
-            colTotal.setOpaque(false);
-            colTotal.setPreferredSize(new Dimension(COL_TOTAL_W, 76));
-            colTotal.setMinimumSize(new Dimension(COL_TOTAL_W, 76));
-            colTotal.setMaximumSize(new Dimension(COL_TOTAL_W, 76));
-
-            JLabel lblTotal = new JLabel(formatTien(item.soLuong * item.mon.getDonGia()), SwingConstants.CENTER);
-            lblTotal.setFont(new Font("SansSerif", Font.BOLD, 14));
-            colTotal.add(lblTotal, BorderLayout.CENTER);
-
             row.add(colTen);
             row.add(colGia);
             row.add(colSL);
@@ -867,7 +866,7 @@ public class DatMon_DigLog extends JDialog {
 
         private String getGhiChuDisplayText() {
             String gc = item.ghiChu == null ? "" : item.ghiChu.trim();
-            if (gc.isEmpty()) return "Ghi chú ..";
+            if (gc.isEmpty()) return "Ghi chú 📝";
             return gc;
         }
 
@@ -913,16 +912,10 @@ public class DatMon_DigLog extends JDialog {
                 item.ghiChu = txtNote.getText().trim();
                 lblGhiChu.setText(getGhiChuDisplayText());
             }
+
             if (popupGhiChu != null) {
                 popupGhiChu.setVisible(false);
             }
-        }
-
-        private void styleQtyButton(JButton btn) {
-            btn.setFont(new Font("SansSerif", Font.PLAIN, 14));
-            btn.setPreferredSize(new Dimension(28, 28));
-            btn.setFocusPainted(false);
-            btn.setMargin(new Insets(0, 0, 0, 0));
         }
     }
 
@@ -1071,10 +1064,4 @@ public class DatMon_DigLog extends JDialog {
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            DatMon_DigLog dlg = new DatMon_DigLog((Frame) null);
-            dlg.setVisible(true);
-        });
     }
-}

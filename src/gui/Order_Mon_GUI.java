@@ -1,6 +1,7 @@
 package gui;
 
 import java.awt.BorderLayout;
+import java.awt.Dialog;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -13,6 +14,7 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -30,6 +32,8 @@ import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
@@ -37,9 +41,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.Scrollable;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -47,6 +53,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.time.LocalDateTime;
 
 import dao.Ban_DAO;
 import dao.ChiTietHoaDon_DAO;
@@ -61,6 +68,7 @@ import entity.LoaiMonAn;
 import entity.MonAn;
 import entity.PhieuDatMon;
 import entity.TaiKhoan;
+import digLog.ChuyenBan_DigLog;
 
 public class Order_Mon_GUI extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -99,6 +107,8 @@ public class Order_Mon_GUI extends JPanel {
     private static final int COL_PRICE_W = 95;
     private static final int COL_QTY_W = 105;
     private static final int COL_TOTAL_W = 125;
+    private static final int HEADER_H = 58;
+    private static final int ORDER_ROW_H = 58;
     private static final int RIGHT_W = COL_NAME_W + COL_PRICE_W + COL_QTY_W + COL_TOTAL_W;
 
     private static final String SEARCH_PLACEHOLDER = "Nhập mã/tên món cần tìm...";
@@ -135,6 +145,9 @@ public class Order_Mon_GUI extends JPanel {
     private String maBan;
     private String maHoaDonHienTai;
     private boolean daGuiThucDon = false;
+    private boolean coThayDoiChuaGui = false;
+    private final Map<String, PendingHuyItem> dsMonChoHuy = new LinkedHashMap<>();
+    private final Map<String, Integer> soLuongDaGuiMap = new LinkedHashMap<>();
 
     private JButton btnGuiThucDon;
     private JButton btnTamTinh;
@@ -335,8 +348,7 @@ public class Order_Mon_GUI extends JPanel {
         JPanel header = new JPanel();
         header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
         header.setBackground(RIGHT_HEADER);
-        header.setPreferredSize(new Dimension(RIGHT_W, 82));
-
+        header.setPreferredSize(new Dimension(RIGHT_W, HEADER_H));
         header.add(createHeaderCell("Tên món", COL_NAME_W, true));
         header.add(createHeaderCell("Giá", COL_PRICE_W, true));
         header.add(createHeaderCell("Số lượng", COL_QTY_W, true));
@@ -422,19 +434,76 @@ public class Order_Mon_GUI extends JPanel {
         styleMainButton(btnThanhToan, BTN_PAY, Color.BLACK, 20, true);
 
         btnQuayLai.addActionListener(e -> {
+            if (!xacNhanRoiManHinhNeuCoThayDoi()) {
+                return;
+            }
+
             Window w = SwingUtilities.getWindowAncestor(Order_Mon_GUI.this);
 
             if (w instanceof TrangChu_GUI) {
-                ((TrangChu_GUI) w).showPage("Order_Ban_GUI");
+                ((TrangChu_GUI) w).showCustomPage(
+                        "Order_Ban_GUI",
+                        new Order_Ban_GUI(taiKhoanDangNhap)
+                );
             }
         });
         btnGuiThucDon.addActionListener(e -> guiThucDonVaLuuCSDL());
 
         btnChuyenBan.addActionListener(e -> {
-            String msg = chkMangVe.isSelected()
-                    ? "Đang chọn chuyển bàn kèm trạng thái mang về."
-                    : "Đang chọn chuyển bàn.";
-            JOptionPane.showMessageDialog(this, msg);
+            Window owner = SwingUtilities.getWindowAncestor(Order_Mon_GUI.this);
+
+            ChuyenBan_DigLog dlg = new ChuyenBan_DigLog(owner, maBan, tenBan);
+            dlg.setVisible(true);
+
+            String maBanMoi = dlg.getMaBanMoi();
+
+            if (maBanMoi == null || maBanMoi.trim().isEmpty()) {
+                return;
+            }
+
+            try {
+                // 1. lấy hóa đơn hiện tại
+                HoaDon hd = hoaDonDAO.timHoaDonChuaThanhToanTheoBan(maBan);
+
+                if (hd == null) {
+                    JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn.");
+                    return;
+                }
+
+                String maHD = hd.getMaHD();
+
+                // 2. chuyển bàn trong hóa đơn
+                boolean okHD = hoaDonDAO.chuyenBan(maHD, maBanMoi);
+
+                if (!okHD) {
+                    JOptionPane.showMessageDialog(this, "Chuyển bàn thất bại.");
+                    return;
+                }
+
+                // 3. cập nhật trạng thái bàn
+                banDAO.capNhatTrangThaiBan(maBan, "Bàn trống");
+                banDAO.capNhatTrangThaiBan(maBanMoi, "Đang phục vụ");
+
+                // 4. load lại Order màn hình bàn mới
+                Window w = SwingUtilities.getWindowAncestor(Order_Mon_GUI.this);
+
+                if (w instanceof TrangChu_GUI) {
+                    ((TrangChu_GUI) w).showCustomPage(
+                            "Order_Mon_GUI",
+                            new Order_Mon_GUI(
+                                    taiKhoanDangNhap,
+                                    maBanMoi,
+                                    maBanMoi, // nếu có tenBan thì truyền thêm
+                                    null,
+                                    true
+                            )
+                    );
+                }
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Lỗi khi chuyển bàn.");
+            }
         });
 
         btnTachBan.addActionListener(e ->
@@ -506,82 +575,204 @@ public class Order_Mon_GUI extends JPanel {
         capNhatTrangThaiNutTheoGuiMon();
         return right;
     }
+    private void capNhatCoThayDoiChuaGui() {
+        if (!dsMonChoHuy.isEmpty()) {
+            coThayDoiChuaGui = true;
+            capNhatTrangThaiNutTheoGuiMon();
+            return;
+        }
+
+        for (OrderItem item : gioHang.values()) {
+            int slDaGui = soLuongDaGuiMap.getOrDefault(item.mon.getMaMon(), 0);
+
+            if (item.soLuong != slDaGui) {
+                coThayDoiChuaGui = true;
+                capNhatTrangThaiNutTheoGuiMon();
+                return;
+            }
+        }
+
+        for (String maMonDaGui : soLuongDaGuiMap.keySet()) {
+            if (!gioHang.containsKey(maMonDaGui)) {
+                coThayDoiChuaGui = true;
+                capNhatTrangThaiNutTheoGuiMon();
+                return;
+            }
+        }
+
+        coThayDoiChuaGui = false;
+        capNhatTrangThaiNutTheoGuiMon();
+    }
 
     private void capNhatTrangThaiNutTheoGuiMon() {
         if (btnTamTinh != null) {
             btnTamTinh.setEnabled(daGuiThucDon);
         }
+
         if (btnThanhToan != null) {
             btnThanhToan.setEnabled(daGuiThucDon);
         }
+
         if (btnGuiThucDon != null) {
-            btnGuiThucDon.setEnabled(!gioHang.isEmpty() && !daGuiThucDon);
+            boolean coDuLieuDeGui = !gioHang.isEmpty() || !dsMonChoHuy.isEmpty();
+            btnGuiThucDon.setEnabled(coDuLieuDeGui && (!daGuiThucDon || coThayDoiChuaGui));
         }
     }
+    private boolean xacNhanRoiManHinhNeuCoThayDoi() {
+        if (!coThayDoiChuaGui && dsMonChoHuy.isEmpty()) {
+            return true;
+        }
 
+        int chon = JOptionPane.showConfirmDialog(
+                this,
+                "Có món đã thêm/sửa/hủy nhưng chưa gửi thực đơn.\nBạn có chắc muốn rời khỏi màn hình Order món không?",
+                "Cảnh báo chưa gửi thực đơn",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+        );
+
+        return chon == JOptionPane.YES_OPTION;
+    }
     private boolean guiThucDonVaLuuCSDL() {
-        if (gioHang.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Chưa có món nào để gửi.");
+        if (gioHang.isEmpty() && dsMonChoHuy.isEmpty()) {
             return false;
         }
 
         try {
-            if (daGuiThucDon && maHoaDonHienTai != null && !maHoaDonHienTai.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Bàn này đã gửi thực đơn trước đó.");
-                return false;
-            }
+            HoaDon hdCu = hoaDonDAO.timHoaDonChuaThanhToanTheoBan(maBan);
 
-            String maHD = hoaDonDAO.taoMaHoaDonMoi();
-            if (maHD == null || maHD.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Không tạo được mã hóa đơn.");
-                return false;
-            }
+            String maHD;
 
-            String maNV = null;
-            if (taiKhoanDangNhap != null && taiKhoanDangNhap.getMaNV() != null) {
-                maNV = taiKhoanDangNhap.getMaNV().getMaNV();
-            }
+            if (hdCu != null) {
+                maHD = hdCu.getMaHD();
+                maHoaDonHienTai = maHD;
+                daGuiThucDon = true;
+            } else {
+                maHD = hoaDonDAO.taoMaHoaDonMoi();
 
-            boolean taoHD = hoaDonDAO.themHoaDonMoi(
-                    maHD,
-                    maBan,
-                    maNV,
-                    null,
-                    null,
-                    "Chưa thanh toán"
-            );
+                if (maHD == null || maHD.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Không tạo được mã hóa đơn.");
+                    return false;
+                }
 
-            if (!taoHD) {
-                JOptionPane.showMessageDialog(this, "Tạo hóa đơn thất bại.");
-                return false;
-            }
+                String maNV = null;
+                if (taiKhoanDangNhap != null && taiKhoanDangNhap.getMaNV() != null) {
+                    maNV = taiKhoanDangNhap.getMaNV().getMaNV();
+                }
 
-            for (OrderItem item : gioHang.values()) {
-                ChiTietHoaDon ct = new ChiTietHoaDon(
-                        new HoaDon(maHD),
-                        new MonAn(item.mon.getMaMon()),
-                        item.soLuong,
-                        item.mon.getDonGia(),
-                        item.ghiChu == null ? "" : item.ghiChu,
-                        "Đang phục vụ",
+                boolean taoHD = hoaDonDAO.themHoaDonMoi(
+                        maHD,
+                        maBan,
+                        maNV,
+                        maPhieuDatBan,
                         null,
-                        0,
-                        null
+                        "Chưa thanh toán"
                 );
 
-                boolean ok = chiTietHoaDonDAO.themChiTietHoaDon(ct);
-                if (!ok) {
-                    JOptionPane.showMessageDialog(this, "Lưu chi tiết hóa đơn thất bại ở món: " + item.mon.getTenMon());
+                if (!taoHD) {
+                    JOptionPane.showMessageDialog(this, "Tạo hóa đơn thất bại.");
                     return false;
                 }
             }
 
-            boolean capNhatBan = banDAO.capNhatTrangThaiBan(maBan, "Đang phục vụ");
-            if (!capNhatBan) {
-                JOptionPane.showMessageDialog(this, "Không cập nhật được trạng thái bàn.");
-                return false;
+            // 1. Lưu món mới hoặc món có thay đổi số lượng,
+            // nhưng bỏ qua món đang nằm trong danh sách chờ hủy
+            for (OrderItem item : gioHang.values()) {
+                if (dsMonChoHuy.containsKey(item.mon.getMaMon())) {
+                    continue;
+                }
+
+                ChiTietHoaDon ctCu = chiTietHoaDonDAO.getChiTietHoaDon(
+                        maHD,
+                        item.mon.getMaMon()
+                );
+
+                if (ctCu == null) {
+                    ChiTietHoaDon ctMoi = new ChiTietHoaDon(
+                            new HoaDon(maHD),
+                            new MonAn(item.mon.getMaMon()),
+                            item.soLuong,
+                            item.mon.getDonGia(),
+                            item.ghiChu == null ? "" : item.ghiChu,
+                            "Đang phục vụ",
+                            null,
+                            0,
+                            null
+                    );
+
+                    boolean ok = chiTietHoaDonDAO.themChiTietHoaDon(ctMoi);
+                    if (!ok) {
+                        JOptionPane.showMessageDialog(
+                                this,
+                                "Thêm món thất bại: " + item.mon.getTenMon()
+                        );
+                        return false;
+                    }
+
+                } else {
+                    ctCu.setSoLuong(item.soLuong);
+                    ctCu.setDonGia(item.mon.getDonGia());
+                    ctCu.setGhiChu(item.ghiChu == null ? "" : item.ghiChu);
+                    ctCu.setTrangThai("Đang phục vụ");
+
+                    boolean ok = chiTietHoaDonDAO.capNhatChiTietHoaDon(ctCu);
+                    if (!ok) {
+                        JOptionPane.showMessageDialog(
+                                this,
+                                "Cập nhật món thất bại: " + item.mon.getTenMon()
+                        );
+                        return false;
+                    }
+                }
             }
 
+            // 2. Xử lý món đã chọn hủy tạm
+            for (PendingHuyItem huy : dsMonChoHuy.values()) {
+                ChiTietHoaDon ctCu = chiTietHoaDonDAO.getChiTietHoaDon(maHD, huy.maMon);
+
+                if (ctCu == null) {
+                    continue;
+                }
+
+                OrderItem itemConLai = gioHang.get(huy.maMon);
+
+                if (itemConLai == null || itemConLai.soLuong <= 0) {
+                    // Hủy hết món
+                    boolean ok = chiTietHoaDonDAO.huyMon(
+                            maHD,
+                            huy.maMon,
+                            huy.lyDo,
+                            huy.soLuongHuy
+                    );
+
+                    if (!ok) {
+                        JOptionPane.showMessageDialog(this, "Hủy món thất bại.");
+                        return false;
+                    }
+
+                } else {
+                    // Hủy một phần
+                    ctCu.setSoLuong(itemConLai.soLuong);
+                    ctCu.setDonGia(itemConLai.mon.getDonGia());
+                    ctCu.setGhiChu(itemConLai.ghiChu == null ? "" : itemConLai.ghiChu);
+                    ctCu.setLyDoHuy(huy.lyDo);
+                    ctCu.setSoLuongHuy(huy.soLuongHuy);
+                    ctCu.setThoiGianHuy(java.time.LocalDateTime.now());
+                    ctCu.setTrangThai("Đang phục vụ");
+
+                    boolean ok = chiTietHoaDonDAO.capNhatChiTietHoaDon(ctCu);
+
+                    if (!ok) {
+                        JOptionPane.showMessageDialog(this, "Cập nhật món hủy thất bại.");
+                        return false;
+                    }
+                }
+            }
+
+            // 3. Cập nhật trạng thái bàn
+            banDAO.capNhatTrangThaiBan(maBan, "Đang phục vụ");
+
+            // 4. Nếu nhận bàn từ phiếu đặt thì cập nhật phiếu đặt
             if (maPhieuDatBan != null && !maPhieuDatBan.trim().isEmpty()) {
                 try {
                     phieuDatBanDAO.capNhatTrangThai(maPhieuDatBan, "Đã nhận bàn");
@@ -592,14 +783,22 @@ public class Order_Mon_GUI extends JPanel {
 
             maHoaDonHienTai = maHD;
             daGuiThucDon = true;
-            capNhatTrangThaiNutTheoGuiMon();
+            coThayDoiChuaGui = false;
+            dsMonChoHuy.clear();
 
-            JOptionPane.showMessageDialog(this, "Đã gửi thực đơn.");
-            Window w = SwingUtilities.getWindowAncestor(Order_Mon_GUI.this);
-
-            if (w instanceof TrangChu_GUI) {
-                ((TrangChu_GUI) w).showPage("Order_Ban_GUI");
+            soLuongDaGuiMap.clear();
+            for (OrderItem item : gioHang.values()) {
+                soLuongDaGuiMap.put(item.mon.getMaMon(), item.soLuong);
             }
+
+            Window w = SwingUtilities.getWindowAncestor(Order_Mon_GUI.this);
+            if (w instanceof TrangChu_GUI) {
+                ((TrangChu_GUI) w).showCustomPage(
+                        "Order_Ban_GUI",
+                        new Order_Ban_GUI(taiKhoanDangNhap)
+                );
+            }
+
             return true;
 
         } catch (Exception ex) {
@@ -608,7 +807,6 @@ public class Order_Mon_GUI extends JPanel {
             return false;
         }
     }
-
     private void loadData() {
         try {
             dsLoai = loaiMonAnDAO.getAllLoaiMonAn();
@@ -622,59 +820,28 @@ public class Order_Mon_GUI extends JPanel {
         }
     }
 
-    private void loadMonDatTheoPhieu(String maPhieu) {
-        try {
-            ArrayList<PhieuDatMon> dsMonDat = phieuDatMonDAO.getDanhSachTheoMaPhieu(maPhieu);
-            gioHang.clear();
-
-            if (dsMonDat != null) {
-                for (PhieuDatMon pdm : dsMonDat) {
-                    if (pdm == null || pdm.getMaMon() == null) continue;
-
-                    MonAn mon = timMonTheoMaLocal(pdm.getMaMon().getMaMon());
-                    if (mon == null) {
-                        mon = new MonAn();
-                        mon.setMaMon(pdm.getMaMon().getMaMon());
-                        mon.setTenMon(pdm.getMaMon().getTenMon());
-                        mon.setDonGia(pdm.getDonGia());
-                    }
-
-                    gioHang.put(mon.getMaMon(), new OrderItem(
-                            mon,
-                            pdm.getSoLuong(),
-                            pdm.getGhiChu() == null ? "" : pdm.getGhiChu()
-                    ));
-                }
-            }
-
-            renderOrderList();
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Không tải được món đặt trước.");
-        }
-    }
-
     private void loadMonDangPhucVuTheoBan() {
         try {
-            HoaDon hd = null;
-            try {
-                hd = hoaDonDAO.timHoaDonChuaThanhToanTheoBan(maBan);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-
+            HoaDon hd = hoaDonDAO.timHoaDonChuaThanhToanTheoBan(maBan);
             if (hd == null) return;
 
             maHoaDonHienTai = hd.getMaHD();
             daGuiThucDon = true;
+
             gioHang.clear();
+            dsMonChoHuy.clear();
+            soLuongDaGuiMap.clear();
 
             List<ChiTietHoaDon> dsCT = chiTietHoaDonDAO.getChiTietTheoMaHD(maHoaDonHienTai);
+
             if (dsCT != null) {
                 for (ChiTietHoaDon ct : dsCT) {
                     if (ct == null || ct.getMaMon() == null) continue;
+                    if ("Đã hủy".equalsIgnoreCase(ct.getTrangThai())) continue;
+                    if (ct.getSoLuong() <= 0) continue;
 
                     MonAn mon = timMonTheoMaLocal(ct.getMaMon().getMaMon());
+
                     if (mon == null) {
                         mon = new MonAn();
                         mon.setMaMon(ct.getMaMon().getMaMon());
@@ -687,17 +854,20 @@ public class Order_Mon_GUI extends JPanel {
                             ct.getSoLuong(),
                             ct.getGhiChu() == null ? "" : ct.getGhiChu()
                     ));
+
+                    soLuongDaGuiMap.put(mon.getMaMon(), ct.getSoLuong());
                 }
             }
 
+            coThayDoiChuaGui = false;
             renderOrderList();
             capNhatTrangThaiNutTheoGuiMon();
+
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Không tải được món đang phục vụ.");
         }
     }
-
     private MonAn timMonTheoMaLocal(String maMon) {
         if (maMon == null || maMon.trim().isEmpty()) return null;
 
@@ -721,10 +891,10 @@ public class Order_Mon_GUI extends JPanel {
         JLabel lbl = new JLabel(text, SwingConstants.CENTER);
         lbl.setOpaque(true);
         lbl.setBackground(RIGHT_HEADER);
-        lbl.setFont(new Font("SansSerif", Font.BOLD, 18));
-        lbl.setPreferredSize(new Dimension(width, 82));
-        lbl.setMinimumSize(new Dimension(width, 82));
-        lbl.setMaximumSize(new Dimension(width, 82));
+        lbl.setFont(new Font("SansSerif", Font.BOLD, 17));
+        lbl.setPreferredSize(new Dimension(width, HEADER_H));
+        lbl.setMinimumSize(new Dimension(width, HEADER_H));
+        lbl.setMaximumSize(new Dimension(width, HEADER_H));
         lbl.setBorder(BorderFactory.createMatteBorder(0, 0, 1, rightBorder ? 1 : 0, BORDER));
         return lbl;
     }
@@ -812,12 +982,15 @@ public class Order_Mon_GUI extends JPanel {
 
     private void themMonVaoGio(MonAn mon) {
         OrderItem item = gioHang.get(mon.getMaMon());
+
         if (item == null) {
             gioHang.put(mon.getMaMon(), new OrderItem(mon, 1, ""));
         } else {
             item.soLuong++;
         }
+
         renderOrderList();
+        capNhatCoThayDoiChuaGui();
     }
 
     private void renderOrderList() {
@@ -1029,112 +1202,166 @@ public class Order_Mon_GUI extends JPanel {
             this.item = item;
 
             setLayout(new BorderLayout());
-            setMaximumSize(new Dimension(RIGHT_W, 76));
-            setPreferredSize(new Dimension(RIGHT_W, 76));
+            setMaximumSize(new Dimension(RIGHT_W, ORDER_ROW_H));
+            setPreferredSize(new Dimension(RIGHT_W, ORDER_ROW_H));
+            setMinimumSize(new Dimension(RIGHT_W, ORDER_ROW_H));
             setBackground(new Color(246, 246, 246));
             setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 220, 220)));
 
             JPanel row = new JPanel();
             row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
             row.setOpaque(false);
-            row.setPreferredSize(new Dimension(RIGHT_W, 76));
+            row.setPreferredSize(new Dimension(RIGHT_W, ORDER_ROW_H));
 
-            JPanel colTen = new JPanel();
+            JPanel colTen = new JPanel(new BorderLayout(6, 0));
             colTen.setOpaque(false);
-            colTen.setLayout(new BoxLayout(colTen, BoxLayout.Y_AXIS));
-            colTen.setPreferredSize(new Dimension(COL_NAME_W, 76));
-            colTen.setMinimumSize(new Dimension(COL_NAME_W, 76));
-            colTen.setMaximumSize(new Dimension(COL_NAME_W, 76));
+            colTen.setPreferredSize(new Dimension(COL_NAME_W, ORDER_ROW_H));
+            colTen.setMinimumSize(new Dimension(COL_NAME_W, ORDER_ROW_H));
+            colTen.setMaximumSize(new Dimension(COL_NAME_W, ORDER_ROW_H));
             colTen.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createMatteBorder(0, 0, 0, 1, BORDER),
-                    new EmptyBorder(7, 10, 5, 8)
+                    new EmptyBorder(5, 8, 5, 8)
             ));
 
-            JPanel tenRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
-            tenRow.setOpaque(false);
-            tenRow.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-            JLabel lblXoa = new JLabel("🗑");
-            lblXoa.setFont(new Font("SansSerif", Font.PLAIN, 15));
+            JLabel lblXoa = new JLabel("🗑", SwingConstants.CENTER);
+            final boolean[] dangMoPopupHuy = {false};
+            lblXoa.setFont(new Font("SansSerif", Font.PLAIN, 17));
             lblXoa.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            lblXoa.setPreferredSize(new Dimension(28, ORDER_ROW_H - 10));
+
+            JPanel tenNotePanel = new JPanel();
+            tenNotePanel.setOpaque(false);
+            tenNotePanel.setLayout(new BoxLayout(tenNotePanel, BoxLayout.Y_AXIS));
 
             JLabel lblTen = new JLabel(
-                    "<html><div style='width:220px;'>" + safe(item.mon.getTenMon()) + "</div></html>"
+                    "<html><div style='width:190px;'>" + safe(item.mon.getTenMon()) + "</div></html>"
             );
-            lblTen.setFont(new Font("SansSerif", Font.PLAIN, 14));
-
-            tenRow.add(lblXoa);
-            tenRow.add(lblTen);
+            lblTen.setFont(new Font("SansSerif", Font.BOLD, 14));
+            lblTen.setAlignmentX(Component.LEFT_ALIGNMENT);
 
             lblGhiChu = new JTextArea(getGhiChuDisplayText());
             lblGhiChu.setFont(new Font("SansSerif", Font.PLAIN, 11));
             lblGhiChu.setForeground(Color.GRAY);
             lblGhiChu.setOpaque(false);
             lblGhiChu.setEditable(false);
-            lblGhiChu.setLineWrap(true);
-            lblGhiChu.setWrapStyleWord(true);
-            lblGhiChu.setBorder(new EmptyBorder(0, 24, 0, 0));
+            lblGhiChu.setLineWrap(false);
+            lblGhiChu.setBorder(new EmptyBorder(1, 0, 0, 0));
             lblGhiChu.setCursor(new Cursor(Cursor.HAND_CURSOR));
             lblGhiChu.setFocusable(false);
-            lblGhiChu.setMaximumSize(new Dimension(240, 24));
+            lblGhiChu.setMaximumSize(new Dimension(200, 18));
             lblGhiChu.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-            colTen.add(tenRow);
-            colTen.add(Box.createVerticalStrut(2));
-            colTen.add(lblGhiChu);
+            tenNotePanel.add(Box.createVerticalGlue());
+            tenNotePanel.add(lblTen);
+            tenNotePanel.add(Box.createVerticalStrut(2));
+            tenNotePanel.add(lblGhiChu);
+            tenNotePanel.add(Box.createVerticalGlue());
+
+            colTen.add(lblXoa, BorderLayout.WEST);
+            colTen.add(tenNotePanel, BorderLayout.CENTER);
 
             JPanel colGia = new JPanel(new BorderLayout());
             colGia.setOpaque(false);
-            colGia.setPreferredSize(new Dimension(COL_PRICE_W, 76));
-            colGia.setMinimumSize(new Dimension(COL_PRICE_W, 76));
-            colGia.setMaximumSize(new Dimension(COL_PRICE_W, 76));
+            colGia.setPreferredSize(new Dimension(COL_PRICE_W, ORDER_ROW_H));
+            colGia.setMinimumSize(new Dimension(COL_PRICE_W, ORDER_ROW_H));
+            colGia.setMaximumSize(new Dimension(COL_PRICE_W, ORDER_ROW_H));
             colGia.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, BORDER));
 
             JLabel lblGia = new JLabel(formatTien(item.mon.getDonGia()), SwingConstants.CENTER);
             lblGia.setFont(new Font("SansSerif", Font.PLAIN, 14));
             colGia.add(lblGia, BorderLayout.CENTER);
 
-            JPanel colSL = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 16));
+            JPanel colSL = new JPanel(new GridBagLayout());
             colSL.setOpaque(false);
-            colSL.setPreferredSize(new Dimension(COL_QTY_W, 76));
-            colSL.setMinimumSize(new Dimension(COL_QTY_W, 76));
-            colSL.setMaximumSize(new Dimension(COL_QTY_W, 76));
+            colSL.setPreferredSize(new Dimension(COL_QTY_W, ORDER_ROW_H));
+            colSL.setMinimumSize(new Dimension(COL_QTY_W, ORDER_ROW_H));
+            colSL.setMaximumSize(new Dimension(COL_QTY_W, ORDER_ROW_H));
             colSL.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, BORDER));
 
-            JButton btnMinus = new JButton("⊖");
-            JButton btnPlus = new JButton("⊕");
+            int slDaGui = soLuongDaGuiMap.getOrDefault(item.mon.getMaMon(), 0);
+
+            JPanel qtyBox = new JPanel(new BorderLayout());
+            qtyBox.setPreferredSize(new Dimension(72, 30));
+            qtyBox.setBackground(Color.WHITE);
+            qtyBox.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+
             JLabel lblSL = new JLabel(String.valueOf(item.soLuong), SwingConstants.CENTER);
+            lblSL.setFont(new Font("SansSerif", Font.BOLD, 14));
 
-            styleQtyButton(btnMinus);
-            styleQtyButton(btnPlus);
+            JPanel pnArrow = new JPanel(new GridLayout(2, 1, 0, 0));
+            pnArrow.setPreferredSize(new Dimension(22, 30));
 
-            lblSL.setFont(new Font("SansSerif", Font.PLAIN, 14));
-            lblSL.setBorder(new LineBorder(Color.GRAY, 1));
-            lblSL.setPreferredSize(new Dimension(34, 28));
+            JButton btnUp = new JButton("▲");
+            JButton btnDown = new JButton("▼");
 
-            btnMinus.addActionListener(e -> {
+            btnUp.setFont(new Font("SansSerif", Font.PLAIN, 8));
+            btnDown.setFont(new Font("SansSerif", Font.PLAIN, 8));
+
+            btnUp.setMargin(new Insets(0, 0, 0, 0));
+            btnDown.setMargin(new Insets(0, 0, 0, 0));
+
+            btnUp.setFocusPainted(false);
+            btnDown.setFocusPainted(false);
+
+            btnUp.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 0, Color.GRAY));
+            btnDown.setBorder(BorderFactory.createMatteBorder(0, 1, 0, 0, Color.GRAY));
+
+            btnUp.addActionListener(e -> {
+                item.soLuong++;
+                renderOrderList();
+                capNhatCoThayDoiChuaGui();
+            });
+
+            btnDown.addActionListener(e -> {
+                int slDaGuiNow = soLuongDaGuiMap.getOrDefault(item.mon.getMaMon(), 0);
+
+                if (slDaGuiNow > 0 && item.soLuong - 1 < slDaGuiNow) {
+                    moPopupHuyMonTam(lblXoa, item, 1);
+                    return;
+                }
+
                 item.soLuong--;
+
                 if (item.soLuong <= 0) {
                     gioHang.remove(item.mon.getMaMon());
                 }
+
                 renderOrderList();
+                capNhatCoThayDoiChuaGui();
             });
 
-            btnPlus.addActionListener(e -> {
-                item.soLuong++;
-                renderOrderList();
-            });
+            pnArrow.add(btnUp);
+            pnArrow.add(btnDown);
+
+            qtyBox.add(lblSL, BorderLayout.CENTER);
+            qtyBox.add(pnArrow, BorderLayout.EAST);
+
+            colSL.add(qtyBox);
+
+            
+            JPanel colTotal = new JPanel(new BorderLayout());
+            colTotal.setOpaque(false);
+            colTotal.setPreferredSize(new Dimension(COL_TOTAL_W, ORDER_ROW_H));
+            colTotal.setMinimumSize(new Dimension(COL_TOTAL_W, ORDER_ROW_H));
+            colTotal.setMaximumSize(new Dimension(COL_TOTAL_W, ORDER_ROW_H));
+
+            JLabel lblTotal = new JLabel(formatTien(item.soLuong * item.mon.getDonGia()), SwingConstants.CENTER);
+            lblTotal.setFont(new Font("SansSerif", Font.BOLD, 14));
+            colTotal.add(lblTotal, BorderLayout.CENTER);
 
             lblXoa.addMouseListener(new java.awt.event.MouseAdapter() {
                 @Override
                 public void mouseClicked(java.awt.event.MouseEvent e) {
-                    if (!daGuiThucDon) {
+                    int slDaGui = soLuongDaGuiMap.getOrDefault(item.mon.getMaMon(), 0);
+
+                    if (slDaGui <= 0) {
                         gioHang.remove(item.mon.getMaMon());
                         renderOrderList();
+                        capNhatCoThayDoiChuaGui();
                         return;
                     }
 
-                    moDialogHuyMon(item);
+                    moPopupHuyMonTam(lblXoa, item, slDaGui);
                 }
             });
 
@@ -1144,20 +1371,6 @@ public class Order_Mon_GUI extends JPanel {
                     showNotePopup();
                 }
             });
-
-            colSL.add(btnMinus);
-            colSL.add(lblSL);
-            colSL.add(btnPlus);
-
-            JPanel colTotal = new JPanel(new BorderLayout());
-            colTotal.setOpaque(false);
-            colTotal.setPreferredSize(new Dimension(COL_TOTAL_W, 76));
-            colTotal.setMinimumSize(new Dimension(COL_TOTAL_W, 76));
-            colTotal.setMaximumSize(new Dimension(COL_TOTAL_W, 76));
-
-            JLabel lblTotal = new JLabel(formatTien(item.soLuong * item.mon.getDonGia()), SwingConstants.CENTER);
-            lblTotal.setFont(new Font("SansSerif", Font.BOLD, 14));
-            colTotal.add(lblTotal, BorderLayout.CENTER);
 
             row.add(colTen);
             row.add(colGia);
@@ -1172,7 +1385,17 @@ public class Order_Mon_GUI extends JPanel {
             if (gc.isEmpty()) return "Ghi chú 📝";
             return gc;
         }
+        private void moPopupHuyTuSoLuong(JLabel lblXoa, JSpinner spinnerSL, OrderItem item, int slCanHuy) {
+            if (lblXoa == null || !lblXoa.isShowing()) {
+                return;
+            }
 
+            spinnerSL.setValue(soLuongDaGuiMap.getOrDefault(item.mon.getMaMon(), item.soLuong));
+
+            SwingUtilities.invokeLater(() -> {
+                moPopupHuyMonTam(lblXoa, item, slCanHuy);
+            });
+        }
         private void showNotePopup() {
             if (popupGhiChu != null && popupGhiChu.isVisible()) {
                 popupGhiChu.setVisible(false);
@@ -1214,18 +1437,23 @@ public class Order_Mon_GUI extends JPanel {
             if (txtNote != null) {
                 item.ghiChu = txtNote.getText().trim();
                 lblGhiChu.setText(getGhiChuDisplayText());
+                capNhatCoThayDoiChuaGui();
             }
+
             if (popupGhiChu != null) {
                 popupGhiChu.setVisible(false);
             }
         }
+    }
+    static class PendingHuyItem {
+        String maMon;
+        int soLuongHuy;
+        String lyDo;
 
-        private void styleQtyButton(JButton btn) {
-            btn.setFont(new Font("SansSerif", Font.PLAIN, 14));
-            btn.setPreferredSize(new Dimension(28, 28));
-            btn.setFocusPainted(false);
-            btn.setMargin(new Insets(0, 0, 0, 0));
-            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        PendingHuyItem(String maMon, int soLuongHuy, String lyDo) {
+            this.maMon = maMon;
+            this.soLuongHuy = soLuongHuy;
+            this.lyDo = lyDo;
         }
     }
 
@@ -1412,43 +1640,207 @@ public class Order_Mon_GUI extends JPanel {
         }
     }
 
-    private void moDialogHuyMon(OrderItem item) {
-        JTextField txtLyDo = new JTextField();
-        Object[] message = {
-                "Lý do hủy món:", txtLyDo
-        };
-
-        int chon = JOptionPane.showConfirmDialog(
-                this,
-                message,
-                "Hủy món",
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.WARNING_MESSAGE
-        );
-
-        if (chon != JOptionPane.OK_OPTION) return;
-
-        String lyDo = txtLyDo.getText().trim();
-        if (lyDo.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Phải nhập lý do hủy.");
-            return;
-        }
-
-        boolean ok = chiTietHoaDonDAO.huyMon(
-                maHoaDonHienTai,
-                item.mon.getMaMon(),
-                lyDo,
-                item.soLuong
-        );
-
-        if (ok) {
-            gioHang.remove(item.mon.getMaMon());
-            renderOrderList();
-            JOptionPane.showMessageDialog(this, "Đã hủy món.");
-        } else {
-            JOptionPane.showMessageDialog(this, "Hủy món thất bại.");
-        }
+    private void moPopupHuyMonTam(Component parent, OrderItem item) {
+        moPopupHuyMonTam(parent, item, 1);
     }
 
-    
+    private void moPopupHuyMonTam(Component parent, OrderItem item, int soLuongMacDinh) {
+        JPopupMenu popup = new JPopupMenu();
+        popup.setBorder(BorderFactory.createLineBorder(new Color(120, 120, 120), 1));
+
+        JPanel root = new JPanel(new BorderLayout(0, 8));
+        root.setBackground(Color.WHITE);
+        root.setBorder(new EmptyBorder(12, 14, 12, 14));
+        root.setPreferredSize(new Dimension(300, 235));
+
+        JPanel qtyPanel = new JPanel(new BorderLayout());
+        qtyPanel.setOpaque(false);
+
+        JButton btnMinus = new JButton("⊖");
+        JButton btnPlus = new JButton("⊕");
+
+        int slMax = Math.max(1, item.soLuong);
+        int slMacDinh = Math.max(1, Math.min(soLuongMacDinh, slMax));
+
+        JLabel lblSL = new JLabel(String.valueOf(slMacDinh), SwingConstants.CENTER);
+
+        btnMinus.setFont(new Font("SansSerif", Font.BOLD, 20));
+        btnPlus.setFont(new Font("SansSerif", Font.BOLD, 20));
+        lblSL.setFont(new Font("SansSerif", Font.BOLD, 20));
+
+        btnMinus.setPreferredSize(new Dimension(58, 38));
+        btnPlus.setPreferredSize(new Dimension(58, 38));
+
+        lblSL.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, Color.GRAY));
+        btnMinus.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        btnPlus.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+
+        qtyPanel.add(btnMinus, BorderLayout.WEST);
+        qtyPanel.add(lblSL, BorderLayout.CENTER);
+        qtyPanel.add(btnPlus, BorderLayout.EAST);
+
+        final int[] soLuongHuy = {slMacDinh};
+
+        btnMinus.addActionListener(e -> {
+            if (soLuongHuy[0] > 1) {
+                soLuongHuy[0]--;
+                lblSL.setText(String.valueOf(soLuongHuy[0]));
+            }
+        });
+
+        btnPlus.addActionListener(e -> {
+            if (soLuongHuy[0] < slMax) {
+                soLuongHuy[0]++;
+                lblSL.setText(String.valueOf(soLuongHuy[0]));
+            }
+        });
+
+        JPanel reasonTabs = new JPanel(new GridLayout(1, 2, 8, 0));
+        reasonTabs.setOpaque(false);
+
+        JButton btnLyDo1 = new JButton("Khách yêu cầu hủy");
+        JButton btnLyDo2 = new JButton("Thao tác sai");
+
+        Color mauGoiY = new Color(220, 220, 220);
+
+        for (JButton b : new JButton[]{btnLyDo1, btnLyDo2}) {
+            b.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            b.setBackground(mauGoiY);
+            b.setOpaque(true);
+            b.setContentAreaFilled(true);
+            b.setFocusPainted(false);
+        }
+
+        reasonTabs.add(btnLyDo1);
+        reasonTabs.add(btnLyDo2);
+
+        JTextArea txtLyDo = new JTextArea("Lý do");
+        txtLyDo.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        txtLyDo.setForeground(Color.GRAY);
+        txtLyDo.setLineWrap(true);
+        txtLyDo.setWrapStyleWord(true);
+        txtLyDo.setBorder(new EmptyBorder(8, 10, 8, 10));
+
+        txtLyDo.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if ("Lý do".equals(txtLyDo.getText())) {
+                    txtLyDo.setText("");
+                    txtLyDo.setForeground(Color.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (txtLyDo.getText().trim().isEmpty()) {
+                    txtLyDo.setText("Lý do");
+                    txtLyDo.setForeground(Color.GRAY);
+                }
+            }
+        });
+
+        btnLyDo1.addActionListener(e -> {
+            txtLyDo.setText("Khách yêu cầu hủy");
+            txtLyDo.setForeground(Color.BLACK);
+        });
+
+        btnLyDo2.addActionListener(e -> {
+            txtLyDo.setText("Thao tác sai");
+            txtLyDo.setForeground(Color.BLACK);
+        });
+
+        JScrollPane spLyDo = new JScrollPane(txtLyDo);
+        spLyDo.setPreferredSize(new Dimension(270, 70));
+        spLyDo.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+
+        JButton btnDongY = new JButton("Đồng ý");
+        btnDongY.setFont(new Font("SansSerif", Font.BOLD, 24));
+        btnDongY.setBackground(new Color(188, 222, 242));
+        btnDongY.setOpaque(true);
+        btnDongY.setContentAreaFilled(true);
+        btnDongY.setFocusPainted(false);
+        btnDongY.setPreferredSize(new Dimension(270, 44));
+
+        btnDongY.addActionListener(e -> {
+            String lyDo = txtLyDo.getText().trim();
+
+            if (lyDo.isEmpty() || "Lý do".equalsIgnoreCase(lyDo)) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập lý do hủy.");
+                return;
+            }
+
+            int slHuy = soLuongHuy[0];
+            int slDaGui = soLuongDaGuiMap.getOrDefault(item.mon.getMaMon(), item.soLuong);
+
+            dsMonChoHuy.put(
+                    item.mon.getMaMon(),
+                    new PendingHuyItem(item.mon.getMaMon(), slHuy, lyDo)
+            );
+
+            item.soLuong = Math.max(0, slDaGui - slHuy);
+
+            if (item.soLuong <= 0) {
+                gioHang.remove(item.mon.getMaMon());
+            }
+
+            renderOrderList();
+            capNhatCoThayDoiChuaGui();
+            popup.setVisible(false);
+        });
+
+        root.add(qtyPanel, BorderLayout.NORTH);
+
+        JPanel center = new JPanel(new BorderLayout(0, 0));
+        center.setOpaque(false);
+        center.add(reasonTabs, BorderLayout.NORTH);
+        center.add(spLyDo, BorderLayout.CENTER);
+
+        root.add(center, BorderLayout.CENTER);
+        root.add(btnDongY, BorderLayout.SOUTH);
+
+        popup.add(root);
+        if (parent != null && parent.isShowing()) {
+            popup.show(parent, -10, parent.getHeight() + 6);
+        }
+    }
+    private void loadMonDatTheoPhieu(String maPhieuDatBan) {
+        try {
+            gioHang.clear();
+            dsMonChoHuy.clear();
+            soLuongDaGuiMap.clear();
+
+            ArrayList<PhieuDatMon> ds = phieuDatMonDAO.getDanhSachTheoMaPhieu(maPhieuDatBan);
+
+            if (ds != null) {
+                for (PhieuDatMon pdm : ds) {
+                    if (pdm == null || pdm.getMaMon() == null) continue;
+
+                    MonAn mon = timMonTheoMaLocal(pdm.getMaMon().getMaMon());
+
+                    if (mon == null) {
+                        mon = new MonAn();
+                        mon.setMaMon(pdm.getMaMon().getMaMon());
+                        mon.setTenMon(pdm.getMaMon().getTenMon());
+                        mon.setDonGia(pdm.getDonGia());
+                    }
+
+                    gioHang.put(mon.getMaMon(), new OrderItem(
+                            mon,
+                            pdm.getSoLuong(),
+                            pdm.getGhiChu() == null ? "" : pdm.getGhiChu()
+                    ));
+                }
+            }
+
+            daGuiThucDon = false;
+            coThayDoiChuaGui = !gioHang.isEmpty();
+
+            renderOrderList();
+            capNhatTrangThaiNutTheoGuiMon();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Không tải được món đặt trước.");
+        }
+    }
 }

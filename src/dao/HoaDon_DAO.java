@@ -219,6 +219,23 @@ public class HoaDon_DAO {
 
         return ds;
     }
+    public boolean chuyenBan(String maHD, String maBanMoi) {
+        try {
+            Connection con = ConnectDB.getConnection();
+
+            String sql = "UPDATE HoaDon SET maBan = ? WHERE maHD = ?";
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, maBanMoi);
+            ps.setString(2, maHD);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
     public List<String> getAllTenKhuyenMai() {
         List<String> ds = new ArrayList<>();

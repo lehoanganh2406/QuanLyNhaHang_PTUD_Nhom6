@@ -34,6 +34,8 @@ public class ChiTietHoaDon_DAO {
                        cthd.thoiGianHuy
                 FROM ChiTietHoaDon cthd
                 WHERE cthd.maHD = ?
+                AND (cthd.trangThai IS NULL OR cthd.trangThai <> N'Đã hủy')
+                AND cthd.soLuong > 0
             """;
 
             PreparedStatement ps = con.prepareStatement(sql);

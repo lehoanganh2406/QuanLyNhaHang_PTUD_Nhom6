@@ -303,6 +303,7 @@ public class Ban_DAO {
 	            b.maBan,
 	            b.tenBan,
 	            kv.tenKhuVuc,
+	            b.soChoNgoi,
 	            CASE
 	                WHEN EXISTS (
 	                    SELECT 1
@@ -338,6 +339,7 @@ public class Ban_DAO {
 	                    rs.getString("maBan"),
 	                    rs.getString("tenBan"),
 	                    rs.getString("tenKhuVuc"),
+	                    String.valueOf(rs.getInt("soChoNgoi")),
 	                    rs.getString("trangThaiHienTai")
 	                });
 	            }

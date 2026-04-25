@@ -18,7 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 
-public class HoaDon_GUI extends JPanel {
+public class HoaDon_GUI extends JFrame {
 
     private static final long serialVersionUID = 1L;
 

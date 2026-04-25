@@ -22,7 +22,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.sql.Connection;
 import java.util.List;
 
-public class TaiKhoan_GUI extends JPanel {
+public class TaiKhoan_GUI extends JFrame {
 
     private static final long serialVersionUID = 1L;
 

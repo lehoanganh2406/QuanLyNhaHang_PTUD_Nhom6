@@ -20,7 +20,7 @@ import java.sql.Connection;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-public class NhanVien_GUI extends JPanel {
+public class NhanVien_GUI extends JFrame {
 
     private static final long serialVersionUID = 1L;
 

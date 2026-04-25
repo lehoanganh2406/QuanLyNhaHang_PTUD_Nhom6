@@ -11,7 +11,6 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
 import java.sql.Connection;
 import java.sql.Timestamp;
@@ -48,37 +47,14 @@ public class HoaDon_GUI extends JFrame {
     private JComboBox<String> cbNhanVien;
     private static TaiKhoan taiKhoanDangNhap;
 
-    private static final double SCALE;
-    static {
-        GraphicsDevice gd = GraphicsEnvironment
-                .getLocalGraphicsEnvironment()
-                .getDefaultScreenDevice();
-        GraphicsConfiguration gc = gd.getDefaultConfiguration();
-        AffineTransform at = gc.getDefaultTransform();
-        SCALE = at.getScaleX();
-    }
-
     public HoaDon_GUI(TaiKhoan tk) {
-    	
-    	System.setProperty("sun.java2d.uiScale", "auto");
 
-        String fontName = "SansSerif";
-
-        UIManager.put("Label.font",   scaledFontStatic(fontName, Font.PLAIN, 13));
-        UIManager.put("Button.font",  scaledFontStatic(fontName, Font.BOLD, 13));
-        UIManager.put("TextField.font", scaledFontStatic(fontName, Font.PLAIN, 13));
-        UIManager.put("Table.font",   scaledFontStatic(fontName, Font.PLAIN, 13));
-        UIManager.put("TableHeader.font", scaledFontStatic(fontName, Font.BOLD, 13));
-        UIManager.put("ComboBox.font", scaledFontStatic(fontName, Font.PLAIN, 13));
-        UIManager.put("ComboBox.listFont", scaledFontStatic(fontName, Font.PLAIN, 13));
-
-        // 🔥 FIX 2: LookAndFeel
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
             e.printStackTrace();
         }
-    	
+
         setTitle("Danh Sách Hóa Đơn");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -124,6 +100,7 @@ public class HoaDon_GUI extends JFrame {
 
         con = ConnectDB.getConnection();
         loadData();
+        disableFormFields();
     }
 
     private JPanel buildTitlePanel() {
@@ -131,7 +108,7 @@ public class HoaDon_GUI extends JFrame {
         pnl.setBackground(CLR_HEADER_BG);
         pnl.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         JLabel lbl = new JLabel("DANH SÁCH HÓA ĐƠN", SwingConstants.CENTER);
-        lbl.setFont(scaledFontStatic("SansSerif", Font.BOLD, 26));
+        lbl.setFont(new Font("Arial", Font.BOLD, 26));
         lbl.setForeground(CLR_HEADER_FG);
         pnl.add(lbl, BorderLayout.CENTER);
         return pnl;
@@ -236,16 +213,6 @@ public class HoaDon_GUI extends JFrame {
         }
     }
 
-    private static Font scaledFontStatic(String name, int style, int size) {
-        GraphicsDevice gd = GraphicsEnvironment
-                .getLocalGraphicsEnvironment()
-                .getDefaultScreenDevice();
-        GraphicsConfiguration gc = gd.getDefaultConfiguration();
-        AffineTransform at = gc.getDefaultTransform();
-        double scale = at.getScaleX();
-        return new Font(name, style, (int) (size * scale));
-    }
-
     private ImageIcon loadIcon(String path, int w, int h) {
         ImageIcon icon = new ImageIcon(path);
         Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
@@ -265,16 +232,16 @@ public class HoaDon_GUI extends JFrame {
             }
         };
 
+        btn.setFont(new Font("Arial", Font.BOLD, 16));
         btn.setForeground(new Color(30, 30, 30));
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setHorizontalAlignment(SwingConstants.CENTER);
-        btn.setIconTextGap(10);
-        btn.setMargin(new Insets(2, 8, 2, 8));
-        btn.setPreferredSize(new Dimension((int) (110 * SCALE), (int) (32 * SCALE)));
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        btn.setIconTextGap(6);
+        btn.setMargin(new Insets(6, 12, 6, 12));
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         if (iconPath != null) {
             btn.setIcon(loadIcon(iconPath, 18, 18));
@@ -293,35 +260,29 @@ public class HoaDon_GUI extends JFrame {
         JPanel wrapper = new JPanel(new GridBagLayout());
         wrapper.setOpaque(false);
         wrapper.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 0));
-        wrapper.setPreferredSize(new Dimension(280, 200));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 6, 6, 6);
-        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(4, 4, 4, 4);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
+        gbc.weighty = 0;
 
         gbc.gridx = 0;
+        gbc.gridwidth = 1;
+
         gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.weighty = 0.2;
         wrapper.add(btnChiTiet, gbc);
 
         gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.weighty = 0.15;
-
-        gbc.gridx = 0;
         wrapper.add(btnTraCuu, gbc);
 
-        gbc.gridx = 1;
+        gbc.gridy = 2;
         wrapper.add(btnLamMoi, gbc);
 
-        gbc.gridy = 2;
-
-        gbc.gridx = 0;
+        gbc.gridy = 3;
         wrapper.add(btnLoc, gbc);
 
-        gbc.gridx = 1;
+        gbc.gridy = 4;
         wrapper.add(btnCapNhat, gbc);
 
         btnLamMoi.addActionListener(e -> lamMoi());
@@ -357,7 +318,8 @@ public class HoaDon_GUI extends JFrame {
         };
 
         table = new JTable(tableModel);
-        table.setRowHeight((int) (32 * SCALE));
+        table.setRowHeight(36);
+        table.setFont(new Font("Arial", Font.PLAIN, 15));
         table.setShowGrid(true);
         table.setGridColor(CLR_BORDER);
         table.setSelectionBackground(new Color(180, 210, 230));
@@ -380,10 +342,26 @@ public class HoaDon_GUI extends JFrame {
             }
         });
 
+        // Dùng custom renderer cho header giống KhachHang_GUI để tránh lỗi LookAndFeel
+        DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                c.setBackground(CLR_TABLE_HDR);
+                c.setForeground(new Color(50, 40, 30));
+                c.setFont(new Font("Arial", Font.BOLD, 15));
+                ((JLabel) c).setHorizontalAlignment(JLabel.CENTER);
+                return c;
+            }
+        };
+
         JTableHeader header = table.getTableHeader();
-        header.setBackground(CLR_TABLE_HDR);
-        header.setForeground(new Color(50, 40, 30));
         header.setReorderingAllowed(false);
+        header.setPreferredSize(new Dimension(100, 38));
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
+        }
 
         int[] widths = {100, 120, 120, 110, 140, 100, 120, 60, 90, 100, 180};
         for (int i = 0; i < widths.length; i++) {
@@ -410,9 +388,14 @@ public class HoaDon_GUI extends JFrame {
         cbTrangThai.setSelectedIndex(0);
         txtLyDoHuy.setText("");
         txtLyDoHuy.setEnabled(false);
+
+        dtThoiGianVao.setEnabled(true);
+        dtThoiGianRa.setEnabled(true);
         dtThoiGianVao.setDate(null);
         dtThoiGianRa.setDate(null);
+
         table.clearSelection();
+        loadData();
     }
 
     private void capNhatHoaDon() {
@@ -509,14 +492,7 @@ public class HoaDon_GUI extends JFrame {
                     row[0],
                     vao != null ? sdf.format(vao) : "",
                     ra != null ? sdf.format(ra) : "",
-                    row[3],
-                    row[4],
-                    row[5],
-                    row[6],
-                    row[7],
-                    row[8],
-                    row[9],
-                    row[10]
+                    row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]
             });
         }
     }
@@ -542,46 +518,36 @@ public class HoaDon_GUI extends JFrame {
 
         try {
             String vao = getSafe(tableModel.getValueAt(row, 1));
-            if (!vao.isEmpty()) {
-                dtThoiGianVao.setDate(new SimpleDateFormat("HH:mm dd-MM-yyyy").parse(vao));
-            } else {
-                dtThoiGianVao.setDate(null);
-            }
+            dtThoiGianVao.setDate(!vao.isEmpty()
+                    ? new SimpleDateFormat("HH:mm dd-MM-yyyy").parse(vao) : null);
         } catch (Exception e) {
             dtThoiGianVao.setDate(null);
         }
 
         try {
             String ra = getSafe(tableModel.getValueAt(row, 2));
-            if (!ra.isEmpty()) {
-                dtThoiGianRa.setDate(new SimpleDateFormat("HH:mm dd-MM-yyyy").parse(ra));
-            } else {
-                dtThoiGianRa.setDate(null);
-            }
+            dtThoiGianRa.setDate(!ra.isEmpty()
+                    ? new SimpleDateFormat("HH:mm dd-MM-yyyy").parse(ra) : null);
+        } catch (Exception e) {
+            dtThoiGianRa.setDate(null);
+        }
 
-        } catch (Exception e) {}
         disableFormFields();
     }
-    
-    private void disableFormFields() {
 
+    private void disableFormFields() {
         txtTenKhach.setEnabled(false);
         txtMaHoaDon.setEnabled(false);
         txtBan.setEnabled(false);
         txtTongTien.setEnabled(false);
         txtSDT.setEnabled(false);
-
         cbNhanVien.setEnabled(false);
         txtKhuyenMai.setEnabled(false);
-
-        dtThoiGianVao.setEnabled(false);
-        dtThoiGianRa.setEnabled(false);
-
-        // 🔥 CHỈ CHO PHÉP TRẠNG THÁI
+        dtThoiGianVao.setEnabled(true);
+        dtThoiGianRa.setEnabled(true);
         cbTrangThai.setEnabled(true);
+        xuLyTrangThai();
     }
-    
-
 
     private void loadData() {
         if (tableModel == null) return;
@@ -597,66 +563,50 @@ public class HoaDon_GUI extends JFrame {
                     row[0],
                     vao != null ? sdf.format(vao) : "",
                     ra != null ? sdf.format(ra) : "",
-                    row[3],
-                    row[4],
-                    row[5],
-                    row[6],
-                    row[7],
-                    row[8],
-                    row[9],
-                    row[10]
+                    row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]
             });
         }
     }
 
     private JLabel createLabel(String text) {
-        return new JLabel(text);
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(new Font("Arial", Font.BOLD, 15));
+        return lbl;
     }
 
     private JTextField createTextField() {
         JTextField tf = new JTextField();
-        tf.setFont(scaledFontStatic("SansSerif", Font.PLAIN, 13));
-
-        int padV = (int) (6 * SCALE);
-        int padH = (int) (8 * SCALE);
-
+        tf.setFont(new Font("Arial", Font.PLAIN, 15));
         tf.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(CLR_BORDER),
-                BorderFactory.createEmptyBorder(padV, padH, padV, padH)
+                BorderFactory.createEmptyBorder(4, 6, 4, 6)
         ));
-
-        int height = (int) (36 * SCALE);
-        tf.setPreferredSize(new Dimension(0, height));
+        tf.setPreferredSize(new Dimension(0, 36));
         return tf;
     }
 
     private JComboBox<String> createComboBox(String[] items) {
         JComboBox<String> cb = new JComboBox<>(items);
-
-
-        cb.setFont(scaledFontStatic("SansSerif", Font.PLAIN, 15));
+        cb.setFont(new Font("Arial", Font.PLAIN, 15));
         cb.setBackground(Color.WHITE);
-
-        int height = (int) (36 * SCALE);
-        cb.setPreferredSize(new Dimension(0, height));
-
+        cb.setPreferredSize(new Dimension(0, 36));
         cb.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(CLR_BORDER),
-                BorderFactory.createEmptyBorder(4, 6, 4, 6)
+                BorderFactory.createEmptyBorder(2, 4, 2, 4)
         ));
-
         return cb;
     }
 
     private JDateChooser createDateChooser() {
         JDateChooser dc = new JDateChooser();
         dc.setDateFormatString("HH:mm dd/MM/yyyy");
+        dc.setPreferredSize(new Dimension(0, 36));
 
-        dc.setPreferredSize(new Dimension(0, (int)(36 * SCALE)));
-//        dc.setPreferredSize(null);
-        dc.getDateEditor().getUiComponent().setEnabled(false); // không gõ tay
         JTextField editor = (JTextField) dc.getDateEditor().getUiComponent();
-        editor.setFont(scaledFontStatic("SansSerif", Font.PLAIN, 13));
+        editor.setEditable(false);
+        editor.setEnabled(true);
+        editor.setFont(new Font("Arial", Font.PLAIN, 15));
+
         return dc;
     }
 
@@ -664,12 +614,9 @@ public class HoaDon_GUI extends JFrame {
         cb.setBackground(Color.WHITE);
         cb.setFocusable(false);
         cb.setRequestFocusEnabled(false);
-
-        int height = (int) (36 * SCALE);
-        cb.setPreferredSize(new Dimension(0, height));
-        cb.setMinimumSize(new Dimension(0, height));
-        cb.setMaximumSize(new Dimension(Integer.MAX_VALUE, height));
-
+        cb.setPreferredSize(new Dimension(0, 36));
+        cb.setMinimumSize(new Dimension(0, 36));
+        cb.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         cb.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(CLR_BORDER),
                 BorderFactory.createEmptyBorder(2, 6, 2, 6)
@@ -680,10 +627,8 @@ public class HoaDon_GUI extends JFrame {
             public Component getListCellRendererComponent(
                     JList<?> list, Object value, int index,
                     boolean isSelected, boolean cellHasFocus) {
-
                 JLabel lbl = (JLabel) super.getListCellRendererComponent(
                         list, value, index, isSelected, false);
-
                 lbl.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
                 return lbl;
             }
@@ -692,7 +637,6 @@ public class HoaDon_GUI extends JFrame {
 
     private void addRow(JPanel p, GridBagConstraints gbc, int row,
                         String lbl1, JComponent c1, String lbl2, JComponent c2) {
-
         gbc.gridy = row;
 
         gbc.gridx = 0;
@@ -718,22 +662,10 @@ public class HoaDon_GUI extends JFrame {
     }
 
     public static void main(String[] args) {
-        System.setProperty("sun.java2d.uiScale", "auto");
-
-        String fontName = "SansSerif";
-        UIManager.put("Label.font", scaledFontStatic(fontName, Font.PLAIN, 13));
-        UIManager.put("Button.font", scaledFontStatic(fontName, Font.BOLD, 13));
-        UIManager.put("TextField.font", scaledFontStatic(fontName, Font.PLAIN, 13));
-        UIManager.put("Table.font", scaledFontStatic(fontName, Font.PLAIN, 13));
-        UIManager.put("TableHeader.font", scaledFontStatic(fontName, Font.BOLD, 13));
-        UIManager.put("ComboBox.font", scaledFontStatic(fontName, Font.PLAIN, 13));
-        UIManager.put("ComboBox.listFont", scaledFontStatic(fontName, Font.PLAIN, 13));
-
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception ignored) {}
-
             new HoaDon_GUI(null).setVisible(true);
         });
     }

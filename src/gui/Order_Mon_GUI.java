@@ -17,6 +17,7 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Window;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -61,7 +62,7 @@ import entity.MonAn;
 import entity.PhieuDatMon;
 import entity.TaiKhoan;
 
-public class Order_Mon_GUI extends JFrame {
+public class Order_Mon_GUI extends JPanel {
     private static final long serialVersionUID = 1L;
 
     // ===== MÀU =====
@@ -161,46 +162,13 @@ public class Order_Mon_GUI extends JFrame {
     }
 
     private void init() {
-        setTitle("Order món");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
-        JLayeredPane layeredPane = new JLayeredPane();
-        layeredPane.setLayout(null);
-        setContentPane(layeredPane);
+        setLayout(new BorderLayout());
+        setBackground(BG_MAIN);
 
         JPanel mainPanel = createMainPanel();
-        Pn_ThanhMenu pnMenu = new Pn_ThanhMenu(taiKhoanDangNhap);
-
-        layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
-        layeredPane.add(pnMenu, JLayeredPane.PALETTE_LAYER);
-
-        addComponentListener(new java.awt.event.ComponentAdapter() {
-            @Override
-            public void componentResized(java.awt.event.ComponentEvent e) {
-                int w = getContentPane().getWidth();
-                int h = getContentPane().getHeight();
-
-                mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
-                pnMenu.setBounds(0, 0, w, h);
-
-                layeredPane.revalidate();
-                layeredPane.repaint();
-            }
-        });
+        add(mainPanel, BorderLayout.CENTER);
 
         loadData();
-        configResponsiveWindow();
-
-        SwingUtilities.invokeLater(() -> {
-            int w = getContentPane().getWidth();
-            int h = getContentPane().getHeight();
-
-            mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
-            pnMenu.setBounds(0, 0, w, h);
-
-            layeredPane.revalidate();
-            layeredPane.repaint();
-        });
     }
 
     private void napDuLieuBanKhiMoForm() {
@@ -454,10 +422,12 @@ public class Order_Mon_GUI extends JFrame {
         styleMainButton(btnThanhToan, BTN_PAY, Color.BLACK, 20, true);
 
         btnQuayLai.addActionListener(e -> {
-            dispose();
-            new Order_Ban_GUI(taiKhoanDangNhap).setVisible(true);
-        });
+            Window w = SwingUtilities.getWindowAncestor(Order_Mon_GUI.this);
 
+            if (w instanceof TrangChu_GUI) {
+                ((TrangChu_GUI) w).showPage("Order_Ban_GUI");
+            }
+        });
         btnGuiThucDon.addActionListener(e -> guiThucDonVaLuuCSDL());
 
         btnChuyenBan.addActionListener(e -> {
@@ -625,8 +595,11 @@ public class Order_Mon_GUI extends JFrame {
             capNhatTrangThaiNutTheoGuiMon();
 
             JOptionPane.showMessageDialog(this, "Đã gửi thực đơn.");
-            dispose();
-            new Order_Ban_GUI(taiKhoanDangNhap).setVisible(true);
+            Window w = SwingUtilities.getWindowAncestor(Order_Mon_GUI.this);
+
+            if (w instanceof TrangChu_GUI) {
+                ((TrangChu_GUI) w).showPage("Order_Ban_GUI");
+            }
             return true;
 
         } catch (Exception ex) {
@@ -914,16 +887,6 @@ public class Order_Mon_GUI extends JFrame {
                 addMouseAll(c, adapter);
             }
         }
-    }
-
-    private void configResponsiveWindow() {
-        Dimension screen = GraphicsEnvironment.getLocalGraphicsEnvironment()
-                .getMaximumWindowBounds().getSize();
-
-        setSize(screen.width, screen.height);
-        setMinimumSize(new Dimension(1280, 760));
-        setLocationRelativeTo(null);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
     class MonCard extends JPanel {
@@ -1487,10 +1450,5 @@ public class Order_Mon_GUI extends JFrame {
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            Order_Mon_GUI gui = new Order_Mon_GUI(null, "B02", "Bàn 02");
-            gui.setVisible(true);
-        });
-    }
+    
 }

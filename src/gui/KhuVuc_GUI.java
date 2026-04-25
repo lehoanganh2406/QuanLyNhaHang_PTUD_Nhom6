@@ -34,7 +34,7 @@ import javax.swing.table.TableCellRenderer;
 
 import entity.TaiKhoan;
 
-public class KhuVuc_GUI extends JFrame {
+public class KhuVuc_GUI extends JPanel {
 
     private TaiKhoan taiKhoanDangNhap;
     
@@ -45,38 +45,11 @@ public class KhuVuc_GUI extends JFrame {
     public KhuVuc_GUI(TaiKhoan tk) {
         this.taiKhoanDangNhap = tk;
 
-        setTitle("Quản lý khu vực");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
-        JLayeredPane layeredPane = new JLayeredPane();
-        layeredPane.setLayout(null);
-        setContentPane(layeredPane);
+        setLayout(new BorderLayout());
+        setBackground(new Color(245, 245, 245));
 
-        Pn_ThanhMenu menu = new Pn_ThanhMenu(taiKhoanDangNhap);
-        JPanel mainPanel = createMainPanel();
-
-        layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
-        layeredPane.add(menu, JLayeredPane.PALETTE_LAYER);
-
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                int w = getContentPane().getWidth();
-                int h = getContentPane().getHeight();
-
-                mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
-                menu.setBounds(0, 0, w, h);
-
-                layeredPane.revalidate();
-                layeredPane.repaint();
-            }
-        });
-
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setMinimumSize(new Dimension(1000, 600));
-        setLocationRelativeTo(null);
-    }
-    
+        add(createMainPanel(), BorderLayout.CENTER);
+    }    
     private JPanel createMainPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(new Color(245, 245, 245));
@@ -297,7 +270,7 @@ public class KhuVuc_GUI extends JFrame {
                 fireEditingStopped();
                 int row = table.getSelectedRow();
                 if (row >= 0) {
-                    JOptionPane.showMessageDialog(KhuVuc_GUI.this, "Chức năng Sửa khu vực: " + tableModel.getValueAt(row, 1));
+                	JOptionPane.showMessageDialog(KhuVuc_GUI.this, "Chức năng Sửa khu vực: " + tableModel.getValueAt(row, 1));
                 }
             });
             

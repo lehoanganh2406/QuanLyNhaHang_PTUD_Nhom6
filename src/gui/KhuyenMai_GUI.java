@@ -1,28 +1,10 @@
 package gui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JLayeredPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
@@ -30,71 +12,61 @@ import com.toedter.calendar.JDateChooser;
 
 import entity.TaiKhoan;
 
-public class KhuyenMai_GUI extends JFrame {
+public class KhuyenMai_GUI extends JPanel {
+
+    private static final long serialVersionUID = 1L;
 
     private TaiKhoan taiKhoanDangNhap;
-
     private JTextField txtSearch;
+
+    private final Color BG = new Color(245, 245, 245);
+    private final Color BORDER = new Color(220, 220, 220);
 
     public KhuyenMai_GUI(TaiKhoan tk) {
         this.taiKhoanDangNhap = tk;
 
-        setTitle("Quản lý khuyến mãi");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+        setBackground(BG);
 
-        JLayeredPane layeredPane = new JLayeredPane();
-        layeredPane.setLayout(null);
-        setContentPane(layeredPane);
+        add(createMainPanel(), BorderLayout.CENTER);
+    }
 
-        Pn_ThanhMenu menu = new Pn_ThanhMenu(taiKhoanDangNhap);
-        JPanel mainPanel = createMainPanel();
-
-        layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
-        layeredPane.add(menu, JLayeredPane.PALETTE_LAYER);
-
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                int w = getContentPane().getWidth();
-                int h = getContentPane().getHeight();
-
-                mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
-                menu.setBounds(0, 0, w, h);
-
-                layeredPane.revalidate();
-                layeredPane.repaint();
-            }
-        });
-
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setMinimumSize(new Dimension(1000, 600));
-        setLocationRelativeTo(null);
+    public KhuyenMai_GUI() {
+        this(null);
     }
 
     private JPanel createMainPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(new Color(245, 245, 245));
+        mainPanel.setBackground(BG);
 
-        // --- TOP SEARCH & FILTER PANEL ---
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setOpaque(false);
+        mainPanel.add(createTopPanel(), BorderLayout.NORTH);
+        mainPanel.add(createCenterWrapper(), BorderLayout.CENTER);
+
+        return mainPanel;
+    }
+
+    private JPanel createTopPanel() {
+        JPanel topPanel = new JPanel(new BorderLayout(12, 0));
+        topPanel.setBackground(BG);
         topPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 220, 220)),
-                new EmptyBorder(15, 20, 15, 20)));
+                BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER),
+                new EmptyBorder(15, 20, 15, 20)
+        ));
 
-        // LEFT: Search Box
         JPanel searchBox = new JPanel(new BorderLayout());
         searchBox.setBackground(Color.WHITE);
+        searchBox.setPreferredSize(new Dimension(320, 38));
         searchBox.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(220, 220, 220), 1),
-                new EmptyBorder(5, 10, 5, 10)));
+                new LineBorder(BORDER, 1),
+                new EmptyBorder(5, 10, 5, 10)
+        ));
 
-        JLabel lblSearchIcon = new JLabel("🔍"); // Unicode magnifying glass
-        lblSearchIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+        JLabel lblSearchIcon = new JLabel("🔍");
+        lblSearchIcon.setFont(new Font("SansSerif", Font.PLAIN, 14));
         lblSearchIcon.setForeground(Color.GRAY);
-        lblSearchIcon.setBorder(new EmptyBorder(0, 0, 0, 5));
+        lblSearchIcon.setBorder(new EmptyBorder(0, 0, 0, 6));
 
-        txtSearch = new JTextField("Tìm kiếm khuyến mãi", 25);
+        txtSearch = new JTextField("Tìm kiếm khuyến mãi");
         txtSearch.setFont(new Font("SansSerif", Font.PLAIN, 14));
         txtSearch.setBorder(null);
         txtSearch.setForeground(Color.GRAY);
@@ -122,33 +94,19 @@ public class KhuyenMai_GUI extends JFrame {
         JPanel leftTopPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         leftTopPanel.setOpaque(false);
         leftTopPanel.add(searchBox);
+
         topPanel.add(leftTopPanel, BorderLayout.WEST);
 
-        // RIGHT: Date Filter
         JPanel rightTopPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         rightTopPanel.setOpaque(false);
 
-        JLabel lblStartDate = new JLabel("Ngày bắt đầu:");
-        lblStartDate.setFont(new Font("SansSerif", Font.PLAIN, 15));
-        JDateChooser dateStart = new JDateChooser();
-        dateStart.setPreferredSize(new Dimension(130, 30));
-        dateStart.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        JLabel lblStartDate = createFilterLabel("Ngày bắt đầu:");
+        JDateChooser dateStart = createDateChooser();
 
-        JLabel lblEndDate = new JLabel("Ngày kết thúc:");
-        lblEndDate.setFont(new Font("SansSerif", Font.PLAIN, 15));
-        JDateChooser dateEnd = new JDateChooser();
-        dateEnd.setPreferredSize(new Dimension(130, 30));
-        dateEnd.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        JLabel lblEndDate = createFilterLabel("Ngày kết thúc:");
+        JDateChooser dateEnd = createDateChooser();
 
-        JButton btnFilter = new JButton("Lọc");
-        btnFilter.setFont(new Font("SansSerif", Font.BOLD, 14));
-        btnFilter.setBackground(new Color(245, 235, 225));
-        btnFilter.setForeground(new Color(120, 90, 70));
-        btnFilter.setFocusPainted(false);
-        btnFilter.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(230, 215, 195), 1),
-                new EmptyBorder(5, 20, 5, 20)));
-        btnFilter.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JButton btnFilter = createSmallButton("Lọc");
 
         rightTopPanel.add(lblStartDate);
         rightTopPanel.add(dateStart);
@@ -158,50 +116,49 @@ public class KhuyenMai_GUI extends JFrame {
 
         topPanel.add(rightTopPanel, BorderLayout.EAST);
 
-        mainPanel.add(topPanel, BorderLayout.NORTH);
+        return topPanel;
+    }
 
-        // --- CENTER PANEL ---
+    private JPanel createCenterWrapper() {
         JPanel centerPanel = new JPanel(new BorderLayout(0, 15));
         centerPanel.setBackground(Color.WHITE);
         centerPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // Content Header
+        centerPanel.add(createContentHeader(), BorderLayout.NORTH);
+        centerPanel.add(createCardsScroll(), BorderLayout.CENTER);
+
+        JPanel centerWrapper = new JPanel(new BorderLayout());
+        centerWrapper.setOpaque(false);
+        centerWrapper.setBorder(new EmptyBorder(0, 20, 20, 20));
+        centerWrapper.add(centerPanel, BorderLayout.CENTER);
+
+        return centerWrapper;
+    }
+
+    private JPanel createContentHeader() {
         JPanel contentHeader = new JPanel(new BorderLayout());
         contentHeader.setOpaque(false);
 
         JLabel lblTitle = new JLabel("Khuyến mãi cố định theo hạng thành viên");
-        lblTitle.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 20));
         lblTitle.setForeground(Color.DARK_GRAY);
         contentHeader.add(lblTitle, BorderLayout.WEST);
 
         JPanel actionButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actionButtons.setOpaque(false);
 
-        JButton btnAdd = new JButton("+ Thêm khuyến mãi");
-        btnAdd.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        btnAdd.setBackground(new Color(230, 244, 234));
-        btnAdd.setForeground(new Color(46, 125, 50));
-        btnAdd.setFocusPainted(false);
-        btnAdd.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        btnAdd.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        JButton btnDelete = new JButton("Xóa");
-        btnDelete.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        btnDelete.setBackground(new Color(245, 235, 225));
-        btnDelete.setForeground(new Color(120, 90, 70));
-        btnDelete.setFocusPainted(false);
-        btnDelete.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(230, 215, 195), 1, true),
-                BorderFactory.createEmptyBorder(7, 20, 7, 20)));
-        btnDelete.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JButton btnAdd = createAddButton("+ Thêm khuyến mãi");
+        JButton btnDelete = createSmallButton("Xóa");
 
         actionButtons.add(btnAdd);
         actionButtons.add(btnDelete);
+
         contentHeader.add(actionButtons, BorderLayout.EAST);
 
-        centerPanel.add(contentHeader, BorderLayout.NORTH);
+        return contentHeader;
+    }
 
-        // Cards list
+    private JScrollPane createCardsScroll() {
         JPanel cardsContainer = new JPanel(new GridLayout(0, 2, 20, 20));
         cardsContainer.setOpaque(false);
 
@@ -229,30 +186,70 @@ public class KhuyenMai_GUI extends JFrame {
         scrollPane.getViewport().setBackground(Color.WHITE);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        centerPanel.add(scrollPane, BorderLayout.CENTER);
 
-        JPanel centerWrapper = new JPanel(new BorderLayout());
-        centerWrapper.setOpaque(false);
-        centerWrapper.setBorder(new EmptyBorder(0, 20, 20, 20));
-        centerWrapper.add(centerPanel, BorderLayout.CENTER);
+        return scrollPane;
+    }
 
-        mainPanel.add(centerWrapper, BorderLayout.CENTER);
+    private JLabel createFilterLabel(String text) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        return lbl;
+    }
 
-        return mainPanel;
+    private JDateChooser createDateChooser() {
+        JDateChooser chooser = new JDateChooser();
+        chooser.setPreferredSize(new Dimension(135, 32));
+        chooser.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        return chooser;
+    }
+
+    private JButton createSmallButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btn.setBackground(new Color(245, 235, 225));
+        btn.setForeground(new Color(120, 90, 70));
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(230, 215, 195), 1, true),
+                new EmptyBorder(7, 20, 7, 20)
+        ));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
+    }
+
+    private JButton createAddButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btn.setBackground(new Color(230, 244, 234));
+        btn.setForeground(new Color(46, 125, 50));
+        btn.setFocusPainted(false);
+        btn.setBorder(new EmptyBorder(8, 16, 8, 16));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
     }
 
     static class PromotionCard extends JPanel {
-        public PromotionCard(String title, String subtitle, String target, String discount, String type,
-                String status) {
+        private static final long serialVersionUID = 1L;
+
+        public PromotionCard(String title, String subtitle, String target,
+                             String discount, String type, String status) {
+
             setLayout(new BorderLayout(10, 10));
             setBackground(Color.WHITE);
             setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true),
-                    BorderFactory.createEmptyBorder(15, 20, 15, 20)));
+                    new LineBorder(new Color(220, 220, 220), 1, true),
+                    new EmptyBorder(15, 20, 15, 20)
+            ));
 
-            // Header Panel
+            add(createHeader(title, subtitle), BorderLayout.NORTH);
+            add(createDetails(target, discount, type, status), BorderLayout.CENTER);
+            add(createFooter(), BorderLayout.SOUTH);
+        }
+
+        private JPanel createHeader(String title, String subtitle) {
             JPanel headerPanel = new JPanel(new GridLayout(2, 1, 0, 8));
             headerPanel.setOpaque(false);
+
             JLabel lblTitle = new JLabel(title);
             lblTitle.setFont(new Font("SansSerif", Font.BOLD, 22));
             lblTitle.setForeground(new Color(30, 30, 30));
@@ -264,11 +261,13 @@ public class KhuyenMai_GUI extends JFrame {
             headerPanel.add(lblTitle);
             headerPanel.add(lblSubtitle);
 
-            add(headerPanel, BorderLayout.NORTH);
+            return headerPanel;
+        }
 
-            // Details Panel
+        private JPanel createDetails(String target, String discount, String type, String status) {
             JPanel detailsPanel = new JPanel(new GridBagLayout());
             detailsPanel.setOpaque(false);
+
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.anchor = GridBagConstraints.WEST;
             gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -278,10 +277,10 @@ public class KhuyenMai_GUI extends JFrame {
             addDetailRow(detailsPanel, gbc, 1, "Mức giảm:", discount);
             addDetailRow(detailsPanel, gbc, 2, "Loại khuyến mãi:", type);
 
-            // Status Row
             gbc.gridy = 3;
             gbc.gridx = 0;
             gbc.weightx = 0;
+
             JLabel lblStatusKey = new JLabel("Trạng thái:");
             lblStatusKey.setFont(new Font("SansSerif", Font.PLAIN, 15));
             lblStatusKey.setForeground(Color.DARK_GRAY);
@@ -289,42 +288,49 @@ public class KhuyenMai_GUI extends JFrame {
 
             gbc.gridx = 1;
             gbc.weightx = 1;
+
             JLabel lblStatusVal = new JLabel(status);
             lblStatusVal.setFont(new Font("SansSerif", Font.PLAIN, 14));
             lblStatusVal.setOpaque(true);
             lblStatusVal.setBackground(new Color(230, 244, 234));
             lblStatusVal.setForeground(new Color(46, 125, 50));
-            lblStatusVal.setBorder(BorderFactory.createEmptyBorder(4, 12, 4, 12));
+            lblStatusVal.setBorder(new EmptyBorder(4, 12, 4, 12));
 
             JPanel statusWrap = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
             statusWrap.setOpaque(false);
             statusWrap.add(lblStatusVal);
+
             detailsPanel.add(statusWrap, gbc);
 
-            add(detailsPanel, BorderLayout.CENTER);
+            return detailsPanel;
+        }
 
-            // Footer Panel (Edit Button)
+        private JPanel createFooter() {
             JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
             footerPanel.setOpaque(false);
+
             JButton btnEdit = new JButton("Sửa");
             btnEdit.setFont(new Font("SansSerif", Font.PLAIN, 14));
             btnEdit.setBackground(new Color(245, 235, 225));
             btnEdit.setForeground(new Color(120, 90, 70));
             btnEdit.setFocusPainted(false);
             btnEdit.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(new Color(230, 215, 195), 1, true),
-                    BorderFactory.createEmptyBorder(6, 25, 6, 25)));
+                    new LineBorder(new Color(230, 215, 195), 1, true),
+                    new EmptyBorder(6, 25, 6, 25)
+            ));
             btnEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            footerPanel.add(btnEdit);
 
-            add(footerPanel, BorderLayout.SOUTH);
+            footerPanel.add(btnEdit);
+            return footerPanel;
         }
 
-        private void addDetailRow(JPanel pnl, GridBagConstraints gbc, int row, String key, String value) {
+        private void addDetailRow(JPanel pnl, GridBagConstraints gbc,
+                                  int row, String key, String value) {
             gbc.gridy = row;
 
             gbc.gridx = 0;
             gbc.weightx = 0;
+
             JLabel lblKey = new JLabel(key);
             lblKey.setFont(new Font("SansSerif", Font.PLAIN, 15));
             lblKey.setForeground(Color.DARK_GRAY);
@@ -332,6 +338,7 @@ public class KhuyenMai_GUI extends JFrame {
 
             gbc.gridx = 1;
             gbc.weightx = 1;
+
             JLabel lblVal = new JLabel(value);
             lblVal.setFont(new Font("SansSerif", Font.PLAIN, 15));
             lblVal.setForeground(Color.BLACK);

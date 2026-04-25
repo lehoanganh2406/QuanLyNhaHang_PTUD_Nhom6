@@ -65,7 +65,7 @@ import entity.KhuVuc;
 import entity.LoaiBan;
 import entity.TaiKhoan;
 
-public class Ban_GUI extends JFrame {
+public class Ban_GUI extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private static final String FILTER_ALL = "ALL";
@@ -108,36 +108,16 @@ public class Ban_GUI extends JFrame {
         this.taiKhoanDangNhap = tk;
         ConnectDB.getInstance().connect();
 
-        setTitle("Quản lý bàn");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+        setBackground(new Color(245, 245, 245));
 
-        JLayeredPane layeredPane = new JLayeredPane();
-        layeredPane.setLayout(null);
-        setContentPane(layeredPane);
-
-        Pn_ThanhMenu menu = new Pn_ThanhMenu(taiKhoanDangNhap);
-        JPanel mainPanel = createMainPanel();
-
-        layeredPane.add(mainPanel, JLayeredPane.DEFAULT_LAYER);
-        layeredPane.add(menu, JLayeredPane.PALETTE_LAYER);
-
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                int w = getContentPane().getWidth();
-                int h = getContentPane().getHeight();
-                mainPanel.setBounds(0, 42, w, Math.max(0, h - 42));
-                menu.setBounds(0, 0, w, h);
-                layeredPane.revalidate();
-                layeredPane.repaint();
-            }
-        });
-
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setMinimumSize(new Dimension(1280, 760));
-        setLocationRelativeTo(null);
+        add(createMainPanel(), BorderLayout.CENTER);
 
         napDuLieuVaRender(true);
+    }
+
+    public Ban_GUI() {
+        this(null);
     }
 
     private JPanel createMainPanel() {

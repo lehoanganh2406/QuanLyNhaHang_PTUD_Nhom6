@@ -77,7 +77,7 @@ import entity.TaiKhoan;
 import dao.KhuyenMai_DAO;
 import entity.KhuyenMai;
 
-public class TraCuu_GUI extends JFrame {
+public class TraCuu_GUI extends JPanel {
     private static final long serialVersionUID = 1L;
 
     private TaiKhoan taiKhoanDangNhap;
@@ -223,25 +223,19 @@ public class TraCuu_GUI extends JFrame {
     }
 
     private void initUI() {
-        setTitle("Tra cứu");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setMinimumSize(new Dimension(1250, 740));
-        setLocationRelativeTo(null);
-
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        setLayout(new BorderLayout());
+        setBackground(BG_FRAME);
+
         contentPane = new JPanel(new BorderLayout());
         contentPane.setBackground(BG_FRAME);
-        setContentPane(contentPane);
 
-        Pn_ThanhMenu pnThanhMenu = new Pn_ThanhMenu(taiKhoanDangNhap);
-        pnThanhMenu.setPreferredSize(new Dimension(100, 42));
-        contentPane.add(pnThanhMenu, BorderLayout.NORTH);
+        add(contentPane, BorderLayout.CENTER);
 
         JPanel pnlBody = new JPanel(new BorderLayout());
         pnlBody.setBackground(BG_FRAME);
@@ -262,7 +256,6 @@ public class TraCuu_GUI extends JFrame {
         pnlBody.add(pnlCards, BorderLayout.CENTER);
         cardLayout.show(pnlCards, "MON_AN");
     }
-
     private JPanel createLeftMenu() {
         JPanel pnlLeft = new JPanel();
         pnlLeft.setLayout(new BoxLayout(pnlLeft, BoxLayout.Y_AXIS));

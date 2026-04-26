@@ -8,5 +8,7 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="libs/mssql-jdbc-12.10.0.jre11.jar"/>
 	<classpathentry kind="lib" path="libs/jcalendar-1.4.jar"/>
+	<classpathentry kind="lib" path="libs/jakarta.activation-2.0.1.jar"/>
+	<classpathentry kind="lib" path="libs/jakarta.mail-2.0.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

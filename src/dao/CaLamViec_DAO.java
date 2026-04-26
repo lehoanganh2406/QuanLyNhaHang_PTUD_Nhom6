@@ -95,19 +95,15 @@ public class CaLamViec_DAO {
         boolean coCaSang = daCoCaSangTrongNgay(today);
         boolean coCaChieu = daCoCaChieuTrongNgay(today);
 
-        if (!coCaSang && !coCaChieu) {
-            if (now.getHour() < 17) {
-                return "Ca sáng";
-            } else {
-                return "Ca chiều";
-            }
+        if (!coCaSang) {
+            return "Ca sáng";
         }
 
-        if (coCaSang && !coCaChieu) {
+        if (!coCaChieu) {
             return "Ca chiều";
         }
 
-        return null;
+        return "Ca phụ 3";
     }
 
     public String layTenCaHienThi() {
@@ -116,12 +112,7 @@ public class CaLamViec_DAO {
             return caDangMo.getTenCa() + " (đang mở)";
         }
 
-        String tenCa = xacDinhTenCaMoi();
-        if (tenCa != null) {
-            return tenCa;
-        }
-
-        return "Hôm nay đã đủ ca";
+        return xacDinhTenCaMoi();
     }
 
     public boolean moCa(double tienMoCa, TaiKhoan taiKhoan) {
@@ -198,5 +189,70 @@ public class CaLamViec_DAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    public boolean dongCa(String maCa, double tienMat, double tienChuyenKhoan, double tienVisa) {
+        Connection con = null;
+        PreparedStatement stmt = null;
+
+        try {
+            con = ConnectDB.getInstance().getConnection();
+
+            String sql = """
+                UPDATE CaLamViec
+                SET thoiGianDongCa = ?,
+                    tienMatCuoiCa = ?,
+                    tienChuyenKhoanCuoiCa = ?,
+                    tienVisaCuoiCa = ?
+                WHERE maCa = ?
+                  AND thoiGianDongCa IS NULL
+            """;
+
+            stmt = con.prepareStatement(sql);
+            stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
+            stmt.setDouble(2, tienMat);
+            stmt.setDouble(3, tienChuyenKhoan);
+            stmt.setDouble(4, tienVisa);
+            stmt.setString(5, maCa);
+
+            return stmt.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            close(null, stmt);
+        }
+
+        return false;
+    }
+    public double tinhTienTheoPhuongThuc(String phuongThuc) {
+        String sql = """
+            SELECT ISNULL(SUM(tongTien + thueVAT), 0)
+            FROM HoaDon
+            WHERE trangThai = N'Đã thanh toán'
+              AND phuongThucThanhToan = ?
+              AND thoiGianVao >= (
+                  SELECT TOP 1 thoiGianMoCa
+                  FROM CaLamViec
+                  WHERE thoiGianDongCa IS NULL
+                  ORDER BY thoiGianMoCa DESC
+              )
+              AND thoiGianVao <= GETDATE()
+        """;
+
+        try {
+            Connection con = ConnectDB.getInstance().getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, phuongThuc);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getDouble(1);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return 0;
     }
 }

@@ -186,9 +186,13 @@ CREATE TABLE HoaDon (
     maKM VARCHAR(20) NULL,
     maBan VARCHAR(20) NOT NULL,
     maNV VARCHAR(20) NOT NULL,
+
+    tongTien DECIMAL(18,2) NOT NULL DEFAULT 0,
     tienKhachTra DECIMAL(18,2) NOT NULL DEFAULT 0,
     thueVAT DECIMAL(18,2) NOT NULL DEFAULT 0,
     tienThua DECIMAL(18,2) NOT NULL DEFAULT 0,
+    phuongThucThanhToan NVARCHAR(50) NULL,
+
     trangThai NVARCHAR(255) NULL,
     lyDoHuy NVARCHAR(255) NULL,
 
@@ -198,12 +202,12 @@ CREATE TABLE HoaDon (
     CONSTRAINT FK_HoaDon_Ban FOREIGN KEY (maBan) REFERENCES Ban(maBan),
     CONSTRAINT FK_HoaDon_NhanVien FOREIGN KEY (maNV) REFERENCES NhanVien(maNV),
 
+    CONSTRAINT CK_HoaDon_TongTien CHECK (tongTien >= 0),
     CONSTRAINT CK_HoaDon_TienKhachTra CHECK (tienKhachTra >= 0),
     CONSTRAINT CK_HoaDon_ThueVAT CHECK (thueVAT >= 0),
     CONSTRAINT CK_HoaDon_TienThua CHECK (tienThua >= 0),
     CONSTRAINT CK_HoaDon_ThoiGian CHECK (thoiGianRa IS NULL OR thoiGianRa >= thoiGianVao)
 );
-GO
 
 CREATE TABLE ChiTietHoaDon (
     maHD VARCHAR(20) NOT NULL,
@@ -480,7 +484,7 @@ INSERT INTO NhanVien (
     maNV, hoTen, anhNhanVien, ngaySinh, gioiTinh, cccd, email, sdt, chucVu, trangThai, lyDoNghi
 )
 VALUES
-('NV001', N'Lê Hoàng Anh', N'hoanganh.png', '2005-06-24', 1, '079205000001', 'hoanganh@hyv.com', '0901000001', N'Quản lý', N'Đang làm', NULL),
+('NV001', N'Lê Hoàng Anh', N'hoanganh.png', '2005-06-24', 1, '079205000001', 'anhcon2406@gmail.com', '0329933607', N'Quản lý', N'Đang làm', NULL),
 ('NV002', N'Trần Quốc Dũng', N'quocdung.png', '2005-03-15', 1, '079205000002', 'quocdung@hyv.com', '0901000002', N'Lễ tân', N'Đang làm', NULL),
 ('NV003', N'Nguyễn Hạ Ánh Dương', N'anhduong.png', '2005-09-10', 0, '079205000003', 'anhduong@hyv.com', '0901000003', N'Lễ tân', N'Đang làm', NULL),
 ('NV004', N'Huỳnh Thị Ngọc Tiên', N'ngoctien.png', '2005-11-20', 0, '079205000004', 'ngoctien@hyv.com', '0901000004', N'Lễ tân', N'Đang làm', NULL);
@@ -675,11 +679,17 @@ GO
 13. HÓA ĐƠN
 ==========================================================*/
 INSERT INTO HoaDon
-(maHD, thoiGianVao, thoiGianRa, maPhieuDatBan, maKH, maKM, maBan, maNV, tienKhachTra, thueVAT, tienThua, trangThai, lyDoHuy)
+(maHD, thoiGianVao, thoiGianRa, maPhieuDatBan, maKH, maKM, maBan, maNV,
+ tongTien, tienKhachTra, thueVAT, tienThua, phuongThucThanhToan, trangThai, lyDoHuy)
 VALUES
-('HD00001', '2026-04-06 18:00:00', '2026-04-06 19:30:00', NULL, 'KH00001', 'KM001', 'A02', 'NV003', 500000, 35000, 45000, N'Đã thanh toán', NULL),
-('HD00002', '2026-04-06 19:00:00', '2026-04-06 21:00:00', 'PDB00002', 'KH00002', NULL, 'A05', 'NV003', 700000, 49000, 81000, N'Đã thanh toán', NULL),
-('HD00003', '2026-04-07 12:00:00', NULL, NULL, 'KH00003', NULL, 'B01', 'NV002', 0, 0, 0, N'Chưa thanh toán', NULL);
+('HD00001', '2026-04-06 18:00:00', '2026-04-06 19:30:00', NULL, 'KH00001', 'KM001', 'A02', 'NV003',
+ 250000, 500000, 35000, 215000, N'Tiền mặt', N'Đã thanh toán', NULL),
+
+('HD00002', '2026-04-06 19:00:00', '2026-04-06 21:00:00', 'PDB00002', 'KH00002', NULL, 'A05', 'NV003',
+ 590000, 700000, 49000, 61000, N'Chuyển khoản', N'Đã thanh toán', NULL),
+
+('HD00003', '2026-04-07 12:00:00', NULL, NULL, 'KH00003', NULL, 'B01', 'NV002',
+ 0, 0, 0, 0, NULL, N'Chưa thanh toán', NULL);
 GO
 
 ALTER SEQUENCE seq_HoaDon RESTART WITH 4;
@@ -721,20 +731,7 @@ SELECT * FROM HoaDon;
 SELECT * FROM ChiTietHoaDon;
 GO
 
-ALTER TABLE NhanVien
-ADD lyDoNghi NVARCHAR(100) NULL;
 
-UPDATE HoaDon
-SET tienKhachTra = 1000000
-WHERE maHD = 'HD00001';
 
-ALTER TABLE HoaDon
-ADD lyDoHuy NVARCHAR(255) NULL;
-
--- ChiTietHoaDon
-ALTER TABLE ChiTietHoaDon ADD lyDoHuy NVARCHAR(255) NULL;
-
--- PhieuDatBan
-ALTER TABLE PhieuDatBan ADD lyDoHuy NVARCHAR(255) NULL;
 
 

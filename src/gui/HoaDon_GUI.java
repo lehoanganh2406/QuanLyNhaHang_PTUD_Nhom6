@@ -40,12 +40,14 @@ public class HoaDon_GUI extends JFrame {
     private static final String PH_NV = "Vui lòng chọn tên nhân viên";
     private static final String PH_KM = "Vui lòng chọn khuyến mãi";
     private static final String PH_TT = "Vui lòng chọn trạng thái";
+    private static final String PH_PTTT = "Vui lòng chọn phương thức";
 
     private JTextField txtTenKhach, txtMaHoaDon, txtBan, txtTongTien, txtSDT, txtLyDoHuy;
     private JDateChooser dtThoiGianVao, dtThoiGianRa;
     private JComboBox<String> txtKhuyenMai;
     private JComboBox<String> cbTrangThai;
     private JComboBox<String> cbNhanVien;
+    private JComboBox<String> cboPhuongThucThanhToan;
 
     private JTable table;
     private DefaultTableModel tableModel;
@@ -151,7 +153,11 @@ public class HoaDon_GUI extends JFrame {
 
         txtLyDoHuy = createTextField();
         txtLyDoHuy.setEnabled(false);
-        addRow(pnlFields, gbc, 5, "Lý do hủy", txtLyDoHuy, "", new JLabel(""));
+        cboPhuongThucThanhToan = createComboBox(new String[]{
+                PH_PTTT, "Tiền mặt", "Chuyển khoản", "Visa"
+        });
+
+        addRow(pnlFields, gbc, 5, "Lý do hủy", txtLyDoHuy, "Phương thức TT", cboPhuongThucThanhToan);
 
         cbTrangThai.addActionListener(e -> xuLyTrangThai());
 
@@ -379,6 +385,9 @@ public class HoaDon_GUI extends JFrame {
         txtMaHoaDon.setText("");
 
         if (cbNhanVien.getItemCount() > 0) cbNhanVien.setSelectedIndex(0);
+        if (cboPhuongThucThanhToan.getItemCount() > 0) {
+            cboPhuongThucThanhToan.setSelectedIndex(0);
+        }
 
         txtBan.setText("");
         txtTongTien.setText("");
@@ -415,6 +424,7 @@ public class HoaDon_GUI extends JFrame {
         String tenKM = getComboValue(txtKhuyenMai);
         String trangThai = getComboValue(cbTrangThai);
         String lyDoHuy = txtLyDoHuy.getText().trim();
+        String phuongThucThanhToan = getComboValue(cboPhuongThucThanhToan);
         if (trangThai.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn trạng thái!");
             cbTrangThai.requestFocus();
@@ -449,7 +459,8 @@ public class HoaDon_GUI extends JFrame {
                 tenKM,
                 trangThai,
                 lyDoHuy,
-                thoiGianRa
+                thoiGianRa,
+                phuongThucThanhToan
         );
 
         if (kq) {
@@ -529,7 +540,7 @@ public class HoaDon_GUI extends JFrame {
 
         String s = value.toString().trim();
 
-        if (PH_NV.equals(s) || PH_KM.equals(s) || PH_TT.equals(s)) {
+        if (PH_NV.equals(s) || PH_KM.equals(s) || PH_TT.equals(s) || PH_PTTT.equals(s)) {
             return "";
         }
 
@@ -620,6 +631,7 @@ public class HoaDon_GUI extends JFrame {
 
         dtThoiGianVao.setEnabled(true);
         dtThoiGianRa.setEnabled(true);
+        cboPhuongThucThanhToan.setEnabled(true);
 
 
         cbTrangThai.setEnabled(true);
@@ -732,7 +744,8 @@ public class HoaDon_GUI extends JFrame {
                 boolean isPlaceholder =
                         PH_NV.equals(text)
                         || PH_KM.equals(text)
-                        || PH_TT.equals(text);
+                        || PH_TT.equals(text)
+                        || PH_PTTT.equals(text);
 
                 if (isSelected) {
                     lbl.setBackground(new Color(224, 207, 180));

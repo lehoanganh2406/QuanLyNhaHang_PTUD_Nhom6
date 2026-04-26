@@ -199,15 +199,7 @@ public class TienMoCa_DigLog extends JDialog {
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
-
-        String tenCaMoi = caLamViecDAO.xacDinhTenCaMoi();
-        if (tenCaMoi == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Hôm nay đã đủ ca hoặc chưa thể mở ca mới.",
-                    "Thông báo",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+      
 
         boolean ok = caLamViecDAO.moCa(tienMoCa, taiKhoanDangNhap);
         if (ok) {

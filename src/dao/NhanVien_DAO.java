@@ -33,6 +33,31 @@ public class NhanVien_DAO {
 
         return ds;
     }
+    public NhanVien getNhanVienTheoSDT(String sdtCanTim) {
+        try {
+            Connection con = ConnectDB.getConnection();
+            String sql = "SELECT * FROM NhanVien WHERE sdt = ?";
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, sdtCanTim);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                NhanVien nv = new NhanVien();
+                nv.setMaNV(rs.getString("maNV"));
+                nv.setHoTen(rs.getString("hoTen"));
+                nv.setEmail(rs.getString("email"));
+                nv.setSdt(rs.getString("sdt"));
+                nv.setChucVu(rs.getString("chucVu"));
+                nv.setTrangThai(rs.getString("trangThai"));
+                return nv;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     public List<NhanVien> getAllNhanVien() {
         List<NhanVien> ds = new ArrayList<NhanVien>();

@@ -1,43 +1,22 @@
 package gui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.RenderingHints;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
+import java.awt.*;
+import java.awt.event.*;
+import java.time.format.DateTimeFormatter;
 
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JProgressBar;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
-import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import connectDB.ConnectDB;
+import dao.CaLamViec_DAO;
+import dao.NhanVien_DAO;
 import dao.TaiKhoan_DAO;
 import digLog.TienMoCa_DigLog;
+import entity.NhanVien;
 import entity.TaiKhoan;
-import dao.CaLamViec_DAO;
+import util.Mail_Util;
+import digLog.DongCa_DigLog;
+import entity.CaLamViec;
 
 public class DangNhap_GUI extends JFrame {
 
@@ -48,10 +27,6 @@ public class DangNhap_GUI extends JFrame {
     private JPasswordField txtMatKhau;
     private RoundedButton btnDangNhap;
     private JCheckBox chkForgot;
-
-    private String maTamThoi = null;
-    private String tenDangNhapMaTam = null;
-    private long thoiGianHetHanMaTam = 0;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -75,8 +50,7 @@ public class DangNhap_GUI extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
-        contentPane = new JPanel();
-        contentPane.setLayout(new GridLayout(1, 2));
+        contentPane = new JPanel(new GridLayout(1, 2));
         setContentPane(contentPane);
 
         JPanel panelLeft = new JPanel() {
@@ -136,7 +110,6 @@ public class DangNhap_GUI extends JFrame {
         txtTenDangNhap.setFont(new Font("SansSerif", Font.PLAIN, 24));
         txtTenDangNhap.setBounds(75, 18, 270, 30);
         pnlUser.add(txtTenDangNhap);
-
         addPlaceholder(txtTenDangNhap, "Tên đăng nhập");
 
         RoundedPanel pnlPass = new RoundedPanel(30);
@@ -162,7 +135,6 @@ public class DangNhap_GUI extends JFrame {
         txtMatKhau.setEchoChar((char) 0);
         txtMatKhau.setBounds(75, 18, 220, 30);
         pnlPass.add(txtMatKhau);
-
         addPasswordPlaceholder(txtMatKhau, "Mật khẩu");
 
         JLabel lblEye = new JLabel("");
@@ -178,11 +150,11 @@ public class DangNhap_GUI extends JFrame {
         lblEye.setIcon(new ImageIcon(eyeCloseImg));
         lblEye.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        lblEye.addMouseListener(new java.awt.event.MouseAdapter() {
+        lblEye.addMouseListener(new MouseAdapter() {
             private boolean isPasswordVisible = false;
 
             @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
+            public void mouseClicked(MouseEvent e) {
                 String value = String.valueOf(txtMatKhau.getPassword());
 
                 if (value.equals("Mật khẩu")) {
@@ -211,12 +183,9 @@ public class DangNhap_GUI extends JFrame {
         chkForgot.setBounds(300, 440, chkForgot.getPreferredSize().width, 30);
         panelRight.add(chkForgot);
 
-        chkForgot.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (chkForgot.isSelected()) {
-                    xuLyQuenMatKhau();
-                }
+        chkForgot.addActionListener(e -> {
+            if (chkForgot.isSelected()) {
+                xuLyQuenMatKhau();
             }
         });
 
@@ -231,12 +200,7 @@ public class DangNhap_GUI extends JFrame {
 
         getRootPane().setDefaultButton(btnDangNhap);
 
-        btnDangNhap.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                xuLyDangNhap();
-            }
-        });
+        btnDangNhap.addActionListener(e -> xuLyDangNhap());
     }
 
     private void xuLyDangNhap() {
@@ -250,7 +214,7 @@ public class DangNhap_GUI extends JFrame {
         }
 
         if (matKhauNhap.equals("") || matKhauNhap.equals("Mật khẩu")) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập mật khẩu hoặc mã tạm!");
+            JOptionPane.showMessageDialog(this, "Vui lòng nhập mật khẩu!");
             txtMatKhau.requestFocus();
             return;
         }
@@ -261,23 +225,9 @@ public class DangNhap_GUI extends JFrame {
         SwingWorker<TaiKhoan, Void> worker = new SwingWorker<TaiKhoan, Void>() {
             @Override
             protected TaiKhoan doInBackground() throws Exception {
-                Thread.sleep(1000);
-
+                Thread.sleep(700);
                 TaiKhoan_DAO tkDao = new TaiKhoan_DAO();
-
-                TaiKhoan tk = tkDao.dangNhap(tenDangNhap, matKhauNhap);
-                if (tk != null) {
-                    return tk;
-                }
-
-                if (kiemTraMaTamHopLe(tenDangNhap, matKhauNhap)) {
-                    TaiKhoan tkTam = tkDao.getTaiKhoanTheoTenDangNhap(tenDangNhap);
-                    if (tkTam != null && tkTam.isTrangThai()) {
-                        return tkTam;
-                    }
-                }
-
-                return null;
+                return tkDao.dangNhap(tenDangNhap, matKhauNhap);
             }
 
             @Override
@@ -292,7 +242,7 @@ public class DangNhap_GUI extends JFrame {
                         moTienMoCaSauDangNhap(tk);
                     } else {
                         JOptionPane.showMessageDialog(DangNhap_GUI.this,
-                                "Sai tên đăng nhập, sai mật khẩu, sai mã tạm hoặc mã đã hết hiệu lực!");
+                                "Sai tên đăng nhập hoặc mật khẩu!");
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -310,114 +260,390 @@ public class DangNhap_GUI extends JFrame {
         setVisible(false);
 
         CaLamViec_DAO caDAO = new CaLamViec_DAO();
+        CaLamViec caDangMo = caDAO.layCaDangMo();
 
-        // Nếu đã có ca chưa đóng thì vào luôn, không nhập tiền mở ca nữa
-        if (caDAO.layCaDangMo() != null) {
-            TrangChu_GUI trangChu = new TrangChu_GUI(tk);
-            trangChu.setVisible(true);
-            dispose();
+        if (caDangMo != null) {
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+            String gioMoCa = caDangMo.getThoiGianMoCa() == null
+                    ? ""
+                    : caDangMo.getThoiGianMoCa().format(dtf);
+
+            Object[] options = {
+                    "Tiếp tục ca đang mở",
+                    "Đóng ca đang mở, mở ca mới",
+                    "Hủy"
+            };
+            UIManager.put("OptionPane.buttonFont", new Font("SansSerif", Font.BOLD, 16));
+            UIManager.put("Button.minimumSize", new Dimension(230, 42));
+
+
+            int chon = JOptionPane.showOptionDialog(
+                    this,
+                    "Hiện tại đang có ca làm việc chưa đóng.\n"
+                            + "Mã ca: " + caDangMo.getMaCa() + "\n"
+                            + "Tên ca: " + caDangMo.getTenCa() + "\n"
+                            + "Giờ mở ca: " + gioMoCa + "\n\n"
+                            + "Bạn muốn tiếp tục ca đang mở hay đóng ca cũ để mở ca mới?",
+                    "Thông báo ca đang mở",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.WARNING_MESSAGE,
+                    null,
+                    options,
+                    options[0]
+            );
+
+            if (chon == 0) {
+                TrangChu_GUI trangChu = new TrangChu_GUI(tk);
+                trangChu.setVisible(true);
+                dispose();
+                return;
+            }
+
+            if (chon == 1) {
+                DongCa_DigLog dlgDongCa = new DongCa_DigLog(this, caDangMo);
+                dlgDongCa.setVisible(true);
+
+                if (!dlgDongCa.isDongCaThanhCong()) {
+                    moTienMoCaSauDangNhap(tk);
+                    return;
+                }
+
+                TienMoCa_DigLog dlgMoCa = new TienMoCa_DigLog(this, tk);
+                dlgMoCa.setVisible(true);
+
+                if (dlgMoCa.isMoCaThanhCong()) {
+                    TrangChu_GUI trangChu = new TrangChu_GUI(tk);
+                    trangChu.setVisible(true);
+                    dispose();
+                } else {
+                    System.exit(0);
+                }
+                return;
+            }
+
+            if (chon == 2 || chon == JOptionPane.CLOSED_OPTION) {
+                int confirm = JOptionPane.showConfirmDialog(
+                        this,
+                        "Bạn chắc chắn muốn đóng ứng dụng?",
+                        "Xác nhận thoát",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE
+                );
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    System.exit(0);
+                } else {
+                    moTienMoCaSauDangNhap(tk);
+                }
+                return;
+            }
+
             return;
         }
 
-        // Nếu chưa có ca mở thì mới hiện dialog nhập tiền mở ca
-        TienMoCa_DigLog dlg = new TienMoCa_DigLog(this, tk);
-        dlg.setVisible(true);
+        TienMoCa_DigLog dlgMoCa = new TienMoCa_DigLog(this, tk);
+        dlgMoCa.setVisible(true);
 
-        if (dlg.isMoCaThanhCong()) {
+        if (dlgMoCa.isMoCaThanhCong()) {
             TrangChu_GUI trangChu = new TrangChu_GUI(tk);
             trangChu.setVisible(true);
             dispose();
         } else {
-            // nếu đóng dialog mà không vào tiếp thì hiện lại form đăng nhập
-            setVisible(true);
+            System.exit(0);
         }
     }
 
     private void xuLyQuenMatKhau() {
-        String tenDN = JOptionPane.showInputDialog(
+        String sdt = JOptionPane.showInputDialog(
                 DangNhap_GUI.this,
-                "Nhập tên đăng nhập để nhận mã đăng nhập tạm:",
+                "Nhập số điện thoại nhân viên:",
                 "Quên mật khẩu",
                 JOptionPane.PLAIN_MESSAGE
         );
 
-        if (tenDN == null) {
+        if (sdt == null) {
             chkForgot.setSelected(false);
             return;
         }
 
-        tenDN = tenDN.trim();
+        sdt = sdt.trim();
 
-        if (tenDN.isEmpty()) {
-            JOptionPane.showMessageDialog(DangNhap_GUI.this, "Tên đăng nhập không được để trống!");
+        if (sdt.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Số điện thoại không được để trống!");
             chkForgot.setSelected(false);
             return;
         }
 
+        NhanVien_DAO nvDao = new NhanVien_DAO();
         TaiKhoan_DAO tkDao = new TaiKhoan_DAO();
-        TaiKhoan tk = tkDao.getTaiKhoanTheoTenDangNhap(tenDN);
+
+        NhanVien nv = nvDao.getNhanVienTheoSDT(sdt);
+
+        if (nv == null) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy nhân viên có số điện thoại này!");
+            chkForgot.setSelected(false);
+            return;
+        }
+
+        if (nv.getEmail() == null || nv.getEmail().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Nhân viên này chưa có email!");
+            chkForgot.setSelected(false);
+            return;
+        }
+
+        TaiKhoan tk = tkDao.getTaiKhoanTheoMaNV(nv.getMaNV());
 
         if (tk == null) {
-            JOptionPane.showMessageDialog(DangNhap_GUI.this, "Tên đăng nhập không tồn tại!");
+            JOptionPane.showMessageDialog(this, "Nhân viên này chưa có tài khoản!");
             chkForgot.setSelected(false);
             return;
         }
 
         if (!tk.isTrangThai()) {
-            JOptionPane.showMessageDialog(DangNhap_GUI.this, "Tài khoản đang bị khóa!");
+            JOptionPane.showMessageDialog(this, "Tài khoản đang bị khóa!");
             chkForgot.setSelected(false);
             return;
         }
 
-        maTamThoi = taoMaNgauNhien5So();
-        tenDangNhapMaTam = tenDN;
-        thoiGianHetHanMaTam = System.currentTimeMillis() + 5 * 60 * 1000;
+        String ma6So = taoMaNgauNhien6So();
+        long thoiGianHetHan = System.currentTimeMillis() + 5 * 60 * 1000;
 
-        JOptionPane.showMessageDialog(
-                DangNhap_GUI.this,
-                "Mã đăng nhập tạm của bạn là: " + maTamThoi
-                        + "\nMã chỉ dùng 1 lần và có hiệu lực trong 5 phút.",
-                "Mã đăng nhập tạm",
-                JOptionPane.INFORMATION_MESSAGE
-        );
+        JDialog sending = taoDialogDangGuiMail();
+        SwingWorker<Boolean, Void> worker = new SwingWorker<Boolean, Void>() {
+            @Override
+            protected Boolean doInBackground() {
+                return Mail_Util.guiMaQuenMatKhau(nv.getEmail(), ma6So);
+            }
 
-        txtTenDangNhap.setText(tenDN);
-        txtTenDangNhap.setForeground(Color.WHITE);
-        txtMatKhau.setText("");
-        txtMatKhau.setEchoChar('•');
-        txtMatKhau.setForeground(Color.WHITE);
-        txtMatKhau.requestFocus();
+            @Override
+            protected void done() {
+                sending.dispose();
 
-        chkForgot.setSelected(false);
+                try {
+                    boolean guiThanhCong = get();
+
+                    if (!guiThanhCong) {
+                        JOptionPane.showMessageDialog(DangNhap_GUI.this,
+                                "Gửi email thất bại!\nKiểm tra Gmail, App Password hoặc Internet.");
+                        chkForgot.setSelected(false);
+                        return;
+                    }
+
+                    JOptionPane.showMessageDialog(DangNhap_GUI.this,
+                            "Mã xác nhận 6 số đã được gửi về email:\n" + cheEmail(nv.getEmail()));
+
+                    moFormDoiMatKhau(tk, ma6So, thoiGianHetHan);
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(DangNhap_GUI.this, "Lỗi khi gửi email!");
+                }
+
+                chkForgot.setSelected(false);
+            }
+        };
+
+        worker.execute();
+        sending.setVisible(true);
     }
 
-    private String taoMaNgauNhien5So() {
-        int so = 10000 + (int) (Math.random() * 90000);
+    private JDialog taoDialogDangGuiMail() {
+        JDialog dlg = new JDialog(this, "Đang gửi mã", true);
+        dlg.setSize(300, 130);
+        dlg.setLocationRelativeTo(this);
+        dlg.setUndecorated(true);
+
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+
+        JProgressBar bar = new JProgressBar();
+        bar.setIndeterminate(true);
+        panel.add(bar, BorderLayout.NORTH);
+
+        JLabel lbl = new JLabel("Đang gửi mã về Gmail...", SwingConstants.CENTER);
+        lbl.setFont(new Font("SansSerif", Font.BOLD, 18));
+        panel.add(lbl, BorderLayout.CENTER);
+
+        dlg.setContentPane(panel);
+        return dlg;
+    }
+
+    private String taoMaNgauNhien6So() {
+        int so = 100000 + (int) (Math.random() * 900000);
         return String.valueOf(so);
     }
 
-    private boolean kiemTraMaTamHopLe(String tenDangNhap, String maNhap) {
-        if (maTamThoi == null || tenDangNhapMaTam == null) {
-            return false;
+    private String cheEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return email;
         }
 
-        long hienTai = System.currentTimeMillis();
+        String[] parts = email.split("@");
+        String name = parts[0];
 
-        if (hienTai >= thoiGianHetHanMaTam) {
-            maTamThoi = null;
-            tenDangNhapMaTam = null;
-            thoiGianHetHanMaTam = 0;
-            return false;
+        if (name.length() <= 2) {
+            return name.charAt(0) + "***@" + parts[1];
         }
 
-        if (tenDangNhap.equals(tenDangNhapMaTam) && maNhap.equals(maTamThoi)) {
-            maTamThoi = null;
-            tenDangNhapMaTam = null;
-            thoiGianHetHanMaTam = 0;
-            return true;
-        }
+        return name.substring(0, 2) + "***@" + parts[1];
+    }
 
-        return false;
+    private void moFormDoiMatKhau(TaiKhoan tk, String ma6So, long thoiGianHetHan) {
+        JDialog dlg = new JDialog(this, "Đổi mật khẩu", true);
+        dlg.setSize(480, 410);
+        dlg.setLocationRelativeTo(this);
+        dlg.setLayout(null);
+        dlg.getContentPane().setBackground(new Color(245, 247, 250));
+        dlg.setResizable(false);
+
+        ImageIcon eyeOpenIcon = new ImageIcon(
+                new ImageIcon("img/Dn_eye_open.png").getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH)
+        );
+        ImageIcon eyeCloseIcon = new ImageIcon(
+                new ImageIcon("img/Dn_eye_off.png").getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH)
+        );
+
+        JLabel lblTitle = new JLabel("ĐỔI MẬT KHẨU", SwingConstants.CENTER);
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 24));
+        lblTitle.setBounds(0, 20, 480, 35);
+        dlg.add(lblTitle);
+
+        JLabel lblMa = new JLabel("Mật khẩu hiện tại / mã 6 số:");
+        lblMa.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        lblMa.setBounds(55, 75, 300, 25);
+        dlg.add(lblMa);
+
+        JPasswordField txtMa = new JPasswordField();
+        txtMa.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        txtMa.setBounds(55, 103, 310, 38);
+        dlg.add(txtMa);
+
+        JLabel eyeMa = taoNutEye(txtMa, eyeOpenIcon, eyeCloseIcon);
+        eyeMa.setBounds(375, 107, 30, 30);
+        dlg.add(eyeMa);
+
+        JLabel lblMoi = new JLabel("Mật khẩu mới:");
+        lblMoi.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        lblMoi.setBounds(55, 150, 300, 25);
+        dlg.add(lblMoi);
+
+        JPasswordField txtMoi = new JPasswordField();
+        txtMoi.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        txtMoi.setBounds(55, 178, 310, 38);
+        dlg.add(txtMoi);
+
+        JLabel eyeMoi = taoNutEye(txtMoi, eyeOpenIcon, eyeCloseIcon);
+        eyeMoi.setBounds(375, 182, 30, 30);
+        dlg.add(eyeMoi);
+
+        JLabel lblNhapLai = new JLabel("Nhập lại mật khẩu mới:");
+        lblNhapLai.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        lblNhapLai.setBounds(55, 225, 300, 25);
+        dlg.add(lblNhapLai);
+
+        JPasswordField txtNhapLai = new JPasswordField();
+        txtNhapLai.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        txtNhapLai.setBounds(55, 253, 310, 38);
+        dlg.add(txtNhapLai);
+
+        JLabel eyeNhapLai = taoNutEye(txtNhapLai, eyeOpenIcon, eyeCloseIcon);
+        eyeNhapLai.setBounds(375, 257, 30, 30);
+        dlg.add(eyeNhapLai);
+
+        JButton btnXacNhan = new JButton("Xác nhận");
+        btnXacNhan.setFont(new Font("SansSerif", Font.BOLD, 15));
+        btnXacNhan.setBounds(95, 320, 120, 38);
+        dlg.add(btnXacNhan);
+
+        JButton btnHuy = new JButton("Hủy");
+        btnHuy.setFont(new Font("SansSerif", Font.BOLD, 15));
+        btnHuy.setBounds(255, 320, 120, 38);
+        dlg.add(btnHuy);
+
+        btnHuy.addActionListener(e -> dlg.dispose());
+
+        btnXacNhan.addActionListener(e -> {
+            String maNhap = String.valueOf(txtMa.getPassword()).trim();
+            String mkMoi = String.valueOf(txtMoi.getPassword()).trim();
+            String mkNhapLai = String.valueOf(txtNhapLai.getPassword()).trim();
+
+            if (System.currentTimeMillis() > thoiGianHetHan) {
+                JOptionPane.showMessageDialog(dlg, "Mã xác nhận đã hết hạn!");
+                dlg.dispose();
+                return;
+            }
+
+            if (maNhap.isEmpty() || mkMoi.isEmpty() || mkNhapLai.isEmpty()) {
+                JOptionPane.showMessageDialog(dlg, "Vui lòng nhập đầy đủ thông tin!");
+                return;
+            }
+
+            if (!maNhap.equals(ma6So)) {
+                JOptionPane.showMessageDialog(dlg, "Mã xác nhận không đúng!");
+                txtMa.requestFocus();
+                return;
+            }
+
+            if (mkMoi.length() < 6) {
+                JOptionPane.showMessageDialog(dlg, "Mật khẩu mới phải từ 6 ký tự trở lên!");
+                txtMoi.requestFocus();
+                return;
+            }
+
+            if (!mkMoi.equals(mkNhapLai)) {
+                JOptionPane.showMessageDialog(dlg, "Mật khẩu nhập lại không khớp!");
+                txtNhapLai.requestFocus();
+                return;
+            }
+
+            TaiKhoan_DAO tkDao = new TaiKhoan_DAO();
+            boolean ok = tkDao.doiMatKhau(tk.getMaTaiKhoan(), mkMoi);
+
+            if (ok) {
+                JOptionPane.showMessageDialog(dlg,
+                        "Đổi mật khẩu thành công!\nVui lòng đăng nhập lại bằng mật khẩu mới.");
+
+                txtTenDangNhap.setText(tk.getTenDangNhap());
+                txtTenDangNhap.setForeground(Color.WHITE);
+
+                txtMatKhau.setText("");
+                txtMatKhau.setEchoChar('•');
+                txtMatKhau.setForeground(Color.WHITE);
+                txtMatKhau.requestFocus();
+
+                dlg.dispose();
+            } else {
+                JOptionPane.showMessageDialog(dlg, "Đổi mật khẩu thất bại!");
+            }
+        });
+
+        dlg.setVisible(true);
+    }
+    private JLabel taoNutEye(JPasswordField passwordField, ImageIcon eyeOpenIcon, ImageIcon eyeCloseIcon) {
+        JLabel lblEye = new JLabel();
+        lblEye.setHorizontalAlignment(SwingConstants.CENTER);
+        lblEye.setIcon(eyeCloseIcon);
+        lblEye.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        lblEye.addMouseListener(new MouseAdapter() {
+            private boolean visible = false;
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (!visible) {
+                    passwordField.setEchoChar((char) 0);
+                    lblEye.setIcon(eyeOpenIcon);
+                    visible = true;
+                } else {
+                    passwordField.setEchoChar('•');
+                    lblEye.setIcon(eyeCloseIcon);
+                    visible = false;
+                }
+            }
+        });
+
+        return lblEye;
     }
 
     private void addPlaceholder(JTextField textField, String placeholder) {
@@ -480,7 +706,6 @@ public class DangNhap_GUI extends JFrame {
 
             JPanel panel = new JPanel();
             panel.setBackground(Color.WHITE);
-            panel.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
             panel.setLayout(new BorderLayout(10, 10));
             panel.setBorder(new EmptyBorder(20, 20, 20, 20));
             setContentPane(panel);

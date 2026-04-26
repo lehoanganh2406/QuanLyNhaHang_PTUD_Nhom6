@@ -62,7 +62,42 @@ public class TaiKhoan_DAO {
 
         return dsTK;
     }
-    
+    public TaiKhoan getTaiKhoanTheoMaNV(String maNVCanTim) {
+        try {
+            Connection con = ConnectDB.getConnection();
+
+            String sql = "SELECT tk.maTaiKhoan, tk.tenDangNhap, tk.matKhau, tk.phanQuyen, tk.trangThai, " +
+                         "tk.maNV, nv.hoTen, nv.chucVu " +
+                         "FROM TaiKhoan tk " +
+                         "JOIN NhanVien nv ON tk.maNV = nv.maNV " +
+                         "WHERE tk.maNV = ?";
+
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, maNVCanTim);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                NhanVien nv = new NhanVien();
+                nv.setMaNV(rs.getString("maNV"));
+                nv.setHoTen(rs.getString("hoTen"));
+                nv.setChucVu(rs.getString("chucVu"));
+
+                return new TaiKhoan(
+                        rs.getString("maTaiKhoan"),
+                        rs.getString("tenDangNhap"),
+                        rs.getString("matKhau"),
+                        rs.getString("phanQuyen"),
+                        rs.getBoolean("trangThai"),
+                        nv
+                );
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
     
     public boolean doiMatKhau(String maNV, String mkCu, String mkMoi) {
         try {

@@ -20,6 +20,7 @@ public class HoaDon {
     private String trangThai;
     private String lyDoHuy;
     private String phuongThucThanhToan;
+    private String hinhThucPhucVu;
 
     public HoaDon() {
     }
@@ -30,9 +31,10 @@ public class HoaDon {
 
     
 
-    public HoaDon(String maHD, LocalDateTime thoiGianVao, LocalDateTime thoiGianRa, PhieuDatBan maPhieuDatBan,
+	public HoaDon(String maHD, LocalDateTime thoiGianVao, LocalDateTime thoiGianRa, PhieuDatBan maPhieuDatBan,
 			KhachHang maKH, KhuyenMai maKM, Ban maBan, NhanVien maNV, double tongTien, double tienKhachTra,
-			double thueVAT, double tienThua, String trangThai, String lyDoHuy, String phuongThucThanhToan) {
+			double thueVAT, double tienThua, String trangThai, String lyDoHuy, String phuongThucThanhToan,
+			String hinhThucPhucVu) {
 		super();
 		this.maHD = maHD;
 		this.thoiGianVao = thoiGianVao;
@@ -49,6 +51,15 @@ public class HoaDon {
 		this.trangThai = trangThai;
 		this.lyDoHuy = lyDoHuy;
 		this.phuongThucThanhToan = phuongThucThanhToan;
+		this.hinhThucPhucVu = hinhThucPhucVu;
+	}
+
+	public String getHinhThucPhucVu() {
+		return hinhThucPhucVu;
+	}
+
+	public void setHinhThucPhucVu(String hinhThucPhucVu) {
+		this.hinhThucPhucVu = hinhThucPhucVu;
 	}
 
 	public String getPhuongThucThanhToan() {
@@ -177,8 +188,10 @@ public class HoaDon {
 				+ ", maPhieuDatBan=" + maPhieuDatBan + ", maKH=" + maKH + ", maKM=" + maKM + ", maBan=" + maBan
 				+ ", maNV=" + maNV + ", tongTien=" + tongTien + ", tienKhachTra=" + tienKhachTra + ", thueVAT="
 				+ thueVAT + ", tienThua=" + tienThua + ", trangThai=" + trangThai + ", lyDoHuy=" + lyDoHuy
-				+ ", phuongThucThanhToan=" + phuongThucThanhToan + "]";
+				+ ", phuongThucThanhToan=" + phuongThucThanhToan + ", hinhThucPhucVu=" + hinhThucPhucVu + "]";
 	}
+
+	
 
     
 }

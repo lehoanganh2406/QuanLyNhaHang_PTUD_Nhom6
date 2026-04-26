@@ -267,4 +267,107 @@ public class ChiTietHoaDon_DAO {
 
         return ct;
     }
+    public boolean tachMonSangHoaDonKhac(String maHDCu, String maHDMoi, String maMon, int soLuongTach) {
+        Connection con = ConnectDB.getConnection();
+
+        try {
+            con.setAutoCommit(false);
+
+            String sqlGet = """
+                SELECT soLuong, donGia, ghiChu, trangThai
+                FROM ChiTietHoaDon
+                WHERE maHD = ? AND maMon = ?
+                  AND (trangThai IS NULL OR trangThai <> N'Đã hủy')
+            """;
+
+            PreparedStatement psGet = con.prepareStatement(sqlGet);
+            psGet.setString(1, maHDCu);
+            psGet.setString(2, maMon);
+            ResultSet rs = psGet.executeQuery();
+
+            if (!rs.next()) {
+                con.rollback();
+                return false;
+            }
+
+            int soLuongCu = rs.getInt("soLuong");
+            double donGia = rs.getDouble("donGia");
+            String ghiChu = rs.getString("ghiChu");
+
+            if (soLuongTach <= 0 || soLuongTach > soLuongCu) {
+                con.rollback();
+                return false;
+            }
+
+            if (soLuongTach == soLuongCu) {
+                String sqlDeleteCu = "DELETE FROM ChiTietHoaDon WHERE maHD = ? AND maMon = ?";
+                PreparedStatement psDeleteCu = con.prepareStatement(sqlDeleteCu);
+                psDeleteCu.setString(1, maHDCu);
+                psDeleteCu.setString(2, maMon);
+                psDeleteCu.executeUpdate();
+            } else {
+                String sqlUpdateCu = """
+                    UPDATE ChiTietHoaDon
+                    SET soLuong = soLuong - ?
+                    WHERE maHD = ? AND maMon = ?
+                """;
+                PreparedStatement psUpdateCu = con.prepareStatement(sqlUpdateCu);
+                psUpdateCu.setInt(1, soLuongTach);
+                psUpdateCu.setString(2, maHDCu);
+                psUpdateCu.setString(3, maMon);
+                psUpdateCu.executeUpdate();
+            }
+
+            String sqlCheckMoi = "SELECT soLuong FROM ChiTietHoaDon WHERE maHD = ? AND maMon = ?";
+            PreparedStatement psCheckMoi = con.prepareStatement(sqlCheckMoi);
+            psCheckMoi.setString(1, maHDMoi);
+            psCheckMoi.setString(2, maMon);
+            ResultSet rsMoi = psCheckMoi.executeQuery();
+
+            if (rsMoi.next()) {
+                String sqlCongMoi = """
+                    UPDATE ChiTietHoaDon
+                    SET soLuong = soLuong + ?,
+                        trangThai = N'Đang phục vụ'
+                    WHERE maHD = ? AND maMon = ?
+                """;
+                PreparedStatement psCongMoi = con.prepareStatement(sqlCongMoi);
+                psCongMoi.setInt(1, soLuongTach);
+                psCongMoi.setString(2, maHDMoi);
+                psCongMoi.setString(3, maMon);
+                psCongMoi.executeUpdate();
+            } else {
+                String sqlInsertMoi = """
+                    INSERT INTO ChiTietHoaDon
+                    (maHD, maMon, soLuong, donGia, ghiChu, trangThai, lyDoHuy, soLuongHuy, thoiGianHuy)
+                    VALUES (?, ?, ?, ?, ?, N'Đang phục vụ', NULL, 0, NULL)
+                """;
+                PreparedStatement psInsertMoi = con.prepareStatement(sqlInsertMoi);
+                psInsertMoi.setString(1, maHDMoi);
+                psInsertMoi.setString(2, maMon);
+                psInsertMoi.setInt(3, soLuongTach);
+                psInsertMoi.setDouble(4, donGia);
+                psInsertMoi.setString(5, ghiChu);
+                psInsertMoi.executeUpdate();
+            }
+
+            con.commit();
+            return true;
+
+        } catch (Exception e) {
+            try {
+                con.rollback();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                con.setAutoCommit(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

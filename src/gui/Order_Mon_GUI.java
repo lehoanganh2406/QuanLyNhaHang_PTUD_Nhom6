@@ -1,6 +1,7 @@
 package gui;
 
 import java.awt.BorderLayout;
+
 import java.awt.Dialog;
 import java.awt.Color;
 import java.awt.Component;
@@ -69,6 +70,7 @@ import entity.MonAn;
 import entity.PhieuDatMon;
 import entity.TaiKhoan;
 import digLog.ChuyenBan_DigLog;
+import digLog.TachBan_DigLog;
 
 public class Order_Mon_GUI extends JPanel {
     private static final long serialVersionUID = 1L;
@@ -506,9 +508,47 @@ public class Order_Mon_GUI extends JPanel {
             }
         });
 
-        btnTachBan.addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Bạn xử lý chức năng tách bàn ở bước sau.")
-        );
+        btnTachBan.addActionListener(e -> {
+            if (!daGuiThucDon) {
+                JOptionPane.showMessageDialog(this, "Vui lòng gửi thực đơn trước khi tách bàn.");
+                return;
+            }
+
+            HoaDon hd = hoaDonDAO.timHoaDonChuaThanhToanTheoBan(maBan);
+
+            if (hd == null) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn hiện tại.");
+                return;
+            }
+
+            Window owner = SwingUtilities.getWindowAncestor(Order_Mon_GUI.this);
+
+            TachBan_DigLog dlg = new TachBan_DigLog(
+                    owner,
+                    taiKhoanDangNhap,
+                    maBan,
+                    hd.getMaHD()
+            );
+
+            dlg.setVisible(true);
+
+            if (dlg.isTachThanhCong()) {
+                Window w = SwingUtilities.getWindowAncestor(Order_Mon_GUI.this);
+
+                if (w instanceof TrangChu_GUI) {
+                    ((TrangChu_GUI) w).showCustomPage(
+                            "Order_Mon_GUI",
+                            new Order_Mon_GUI(
+                                    taiKhoanDangNhap,
+                                    maBan,
+                                    tenBan,
+                                    null,
+                                    true
+                            )
+                    );
+                }
+            }
+        });
 
         btnTamTinh.addActionListener(e -> {
             if (gioHang.isEmpty()) {
@@ -660,12 +700,15 @@ public class Order_Mon_GUI extends JPanel {
                     maNV = taiKhoanDangNhap.getMaNV().getMaNV();
                 }
 
+                String hinhThucPhucVu = chkMangVe.isSelected() ? "Mang về" : "Tại bàn";
+
                 boolean taoHD = hoaDonDAO.themHoaDonMoi(
                         maHD,
                         maBan,
                         maNV,
                         maPhieuDatBan,
                         null,
+                        hinhThucPhucVu,
                         "Chưa thanh toán"
                 );
 

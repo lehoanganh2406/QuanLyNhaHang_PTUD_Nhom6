@@ -192,6 +192,7 @@ CREATE TABLE HoaDon (
     thueVAT DECIMAL(18,2) NOT NULL DEFAULT 0,
     tienThua DECIMAL(18,2) NOT NULL DEFAULT 0,
     phuongThucThanhToan NVARCHAR(50) NULL,
+    hinhThucPhucVu NVARCHAR(50) NULL,
 
     trangThai NVARCHAR(255) NULL,
     lyDoHuy NVARCHAR(255) NULL,
@@ -680,18 +681,17 @@ GO
 ==========================================================*/
 INSERT INTO HoaDon
 (maHD, thoiGianVao, thoiGianRa, maPhieuDatBan, maKH, maKM, maBan, maNV,
- tongTien, tienKhachTra, thueVAT, tienThua, phuongThucThanhToan, trangThai, lyDoHuy)
+ tongTien, tienKhachTra, thueVAT, tienThua, phuongThucThanhToan, hinhThucPhucVu, trangThai, lyDoHuy)
 VALUES
 ('HD00001', '2026-04-06 18:00:00', '2026-04-06 19:30:00', NULL, 'KH00001', 'KM001', 'A02', 'NV003',
- 250000, 500000, 35000, 215000, N'Tiền mặt', N'Đã thanh toán', NULL),
+ 250000, 500000, 35000, 215000, N'Tiền mặt', N'Tại bàn', N'Đã thanh toán', NULL),
 
 ('HD00002', '2026-04-06 19:00:00', '2026-04-06 21:00:00', 'PDB00002', 'KH00002', NULL, 'A05', 'NV003',
- 590000, 700000, 49000, 61000, N'Chuyển khoản', N'Đã thanh toán', NULL),
+ 590000, 700000, 49000, 61000, N'Chuyển khoản', N'Tại bàn', N'Đã thanh toán', NULL),
 
 ('HD00003', '2026-04-07 12:00:00', NULL, NULL, 'KH00003', NULL, 'B01', 'NV002',
- 0, 0, 0, 0, NULL, N'Chưa thanh toán', NULL);
+ 0, 0, 0, 0, NULL, N'Tại bàn', N'Chưa thanh toán', NULL);
 GO
-
 ALTER SEQUENCE seq_HoaDon RESTART WITH 4;
 GO
 

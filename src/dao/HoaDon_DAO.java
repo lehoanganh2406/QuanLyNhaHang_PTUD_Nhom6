@@ -28,6 +28,7 @@ public class HoaDon_DAO {
                        hd.tongTien,
                        hd.tienKhachTra,
                        hd.phuongThucThanhToan,
+                       hd.hinhThucPhucVu,
                        hd.trangThai,
                        hd.lyDoHuy
                 FROM HoaDon hd
@@ -53,6 +54,7 @@ public class HoaDon_DAO {
                         rs.getBigDecimal("tongTien"),
                         rs.getBigDecimal("tienKhachTra"),
                         rs.getString("phuongThucThanhToan"),
+                        rs.getString("hinhThucPhucVu"),
                         rs.getString("trangThai"),
                         rs.getString("lyDoHuy")
                 });
@@ -72,7 +74,7 @@ public class HoaDon_DAO {
             String sql = """
                 SELECT TOP 1 maHD, maPhieuDatBan, maKH, maKM, maBan, maNV,
                        thoiGianVao, thoiGianRa, tongTien, tienKhachTra, thueVAT, tienThua,
-                       phuongThucThanhToan, trangThai, lyDoHuy
+                       phuongThucThanhToan, hinhThucPhucVu, trangThai, lyDoHuy
                 FROM HoaDon
                 WHERE maBan = ? AND trangThai = N'Chưa thanh toán'
                 ORDER BY thoiGianVao DESC
@@ -96,6 +98,7 @@ public class HoaDon_DAO {
                 hd.setThueVAT(rs.getDouble("thueVAT"));
                 hd.setTienThua(rs.getDouble("tienThua"));
                 hd.setPhuongThucThanhToan(rs.getString("phuongThucThanhToan"));
+                hd.setHinhThucPhucVu(rs.getString("hinhThucPhucVu"));
                 hd.setTrangThai(rs.getString("trangThai"));
                 hd.setLyDoHuy(rs.getString("lyDoHuy"));
 
@@ -125,6 +128,7 @@ public class HoaDon_DAO {
                        hd.tongTien,
                        hd.tienKhachTra,
                        hd.phuongThucThanhToan,
+                       hd.hinhThucPhucVu,
                        hd.trangThai,
                        hd.lyDoHuy
                 FROM HoaDon hd
@@ -152,6 +156,7 @@ public class HoaDon_DAO {
                         rs.getBigDecimal("tongTien"),
                         rs.getBigDecimal("tienKhachTra"),
                         rs.getString("phuongThucThanhToan"),
+                        rs.getString("hinhThucPhucVu"),
                         rs.getString("trangThai"),
                         rs.getString("lyDoHuy")
                 };
@@ -182,6 +187,7 @@ public class HoaDon_DAO {
                        hd.tongTien,
                        hd.tienKhachTra,
                        hd.phuongThucThanhToan,
+                       hd.hinhThucPhucVu,
                        hd.trangThai,
                        hd.lyDoHuy
                 FROM HoaDon hd
@@ -210,6 +216,7 @@ public class HoaDon_DAO {
                         rs.getBigDecimal("tongTien"),
                         rs.getBigDecimal("tienKhachTra"),
                         rs.getString("phuongThucThanhToan"),
+                        rs.getString("hinhThucPhucVu"),
                         rs.getString("trangThai"),
                         rs.getString("lyDoHuy")
                 });
@@ -294,7 +301,8 @@ public class HoaDon_DAO {
             String trangThai,
             String lyDoHuy,
             Timestamp thoiGianRa,
-            String phuongThucThanhToan
+            String phuongThucThanhToan,
+            String hinhThucPhucVu
     ) {
         try {
             Connection con = ConnectDB.getConnection();
@@ -306,7 +314,8 @@ public class HoaDon_DAO {
                     trangThai = ?,
                     lyDoHuy = ?,
                     thoiGianRa = ?,
-                    phuongThucThanhToan = ?
+                    phuongThucThanhToan = ?,
+                    hinhThucPhucVu = ?
                 WHERE maHD = ?
             """;
 
@@ -335,7 +344,13 @@ public class HoaDon_DAO {
                 ps.setString(6, phuongThucThanhToan);
             }
 
-            ps.setString(7, maHD);
+            if (hinhThucPhucVu == null || hinhThucPhucVu.trim().isEmpty()) {
+                ps.setNull(7, Types.NVARCHAR);
+            } else {
+                ps.setString(7, hinhThucPhucVu);
+            }
+
+            ps.setString(8, maHD);
 
             return ps.executeUpdate() > 0;
 
@@ -367,61 +382,67 @@ public class HoaDon_DAO {
     }
 
     public boolean themHoaDonMoi(String maHD, String maBan, String maNV,
-                                 String maPhieuDatBan, String maKH, String trangThai) {
-        Connection con = ConnectDB.getConnection();
+            String maPhieuDatBan, String maKH,
+            String hinhThucPhucVu, String trangThai) {
+    	Connection con = ConnectDB.getConnection();
 
-        String sql = """
-            INSERT INTO HoaDon
-            (maHD, thoiGianVao, thoiGianRa, maPhieuDatBan, maKH, maKM, maBan, maNV,
-             tongTien, tienKhachTra, thueVAT, tienThua, phuongThucThanhToan, trangThai, lyDoHuy)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """;
+    	String sql = """
+    	INSERT INTO HoaDon
+    	(maHD, thoiGianVao, thoiGianRa, maPhieuDatBan, maKH, maKM, maBan, maNV,
+    	tongTien, tienKhachTra, thueVAT, tienThua, phuongThucThanhToan, hinhThucPhucVu, trangThai, lyDoHuy)
+    	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    	""";
 
-        try {
-            PreparedStatement ps = con.prepareStatement(sql);
+    	try {
+    	PreparedStatement ps = con.prepareStatement(sql);
 
-            ps.setString(1, maHD);
-            ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
-            ps.setNull(3, Types.TIMESTAMP);
+    	ps.setString(1, maHD);
+    	ps.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
+    	ps.setNull(3, Types.TIMESTAMP);
 
-            if (maPhieuDatBan == null || maPhieuDatBan.trim().isEmpty()) {
-                ps.setNull(4, Types.VARCHAR);
-            } else {
-                ps.setString(4, maPhieuDatBan);
-            }
+    	if (maPhieuDatBan == null || maPhieuDatBan.trim().isEmpty()) {
+    	ps.setNull(4, Types.VARCHAR);
+    	} else {
+    	ps.setString(4, maPhieuDatBan);
+    	}
 
-            if (maKH == null || maKH.trim().isEmpty()) {
-                ps.setNull(5, Types.VARCHAR);
-            } else {
-                ps.setString(5, maKH);
-            }
+    	if (maKH == null || maKH.trim().isEmpty()) {
+    	ps.setNull(5, Types.VARCHAR);
+    	} else {
+    	ps.setString(5, maKH);
+    	}
 
-            ps.setNull(6, Types.VARCHAR);
-            ps.setString(7, maBan);
+    	ps.setNull(6, Types.VARCHAR); // maKM
+    	ps.setString(7, maBan);
 
-            if (maNV == null || maNV.trim().isEmpty()) {
-                ps.setNull(8, Types.VARCHAR);
-            } else {
-                ps.setString(8, maNV);
-            }
+    	if (maNV == null || maNV.trim().isEmpty()) {
+    	ps.setNull(8, Types.VARCHAR);
+    	} else {
+    	ps.setString(8, maNV);
+    	}
 
-            ps.setDouble(9, 0);
-            ps.setDouble(10, 0);
-            ps.setDouble(11, 0);
-            ps.setDouble(12, 0);
-            ps.setNull(13, Types.NVARCHAR);
-            ps.setString(14, trangThai);
-            ps.setNull(15, Types.NVARCHAR);
+    	ps.setDouble(9, 0);
+    	ps.setDouble(10, 0);
+    	ps.setDouble(11, 0);
+    	ps.setDouble(12, 0);
 
-            return ps.executeUpdate() > 0;
+    	ps.setNull(13, Types.NVARCHAR); // phuongThucThanhToan
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    	// 🔥 CHỖ QUAN TRỌNG
+    	ps.setString(14, hinhThucPhucVu);
 
-        return false;
+    	ps.setString(15, trangThai);
+    	ps.setNull(16, Types.NVARCHAR);
+
+    	return ps.executeUpdate() > 0;
+
+    	} catch (Exception e) {
+    	e.printStackTrace();
+    	}
+
+    	return false;
+    	
     }
-
     public boolean capNhatTongTien(String maHD) {
         String sql = """
             UPDATE HoaDon

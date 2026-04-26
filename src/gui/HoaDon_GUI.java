@@ -41,6 +41,7 @@ public class HoaDon_GUI extends JFrame {
     private static final String PH_KM = "Vui lòng chọn khuyến mãi";
     private static final String PH_TT = "Vui lòng chọn trạng thái";
     private static final String PH_PTTT = "Vui lòng chọn phương thức";
+    private static final String PH_HTPV = "Vui lòng chọn hình thức";
 
     private JTextField txtTenKhach, txtMaHoaDon, txtBan, txtTongTien, txtSDT, txtLyDoHuy;
     private JDateChooser dtThoiGianVao, dtThoiGianRa;
@@ -48,6 +49,7 @@ public class HoaDon_GUI extends JFrame {
     private JComboBox<String> cbTrangThai;
     private JComboBox<String> cbNhanVien;
     private JComboBox<String> cboPhuongThucThanhToan;
+    private JComboBox<String> cboHinhThucPhucVu;
 
     private JTable table;
     private DefaultTableModel tableModel;
@@ -153,12 +155,18 @@ public class HoaDon_GUI extends JFrame {
 
         txtLyDoHuy = createTextField();
         txtLyDoHuy.setEnabled(false);
+
         cboPhuongThucThanhToan = createComboBox(new String[]{
                 PH_PTTT, "Tiền mặt", "Chuyển khoản", "Visa"
         });
 
         addRow(pnlFields, gbc, 5, "Lý do hủy", txtLyDoHuy, "Phương thức TT", cboPhuongThucThanhToan);
 
+        cboHinhThucPhucVu = createComboBox(new String[]{
+                PH_HTPV, "Tại bàn", "Mang về"
+        });
+
+        addRow(pnlFields, gbc, 6, "Hình thức phục vụ", cboHinhThucPhucVu, "", new JLabel());
         cbTrangThai.addActionListener(e -> xuLyTrangThai());
 
         outer.add(pnlFields, BorderLayout.CENTER);
@@ -240,10 +248,11 @@ public class HoaDon_GUI extends JFrame {
     }
 
     private JScrollPane buildTablePanel() {
-        String[] cols = {
-                "Mã hóa đơn", "Thời gian tạo", "Thời gian ra", "Khách hàng",
-                "Nhân viên", "SĐT", "Khuyến mãi", "Bàn", "Tổng tiền", "Trạng thái", "Lý do hủy"
-        };
+    	String[] cols = {
+    	        "Mã hóa đơn", "Thời gian tạo", "Thời gian ra", "Khách hàng",
+    	        "Nhân viên", "SĐT", "Khuyến mãi", "Bàn", "Tổng tiền",
+    	        "Phương thức TT", "Hình thức PV", "Trạng thái", "Lý do hủy"
+    	};
 
         tableModel = new DefaultTableModel(cols, 0) {
             private static final long serialVersionUID = 1L;
@@ -281,9 +290,9 @@ public class HoaDon_GUI extends JFrame {
 
                 c.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
 
-                String trangThai = table.getValueAt(row, 9) == null
+                String trangThai = table.getValueAt(row, 11) == null
                         ? ""
-                        : table.getValueAt(row, 9).toString();
+                        : table.getValueAt(row, 11).toString();
 
                 if (!isSelected) {
                     c.setForeground(("Hủy".equalsIgnoreCase(trangThai)
@@ -291,7 +300,7 @@ public class HoaDon_GUI extends JFrame {
                     c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(250, 248, 242));
                 }
 
-                if (column == 3 || column == 4 || column == 10) {
+                if (column == 3 || column == 4 || column == 12) {
                     c.setHorizontalAlignment(SwingConstants.LEFT);
                 } else {
                     c.setHorizontalAlignment(SwingConstants.CENTER);
@@ -329,7 +338,7 @@ public class HoaDon_GUI extends JFrame {
             table.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
         }
 
-        int[] widths = {110, 140, 140, 140, 150, 120, 140, 70, 110, 120, 190};
+        int[] widths = {110, 140, 140, 140, 150, 120, 140, 70, 110, 130, 120, 120, 190};
         for (int i = 0; i < widths.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         }
@@ -388,6 +397,9 @@ public class HoaDon_GUI extends JFrame {
         if (cboPhuongThucThanhToan.getItemCount() > 0) {
             cboPhuongThucThanhToan.setSelectedIndex(0);
         }
+        if (cboHinhThucPhucVu.getItemCount() > 0) {
+            cboHinhThucPhucVu.setSelectedIndex(0);
+        }
 
         txtBan.setText("");
         txtTongTien.setText("");
@@ -425,6 +437,7 @@ public class HoaDon_GUI extends JFrame {
         String trangThai = getComboValue(cbTrangThai);
         String lyDoHuy = txtLyDoHuy.getText().trim();
         String phuongThucThanhToan = getComboValue(cboPhuongThucThanhToan);
+        String hinhThucPhucVu = getComboValue(cboHinhThucPhucVu);
         if (trangThai.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn trạng thái!");
             cbTrangThai.requestFocus();
@@ -460,7 +473,8 @@ public class HoaDon_GUI extends JFrame {
                 trangThai,
                 lyDoHuy,
                 thoiGianRa,
-                phuongThucThanhToan
+                phuongThucThanhToan,
+                hinhThucPhucVu
         );
 
         if (kq) {
@@ -530,7 +544,8 @@ public class HoaDon_GUI extends JFrame {
                     row[0],
                     vao != null ? sdf.format(vao) : "",
                     ra != null ? sdf.format(ra) : "",
-                    row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]
+                    		row[3], row[4], row[5], row[6], row[7], row[8],
+                    		row[9], row[10], row[11], row[12]
             });
         }
     }
@@ -540,7 +555,8 @@ public class HoaDon_GUI extends JFrame {
 
         String s = value.toString().trim();
 
-        if (PH_NV.equals(s) || PH_KM.equals(s) || PH_TT.equals(s) || PH_PTTT.equals(s)) {
+        if (PH_NV.equals(s) || PH_KM.equals(s) || PH_TT.equals(s)
+                || PH_PTTT.equals(s) || PH_HTPV.equals(s)) {
             return "";
         }
 
@@ -563,8 +579,10 @@ public class HoaDon_GUI extends JFrame {
         txtBan.setText(getSafe(tableModel.getValueAt(row, 7)));
         txtTongTien.setText(getSafe(tableModel.getValueAt(row, 8)));
         txtKhuyenMai.setSelectedItem(getSafe(tableModel.getValueAt(row, 6)));
-        cbTrangThai.setSelectedItem(getSafe(tableModel.getValueAt(row, 9)));
-        txtLyDoHuy.setText(getSafe(tableModel.getValueAt(row, 10)));
+        cboPhuongThucThanhToan.setSelectedItem(getSafe(tableModel.getValueAt(row, 9)));
+        cboHinhThucPhucVu.setSelectedItem(getSafe(tableModel.getValueAt(row, 10)));
+        cbTrangThai.setSelectedItem(getSafe(tableModel.getValueAt(row, 11)));
+        txtLyDoHuy.setText(getSafe(tableModel.getValueAt(row, 12)));
         xuLyTrangThai();
 
         try {
@@ -608,8 +626,8 @@ public class HoaDon_GUI extends JFrame {
         txtSDT.setEnabled(false);
         cbNhanVien.setEnabled(false);
         txtKhuyenMai.setEnabled(false);
-
-
+        cboPhuongThucThanhToan.setEnabled(true);
+        cboHinhThucPhucVu.setEnabled(true);
 
         dtThoiGianVao.setEnabled(false);
         dtThoiGianRa.setEnabled(true);
@@ -632,6 +650,7 @@ public class HoaDon_GUI extends JFrame {
         dtThoiGianVao.setEnabled(true);
         dtThoiGianRa.setEnabled(true);
         cboPhuongThucThanhToan.setEnabled(true);
+        cboHinhThucPhucVu.setEnabled(true);
 
 
         cbTrangThai.setEnabled(true);
@@ -652,7 +671,8 @@ public class HoaDon_GUI extends JFrame {
                     row[0],
                     vao != null ? sdf.format(vao) : "",
                     ra != null ? sdf.format(ra) : "",
-                    row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]
+                    		row[3], row[4], row[5], row[6], row[7], row[8],
+                    		row[9], row[10], row[11], row[12]
             });
         }
     }

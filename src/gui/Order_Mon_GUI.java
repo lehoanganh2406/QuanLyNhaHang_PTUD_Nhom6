@@ -560,14 +560,21 @@ public class Order_Mon_GUI extends JPanel {
         });
 
         btnThanhToan.addActionListener(e -> {
-            if (gioHang.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Chưa có món nào để thanh toán.");
+            HoaDon hd = hoaDonDAO.timHoaDonChuaThanhToanTheoBan(maBan);
+
+            if (hd == null) {
+                JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn chưa thanh toán.");
                 return;
             }
-            String msg = chkMangVe.isSelected()
-                    ? "Thanh toán đơn mang về."
-                    : "Thanh toán tại bàn.";
-            JOptionPane.showMessageDialog(this, msg);
+
+            Window w = SwingUtilities.getWindowAncestor(Order_Mon_GUI.this);
+
+            if (w instanceof TrangChu_GUI) {
+                ((TrangChu_GUI) w).showCustomPage(
+                        "Order_ThanhToan_GUI",
+                        new Order_ThanhToan_GUI(taiKhoanDangNhap, maBan, tenBan)
+                );
+            }
         });
 
         gbc.gridx = 0;

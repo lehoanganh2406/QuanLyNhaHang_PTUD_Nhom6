@@ -272,9 +272,17 @@ public class TachBan_DigLog extends JDialog {
             if (sp == null) continue;
 
             int soLuongTach = (Integer) sp.getValue();
+            int soLuongHienCo = ct.getSoLuong();
 
             if (soLuongTach <= 0) {
                 continue;
+            }
+
+            if (soLuongTach > soLuongHienCo) {
+                JOptionPane.showMessageDialog(this,
+                        "Số lượng tách của món " + maMon + " không được lớn hơn số lượng hiện có.");
+                sp.setValue(soLuongHienCo);
+                return;
             }
 
             boolean ok = chiTietDAO.tachMonSangHoaDonKhac(

@@ -7,22 +7,32 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JLayeredPane;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -30,23 +40,46 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
 import com.toedter.calendar.JDateChooser;
 
+import connectDB.ConnectDB;
 import entity.TaiKhoan;
 
 public class TongKetBanHang_GUI extends JPanel {
+    private static final long serialVersionUID = 1L;
 
     private TaiKhoan taiKhoanDangNhap;
 
+    private JDateChooser startChooser;
+    private JDateChooser endChooser;
+    private JLabel lblTongMonBan;
+    private JLabel lblTongSoLuong;
+    private JLabel lblDoanhThu;
+    private JLabel lblBanChayNhat;
+    private JLabel lblFooterDong;
+    private JLabel lblFooterSL;
+    private JLabel lblFooterTien;
+
+    private DefaultTableModel tableModel;
+    private MockBarTopMon chartTopMon;
+    private MockLineDoanhThu chartDoanhThu;
+
+    private final DecimalFormat moneyFormat = new DecimalFormat("#,##0");
+    private final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     public TongKetBanHang_GUI(TaiKhoan tk) {
         this.taiKhoanDangNhap = tk;
+        ConnectDB.getInstance().connect();
 
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
-
         add(createMainPanel(), BorderLayout.CENTER);
+
+        setDefaultDates();
+        loadData();
     }
 
     public TongKetBanHang_GUI() {
@@ -55,19 +88,17 @@ public class TongKetBanHang_GUI extends JPanel {
 
     private JPanel createMainPanel() {
         JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setBackground(Color.WHITE);
+        wrapper.setBackground(new Color(248, 249, 251));
 
         JPanel contentContainer = new JPanel();
         contentContainer.setLayout(new BoxLayout(contentContainer, BoxLayout.Y_AXIS));
         contentContainer.setOpaque(false);
-        contentContainer.setBorder(new EmptyBorder(25, 40, 40, 40));
+        contentContainer.setBorder(new EmptyBorder(22, 32, 36, 32));
 
         contentContainer.add(wrapInNorth(createHeaderPanel()));
         contentContainer.add(Box.createRigidArea(new Dimension(0, 35)));
-
         contentContainer.add(wrapInNorth(createKpiPanel()));
         contentContainer.add(Box.createRigidArea(new Dimension(0, 40)));
-
         contentContainer.add(wrapInNorth(createMidScaleSection()));
 
         JPanel smoothScrollWrapper = new JPanel(new BorderLayout());
@@ -78,9 +109,7 @@ public class TongKetBanHang_GUI extends JPanel {
         scroll.setBorder(null);
         scroll.getViewport().setBackground(Color.WHITE);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
-
         wrapper.add(scroll, BorderLayout.CENTER);
-
         return wrapper;
     }
 
@@ -92,48 +121,63 @@ public class TongKetBanHang_GUI extends JPanel {
     }
 
     private JPanel createHeaderPanel() {
-        JPanel hdr = new JPanel(new BorderLayout());
-        hdr.setOpaque(false);
+        JPanel hdr = new JPanel(new BorderLayout(20, 0));
+        hdr.setBackground(Color.WHITE);
+        hdr.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(226, 232, 240), 1, true),
+                new EmptyBorder(18, 22, 18, 22)));
+
+        JPanel titleBox = new JPanel();
+        titleBox.setOpaque(false);
+        titleBox.setLayout(new BoxLayout(titleBox, BoxLayout.Y_AXIS));
 
         JLabel lblTitle = new JLabel("Tổng kết bán hàng");
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 30));
-        hdr.add(lblTitle, BorderLayout.WEST);
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
+        lblTitle.setForeground(new Color(30, 41, 59));
 
-        JPanel rightHdr = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+        JLabel lblSub = new JLabel("Tổng hợp món bán, số lượng và doanh thu theo khoảng ngày");
+        lblSub.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        lblSub.setForeground(new Color(100, 116, 139));
+
+        titleBox.add(lblTitle);
+        titleBox.add(Box.createRigidArea(new Dimension(0, 4)));
+        titleBox.add(lblSub);
+        hdr.add(titleBox, BorderLayout.WEST);
+
+        JPanel rightHdr = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         rightHdr.setOpaque(false);
 
-        JLabel lblStart = new JLabel("Ngày bắt đầu:");
-        lblStart.setFont(new Font("SansSerif", Font.PLAIN, 20));
-        lblStart.setForeground(Color.DARK_GRAY);
-        JDateChooser startChooser = new JDateChooser();
-        startChooser.setPreferredSize(new Dimension(180, 40));
-        startChooser.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        JLabel lblStart = new JLabel("Từ ngày:");
+        lblStart.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblStart.setForeground(new Color(71, 85, 105));
+        startChooser = new JDateChooser();
+        startChooser.setPreferredSize(new Dimension(145, 34));
+        startChooser.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
-        JLabel lblEnd = new JLabel("Ngày kết thúc:");
-        lblEnd.setFont(new Font("SansSerif", Font.PLAIN, 20));
-        lblEnd.setForeground(Color.DARK_GRAY);
-        JDateChooser endChooser = new JDateChooser();
-        endChooser.setPreferredSize(new Dimension(180, 40));
-        endChooser.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        JLabel lblEnd = new JLabel("Đến ngày:");
+        lblEnd.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblEnd.setForeground(new Color(71, 85, 105));
+        endChooser = new JDateChooser();
+        endChooser.setPreferredSize(new Dimension(145, 34));
+        endChooser.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
-        JButton btnFilter = new JButton("Lọc");
-        btnFilter.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        JButton btnFilter = new JButton("Lọc dữ liệu");
+        btnFilter.setFont(new Font("SansSerif", Font.BOLD, 14));
         btnFilter.setBackground(new Color(250, 235, 215));
         btnFilter.setForeground(new Color(110, 80, 50));
         btnFilter.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(210, 190, 170), 1),
-                new EmptyBorder(8, 25, 8, 25)));
+                new LineBorder(new Color(210, 190, 170), 1, true),
+                new EmptyBorder(8, 18, 8, 18)));
         btnFilter.setFocusPainted(false);
         btnFilter.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnFilter.addActionListener(e -> loadData());
 
         rightHdr.add(lblStart);
         rightHdr.add(startChooser);
         rightHdr.add(lblEnd);
         rightHdr.add(endChooser);
         rightHdr.add(btnFilter);
-
         hdr.add(rightHdr, BorderLayout.EAST);
-
         return hdr;
     }
 
@@ -141,10 +185,15 @@ public class TongKetBanHang_GUI extends JPanel {
         JPanel kpi = new JPanel(new GridLayout(1, 5, 25, 0));
         kpi.setOpaque(false);
 
-        kpi.add(createKpiCard("Tổng món bán", "24", new Color(235, 243, 255), new Color(100, 130, 150)));
-        kpi.add(createKpiCard("Tổng số lượng", "58", new Color(235, 250, 240), new Color(120, 150, 130)));
-        kpi.add(createKpiCard("Doanh thu", "4.250.000đ", new Color(255, 250, 235), new Color(150, 140, 100)));
-        kpi.add(createKpiCard("Bán chạy nhất", "Gà nướng", new Color(255, 235, 245), new Color(150, 100, 120)));
+        lblTongMonBan = new JLabel("0", SwingConstants.CENTER);
+        lblTongSoLuong = new JLabel("0", SwingConstants.CENTER);
+        lblDoanhThu = new JLabel("0đ", SwingConstants.CENTER);
+        lblBanChayNhat = new JLabel("-", SwingConstants.CENTER);
+
+        kpi.add(createKpiCard("Tổng món bán", lblTongMonBan, new Color(235, 243, 255), new Color(100, 130, 150)));
+        kpi.add(createKpiCard("Tổng số lượng", lblTongSoLuong, new Color(235, 250, 240), new Color(120, 150, 130)));
+        kpi.add(createKpiCard("Doanh thu", lblDoanhThu, new Color(255, 250, 235), new Color(150, 140, 100)));
+        kpi.add(createKpiCard("Bán chạy nhất", lblBanChayNhat, new Color(255, 235, 245), new Color(150, 100, 120)));
 
         JPanel btnWrap = new JPanel(new BorderLayout());
         btnWrap.setOpaque(false);
@@ -154,45 +203,45 @@ public class TongKetBanHang_GUI extends JPanel {
         btnExport.setForeground(Color.DARK_GRAY);
         btnExport.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(90, 160, 90), 1),
-                new EmptyBorder(0, 0, 0, 0) // size will stretch
-        ));
+                new EmptyBorder(0, 0, 0, 0)));
         btnExport.setFocusPainted(false);
         btnExport.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnExport.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                "Dữ liệu tổng kết đã được tải từ CSDL. Nếu cần xuất file, có thể bổ sung chức năng Excel/PDF sau.",
+                "Xuất báo cáo", JOptionPane.INFORMATION_MESSAGE));
 
         JPanel innerBtnWrap = new JPanel(new BorderLayout());
         innerBtnWrap.setOpaque(false);
         innerBtnWrap.setBorder(new EmptyBorder(12, 0, 12, 0));
         innerBtnWrap.add(btnExport, BorderLayout.CENTER);
-
-        kpi.add(innerBtnWrap);
-
+        btnWrap.add(innerBtnWrap, BorderLayout.CENTER);
+        kpi.add(btnWrap);
         return kpi;
     }
 
-    private JPanel createKpiCard(String title, String value, Color bg, Color titleFg) {
-        JPanel card = new JPanel(new BorderLayout(0, 5));
-        card.setBackground(bg);
+    private JPanel createKpiCard(String title, JLabel valueLabel, Color bg, Color titleFg) {
+        JPanel card = new JPanel(new BorderLayout(0, 8));
+        card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(230, 230, 230), 1, true),
-                new EmptyBorder(20, 15, 20, 15)));
+                BorderFactory.createMatteBorder(0, 0, 4, 0, titleFg),
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true),
+                        new EmptyBorder(16, 14, 16, 14))));
 
         JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
-        lblTitle.setForeground(titleFg);
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblTitle.setForeground(new Color(100, 116, 139));
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
 
-        JLabel lblVal = new JLabel(value);
-        lblVal.setFont(new Font("SansSerif", Font.BOLD, 32));
-        lblVal.setForeground(new Color(40, 40, 40));
-        lblVal.setHorizontalAlignment(SwingConstants.CENTER);
+        valueLabel.setFont(new Font("SansSerif", Font.BOLD, 26));
+        valueLabel.setForeground(new Color(15, 23, 42));
+        valueLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        JPanel wrap = new JPanel(new BorderLayout());
+        JPanel wrap = new JPanel(new BorderLayout(0, 6));
         wrap.setOpaque(false);
         wrap.add(lblTitle, BorderLayout.NORTH);
-        wrap.add(lblVal, BorderLayout.CENTER);
-
+        wrap.add(valueLabel, BorderLayout.CENTER);
         card.add(wrap, BorderLayout.CENTER);
-
         return card;
     }
 
@@ -200,161 +249,304 @@ public class TongKetBanHang_GUI extends JPanel {
         JPanel mid = new JPanel(new BorderLayout(40, 0));
         mid.setOpaque(false);
 
-        // Left Column (Table)
         JPanel leftCol = new JPanel(new BorderLayout(0, 15));
         leftCol.setOpaque(false);
-
         JLabel lblDetailsTitle = new JLabel("DANH SÁCH CHI TIẾT");
-        lblDetailsTitle.setFont(new Font("SansSerif", Font.BOLD, 24));
-        lblDetailsTitle.setForeground(new Color(60, 60, 60));
+        lblDetailsTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
+        lblDetailsTitle.setForeground(new Color(30, 41, 59));
         leftCol.add(lblDetailsTitle, BorderLayout.NORTH);
 
         String[] cols = { "STT", "Loại món", "Tên món ăn", "Mã món", "SL", "Thành tiền" };
-        Object[][] data = {
-                { "1", "Món chính", "Gà nướng", "MM01", "12", "1.200.000đ" },
-                { "2", "Nước uống", "Trà đào", "NU02", "15", "750.000đ" },
-                { "3", "Ăn vặt", "Khoai tây", "AV03", "8", "320.000đ" },
-                { "4", "Món chính", "Cơm gà", "MM04", "10", "980.000đ" },
-                { "5", "Tráng miệng", "Bánh flan", "TM05", "13", "1.000.000đ" }
+        tableModel = new DefaultTableModel(cols, 0) {
+            private static final long serialVersionUID = 1L;
+            @Override public boolean isCellEditable(int row, int column) { return false; }
         };
-
-        JTable table = new JTable(data, cols);
-        table.setFont(new Font("SansSerif", Font.PLAIN, 18));
-        table.setRowHeight(50);
+        JTable table = new JTable(tableModel);
+        table.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        table.setRowHeight(42);
         table.setGridColor(new Color(230, 230, 230));
         table.setShowVerticalLines(false);
         table.setSelectionBackground(new Color(230, 240, 255));
-
         JTableHeader th = table.getTableHeader();
-        th.setFont(new Font("SansSerif", Font.BOLD, 18));
-        th.setBackground(new Color(235, 240, 250)); // Light blue header
+        th.setFont(new Font("SansSerif", Font.BOLD, 15));
+        th.setBackground(new Color(235, 240, 250));
         th.setForeground(new Color(50, 50, 50));
-        th.setPreferredSize(new Dimension(0, 50));
+        th.setPreferredSize(new Dimension(0, 42));
         ((DefaultTableCellRenderer) th.getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
-
         DefaultTableCellRenderer centerRender = new DefaultTableCellRenderer();
         centerRender.setHorizontalAlignment(SwingConstants.CENTER);
         for (int i = 0; i < table.getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setCellRenderer(centerRender);
         }
-
         JScrollPane tblScroll = new JScrollPane(table);
         tblScroll.setBorder(new LineBorder(new Color(230, 230, 230)));
         tblScroll.getViewport().setBackground(Color.WHITE);
         tblScroll.setPreferredSize(new Dimension(0, 250));
 
-        // Custom Footer for the table
         JPanel footer = new JPanel(new GridLayout(1, 3, 0, 0));
         footer.setOpaque(false);
-
-        footer.add(createFooterCell("Tổng số dòng: 24"));
-        footer.add(createFooterCell("Tổng SL: 58"));
-        footer.add(createFooterCell("Tổng tiền: 4.250.000đ"));
+        lblFooterDong = createFooterLabel("Tổng số dòng: 0");
+        lblFooterSL = createFooterLabel("Tổng SL: 0");
+        lblFooterTien = createFooterLabel("Tổng tiền: 0đ");
+        footer.add(createFooterCell(lblFooterDong));
+        footer.add(createFooterCell(lblFooterSL));
+        footer.add(createFooterCell(lblFooterTien));
 
         JPanel tableWrap = new JPanel(new BorderLayout());
         tableWrap.setOpaque(false);
         tableWrap.add(tblScroll, BorderLayout.CENTER);
         tableWrap.add(footer, BorderLayout.SOUTH);
-
         leftCol.add(tableWrap, BorderLayout.CENTER);
-
         mid.add(leftCol, BorderLayout.CENTER);
 
-        // Right Column (Charts)
         JPanel rightCol = new JPanel(new GridLayout(2, 1, 0, 30));
         rightCol.setOpaque(false);
-        rightCol.setPreferredSize(new Dimension(420, 0)); // explicit width restraint
-
-        rightCol.add(createChartWrapper("BIỂU ĐỒ TOP MÓN BÁN CHẠY", new MockBarTopMon()));
-        rightCol.add(createChartWrapper("DOANH THU THEO NGÀY", new MockLineDoanhThu()));
-
+        rightCol.setPreferredSize(new Dimension(420, 0));
+        chartTopMon = new MockBarTopMon();
+        chartDoanhThu = new MockLineDoanhThu();
+        rightCol.add(createChartWrapper("BIỂU ĐỒ TOP MÓN BÁN CHẠY", chartTopMon));
+        rightCol.add(createChartWrapper("DOANH THU THEO NGÀY", chartDoanhThu));
         mid.add(rightCol, BorderLayout.EAST);
-
         return mid;
+    }
+
+    private JLabel createFooterLabel(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(new Font("SansSerif", Font.BOLD, 18));
+        l.setForeground(new Color(50, 50, 50));
+        return l;
     }
 
     private JPanel createChartWrapper(String title, JPanel chart) {
         JPanel w = new JPanel(new BorderLayout(0, 10));
         w.setBackground(Color.WHITE);
         w.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 220, 220), 1, true),
+                BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true),
                 new EmptyBorder(15, 20, 15, 20)));
-
         JLabel lblTop = new JLabel(title);
-        lblTop.setFont(new Font("SansSerif", Font.BOLD, 22));
-        lblTop.setForeground(new Color(50, 50, 50));
+        lblTop.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblTop.setForeground(new Color(30, 41, 59));
         w.add(lblTop, BorderLayout.NORTH);
         w.add(chart, BorderLayout.CENTER);
-
         return w;
     }
 
-    private JPanel createFooterCell(String text) {
+    private JPanel createFooterCell(JLabel label) {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(new Color(248, 248, 250));
         p.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(230, 230, 230), 1),
                 new EmptyBorder(10, 20, 10, 20)));
-        JLabel l = new JLabel(text);
-        l.setFont(new Font("SansSerif", Font.BOLD, 18));
-        l.setForeground(new Color(50, 50, 50));
-        p.add(l, BorderLayout.CENTER);
+        p.add(label, BorderLayout.CENTER);
         return p;
     }
 
-    // --- Mock Component for TOP MON ---
-    class MockBarTopMon extends JPanel {
-        public MockBarTopMon() {
-            setOpaque(false);
+    private void setDefaultDates() {
+        Calendar cal = Calendar.getInstance();
+        endChooser.setDate(cal.getTime());
+        cal.add(Calendar.DAY_OF_MONTH, -30);
+        startChooser.setDate(cal.getTime());
+    }
+
+    private void loadData() {
+        Date start = startChooser.getDate();
+        Date end = endChooser.getDate();
+        if (start == null || end == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày bắt đầu và ngày kết thúc.");
+            return;
+        }
+        if (start.after(end)) {
+            JOptionPane.showMessageDialog(this, "Ngày bắt đầu không được lớn hơn ngày kết thúc.");
+            return;
+        }
+        LocalDate startDate = toLocalDate(start);
+        LocalDate endDate = toLocalDate(end);
+        List<ItemSale> items = loadItemSales(startDate, endDate);
+        List<DaySale> days = loadDaySales(startDate, endDate);
+        updateUIWithData(items, days);
+    }
+
+    private List<ItemSale> loadItemSales(LocalDate start, LocalDate end) {
+        List<ItemSale> list = new ArrayList<>();
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            con = ConnectDB.getConnection();
+            if (con == null) return list;
+            String sql = "SELECT lm.tenLoaiMonAn, m.tenMon, m.maMon, "
+                    + "ISNULL(SUM(ct.soLuong - ISNULL(ct.soLuongHuy,0)),0) AS soLuong, "
+                    + "ISNULL(SUM((ct.soLuong - ISNULL(ct.soLuongHuy,0)) * ct.donGia),0) AS thanhTien "
+                    + "FROM ChiTietHoaDon ct "
+                    + "JOIN HoaDon hd ON hd.maHD = ct.maHD "
+                    + "JOIN MonAn m ON m.maMon = ct.maMon "
+                    + "JOIN LoaiMonAn lm ON lm.maLoaiMonAn = m.maLoaiMonAn "
+                    + "WHERE hd.trangThai = N'Đã thanh toán' "
+                    + "AND hd.thoiGianRa >= ? AND hd.thoiGianRa < ? "
+                    + "AND (ct.trangThai IS NULL OR ct.trangThai <> N'Đã hủy') "
+                    + "GROUP BY lm.tenLoaiMonAn, m.tenMon, m.maMon "
+                    + "ORDER BY thanhTien DESC";
+            stmt = con.prepareStatement(sql);
+            stmt.setTimestamp(1, Timestamp.valueOf(start.atStartOfDay()));
+            stmt.setTimestamp(2, Timestamp.valueOf(end.plusDays(1).atStartOfDay()));
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                ItemSale item = new ItemSale();
+                item.loaiMon = rs.getString("tenLoaiMonAn");
+                item.tenMon = rs.getString("tenMon");
+                item.maMon = rs.getString("maMon");
+                item.soLuong = rs.getInt("soLuong");
+                item.thanhTien = rs.getDouble("thanhTien");
+                list.add(item);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi tải tổng kết bán hàng: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            closeQuietly(rs);
+            closeQuietly(stmt);
+        }
+        return list;
+    }
+
+    private List<DaySale> loadDaySales(LocalDate start, LocalDate end) {
+        List<DaySale> list = new ArrayList<>();
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            con = ConnectDB.getConnection();
+            if (con == null) return list;
+            String sql = "SELECT CAST(thoiGianRa AS DATE) AS ngay, ISNULL(SUM(tongTien),0) AS doanhThu "
+                    + "FROM HoaDon "
+                    + "WHERE trangThai = N'Đã thanh toán' "
+                    + "AND thoiGianRa >= ? AND thoiGianRa < ? "
+                    + "GROUP BY CAST(thoiGianRa AS DATE) ORDER BY ngay";
+            stmt = con.prepareStatement(sql);
+            stmt.setTimestamp(1, Timestamp.valueOf(start.atStartOfDay()));
+            stmt.setTimestamp(2, Timestamp.valueOf(end.plusDays(1).atStartOfDay()));
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                DaySale day = new DaySale();
+                day.label = rs.getDate("ngay").toLocalDate().format(dateFormat);
+                day.doanhThu = rs.getDouble("doanhThu");
+                list.add(day);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeQuietly(rs);
+            closeQuietly(stmt);
+        }
+        return list;
+    }
+
+    private void updateUIWithData(List<ItemSale> items, List<DaySale> days) {
+        tableModel.setRowCount(0);
+        int totalQty = 0;
+        double totalMoney = 0;
+        int stt = 1;
+        for (ItemSale item : items) {
+            totalQty += item.soLuong;
+            totalMoney += item.thanhTien;
+            tableModel.addRow(new Object[] {
+                    stt++,
+                    item.loaiMon,
+                    item.tenMon,
+                    item.maMon,
+                    item.soLuong,
+                    formatMoney(item.thanhTien)
+            });
         }
 
-        @Override
-        protected void paintComponent(Graphics g) {
+        lblTongMonBan.setText(String.valueOf(items.size()));
+        lblTongSoLuong.setText(String.valueOf(totalQty));
+        lblDoanhThu.setText(formatMoney(totalMoney));
+        lblBanChayNhat.setText(items.isEmpty() ? "-" : items.get(0).tenMon);
+        lblFooterDong.setText("Tổng số dòng: " + items.size());
+        lblFooterSL.setText("Tổng SL: " + totalQty);
+        lblFooterTien.setText("Tổng tiền: " + formatMoney(totalMoney));
+
+        chartTopMon.setData(items);
+        chartDoanhThu.setData(days);
+    }
+
+    private LocalDate toLocalDate(Date date) {
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    private String formatMoney(double value) {
+        return moneyFormat.format(value) + "đ";
+    }
+
+    private void closeQuietly(AutoCloseable closeable) {
+        if (closeable == null) return;
+        try { closeable.close(); } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    private static class ItemSale {
+        String loaiMon;
+        String tenMon;
+        String maMon;
+        int soLuong;
+        double thanhTien;
+    }
+
+    private static class DaySale {
+        String label;
+        double doanhThu;
+    }
+
+    class MockBarTopMon extends JPanel {
+        private static final long serialVersionUID = 1L;
+        private List<ItemSale> data = new ArrayList<>();
+
+        public MockBarTopMon() { setOpaque(false); }
+        public void setData(List<ItemSale> data) { this.data = data == null ? new ArrayList<>() : data; repaint(); }
+
+        @Override protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
             int w = getWidth();
             int h = getHeight();
             int padLeft = 20;
-            int padBottom = 35;
-
+            int padBottom = 40;
             g2.setColor(new Color(200, 200, 200));
-            g2.drawLine(padLeft, h - padBottom, w, h - padBottom); // X axis
-            g2.drawLine(padLeft, 10, padLeft, h - padBottom); // Y axis
+            g2.drawLine(padLeft, h - padBottom, w, h - padBottom);
+            g2.drawLine(padLeft, 10, padLeft, h - padBottom);
 
-            String[] xLabels = { "Gà nướng", "Trà đào", "Cơm gà", "Khoai", "Flan" };
-            int[] values = { 85, 70, 55, 35, 25 };
-
-            int n = xLabels.length;
-            double groupW = (w - padLeft) / (double) n;
-            int barW = 38;
-
-            g2.setFont(new Font("SansSerif", Font.PLAIN, 15));
-            // Ensure no bars stretch above the panel artificially
-            int maxBarHeightPixels = h - padBottom - 20;
-
-            for (int i = 0; i < n; i++) {
-                int cx = padLeft + (int) (i * groupW) + (int) (groupW / 2);
-
-                int textW = g2.getFontMetrics().stringWidth(xLabels[i]);
-                g2.setColor(Color.DARK_GRAY);
-                g2.drawString(xLabels[i], cx - textW / 2, h - 12);
-
-                int barH = (int) ((double) values[i] / 100.0 * maxBarHeightPixels);
-                int y = h - padBottom - barH;
-                g2.setColor(new Color(80, 160, 250)); // Bright sky blue
-                
-                if (barH > 0) {
-                    g2.fillRoundRect(cx - barW / 2, y, barW, barH, 12, 12);
-                    // Square off the bottom portion so it doesn't bleed through the axis
-                    if (barH > 6) {
-                        g2.fillRect(cx - barW / 2, h - padBottom - 6, barW, 6);
-                    }
-                }
+            if (data.isEmpty()) {
+                g2.setFont(new Font("SansSerif", Font.BOLD, 16));
+                g2.setColor(Color.GRAY);
+                g2.drawString("Chưa có dữ liệu", w / 2 - 65, h / 2);
+                return;
             }
 
-            // Re-draw axis heavily to ensure clean border line
+            int n = Math.min(data.size(), 5);
+            double max = 0;
+            for (int i = 0; i < n; i++) max = Math.max(max, data.get(i).soLuong);
+            if (max <= 0) max = 1;
+            double groupW = (w - padLeft) / (double) n;
+            int barW = 38;
+            g2.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            FontMetrics fm = g2.getFontMetrics();
+            int maxBarHeightPixels = h - padBottom - 20;
+            for (int i = 0; i < n; i++) {
+                ItemSale item = data.get(i);
+                int cx = padLeft + (int) (i * groupW) + (int) (groupW / 2);
+                String label = item.tenMon.length() > 8 ? item.tenMon.substring(0, 8) + "..." : item.tenMon;
+                int textW = fm.stringWidth(label);
+                g2.setColor(Color.DARK_GRAY);
+                g2.drawString(label, cx - textW / 2, h - 12);
+                int barH = (int) (item.soLuong / max * maxBarHeightPixels);
+                int y = h - padBottom - barH;
+                g2.setColor(new Color(80, 160, 250));
+                if (barH > 0) {
+                    g2.fillRoundRect(cx - barW / 2, y, barW, barH, 12, 12);
+                    if (barH > 6) g2.fillRect(cx - barW / 2, h - padBottom - 6, barW, 6);
+                }
+            }
             g2.setColor(new Color(200, 200, 200));
             Stroke oldStr = g2.getStroke();
             g2.setStroke(new BasicStroke(1.5f));
@@ -363,60 +555,57 @@ public class TongKetBanHang_GUI extends JPanel {
         }
     }
 
-    // --- Mock Component for DOANH THU THEO NGÀY ---
     class MockLineDoanhThu extends JPanel {
-        public MockLineDoanhThu() {
-            setOpaque(false);
-        }
+        private static final long serialVersionUID = 1L;
+        private List<DaySale> data = new ArrayList<>();
 
-        @Override
-        protected void paintComponent(Graphics g) {
+        public MockLineDoanhThu() { setOpaque(false); }
+        public void setData(List<DaySale> data) { this.data = data == null ? new ArrayList<>() : data; repaint(); }
+
+        @Override protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
             int w = getWidth();
             int h = getHeight();
             int padLeft = 20;
-            int padBottom = 35;
-
+            int padBottom = 40;
             g2.setColor(new Color(200, 200, 200));
             g2.drawLine(padLeft, h - padBottom, w, h - padBottom);
             g2.drawLine(padLeft, 10, padLeft, h - padBottom);
 
-            String[] xLabels = { "20/03", "21/03", "22/03", "23/03", "24/03", "25/03", "26/03" };
-            int[] values = { 30, 45, 38, 65, 55, 80, 75 };
+            if (data.isEmpty()) {
+                g2.setFont(new Font("SansSerif", Font.BOLD, 16));
+                g2.setColor(Color.GRAY);
+                g2.drawString("Chưa có dữ liệu", w / 2 - 65, h / 2);
+                return;
+            }
 
-            int n = xLabels.length;
+            int n = Math.min(data.size(), 7);
+            double max = 0;
+            for (int i = 0; i < n; i++) max = Math.max(max, data.get(i).doanhThu);
+            if (max <= 0) max = 1;
             double groupW = (w - padLeft) / (double) n;
             int[] px = new int[n];
             int[] py = new int[n];
-
-            g2.setFont(new Font("SansSerif", Font.PLAIN, 15));
+            g2.setFont(new Font("SansSerif", Font.PLAIN, 12));
             int maxLineHeight = h - padBottom - 20;
-
             for (int i = 0; i < n; i++) {
+                DaySale d = data.get(i);
                 int cx = padLeft + (int) (i * groupW) + (int) (groupW / 2);
                 px[i] = cx;
-
-                int textW = g2.getFontMetrics().stringWidth(xLabels[i]);
+                int textW = g2.getFontMetrics().stringWidth(d.label);
                 g2.setColor(Color.DARK_GRAY);
-                g2.drawString(xLabels[i], cx - textW / 2, h - 12);
-
-                int pointH = (int) ((double) values[i] / 100.0 * maxLineHeight);
+                g2.drawString(d.label, cx - textW / 2, h - 12);
+                int pointH = (int) (d.doanhThu / max * maxLineHeight);
                 py[i] = h - padBottom - pointH;
-                
-                // Draw connecting dots for aesthetics
                 g2.setColor(new Color(30, 90, 250));
                 g2.fillOval(cx - 3, py[i] - 3, 6, 6);
             }
-
-            g2.setColor(new Color(30, 90, 250)); // Deep energetic Blue
+            g2.setColor(new Color(30, 90, 250));
             Stroke oldStr = g2.getStroke();
             g2.setStroke(new BasicStroke(3.0f));
-            for (int i = 0; i < n - 1; i++) {
-                g2.drawLine(px[i], py[i], px[i + 1], py[i + 1]);
-            }
+            for (int i = 0; i < n - 1; i++) g2.drawLine(px[i], py[i], px[i + 1], py[i + 1]);
             g2.setStroke(oldStr);
         }
     }

@@ -304,7 +304,6 @@ public class DatBan_GUI extends JPanel {
 
             currentCalendar.setTime(today);
             dateChooser.setDate(today);
-            dateChooser.setMinSelectableDate(today);
             dateChooser.setDateFormatString("dd/MM/yyyy");
             dateChooser.setLocale(new Locale("vi", "VN"));
             dateChooser.setPreferredSize(new Dimension(165, 34));
@@ -410,6 +409,20 @@ public class DatBan_GUI extends JPanel {
                     cachedFilteredBookings.add(item);
                 }
             }
+        }
+        private java.util.List<BookingDisplayItem> getFilteredBookingsByWeek(Date date) {
+            java.util.List<BookingDisplayItem> result = new ArrayList<>();
+
+            Calendar weekStart = getWeekStart(currentCalendar);
+
+            for (int i = 0; i < 7; i++) {
+                Calendar d = (Calendar) weekStart.clone();
+                d.add(Calendar.DAY_OF_MONTH, i);
+
+                result.addAll(getFilteredBookingsByDate(d.getTime()));
+            }
+
+            return result;
         }
 
         private java.util.List<BookingDisplayItem> getFilteredBookingsByDate(Date ngay) {
@@ -1342,8 +1355,7 @@ public class DatBan_GUI extends JPanel {
             gbc.weightx = 1;
             content.add(createCell("Thông tin", colThongTin, headerH, true, SwingConstants.LEFT), gbc);
 
-            java.util.List<BookingDisplayItem> filtered = getFilteredBookingsByDate(currentCalendar.getTime());
-
+            java.util.List<BookingDisplayItem> filtered = getFilteredBookingsByWeek(currentCalendar.getTime());
             if (!filtered.isEmpty()) {
                 for (int i = 0; i < filtered.size(); i++) {
                     BookingDisplayItem item = filtered.get(i);
@@ -1575,11 +1587,6 @@ public class DatBan_GUI extends JPanel {
             }
             start.add(Calendar.DAY_OF_MONTH, diff);
 
-            if (isBeforeToday(start.getTime())) {
-                Calendar today = Calendar.getInstance();
-                today.setTime(getTodayStartDate());
-                return today;
-            }
             return start;
         }
 
@@ -1676,10 +1683,7 @@ public class DatBan_GUI extends JPanel {
                     temp.add(Calendar.DAY_OF_MONTH, -7);
                 }
 
-                if (isBeforeToday(temp.getTime())) {
-                    temp.setTime(getTodayStartDate());
-                }
-
+                
                 currentCalendar.setTime(normalizeDate(temp.getTime()));
                 dateChooser.setDate(currentCalendar.getTime());
                 clearBookingCache();
@@ -1704,13 +1708,8 @@ public class DatBan_GUI extends JPanel {
             dateChooser.getDateEditor().addPropertyChangeListener("date", evt -> {
                 Date selectedDate = dateChooser.getDate();
                 if (selectedDate != null) {
-                    if (isBeforeToday(selectedDate)) {
-                        Date today = getTodayStartDate();
-                        currentCalendar.setTime(today);
-                        dateChooser.setDate(today);
-                    } else {
-                        currentCalendar.setTime(normalizeDate(selectedDate));
-                    }
+                    currentCalendar.setTime(normalizeDate(selectedDate));
+
                     clearBookingCache();
                     updateDisplayedDateText();
                     refreshView();
@@ -1755,4 +1754,5 @@ public class DatBan_GUI extends JPanel {
             DAY, WEEK, SCHEDULE
         }
     }
+    
 }

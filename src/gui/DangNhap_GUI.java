@@ -27,6 +27,8 @@ public class DangNhap_GUI extends JFrame {
     private JPasswordField txtMatKhau;
     private RoundedButton btnDangNhap;
     private JCheckBox chkForgot;
+    private RoundedPanel pnlUser;
+    private RoundedPanel pnlPass;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -88,7 +90,7 @@ public class DangNhap_GUI extends JFrame {
         lblTitle.setBounds(60, 160, 500, 60);
         panelRight.add(lblTitle);
 
-        RoundedPanel pnlUser = new RoundedPanel(30);
+        pnlUser = new RoundedPanel(30);
         pnlUser.setBackground(new Color(190, 195, 202));
         pnlUser.setBounds(120, 250, 380, 68);
         pnlUser.setLayout(null);
@@ -111,8 +113,14 @@ public class DangNhap_GUI extends JFrame {
         txtTenDangNhap.setBounds(75, 18, 270, 30);
         pnlUser.add(txtTenDangNhap);
         addPlaceholder(txtTenDangNhap, "Tên đăng nhập");
+        txtTenDangNhap.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                setLoiUser(false);
+            }
+        });
 
-        RoundedPanel pnlPass = new RoundedPanel(30);
+        pnlPass = new RoundedPanel(30);
         pnlPass.setBackground(new Color(190, 195, 202));
         pnlPass.setBounds(120, 350, 380, 68);
         pnlPass.setLayout(null);
@@ -136,6 +144,12 @@ public class DangNhap_GUI extends JFrame {
         txtMatKhau.setBounds(75, 18, 220, 30);
         pnlPass.add(txtMatKhau);
         addPasswordPlaceholder(txtMatKhau, "Mật khẩu");
+        txtMatKhau.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                setLoiPass(false);
+            }
+        });
 
         JLabel lblEye = new JLabel("");
         lblEye.setHorizontalAlignment(SwingConstants.CENTER);
@@ -207,14 +221,18 @@ public class DangNhap_GUI extends JFrame {
         String tenDangNhap = txtTenDangNhap.getText().trim();
         String matKhauNhap = String.valueOf(txtMatKhau.getPassword()).trim();
 
-        if (tenDangNhap.equals("") || tenDangNhap.equals("Tên đăng nhập")) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập tên đăng nhập!");
+        boolean thieuTenDN = tenDangNhap.isEmpty() || tenDangNhap.equals("Tên đăng nhập");
+        boolean thieuMK = matKhauNhap.isEmpty() || matKhauNhap.equals("Mật khẩu");
+
+        setLoiUser(thieuTenDN);
+        setLoiPass(thieuMK);
+
+        if (thieuTenDN) {
             txtTenDangNhap.requestFocus();
             return;
         }
 
-        if (matKhauNhap.equals("") || matKhauNhap.equals("Mật khẩu")) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập mật khẩu!");
+        if (thieuMK) {
             txtMatKhau.requestFocus();
             return;
         }
@@ -788,5 +806,14 @@ public class DangNhap_GUI extends JFrame {
             g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, radius, radius);
             g2.dispose();
         }
+    }
+    private void setLoiUser(boolean loi) {
+        pnlUser.setBorder(loi ? BorderFactory.createLineBorder(Color.RED, 3) : null);
+        pnlUser.repaint();
+    }
+
+    private void setLoiPass(boolean loi) {
+        pnlPass.setBorder(loi ? BorderFactory.createLineBorder(Color.RED, 3) : null);
+        pnlPass.repaint();
     }
 }

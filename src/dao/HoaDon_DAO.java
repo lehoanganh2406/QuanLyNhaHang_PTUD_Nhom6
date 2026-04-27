@@ -473,36 +473,45 @@ public class HoaDon_DAO {
     public boolean thanhToanHoaDon(String maHD, String maKH, String maKM,
             double tienKhachTra, double thueVAT, double tienThua,
             String phuongThucThanhToan) {
-    	String sql = """
-    			UPDATE HoaDon
-    			SET thoiGianRa = GETDATE(),
-    			maKH = ?,
-    			maKM = ?,
-    			tienKhachTra = ?,
-    			thueVAT = ?,
-    			tienThua = ?,
-    			phuongThucThanhToan = ?,
-    			trangThai = N'Đã thanh toán'
-    			WHERE maHD = ?
-    			""";
-    	try {
-    		Connection con = ConnectDB.getConnection();
-    		PreparedStatement ps = con.prepareStatement(sql);
-    		if (maKH == null || maKH.trim().isEmpty()) ps.setNull(1, Types.VARCHAR);
-    		else ps.setString(1, maKH);
-    		
-    		if (maKM == null || maKM.trim().isEmpty()) ps.setNull(2, Types.VARCHAR);
-    		else ps.setString(2, maKM);
-    		ps.setDouble(3, tienKhachTra);
-    		ps.setDouble(4, thueVAT);
-    		ps.setDouble(5, tienThua);
-    		ps.setString(6, phuongThucThanhToan);
-    		ps.setString(7, maHD);
-    		return ps.executeUpdate() > 0;
-    		} 
-    	catch (Exception e) {
-    			e.printStackTrace();
-    			}
-    	return false;
-    	}
+
+        String sql = """
+            UPDATE HoaDon
+            SET thoiGianRa = CASE 
+                    WHEN GETDATE() <= thoiGianVao THEN DATEADD(SECOND, 1, thoiGianVao)
+                    ELSE GETDATE()
+                END,
+                maKH = ?,
+                maKM = ?,
+                tienKhachTra = ?,
+                thueVAT = ?,
+                tienThua = ?,
+                phuongThucThanhToan = ?,
+                trangThai = N'Đã thanh toán'
+            WHERE maHD = ?
+        """;
+
+        try {
+            Connection con = ConnectDB.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+
+            if (maKH == null || maKH.trim().isEmpty()) ps.setNull(1, Types.VARCHAR);
+            else ps.setString(1, maKH);
+
+            if (maKM == null || maKM.trim().isEmpty()) ps.setNull(2, Types.VARCHAR);
+            else ps.setString(2, maKM);
+
+            ps.setDouble(3, tienKhachTra);
+            ps.setDouble(4, thueVAT);
+            ps.setDouble(5, tienThua);
+            ps.setString(6, phuongThucThanhToan);
+            ps.setString(7, maHD);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }

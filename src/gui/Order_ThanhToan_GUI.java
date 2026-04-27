@@ -14,6 +14,7 @@ import dao.HoaDon_DAO;
 import dao.KhachHang_DAO;
 import dao.KhuyenMai_DAO;
 import dao.MonAn_DAO;
+import digLog.HoaDonChiTiet_DigLog;
 import digLog.KhachHang_DigLog;
 import entity.ChiTietHoaDon;
 import entity.HoaDon;
@@ -68,7 +69,10 @@ public class Order_ThanhToan_GUI extends JPanel {
     private JComboBox<String> cboPhuongThuc;
     private JTextField txtTienKhachTra;
     private JLabel lblTienThua;
-
+    private JButton btnXemKhuyenMai;
+    private boolean tuChonKhuyenMai = false;
+    private String tenKhuyenMaiTuChon = "";
+    
     private JPanel pnOrderList;
     private JLabel lblTongSoLuong;
     private JLabel lblTongTienRight;
@@ -160,10 +164,10 @@ public class Order_ThanhToan_GUI extends JPanel {
         form.add(searchRow);
         form.add(Box.createVerticalStrut(22));
 
-        lblTenKH = new JLabel("");
-        lblKhuyenMai = new JLabel("");
-        lblTongThanhTien = new JLabel("0");
+        lblTenKH = new JLabel("Khách vãng lai");
+        lblKhuyenMai = new JLabel("Không áp dụng");
         lblDiemTichLuy = new JLabel("0");
+        lblTongThanhTien = new JLabel("0");
         lblVAT = new JLabel("7%");
         lblTongCong = new JLabel("0");
         lblTienThua = new JLabel("0");
@@ -175,7 +179,7 @@ public class Order_ThanhToan_GUI extends JPanel {
         txtTienKhachTra.setFont(new Font("SansSerif", Font.PLAIN, 16));
 
         form.add(row("Khách hàng", lblTenKH, true));
-        form.add(row("Khuyến mãi", lblKhuyenMai, false));
+        form.add(row("Khuyến mãi", createKhuyenMaiView(), false));
         form.add(row("Tổng thành tiền", lblTongThanhTien, true));
         form.add(row("Điểm tích lũy", lblDiemTichLuy, false));
         form.add(row("VAT", lblVAT, true));
@@ -365,11 +369,13 @@ public class Order_ThanhToan_GUI extends JPanel {
 
         
         JButton btnQuayLai = new JButton("‹ Quay lại");
+        JButton btnTamTinh = new JButton("Tạm tính");
         JButton btnThanhToan = new JButton("Thanh toán [F4]");
 
-        styleButton(btnQuayLai, BTN_BACK, 24, false);
-        styleButton(btnThanhToan, BTN_PAY, 24, true);
-
+        styleButton(btnQuayLai, BTN_BACK, 20, false);
+        styleButton(btnTamTinh, BTN_PREVIEW, 20, true);
+        styleButton(btnThanhToan, BTN_PAY, 20, true);
+        
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -377,7 +383,12 @@ public class Order_ThanhToan_GUI extends JPanel {
 
         gbc.gridx = 1;
         gbc.gridy = 0;
-        gbc.gridwidth = 2;
+        gbc.gridwidth = 1;
+        actionPanel.add(btnTamTinh, gbc);
+
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
         actionPanel.add(btnThanhToan, gbc);
 
         bottom.add(tongPanel, BorderLayout.NORTH);
@@ -388,6 +399,7 @@ public class Order_ThanhToan_GUI extends JPanel {
         right.add(bottom, BorderLayout.SOUTH);
 
         btnQuayLai.addActionListener(e -> quayLaiOrderMon());
+        btnTamTinh.addActionListener(e -> moPhieuTamTinh());
         btnThanhToan.addActionListener(e -> xuLyThanhToan());
 
         return right;
@@ -491,18 +503,14 @@ public class Order_ThanhToan_GUI extends JPanel {
         }
 
         tienVAT = tongTien * 0.07;
-        tienGiam = 0;
-
-        if (khuyenMaiDangDung != null && tongTien >= khuyenMaiDangDung.getDieuKienApDung()) {
-            tienGiam = tongTien * khuyenMaiDangDung.getGiaTri() / 100.0;
+        if (!tuChonKhuyenMai) {
+            chonKhuyenMaiTotNhat();
         }
 
         tongCong = tongTien + tienVAT - tienGiam;
 
         lblTongThanhTien.setText(formatTien(tongTien));
         lblVAT.setText("7%");
-        lblKhuyenMai.setText(khuyenMaiDangDung == null ? "" :
-                khuyenMaiDangDung.getTenKhuyenMai() + " - " + df.format(khuyenMaiDangDung.getGiaTri()) + "%");
         lblTongCong.setText(formatTien(tongCong));
         lblTongTienRight.setText(formatTien(tongTien));
 
@@ -542,6 +550,7 @@ public class Order_ThanhToan_GUI extends JPanel {
                     if (khachHang != null) {
                     	lblTenKH.setText(getThongTinKhachHang(khachHang));
                         lblDiemTichLuy.setText(String.valueOf(khachHang.getDiemTichLuy()));
+                        tuChonKhuyenMai = false;
                         khuyenMaiDangDung = null;
                         tinhTongTien();
                     }
@@ -554,22 +563,26 @@ public class Order_ThanhToan_GUI extends JPanel {
         lblTenKH.setText(getThongTinKhachHang(khachHang));
         lblDiemTichLuy.setText(String.valueOf(khachHang.getDiemTichLuy()));
 
-        chonKhuyenMaiTotNhat();
+        tuChonKhuyenMai = false;
+        khuyenMaiDangDung = null;
         tinhTongTien();
     }
 
     private void chonKhuyenMaiTotNhat() {
         khuyenMaiDangDung = null;
+        tienGiam = 0;
 
-        for (KhuyenMai km : khuyenMaiDAO.getAllKhuyenMai()) {
-            if (km == null) continue;
-            if (!"Đang áp dụng".equalsIgnoreCase(km.getTrangThai())) continue;
-            if (tongTien < km.getDieuKienApDung()) continue;
+        List<KMOption> list = layDanhSachKhuyenMaiCoTheApDung();
 
-            if (khuyenMaiDangDung == null || km.getGiaTri() > khuyenMaiDangDung.getGiaTri()) {
-                khuyenMaiDangDung = km;
-            }
+        if (list.isEmpty()) {
+            lblKhuyenMai.setText("Không áp dụng");
+            return;
         }
+
+        KMOption best = list.get(0);
+        khuyenMaiDangDung = best.km;
+        tienGiam = best.tienGiam;
+        lblKhuyenMai.setText(best.ten + " - giảm " + formatTien(best.tienGiam));
     }
 
     private void tinhTienThua() {
@@ -617,11 +630,37 @@ public class Order_ThanhToan_GUI extends JPanel {
             banDAO.capNhatTrangThaiBan(maBan, "Bàn trống");
 
             if (khachHang != null) {
-                int diemMoi = khachHang.getDiemTichLuy() + (int) (tongCong / 10000);
+            	int diemMoi = khachHang.getDiemTichLuy() + (int) (tongCong / 100000);
                 khachHangDAO.capNhatDiemTichLuy(khachHang.getMaKH(), diemMoi);
             }
 
-            JOptionPane.showMessageDialog(this, "Thanh toán thành công!");
+
+            JDialog dlg = new JDialog(
+                    SwingUtilities.getWindowAncestor(this),
+                    "Chi tiết hóa đơn",
+                    Dialog.ModalityType.APPLICATION_MODAL
+            );
+
+            dlg.setContentPane(new HoaDonChiTiet_DigLog(
+                    "HÓA ĐƠN THANH TOÁN",
+                    maHD,
+                    tenBan,
+                    lblTenKH.getText(),
+                    getTenNhanVienDangNhap(),
+                    getThoiGianHoaDon(),
+                    lblKhuyenMai.getText(),
+                    tienGiam,
+                    tongTien,
+                    tienVAT,
+                    tongCong,
+                    tienTra,
+                    tienThua,
+                    phuongThuc,
+                    dsCT
+            ));
+            dlg.setSize(650, 760);
+            dlg.setLocationRelativeTo(this);
+            dlg.setVisible(true);
 
             Window w = SwingUtilities.getWindowAncestor(this);
             if (w instanceof TrangChu_GUI) {
@@ -640,10 +679,11 @@ public class Order_ThanhToan_GUI extends JPanel {
         if (w instanceof TrangChu_GUI) {
             ((TrangChu_GUI) w).showCustomPage(
                     "Order_Mon_GUI",
-                    new Order_Mon_GUI(taiKhoanDangNhap, maBan, tenBan, null, true)
+                    new Order_Mon_GUI(taiKhoanDangNhap, maBan, tenBan, null, true, laHoaDonMangVe())
             );
         }
     }
+    
 
     private double parseTien(String text) {
         try {
@@ -681,6 +721,16 @@ public class Order_ThanhToan_GUI extends JPanel {
             super.paintComponent(g);
         }
     }
+    private String getThoiGianHoaDon() {
+        Object[] hd = hoaDonDAO.getHoaDonByMa(maHD);
+
+        if (hd == null) return "";
+
+        String vao = hd[1] == null ? "" : hd[1].toString();
+        String ra = hd[2] == null ? "" : hd[2].toString();
+
+        return vao + " - " + ra;
+    }
     private void moThemKhachHang() {
         String sdt = txtSDT.getText().trim();
 
@@ -702,6 +752,7 @@ public class Order_ThanhToan_GUI extends JPanel {
                 lblTenKH.setText(getThongTinKhachHang(khachHang));
                 lblDiemTichLuy.setText(String.valueOf(khachHang.getDiemTichLuy()));
 
+                tuChonKhuyenMai = false;
                 khuyenMaiDangDung = null;
                 tinhTongTien();
             }
@@ -722,5 +773,365 @@ public class Order_ThanhToan_GUI extends JPanel {
         }
 
         return tenKH + " - " + tenLoai;
+    }
+    private JPanel createKhuyenMaiView() {
+        JPanel panel = new JPanel(new BorderLayout(8, 0));
+        panel.setOpaque(false);
+        panel.setPreferredSize(new Dimension(270, 42));
+
+        lblKhuyenMai.setHorizontalAlignment(SwingConstants.RIGHT);
+        lblKhuyenMai.setFont(new Font("SansSerif", Font.PLAIN, 18));
+
+        btnXemKhuyenMai = new JButton("🔍");
+        btnXemKhuyenMai.setPreferredSize(new Dimension(45, 38));
+        btnXemKhuyenMai.setFocusPainted(false);
+        btnXemKhuyenMai.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnXemKhuyenMai.addActionListener(e -> hienThiChonKhuyenMai());
+
+        panel.add(lblKhuyenMai, BorderLayout.CENTER);
+        panel.add(btnXemKhuyenMai, BorderLayout.EAST);
+
+        return panel;
+    }
+    private class KMOption {
+        KhuyenMai km;
+        String ten;
+        double tienGiam;
+        boolean duocApDung;
+        boolean laTotNhat;
+        String lyDo;
+
+        KMOption(KhuyenMai km, String ten, double tienGiam, boolean duocApDung, String lyDo) {
+            this.km = km;
+            this.ten = ten;
+            this.tienGiam = tienGiam;
+            this.duocApDung = duocApDung;
+            this.lyDo = lyDo;
+        }
+
+        @Override
+        public String toString() {
+            String best = laTotNhat ? "  ⭐ TỐT NHẤT" : "";
+            String status = duocApDung ? "Giảm " + formatTien(tienGiam) : "Không đủ điều kiện";
+            return ten + " - " + status + best;
+        }
+    }
+
+    private List<KMOption> layDanhSachKhuyenMaiTatCa() {
+        List<KMOption> list = new ArrayList<>();
+
+        String loaiKH = "";
+        int diem = 0;
+
+        if (khachHang != null) {
+            diem = khachHang.getDiemTichLuy();
+            if (khachHang.getMaLoaiKH() != null && khachHang.getMaLoaiKH().getTenLoaiKH() != null) {
+                loaiKH = khachHang.getMaLoaiKH().getTenLoaiKH();
+            }
+        }
+
+        for (KhuyenMai km : khuyenMaiDAO.getAllKhuyenMai()) {
+            if (km == null) continue;
+
+            boolean duoc = true;
+            String lyDo = "";
+
+            if (!"Đang áp dụng".equalsIgnoreCase(km.getTrangThai())) {
+                duoc = false;
+                lyDo = "Khuyến mãi không ở trạng thái Đang áp dụng";
+            }
+
+            double dieuKien = km.getDieuKienApDung();
+            if (duoc && tongTien < dieuKien) {
+                duoc = false;
+                lyDo = "Hóa đơn chưa đủ " + formatTien(dieuKien);
+            }
+
+            String doiTuong = km.getDoiTuongApDung() == null ? "" : km.getDoiTuongApDung();
+
+            boolean laTatCaKH = doiTuong.equalsIgnoreCase("Tất cả KH");
+            boolean dungLoaiKH = khachHang != null && doiTuong.equalsIgnoreCase(loaiKH);
+
+            boolean dungDoiTuong = laTatCaKH || dungLoaiKH;
+
+            if (duoc && !dungDoiTuong) {
+                duoc = false;
+                lyDo = "Không đúng đối tượng áp dụng";
+            }
+
+            double tienGiamKM = duoc ? tinhTienGiamTheoKM(km) : 0;
+            list.add(new KMOption(km, km.getTenKhuyenMai(), tienGiamKM, duoc, lyDo));
+        }
+
+        list.sort((a, b) -> {
+            if (a.duocApDung != b.duocApDung) return a.duocApDung ? -1 : 1;
+            return Double.compare(b.tienGiam, a.tienGiam);
+        });
+
+        for (KMOption o : list) {
+            o.laTotNhat = false;
+        }
+
+        for (KMOption o : list) {
+            if (o.duocApDung) {
+                o.laTotNhat = true;
+                break;
+            }
+        }
+
+        return list;
+    }
+
+    private List<KMOption> layDanhSachKhuyenMaiCoTheApDung() {
+        List<KMOption> result = new ArrayList<>();
+
+        for (KMOption o : layDanhSachKhuyenMaiTatCa()) {
+            if (o.duocApDung) {
+                result.add(o);
+            }
+        }
+
+        return result;
+    }
+
+    private void hienThiChonKhuyenMai() {
+        List<KMOption> list = layDanhSachKhuyenMaiTatCa();
+
+        if (list.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không có khuyến mãi.");
+            return;
+        }
+
+        String[] cols = {"Khuyến mãi", "Giảm", "Trạng thái", "Chi tiết"};
+        Object[][] data = new Object[list.size()][4];
+
+        for (int i = 0; i < list.size(); i++) {
+            KMOption o = list.get(i);
+
+            data[i][0] = o.ten + (o.laTotNhat ? "  ⭐ TỐT NHẤT" : "");
+            data[i][1] = o.duocApDung ? formatTien(o.tienGiam) : "-";
+            data[i][2] = o.duocApDung ? "Có thể chọn" : "Không đủ điều kiện";
+            data[i][3] = "<html><u>Chi tiết</u></html>";
+        }
+
+        JTable table = new JTable(data, cols) {
+            @Override
+            public boolean isCellEditable(int row, int col) {
+                return false;
+            }
+
+            @Override
+            public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int col) {
+                Component c = super.prepareRenderer(renderer, row, col);
+                KMOption opt = list.get(row);
+
+                if (!opt.duocApDung) {
+                    c.setForeground(Color.GRAY);
+                    c.setBackground(new Color(240, 240, 240));
+                } else if (isRowSelected(row)) {
+                    c.setForeground(Color.BLACK);
+                    c.setBackground(new Color(206, 227, 242));
+                } else if (opt.laTotNhat) {
+                    c.setForeground(new Color(20, 120, 40));
+                    c.setBackground(Color.WHITE);
+                } else {
+                    c.setForeground(Color.BLACK);
+                    c.setBackground(Color.WHITE);
+                }
+
+                return c;
+            }
+        };
+
+        table.setRowHeight(42);
+        table.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 15));
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        table.getColumnModel().getColumn(0).setPreferredWidth(260);
+        table.getColumnModel().getColumn(1).setPreferredWidth(90);
+        table.getColumnModel().getColumn(2).setPreferredWidth(140);
+        table.getColumnModel().getColumn(3).setPreferredWidth(80);
+
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).duocApDung) {
+                table.setRowSelectionInterval(i, i);
+                break;
+            }
+        }
+
+        JDialog dlg = new JDialog(
+                SwingUtilities.getWindowAncestor(this),
+                "Chọn khuyến mãi",
+                Dialog.ModalityType.APPLICATION_MODAL
+        );
+
+  
+        JButton btnDong = new JButton("Đóng");
+
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottom.add(btnDong);
+
+        dlg.setLayout(new BorderLayout(10, 10));
+        dlg.add(new JScrollPane(table), BorderLayout.CENTER);
+        dlg.add(bottom, BorderLayout.SOUTH);
+        dlg.setSize(720, 420);
+        dlg.setLocationRelativeTo(this);
+
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                int row = table.rowAtPoint(e.getPoint());
+                int col = table.columnAtPoint(e.getPoint());
+
+                if (row < 0) return;
+
+                KMOption opt = list.get(row);
+
+                // bấm chi tiết
+                if (col == 3) {
+                    hienThiChiTietKhuyenMai(opt, dlg);
+                    return;
+                }
+
+                // không đủ điều kiện thì không cho chọn
+                if (!opt.duocApDung) {
+                    JOptionPane.showMessageDialog(dlg, "Khuyến mãi này không đủ điều kiện.");
+                    return;
+                }
+
+                // CHỌN LUÔN
+                khuyenMaiDangDung = opt.km;
+                tienGiam = opt.tienGiam;
+                tenKhuyenMaiTuChon = opt.ten;
+                tuChonKhuyenMai = true;
+
+                lblKhuyenMai.setText(opt.ten + " - giảm " + formatTien(opt.tienGiam));
+
+                tongCong = tongTien + tienVAT - tienGiam;
+                lblTongCong.setText(formatTien(tongCong));
+                tinhTienThua();
+
+                dlg.dispose();
+            }
+        });
+
+        
+        btnDong.addActionListener(e -> dlg.dispose());
+
+        dlg.setVisible(true);
+    }
+    private void hienThiChiTietKhuyenMai(KMOption opt, Component parent) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("Tên khuyến mãi: ").append(opt.ten).append("\n");
+        sb.append("Trạng thái: ").append(opt.duocApDung ? "Có thể áp dụng" : "Không đủ điều kiện").append("\n");
+        sb.append("Tiền giảm: ").append(formatTien(opt.tienGiam)).append("\n");
+
+        if (opt.km != null) {
+            sb.append("Mã KM: ").append(opt.km.getMaKM()).append("\n");
+
+            if (opt.km.getMaLoaiKM() != null) {
+                sb.append("Loại KM: ").append(opt.km.getMaLoaiKM().getTenLoaiKM()).append("\n");
+            }
+
+            sb.append("Đối tượng: ").append(opt.km.getDoiTuongApDung()).append("\n");
+            sb.append("Điều kiện: ").append(formatTien(opt.km.getDieuKienApDung())).append("\n");
+            sb.append("Giá trị: ").append(formatTien(opt.km.getGiaTri())).append("\n");
+            sb.append("Ghi chú: ").append(opt.km.getGhiChu()).append("\n");
+            sb.append("Trạng thái: ").append(opt.km.getTrangThai()).append("\n");
+        } else {
+            sb.append("Loại KM: Thành viên\n");
+            sb.append("Nguồn: Theo loại khách hàng/điểm tích lũy\n");
+        }
+
+        if (!opt.duocApDung) {
+            sb.append("Lý do: ").append(opt.lyDo).append("\n");
+        }
+
+        JOptionPane.showMessageDialog(parent, sb.toString(), "Chi tiết khuyến mãi", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private double tinhTienGiamTheoKM(KhuyenMai km) {
+        if (km == null) return 0;
+
+        String maLoaiKM = "";
+        if (km.getMaLoaiKM() != null) {
+            maLoaiKM = km.getMaLoaiKM().getMaLoaiKM();
+        }
+
+        if ("LKM01".equals(maLoaiKM) || "LKM03".equals(maLoaiKM)) {
+            return tongTien * km.getGiaTri() / 100.0;
+        }
+
+        if ("LKM02".equals(maLoaiKM)) {
+            return km.getGiaTri();
+        }
+
+        return 0;
+    }
+    private String getTenNhanVienDangNhap() {
+        if (taiKhoanDangNhap == null || taiKhoanDangNhap.getMaNV() == null) {
+            return "";
+        }
+
+        if (taiKhoanDangNhap.getMaNV().getHoTen() != null 
+                && !taiKhoanDangNhap.getMaNV().getHoTen().trim().isEmpty()) {
+            return taiKhoanDangNhap.getMaNV().getHoTen();
+        }
+
+        return taiKhoanDangNhap.getMaNV().getMaNV();
+    }
+    private void moPhieuTamTinh() {
+        JDialog dlg = new JDialog(
+                SwingUtilities.getWindowAncestor(this),
+                "Phiếu Tạm Tính",
+                Dialog.ModalityType.APPLICATION_MODAL
+        );
+
+        dlg.setContentPane(new HoaDonChiTiet_DigLog(
+                "PHIẾU TẠM TÍNH",
+                maHD,
+                tenBan,
+                lblTenKH.getText(),
+                getTenNhanVienDangNhap(),
+                getThoiGianHoaDonTamTinh(),
+                lblKhuyenMai.getText(),
+                tienGiam,
+                tongTien,
+                tienVAT,
+                tongCong,
+                0,
+                0,
+                cboPhuongThuc.getSelectedItem().toString(),
+                dsCT
+        ));
+
+        dlg.setSize(650, 760);
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
+    }
+    private String getThoiGianHoaDonTamTinh() {
+        Object[] hd = hoaDonDAO.getHoaDonByMa(maHD);
+
+        if (hd == null) return "";
+
+        String vao = hd[1] == null ? "" : hd[1].toString();
+        String hienTai = java.time.LocalDateTime.now().toString();
+
+        return vao + " - " + hienTai;
+    }
+    private boolean laHoaDonMangVe() {
+        Object[] hd = hoaDonDAO.getHoaDonByMa(maHD);
+
+        if (hd == null) return false;
+
+        for (Object o : hd) {
+            if (o != null && "Mang về".equalsIgnoreCase(o.toString())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -119,17 +119,7 @@ public class PhieuDatBan_DigLog extends JDialog {
     private static final String PH_GIO = "Chọn ngày giờ";
     private static final String PH_BAN = "Tìm kiếm bàn...";
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(null);
-                dialog.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
+ 
     public PhieuDatBan_DigLog(Frame owner) {
         super(owner, "Phiếu đặt bàn", true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);

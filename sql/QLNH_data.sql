@@ -532,9 +532,9 @@ GO
 INSERT INTO KhuyenMai
 (maKM, maLoaiKM, maNV, giaTri, tenKhuyenMai, thoiGianBatDau, thoiGianKetThuc, doiTuongApDung, dieuKienApDung, ghiChu, trangThai)
 VALUES
-('KM001', 'LKM01', 'NV001', 10, N'Giảm 10%', '2026-04-01 00:00:00', '2026-04-30 23:59:59', N'Tất cả KH', 500000, N'Hóa đơn từ 500K', N'Đang áp dụng'),
+('KM001', 'LKM01', 'NV001', 10, N'Thành viên Vàng', '2026-01-01 00:00:00', '2026-12-31 23:59:59', N'Vàng', 0, N'Ưu đãi thành viên vàng', N'Đang áp dụng'),
 ('KM002', 'LKM02', 'NV001', 50000, N'Giảm 50K', '2026-04-01 00:00:00', '2026-05-15 23:59:59', N'Tất cả KH', 1000000, N'Hóa đơn từ 1 triệu', N'Đang áp dụng'),
-('KM003', 'LKM03', 'NV001', 15, N'Kim cương', '2026-01-01 00:00:00', '2026-12-31 23:59:59', N'Kim cương', 0, N'Ưu đãi thành viên', N'Đang áp dụng');
+('KM003', 'LKM03', 'NV001', 15, N'Thành viên Kim cương', '2026-01-01 00:00:00', '2026-12-31 23:59:59', N'Kim cương', 0, N'Ưu đãi thành viên kim cương', N'Đang áp dụng');
 GO
 
 ALTER SEQUENCE seq_KhuyenMai RESTART WITH 4;

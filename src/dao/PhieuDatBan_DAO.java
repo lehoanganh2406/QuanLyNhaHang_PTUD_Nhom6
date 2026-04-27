@@ -253,4 +253,53 @@ public class PhieuDatBan_DAO {
             e.printStackTrace();
         }
     }
+    public ArrayList<String[]> getPhieuTreQua30Phut() {
+        ArrayList<String[]> ds = new ArrayList<>();
+
+        String sql = """
+            SELECT maPhieuDatBan, maBan, tenKhach, sdt, thoiGianDen
+            FROM PhieuDatBan
+            WHERE trangThai = N'Đang chờ'
+              AND DATEDIFF(MINUTE, thoiGianDen, GETDATE()) >= 30
+        """;
+
+        try {
+            Connection con = ConnectDB.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                ds.add(new String[] {
+                        rs.getString("maPhieuDatBan"),
+                        rs.getString("maBan"),
+                        rs.getString("tenKhach"),
+                        rs.getString("sdt"),
+                        String.valueOf(rs.getTimestamp("thoiGianDen"))
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return ds;
+    }
+
+    public boolean giaHanThoiGianCho(String maPhieuDatBan) {
+        String sql = """
+            UPDATE PhieuDatBan
+            SET thoiGianDen = DATEADD(MINUTE, 30, thoiGianDen)
+            WHERE maPhieuDatBan = ?
+        """;
+
+        try {
+            Connection con = ConnectDB.getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, maPhieuDatBan);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }

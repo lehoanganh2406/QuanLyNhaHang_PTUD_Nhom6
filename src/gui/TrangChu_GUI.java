@@ -1,6 +1,9 @@
 package gui;
 
 import java.awt.BorderLayout;
+import javax.swing.Timer;
+import dao.PhieuDatBan_DAO;
+import java.util.ArrayList;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Container;
@@ -27,6 +30,7 @@ public class TrangChu_GUI extends JFrame {
 
     private CardLayout cardLayout;
     private JPanel contentPanel;
+    private Timer timerKiemTraQuaGio;
 
     private final Map<String, JPanel> pageCache = new HashMap<>();
 
@@ -54,6 +58,7 @@ public class TrangChu_GUI extends JFrame {
         add(contentPanel, BorderLayout.CENTER);
 
         setLocationRelativeTo(null);
+        batDauKiemTraPhieuQuaGio();
     }
 
     private JPanel createTrangChuPanel() {
@@ -193,5 +198,50 @@ public class TrangChu_GUI extends JFrame {
         cardLayout.show(contentPanel, pageName);
         contentPanel.revalidate();
         contentPanel.repaint();
+    }
+    private void batDauKiemTraPhieuQuaGio() {
+        timerKiemTraQuaGio = new Timer(60 * 1000, e -> kiemTraPhieuQuaGio());
+        timerKiemTraQuaGio.setInitialDelay(3000);
+        timerKiemTraQuaGio.start();
+    }
+
+    private void kiemTraPhieuQuaGio() {
+        try {
+            PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
+            ArrayList<String[]> ds = dao.getPhieuTreQua30Phut();
+
+            if (ds == null || ds.isEmpty()) return;
+
+            for (String[] row : ds) {
+                String maPhieu = row[0];
+                String maBan = row[1];
+                String tenKhach = row[2];
+                String sdt = row[3];
+                String gioDen = row[4];
+
+                int chon = JOptionPane.showConfirmDialog(
+                        this,
+                        "Phiếu đặt bàn đã trễ quá 30 phút.\n\n"
+                                + "Mã phiếu: " + maPhieu + "\n"
+                                + "Bàn: " + maBan + "\n"
+                                + "Khách: " + tenKhach + "\n"
+                                + "SĐT: " + sdt + "\n"
+                                + "Giờ đến: " + gioDen + "\n\n"
+                                + "Bạn có muốn gia hạn thêm 30 phút không?",
+                        "Cảnh báo quá giờ đặt bàn",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE
+                );
+
+                if (chon == JOptionPane.YES_OPTION) {
+                    dao.giaHanThoiGianCho(maPhieu);
+                } else {
+                    dao.capNhatTrangThai(maPhieu, "Quá giờ");
+                }
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 }

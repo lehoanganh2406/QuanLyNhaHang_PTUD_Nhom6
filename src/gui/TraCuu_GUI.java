@@ -10,6 +10,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -69,6 +70,8 @@ import dao.KhachHang_DAO;
 import dao.KhuVuc_DAO;
 import dao.LoaiMonAn_DAO;
 import dao.MonAn_DAO;
+import dao.PhieuDatBan_DAO;
+import digLog.PhieuDatBan_DigLog;
 import entity.KhachHang;
 import entity.KhuVuc;
 import entity.LoaiMonAn;
@@ -284,6 +287,14 @@ public class TraCuu_GUI extends JPanel {
         btnBan.addActionListener(e -> {
             btnBan.setSelected(true);
             cardLayout.show(pnlCards, "BAN");
+
+            filterTrangThaiBan = "Tất cả";
+            filterKhuVucBan = "Tất cả";
+
+            napTabKhuVucBan();
+            datNgayMacDinhHomNay();
+            taiDanhSachBanTheoNgay();
+
             pnlLeft.repaint();
         });
 
@@ -796,7 +807,7 @@ public class TraCuu_GUI extends JPanel {
         pnlOuter.setBackground(BG_WHITE);
         pnlOuter.setBorder(BorderFactory.createLineBorder(BORDER));
 
-        modelBan = new DefaultTableModel(new String[] { "Mã bàn", "Tên bàn", "Khu vực", "Trạng thái" }, 0) {
+        modelBan = new DefaultTableModel(new String[] { "Mã bàn", "Tên bàn", "Khu vực", "Số chỗ", "Trạng thái" }, 0) {
             private static final long serialVersionUID = 1L;
 
             @Override
@@ -821,9 +832,25 @@ public class TraCuu_GUI extends JPanel {
         tblBan.getColumnModel().getColumn(0).setPreferredWidth(120);
         tblBan.getColumnModel().getColumn(1).setPreferredWidth(720);
         tblBan.getColumnModel().getColumn(2).setPreferredWidth(140);
-        tblBan.getColumnModel().getColumn(3).setPreferredWidth(150);
+        tblBan.getColumnModel().getColumn(3).setPreferredWidth(90);
+        tblBan.getColumnModel().getColumn(4).setPreferredWidth(150);
 
         JScrollPane scroll = new JScrollPane(tblBan);
+        tblBan.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = tblBan.getSelectedRow();
+                if (row == -1) return;
+
+                String maBan = tblBan.getValueAt(row, 0).toString();
+                String trangThai = tblBan.getValueAt(row, 4).toString(); // cột trạng thái
+
+                // chỉ xử lý khi là bàn đặt
+                if (!trangThai.equalsIgnoreCase("Đã đặt")) return;
+
+                moPhieuDatBanTheoBan(maBan);
+            }
+        });
         scroll.setBorder(null);
         scroll.getViewport().setBackground(BG_WHITE);
 
@@ -918,11 +945,13 @@ public class TraCuu_GUI extends JPanel {
             String maBan = item[0];
             String tenBan = item[1];
             String khuVuc = item[2];
-            String trangThai = item[3];
+            String soChoNgoi = item[3];
+            String trangThai = item[4];
 
             boolean hopTrangThai = true;
             if ("Bàn đặt".equalsIgnoreCase(filterTrangThaiBan)) {
-                hopTrangThai = "Đã đặt".equalsIgnoreCase(trangThai);
+                hopTrangThai = "Đã đặt".equalsIgnoreCase(trangThai)
+                        || "Bàn đặt".equalsIgnoreCase(trangThai);
             } else if ("Bàn đang phục vụ".equalsIgnoreCase(filterTrangThaiBan)) {
                 hopTrangThai = "Đang phục vụ".equalsIgnoreCase(trangThai);
             } else if ("Bàn trống".equalsIgnoreCase(filterTrangThaiBan)) {
@@ -933,7 +962,7 @@ public class TraCuu_GUI extends JPanel {
                     || filterKhuVucBan.equalsIgnoreCase(khuVuc);
 
             if (hopTrangThai && hopKhuVuc) {
-                modelBan.addRow(new Object[] { maBan, tenBan, khuVuc, trangThai });
+            	modelBan.addRow(new Object[] { maBan, tenBan, khuVuc, soChoNgoi, trangThai });
             }
         }
     }
@@ -2701,14 +2730,39 @@ public class TraCuu_GUI extends JPanel {
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                TraCuu_GUI frame = new TraCuu_GUI();
-                frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
+   
+    private void moPhieuDatBanTheoBan(String maBan) {
+        try {
+        	if (dcNgayTimBan.getDate() == null) {
+        	    datNgayMacDinhHomNay();
+        	}
+
+        	java.sql.Date ngayChon = new java.sql.Date(dcNgayTimBan.getDate().getTime());
+
+            PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
+            ArrayList<String[]> ds = dao.getPhieuDatBanTheoNgay(ngayChon);
+
+            for (String[] row : ds) {
+                String maBanDB = row[1];
+                String trangThai = row[8];
+
+                if (maBanDB.equalsIgnoreCase(maBan)
+                        && (trangThai == null || !trangThai.equalsIgnoreCase("Đã hủy"))) {
+
+                    String maPhieu = row[0];
+
+                    Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
+                    PhieuDatBan_DigLog dlg = new PhieuDatBan_DigLog(owner, maPhieu);
+                    dlg.setLocationRelativeTo(this);
+                    dlg.setVisible(true);
+                    return;
+                }
             }
-        });
+
+            JOptionPane.showMessageDialog(this, "Không tìm thấy phiếu đặt bàn!");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -10,5 +10,6 @@
 	<classpathentry kind="lib" path="libs/jcalendar-1.4.jar"/>
 	<classpathentry kind="lib" path="libs/jakarta.activation-2.0.1.jar"/>
 	<classpathentry kind="lib" path="libs/jakarta.mail-2.0.1.jar"/>
+	<classpathentry kind="lib" path="libs/itextpdf-5.5.13.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

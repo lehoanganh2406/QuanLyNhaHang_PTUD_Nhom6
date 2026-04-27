@@ -14,6 +14,7 @@ import dao.TaiKhoan_DAO;
 import digLog.DoiMatKhau;
 import entity.NhanVien;
 import entity.TaiKhoan;
+import util.PasswordUtil;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -313,7 +314,7 @@ public class TaiKhoan_GUI extends JFrame {
         btnLamMoi    = createFuncButton("Làm mới", CLR_BTN_RESET, "img/mn_xuly.png");
         btnTraCuu    = createFuncButton("Tra cứu", CLR_BTN_SEARCH, "img/mn_tracuu.png");
         btnXoa       = createFuncButton("Xóa", CLR_BTN_DELETE, null);
-        btnCapNhatMK = createFuncButton("Cập nhật mật khẩu", CLR_BTN_CHPWD, null);
+        btnCapNhatMK = createFuncButton("Đổi mật khẩu", CLR_BTN_CHPWD, null);
 
         // 👉 fix kích thước tối thiểu (QUAN TRỌNG)
         Dimension btnSize = new Dimension(150, 40);
@@ -553,27 +554,38 @@ public class TaiKhoan_GUI extends JFrame {
         }
     }
 
+//    private void moDoiMatKhau() {
+//        int row = table.getSelectedRow();
+//        if (row < 0) {
+//            JOptionPane.showMessageDialog(this, "Chọn tài khoản cần đổi mật khẩu!");
+//            return;
+//        }
+//        TaiKhoan tk = dsTK.get(row);
+//        String maNV = tk.getMaNV().getMaNV();
+//        Window w = SwingUtilities.getWindowAncestor(this);
+//        if (w instanceof JFrame) {
+//            DoiMatKhau dialog = new DoiMatKhau((JFrame) w, maNV);
+//            dialog.setLocationRelativeTo(w);
+//            dialog.setVisible(true);
+//        }
+//        loadData();
+//    }
+    
     private void moDoiMatKhau() {
         int row = table.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Chọn tài khoản cần đổi mật khẩu!");
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Chọn tài khoản cần đổi mật khẩu!"
+            );
             return;
         }
-
-
-
         TaiKhoan tk = dsTK.get(row);
-        String maNV = tk.getMaNV().getMaNV();
+        String maTaiKhoan = tk.getMaTaiKhoan();
+        DoiMatKhau dialog = new DoiMatKhau(this, maTaiKhoan);
 
-        Window w = SwingUtilities.getWindowAncestor(this);
-
-        if (w instanceof JFrame) {
-            DoiMatKhau dialog = new DoiMatKhau((JFrame) w, maNV);
-            dialog.setLocationRelativeTo(w);
-            dialog.setVisible(true);
-        }
-
-
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
         loadData();
     }
 
@@ -593,34 +605,164 @@ public class TaiKhoan_GUI extends JFrame {
         table.clearSelection();
         loadData();
     }
-
+//
+//    private void traCuu() {
+//
+//
+//        String keyword = JOptionPane.showInputDialog(
+//                this,
+//                "Nhập từ khóa tìm kiếm:",
+//                "Tra cứu",
+//                JOptionPane.PLAIN_MESSAGE
+//        );
+//
+//        if (keyword == null || keyword.trim().isEmpty()) return;
+//
+//        String kw = keyword.trim().toLowerCase();
+//
+//        for (int r = 0; r < tableModel.getRowCount(); r++) {
+//            for (int c = 0; c < tableModel.getColumnCount(); c++) {
+//                Object val = tableModel.getValueAt(r, c);
+//                if (val != null && val.toString().toLowerCase().contains(kw)) {
+//                    table.setRowSelectionInterval(r, r);
+//                    table.scrollRectToVisible(table.getCellRect(r, 0, true));
+//                    return;
+//                }
+//            }
+//        }
+//
+//        JOptionPane.showMessageDialog(this, "Không tìm thấy kết quả!", "Tra cứu", JOptionPane.INFORMATION_MESSAGE);
+//    }
+    
     private void traCuu() {
+        // Xóa dữ liệu cũ trên bảng
+        tableModel.setRowCount(0);
 
 
-        String keyword = JOptionPane.showInputDialog(
-                this,
-                "Nhập từ khóa tìm kiếm:",
-                "Tra cứu",
-                JOptionPane.PLAIN_MESSAGE
-        );
+        String maTaiKhoan = txtMaDangNhap.getText().trim().toLowerCase();
+        String tenDangNhap = txtTenDangNhap.getText().trim().toLowerCase();
 
-        if (keyword == null || keyword.trim().isEmpty()) return;
+        String matKhau = new String(txtMatKhau.getPassword()).trim().toLowerCase();
 
-        String kw = keyword.trim().toLowerCase();
-
-        for (int r = 0; r < tableModel.getRowCount(); r++) {
-            for (int c = 0; c < tableModel.getColumnCount(); c++) {
-                Object val = tableModel.getValueAt(r, c);
-                if (val != null && val.toString().toLowerCase().contains(kw)) {
-                    table.setRowSelectionInterval(r, r);
-                    table.scrollRectToVisible(table.getCellRect(r, 0, true));
-                    return;
-                }
-            }
+        String vaiTro = "";
+        if (cbVaiTro.getSelectedItem() != null) {
+            vaiTro = cbVaiTro.getSelectedItem().toString().trim().toLowerCase();
         }
 
-        JOptionPane.showMessageDialog(this, "Không tìm thấy kết quả!", "Tra cứu", JOptionPane.INFORMATION_MESSAGE);
+        String nhanVien = "";
+        if (cbNhanVien.getSelectedItem() != null) {
+            nhanVien = cbNhanVien.getSelectedItem().toString().trim();
+
+            // bỏ placeholder
+            if (nhanVien.equals("--Chọn nhân viên---")) {
+                nhanVien = "";
+            }
+        }
+        nhanVien = nhanVien.toLowerCase();
+
+        String trangThai = "";
+        if (cbTrangThai.getSelectedItem() != null) {
+            trangThai = cbTrangThai.getSelectedItem().toString().trim().toLowerCase();
+        }
+
+
+        boolean coDieuKien =
+                !maTaiKhoan.isEmpty() ||
+                !tenDangNhap.isEmpty() ||
+                !matKhau.isEmpty() ||
+                !vaiTro.isEmpty() ||
+                !nhanVien.isEmpty() ||
+                !trangThai.isEmpty();
+
+        if (!coDieuKien) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Vui lòng nhập ít nhất 1 tiêu chí tìm kiếm!",
+                    "Tra cứu",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
+        boolean found = false;
+
+
+        for (TaiKhoan tk : dsTK) {
+
+            String dbMaTK = tk.getMaTaiKhoan() == null
+                    ? ""
+                    : tk.getMaTaiKhoan().trim().toLowerCase();
+
+            String dbTenDangNhap = tk.getTenDangNhap() == null
+                    ? ""
+                    : tk.getTenDangNhap().trim().toLowerCase();
+
+            String dbMatKhau = tk.getMatKhau() == null
+                    ? ""
+                    : tk.getMatKhau().trim().toLowerCase();
+
+            String dbVaiTro = tk.getPhanQuyen() == null
+                    ? ""
+                    : tk.getPhanQuyen().trim().toLowerCase();
+
+            String dbNhanVien = tk.getMaNV() == null || tk.getMaNV().getHoTen() == null
+                    ? ""
+                    : tk.getMaNV().getHoTen().trim().toLowerCase();
+
+            String dbTrangThai = tk.isTrangThai()
+                    ? "hoạt động"
+                    : "khóa";
+
+
+            if (!maTaiKhoan.isEmpty() && !dbMaTK.contains(maTaiKhoan)) {
+                continue;
+            }
+
+            if (!tenDangNhap.isEmpty() && !dbTenDangNhap.contains(tenDangNhap)) {
+                continue;
+            }
+
+            if (!matKhau.isEmpty() && !dbMatKhau.contains(matKhau)) {
+                continue;
+            }
+
+            if (!vaiTro.isEmpty() && !dbVaiTro.equals(vaiTro)) {
+                continue;
+            }
+
+            if (!nhanVien.isEmpty() && !dbNhanVien.equals(nhanVien)) {
+                continue;
+            }
+
+            if (!trangThai.isEmpty() && !dbTrangThai.equals(trangThai)) {
+                continue;
+            }
+
+
+            tableModel.addRow(new Object[]{
+                    tk.getMaTaiKhoan(),
+                    tk.getTenDangNhap(),
+                    tk.getPhanQuyen(),
+                    tk.getMatKhau(),
+                    tk.getMaNV().getHoTen(),
+                    tk.isTrangThai() ? "Hoạt động" : "Khóa"
+            });
+
+            found = true;
+        }
+
+        // ===== Không tìm thấy =====
+
+        if (!found) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Không tìm thấy tài khoản phù hợp!",
+                    "Tra cứu",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        }
     }
+    
 
     private void loadRowToForm() {
         int row = table.getSelectedRow();
@@ -629,7 +771,12 @@ public class TaiKhoan_GUI extends JFrame {
         txtMaDangNhap.setText(tableModel.getValueAt(row, 0).toString());
         txtTenDangNhap.setText(tableModel.getValueAt(row, 1).toString());
         cbVaiTro.setSelectedItem(tableModel.getValueAt(row, 2).toString());
-        txtMatKhau.setText(tableModel.getValueAt(row, 3).toString());
+//        txtMatKhau.setText(tableModel.getValueAt(row, 3).toString());
+        String mkThat = tableModel.getValueAt(row, 3).toString();
+
+        txtMatKhau.setText(
+            PasswordUtil.maHoaMD5(mkThat)
+        );
 
         txtTenDangNhap.setEnabled(false);
         txtMatKhau.setEnabled(false);

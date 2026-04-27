@@ -723,13 +723,35 @@ public class ThucDon_GUI extends JPanel {
         card.putClientProperty("info", info);
 
         card.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (selectedCard != null && selectedCard != card) {
-                    deselect(selectedCard);
-                }
-                select(card, mon);
-            }
+        	private int clickCount=0;
+
+			@Override
+        	public void mouseClicked(MouseEvent e) {
+
+        	    
+				// Nếu click đúng card đang chọn
+        	    if (selectedCard == card) {
+        	        clickCount++;
+
+        	        // Click lần 2 mới bỏ chọn
+        	        if (clickCount > 2) {
+        	            deselect(card);
+        	            selectedCard = null;
+        	            selectedMon = null;
+        	            clickCount = 0;
+        	        }
+
+        	        return;
+        	    }
+
+        	    // Nếu chọn card mới
+        	    if (selectedCard != null) {
+        	        deselect(selectedCard);
+        	    }
+
+        	    select(card, mon);
+        	    clickCount = 1;
+        	}
 
             @Override
             public void mouseEntered(MouseEvent e) {

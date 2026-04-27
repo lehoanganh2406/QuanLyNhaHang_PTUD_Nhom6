@@ -420,6 +420,7 @@ public class HoaDon_GUI extends JFrame {
 
 
         enableFormFields();
+        loadData();
 
     }
 
@@ -438,11 +439,11 @@ public class HoaDon_GUI extends JFrame {
         String lyDoHuy = txtLyDoHuy.getText().trim();
         String phuongThucThanhToan = getComboValue(cboPhuongThucThanhToan);
         String hinhThucPhucVu = getComboValue(cboHinhThucPhucVu);
-        if (trangThai.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn trạng thái!");
-            cbTrangThai.requestFocus();
-            return;
-        }
+//        if (trangThai.isEmpty()) {
+//            JOptionPane.showMessageDialog(this, "Vui lòng chọn trạng thái!");
+//            cbTrangThai.requestFocus();
+//            return;
+//        }
 
         if (("Hủy".equalsIgnoreCase(trangThai) || "Đã hủy".equalsIgnoreCase(trangThai)) && lyDoHuy.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập lý do hủy!");
@@ -486,33 +487,230 @@ public class HoaDon_GUI extends JFrame {
         }
     }
 
+//    private void traCuu() {
+//        String keyword = JOptionPane.showInputDialog(
+//                this,
+//                "Nhập từ khóa:",
+//                "Tra cứu",
+//                JOptionPane.PLAIN_MESSAGE
+//        );
+//
+//        if (keyword == null || keyword.trim().isEmpty()) return;
+//
+//        String kw = keyword.trim().toLowerCase();
+//
+//        for (int r = 0; r < tableModel.getRowCount(); r++) {
+//            for (int c = 0; c < tableModel.getColumnCount(); c++) {
+//                Object val = tableModel.getValueAt(r, c);
+//
+//                if (val != null && val.toString().toLowerCase().contains(kw)) {
+//                    table.setRowSelectionInterval(r, r);
+//                    table.scrollRectToVisible(table.getCellRect(r, 0, true));
+//                    return;
+//                }
+//            }
+//        }
+//
+//        JOptionPane.showMessageDialog(this, "Không tìm thấy kết quả!", "Tra cứu", JOptionPane.INFORMATION_MESSAGE);
+//    }
+    
+    
     private void traCuu() {
-        String keyword = JOptionPane.showInputDialog(
-                this,
-                "Nhập từ khóa:",
-                "Tra cứu",
-                JOptionPane.PLAIN_MESSAGE
-        );
+        // Xóa bảng trước khi tra cứu
+        tableModel.setRowCount(0);
 
-        if (keyword == null || keyword.trim().isEmpty()) return;
+        // ===== Lấy dữ liệu textfield =====
+        String tenKhach = txtTenKhach.getText().trim().toLowerCase();
+        String sdt = txtSDT.getText().trim().toLowerCase();
+        String ban = txtBan.getText().trim().toLowerCase();
+        String tongTien = txtTongTien.getText().trim().toLowerCase();
 
-        String kw = keyword.trim().toLowerCase();
+        // Không dùng mã hóa đơn để tra cứu
+        txtMaHoaDon.setText("");
 
-        for (int r = 0; r < tableModel.getRowCount(); r++) {
-            for (int c = 0; c < tableModel.getColumnCount(); c++) {
-                Object val = tableModel.getValueAt(r, c);
-
-                if (val != null && val.toString().toLowerCase().contains(kw)) {
-                    table.setRowSelectionInterval(r, r);
-                    table.scrollRectToVisible(table.getCellRect(r, 0, true));
-                    return;
-                }
+        // ===== Lấy dữ liệu combobox =====
+        String tenNhanVien = "";
+        if (cbNhanVien.getSelectedItem() != null) {
+            tenNhanVien = cbNhanVien.getSelectedItem().toString().trim();
+            if (tenNhanVien.equals(PH_NV)) {
+                tenNhanVien = "";
             }
         }
 
-        JOptionPane.showMessageDialog(this, "Không tìm thấy kết quả!", "Tra cứu", JOptionPane.INFORMATION_MESSAGE);
-    }
+        String trangThai = "";
+        if (cbTrangThai.getSelectedItem() != null) {
+            trangThai = cbTrangThai.getSelectedItem().toString().trim();
+            if (trangThai.equals(PH_TT)) {
+                trangThai = "";
+            }
+        }
 
+        String khuyenMai = "";
+        if (txtKhuyenMai.getSelectedItem() != null) {
+            khuyenMai = txtKhuyenMai.getSelectedItem().toString().trim();
+            if (khuyenMai.equals(PH_KM)) {
+                khuyenMai = "";
+            }
+        }
+
+        String phuongThucTT = "";
+        if (cboPhuongThucThanhToan.getSelectedItem() != null) {
+            phuongThucTT = cboPhuongThucThanhToan.getSelectedItem().toString().trim();
+            if (phuongThucTT.equals(PH_PTTT)) {
+                phuongThucTT = "";
+            }
+        }
+
+        String hinhThucPV = "";
+        if (cboHinhThucPhucVu.getSelectedItem() != null) {
+            hinhThucPV = cboHinhThucPhucVu.getSelectedItem().toString().trim();
+            if (hinhThucPV.equals(PH_HTPV)) {
+                hinhThucPV = "";
+            }
+        }
+
+        // lowercase để so sánh
+        tenNhanVien = tenNhanVien.toLowerCase();
+        trangThai = trangThai.toLowerCase();
+        khuyenMai = khuyenMai.toLowerCase();
+        phuongThucTT = phuongThucTT.toLowerCase();
+        hinhThucPV = hinhThucPV.toLowerCase();
+
+        // ===== Bắt buộc phải nhập ít nhất 1 điều kiện =====
+        boolean coDieuKien =
+                !tenKhach.isEmpty() ||
+                !sdt.isEmpty() ||
+                !ban.isEmpty() ||
+                !tongTien.isEmpty() ||
+                !tenNhanVien.isEmpty() ||
+                !trangThai.isEmpty() ||
+                !khuyenMai.isEmpty() ||
+                !phuongThucTT.isEmpty() ||
+                !hinhThucPV.isEmpty();
+
+        if (!coDieuKien) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Vui lòng nhập ít nhất 1 tiêu chí tìm kiếm!",
+                    "Tra cứu",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd-MM-yyyy");
+        boolean found = false;
+
+        // ===== DUYỆT TOÀN BỘ HÓA ĐƠN =====
+        for (Object[] row : hd_dao.getAllHoaDon()) {
+
+            String dbTenKhach = row[3] == null ? "" : row[3].toString().trim().toLowerCase();
+            String dbTenNhanVien = row[4] == null ? "" : row[4].toString().trim().toLowerCase();
+            String dbSDT = row[5] == null ? "" : row[5].toString().trim().toLowerCase();
+            String dbKhuyenMai = row[6] == null ? "" : row[6].toString().trim().toLowerCase();
+            String dbBan = row[7] == null ? "" : row[7].toString().trim().toLowerCase();
+            String dbTongTien = row[8] == null ? "" : row[8].toString().trim().toLowerCase();
+            String dbPhuongThuc = row[10] == null ? "" : row[10].toString().trim().toLowerCase();
+            String dbHinhThuc = row[11] == null ? "" : row[11].toString().trim().toLowerCase();
+            String dbTrangThai = row[12] == null ? "" : row[12].toString().trim().toLowerCase();
+
+            /*
+               LOGIC AND THẬT SỰ:
+               Chỉ cần SAI 1 điều kiện -> bỏ hóa đơn đó ngay
+            */
+
+            boolean match = true;
+
+            if (!tenKhach.isEmpty()) {
+                if (!dbTenKhach.contains(tenKhach)) {
+                    match = false;
+                }
+            }
+
+            if (!tenNhanVien.isEmpty()) {
+                if (!dbTenNhanVien.equals(tenNhanVien)) {
+                    match = false;
+                }
+            }
+
+            if (!sdt.isEmpty()) {
+                if (!dbSDT.contains(sdt)) {
+                    match = false;
+                }
+            }
+
+            if (!ban.isEmpty()) {
+                if (!dbBan.contains(ban)) {
+                    match = false;
+                }
+            }
+
+            if (!tongTien.isEmpty()) {
+                if (!dbTongTien.contains(tongTien)) {
+                    match = false;
+                }
+            }
+
+            if (!trangThai.isEmpty()) {
+                if (!dbTrangThai.equals(trangThai)) {
+                    match = false;
+                }
+            }
+
+            if (!khuyenMai.isEmpty()) {
+                if (!dbKhuyenMai.contains(khuyenMai)) {
+                    match = false;
+                }
+            }
+
+            if (!phuongThucTT.isEmpty()) {
+                if (!dbPhuongThuc.equals(phuongThucTT)) {
+                    match = false;
+                }
+            }
+
+            if (!hinhThucPV.isEmpty()) {
+                if (!dbHinhThuc.equals(hinhThucPV)) {
+                    match = false;
+                }
+            }
+
+            // CHỈ add khi TẤT CẢ đều đúng
+            if (match) {
+                Timestamp vao = (Timestamp) row[1];
+                Timestamp ra = (Timestamp) row[2];
+
+                tableModel.addRow(new Object[]{
+                        row[0],
+                        vao != null ? sdf.format(vao) : "",
+                        ra != null ? sdf.format(ra) : "",
+                        row[3],
+                        row[4],
+                        row[5],
+                        row[6],
+                        row[7],
+                        row[8],
+                        row[10],
+                        row[11],
+                        row[12],
+                        row[13]
+                });
+
+                found = true;
+            }
+        }
+
+        if (!found) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Không có hóa đơn phù hợp với tiêu chí tìm kiếm!",
+                    "Tra cứu",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        }
+    }
+    
+    
     private void locHoaDon() {
     	String trangThai = getComboValue(cbTrangThai);
 
@@ -541,12 +739,20 @@ public class HoaDon_GUI extends JFrame {
             Timestamp ra = (Timestamp) row[2];
 
             tableModel.addRow(new Object[]{
-                    row[0],
-                    vao != null ? sdf.format(vao) : "",
-                    ra != null ? sdf.format(ra) : "",
-                    		row[3], row[4], row[5], row[6], row[7], row[8],
-                    		row[9], row[10], row[11], row[12]
-            });
+            	    row[0],
+            	    vao != null ? sdf.format(vao) : "",
+            	    ra != null ? sdf.format(ra) : "",
+            	    row[3],   // khách hàng
+            	    row[4],   // nhân viên
+            	    row[5],   // sdt
+            	    row[6],   // khuyến mãi
+            	    row[7],   // bàn
+            	    row[8],   // tổng tiền
+            	    row[10],  // phương thức TT
+            	    row[11],  // hình thức PV
+            	    row[12],  // trạng thái
+            	    row[13]   // lý do hủy
+            	});
         }
     }
     private String getComboValue(JComboBox<String> cb) {
@@ -667,13 +873,28 @@ public class HoaDon_GUI extends JFrame {
             Timestamp vao = (Timestamp) row[1];
             Timestamp ra = (Timestamp) row[2];
 
+//            tableModel.addRow(new Object[]{
+//                    row[0],
+//                    vao != null ? sdf.format(vao) : "",
+//                    ra != null ? sdf.format(ra) : "",
+//                    		row[3], row[4], row[5], row[6], row[7], row[8],
+//                    		row[9], row[10], row[11], row[12]
+//            });
             tableModel.addRow(new Object[]{
-                    row[0],
-                    vao != null ? sdf.format(vao) : "",
-                    ra != null ? sdf.format(ra) : "",
-                    		row[3], row[4], row[5], row[6], row[7], row[8],
-                    		row[9], row[10], row[11], row[12]
-            });
+            	    row[0],
+            	    vao != null ? sdf.format(vao) : "",
+            	    ra != null ? sdf.format(ra) : "",
+            	    row[3],   // khách hàng
+            	    row[4],   // nhân viên
+            	    row[5],   // sdt
+            	    row[6],   // khuyến mãi
+            	    row[7],   // bàn
+            	    row[8],   // tổng tiền
+            	    row[10],  // phương thức TT
+            	    row[11],  // hình thức PV
+            	    row[12],  // trạng thái
+            	    row[13]   // lý do hủy
+            	});
         }
     }
 

@@ -134,7 +134,12 @@ public class NhanVien_GUI extends JFrame {
         txtMaNV.setEnabled(false);
         txtMaNV.setDisabledTextColor(new Color(60, 60, 60));
 
-        cbChucVu = new JComboBox<>(new String[]{"Quản lý", "Lễ tân"});
+//        cbChucVu = new JComboBox<>(new String[]{"Quản lý", "Lễ tân"});
+        cbChucVu = new JComboBox<>(new String[]{
+        	    "-- Chọn chức vụ --",
+        	    "Quản lý",
+        	    "Lễ tân"
+        	});
         styleComboBox(cbChucVu);
         addRow(pnlFields, gbc, 0, "Mã nhân viên", txtMaNV, "Chức vụ", cbChucVu);
 
@@ -168,7 +173,12 @@ public class NhanVien_GUI extends JFrame {
         pnlGT.add(rdNam);
         pnlGT.add(rdNu);
 
-        cbTrangThai = new JComboBox<>(new String[]{"Đang làm", "Nghỉ việc"});
+//        cbTrangThai = new JComboBox<>(new String[]{"Đang làm", "Nghỉ việc"});
+        cbTrangThai = new JComboBox<>(new String[]{
+        	    "-- Chọn trạng thái --",
+        	    "Đang làm",
+        	    "Nghỉ việc"
+        	});
         styleComboBox(cbTrangThai);
         cbTrangThai.addActionListener(e -> xuLyTrangThai());
 
@@ -529,32 +539,158 @@ public class NhanVien_GUI extends JFrame {
         lblAnh.setText("Chọn ảnh");
         duongDanAnh = "";
         txtLyDoNghi.setEnabled(false);
+        loadData();
     }
 
+//    private void traCuu() {
+//        String keyword = JOptionPane.showInputDialog(
+//                this,
+//                "Nhập từ khóa tìm kiếm:",
+//                "Tra cứu",
+//                JOptionPane.PLAIN_MESSAGE
+//        );
+//
+//        if (keyword == null || keyword.trim().isEmpty()) return;
+//
+//        String kw = keyword.trim().toLowerCase();
+//
+//        for (int r = 0; r < tableModel.getRowCount(); r++) {
+//            for (int c = 0; c < tableModel.getColumnCount(); c++) {
+//                Object val = tableModel.getValueAt(r, c);
+//                if (val != null && val.toString().toLowerCase().contains(kw)) {
+//                    table.setRowSelectionInterval(r, r);
+//                    table.scrollRectToVisible(table.getCellRect(r, 0, true));
+//                    return;
+//                }
+//            }
+//        }
+//        JOptionPane.showMessageDialog(this, "Không tìm thấy kết quả!", "Tra cứu", JOptionPane.INFORMATION_MESSAGE);
+//    }
+    
+    
     private void traCuu() {
-        String keyword = JOptionPane.showInputDialog(
-                this,
-                "Nhập từ khóa tìm kiếm:",
-                "Tra cứu",
-                JOptionPane.PLAIN_MESSAGE
-        );
 
-        if (keyword == null || keyword.trim().isEmpty()) return;
+        String maNV = txtMaNV.getText().trim().toLowerCase();
+        String hoTen = txtHoTen.getText().trim().toLowerCase();
+        String email = txtEmail.getText().trim().toLowerCase();
+        String sdt = txtSDT.getText().trim().toLowerCase();
+        String cccd = txtCCCD.getText().trim().toLowerCase();
 
-        String kw = keyword.trim().toLowerCase();
+        // bỏ mã tự sinh NV005 khi chưa chọn dòng
+        if (table.getSelectedRow() == -1 &&
+                maNV.equalsIgnoreCase(nv_dao.getNextMaNV().toLowerCase())) {
+            maNV = "";
+        }
 
-        for (int r = 0; r < tableModel.getRowCount(); r++) {
-            for (int c = 0; c < tableModel.getColumnCount(); c++) {
-                Object val = tableModel.getValueAt(r, c);
-                if (val != null && val.toString().toLowerCase().contains(kw)) {
-                    table.setRowSelectionInterval(r, r);
-                    table.scrollRectToVisible(table.getCellRect(r, 0, true));
-                    return;
+        // CHỈ lọc khi chọn khác dòng đầu tiên
+        String chucVu = "";
+        if (cbChucVu.getSelectedIndex() > 0) {
+            chucVu = cbChucVu.getSelectedItem()
+                    .toString()
+                    .trim()
+                    .toLowerCase();
+        }
+
+        String trangThai = "";
+        if (cbTrangThai.getSelectedIndex() > 0) {
+            trangThai = cbTrangThai.getSelectedItem()
+                    .toString()
+                    .trim()
+                    .toLowerCase();
+        }
+
+        // kiểm tra có nhập tiêu chí chưa
+        if (maNV.isEmpty()
+                && hoTen.isEmpty()
+                && email.isEmpty()
+                && sdt.isEmpty()
+                && cccd.isEmpty()
+                && chucVu.isEmpty()
+                && trangThai.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Vui lòng nhập ít nhất 1 tiêu chí tra cứu!"
+            );
+            return;
+        }
+
+        tableModel.setRowCount(0);
+        boolean timThay = false;
+
+        for (NhanVien nv : dsNV) {
+
+            boolean match = true;
+
+            if (!maNV.isEmpty()
+                    && !nv.getMaNV().toLowerCase().contains(maNV)) {
+                match = false;
+            }
+
+            if (!hoTen.isEmpty()
+                    && !nv.getHoTen().toLowerCase().contains(hoTen)) {
+                match = false;
+            }
+
+            if (!email.isEmpty()
+                    && !nv.getEmail().toLowerCase().contains(email)) {
+                match = false;
+            }
+
+            if (!sdt.isEmpty()
+                    && !nv.getSdt().toLowerCase().contains(sdt)) {
+                match = false;
+            }
+
+            if (!cccd.isEmpty()
+                    && !nv.getCccd().toLowerCase().contains(cccd)) {
+                match = false;
+            }
+
+            if (!chucVu.isEmpty()
+                    && !nv.getChucVu().toLowerCase().equals(chucVu)) {
+                match = false;
+            }
+
+            if (!trangThai.isEmpty()
+                    && !nv.getTrangThai().toLowerCase().equals(trangThai)) {
+                match = false;
+            }
+
+            if (match) {
+                String gioiTinh = nv.isGioiTinh() ? "Nam" : "Nữ";
+
+                String ngaySinh = "";
+                if (nv.getNgaySinh() != null) {
+                    ngaySinh = new SimpleDateFormat("dd/MM/yyyy")
+                            .format(nv.getNgaySinh());
                 }
+
+                tableModel.addRow(new Object[]{
+                        nv.getMaNV(),
+                        nv.getHoTen(),
+                        gioiTinh,
+                        ngaySinh,
+                        nv.getSdt(),
+                        nv.getCccd(),
+                        nv.getEmail(),
+                        nv.getChucVu(),
+                        nv.getTrangThai(),
+                        nv.getLyDo()
+                });
+
+                timThay = true;
             }
         }
-        JOptionPane.showMessageDialog(this, "Không tìm thấy kết quả!", "Tra cứu", JOptionPane.INFORMATION_MESSAGE);
+
+        if (!timThay) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Không có nhân viên phù hợp với tiêu chí tìm kiếm!"
+            );
+        }
     }
+    
 
     private void loadRowToForm() {
         int row = table.getSelectedRow();

@@ -10,7 +10,10 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.sql.Connection;
@@ -36,6 +39,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -90,7 +94,7 @@ public class TongKetBanHang_GUI extends JPanel {
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setBackground(new Color(248, 249, 251));
 
-        JPanel contentContainer = new JPanel();
+        JPanel contentContainer = new WidthTrackingPanel();
         contentContainer.setLayout(new BoxLayout(contentContainer, BoxLayout.Y_AXIS));
         contentContainer.setOpaque(false);
         contentContainer.setBorder(new EmptyBorder(22, 32, 36, 32));
@@ -101,14 +105,13 @@ public class TongKetBanHang_GUI extends JPanel {
         contentContainer.add(Box.createRigidArea(new Dimension(0, 40)));
         contentContainer.add(wrapInNorth(createMidScaleSection()));
 
-        JPanel smoothScrollWrapper = new JPanel(new BorderLayout());
-        smoothScrollWrapper.setOpaque(false);
-        smoothScrollWrapper.add(contentContainer, BorderLayout.NORTH);
-
-        JScrollPane scroll = new JScrollPane(smoothScrollWrapper);
+        JScrollPane scroll = new JScrollPane(contentContainer);
         scroll.setBorder(null);
+        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scroll.getViewport().setBackground(Color.WHITE);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
+
         wrapper.add(scroll, BorderLayout.CENTER);
         return wrapper;
     }
@@ -182,23 +185,49 @@ public class TongKetBanHang_GUI extends JPanel {
     }
 
     private JPanel createKpiPanel() {
-        JPanel kpi = new JPanel(new GridLayout(1, 5, 25, 0));
+        JPanel kpi = new JPanel(new GridBagLayout());
         kpi.setOpaque(false);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(0, 0, 0, 18);
 
         lblTongMonBan = new JLabel("0", SwingConstants.CENTER);
         lblTongSoLuong = new JLabel("0", SwingConstants.CENTER);
         lblDoanhThu = new JLabel("0đ", SwingConstants.CENTER);
         lblBanChayNhat = new JLabel("-", SwingConstants.CENTER);
 
-        kpi.add(createKpiCard("Tổng món bán", lblTongMonBan, new Color(235, 243, 255), new Color(100, 130, 150)));
-        kpi.add(createKpiCard("Tổng số lượng", lblTongSoLuong, new Color(235, 250, 240), new Color(120, 150, 130)));
-        kpi.add(createKpiCard("Doanh thu", lblDoanhThu, new Color(255, 250, 235), new Color(150, 140, 100)));
-        kpi.add(createKpiCard("Bán chạy nhất", lblBanChayNhat, new Color(255, 235, 245), new Color(150, 100, 120)));
+        JPanel cardTongMon = createKpiCard("Tổng món bán", lblTongMonBan, new Color(235, 243, 255), new Color(100, 130, 150));
+        JPanel cardTongSL = createKpiCard("Tổng số lượng", lblTongSoLuong, new Color(235, 250, 240), new Color(120, 150, 130));
+        JPanel cardDoanhThu = createKpiCard("Doanh thu", lblDoanhThu, new Color(255, 250, 235), new Color(150, 140, 100));
+        JPanel cardBanChay = createKpiCard("Bán chạy nhất", lblBanChayNhat, new Color(255, 235, 245), new Color(150, 100, 120));
+
+        cardTongMon.setPreferredSize(new Dimension(220, 115));
+        cardTongSL.setPreferredSize(new Dimension(220, 115));
+        cardDoanhThu.setPreferredSize(new Dimension(220, 115));
+        cardBanChay.setPreferredSize(new Dimension(300, 115));
+
+        gbc.gridx = 0;
+        gbc.weightx = 0.15;
+        kpi.add(cardTongMon, gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.15;
+        kpi.add(cardTongSL, gbc);
+
+        gbc.gridx = 2;
+        gbc.weightx = 0.17;
+        kpi.add(cardDoanhThu, gbc);
+
+        gbc.gridx = 3;
+        gbc.weightx = 0.31;
+        kpi.add(cardBanChay, gbc);
 
         JPanel btnWrap = new JPanel(new BorderLayout());
         btnWrap.setOpaque(false);
         JButton btnExport = new JButton("Xuất báo cáo");
-        btnExport.setFont(new Font("SansSerif", Font.BOLD, 24));
+        btnExport.setFont(new Font("SansSerif", Font.BOLD, 22));
         btnExport.setBackground(new Color(105, 185, 115));
         btnExport.setForeground(Color.DARK_GRAY);
         btnExport.setBorder(BorderFactory.createCompoundBorder(
@@ -215,7 +244,13 @@ public class TongKetBanHang_GUI extends JPanel {
         innerBtnWrap.setBorder(new EmptyBorder(12, 0, 12, 0));
         innerBtnWrap.add(btnExport, BorderLayout.CENTER);
         btnWrap.add(innerBtnWrap, BorderLayout.CENTER);
-        kpi.add(btnWrap);
+        btnWrap.setPreferredSize(new Dimension(230, 115));
+
+        gbc.gridx = 4;
+        gbc.weightx = 0.18;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        kpi.add(btnWrap, gbc);
+
         return kpi;
     }
 
@@ -246,7 +281,7 @@ public class TongKetBanHang_GUI extends JPanel {
     }
 
     private JPanel createMidScaleSection() {
-        JPanel mid = new JPanel(new BorderLayout(40, 0));
+        JPanel mid = new JPanel(new BorderLayout(24, 0));
         mid.setOpaque(false);
 
         JPanel leftCol = new JPanel(new BorderLayout(0, 15));
@@ -267,6 +302,8 @@ public class TongKetBanHang_GUI extends JPanel {
         table.setGridColor(new Color(230, 230, 230));
         table.setShowVerticalLines(false);
         table.setSelectionBackground(new Color(230, 240, 255));
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
         JTableHeader th = table.getTableHeader();
         th.setFont(new Font("SansSerif", Font.BOLD, 15));
         th.setBackground(new Color(235, 240, 250));
@@ -278,10 +315,17 @@ public class TongKetBanHang_GUI extends JPanel {
         for (int i = 0; i < table.getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setCellRenderer(centerRender);
         }
+        int[] widths = { 50, 105, 170, 80, 45, 100 };
+        for (int i = 0; i < widths.length; i++) {
+            table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        }
+
         JScrollPane tblScroll = new JScrollPane(table);
         tblScroll.setBorder(new LineBorder(new Color(230, 230, 230)));
         tblScroll.getViewport().setBackground(Color.WHITE);
         tblScroll.setPreferredSize(new Dimension(0, 250));
+        tblScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        tblScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
         JPanel footer = new JPanel(new GridLayout(1, 3, 0, 0));
         footer.setOpaque(false);
@@ -301,7 +345,8 @@ public class TongKetBanHang_GUI extends JPanel {
 
         JPanel rightCol = new JPanel(new GridLayout(2, 1, 0, 30));
         rightCol.setOpaque(false);
-        rightCol.setPreferredSize(new Dimension(420, 0));
+        rightCol.setPreferredSize(new Dimension(470, 0));
+        rightCol.setMinimumSize(new Dimension(430, 0));
         chartTopMon = new MockBarTopMon();
         chartDoanhThu = new MockLineDoanhThu();
         rightCol.add(createChartWrapper("BIỂU ĐỒ TOP MÓN BÁN CHẠY", chartTopMon));
@@ -495,6 +540,16 @@ public class TongKetBanHang_GUI extends JPanel {
     private static class DaySale {
         String label;
         double doanhThu;
+    }
+
+    private static class WidthTrackingPanel extends JPanel implements Scrollable {
+        private static final long serialVersionUID = 1L;
+
+        @Override public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
+        @Override public int getScrollableUnitIncrement(java.awt.Rectangle visibleRect, int orientation, int direction) { return 16; }
+        @Override public int getScrollableBlockIncrement(java.awt.Rectangle visibleRect, int orientation, int direction) { return 80; }
+        @Override public boolean getScrollableTracksViewportWidth() { return true; }
+        @Override public boolean getScrollableTracksViewportHeight() { return false; }
     }
 
     class MockBarTopMon extends JPanel {

@@ -209,7 +209,7 @@ public class TraCuu_GUI extends JPanel {
     private static final int KM_COL_NGAY = 210;
     private static final int KM_COL_TRANG_THAI = 150;
     private static final int KM_ROW_HEIGHT = 40;
-    private static final int KM_DETAIL_HEIGHT = 360;
+    private static final int KM_DETAIL_HEIGHT = 410;
 
     private final DateTimeFormatter dtfKM = DateTimeFormatter.ofPattern("dd/MM/yyyy, HH:mm");
 

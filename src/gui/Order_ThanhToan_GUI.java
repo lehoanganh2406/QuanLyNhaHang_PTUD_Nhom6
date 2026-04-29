@@ -172,7 +172,7 @@ public class Order_ThanhToan_GUI extends JPanel {
         lblTongCong = new JLabel("0");
         lblTienThua = new JLabel("0");
 
-        cboPhuongThuc = new JComboBox<>(new String[]{"Tiền mặt", "Chuyển khoản", "Visa"});
+        cboPhuongThuc = new JComboBox<>(new String[]{"Tiền mặt", "Chuyển khoản", "MoMo", "Visa"});
         cboPhuongThuc.setFont(new Font("SansSerif", Font.PLAIN, 16));
 
         txtTienKhachTra = new JTextField();
@@ -200,6 +200,7 @@ public class Order_ThanhToan_GUI extends JPanel {
             public void removeUpdate(javax.swing.event.DocumentEvent e) { tinhTienThua(); }
             public void changedUpdate(javax.swing.event.DocumentEvent e) { tinhTienThua(); }
         });
+        cboPhuongThuc.addActionListener(e -> capNhatTienKhachTraTheoPhuongThuc());
         txtSDT.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override
             public void focusGained(java.awt.event.FocusEvent e) {
@@ -268,7 +269,23 @@ public class Order_ThanhToan_GUI extends JPanel {
 
         return row;
     }
+    private void capNhatTienKhachTraTheoPhuongThuc() {
+        String pt = cboPhuongThuc.getSelectedItem() == null
+                ? ""
+                : cboPhuongThuc.getSelectedItem().toString();
 
+        if (!"Tiền mặt".equalsIgnoreCase(pt)) {
+            txtTienKhachTra.setText(formatTien(tongCong));
+            txtTienKhachTra.setEditable(false);
+            txtTienKhachTra.setBackground(new Color(235, 235, 235));
+        } else {
+            txtTienKhachTra.setEditable(true);
+            txtTienKhachTra.setBackground(Color.WHITE);
+            txtTienKhachTra.setText("");
+        }
+
+        tinhTienThua();
+    }
     private JPanel createMenhGiaPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 58));
@@ -515,6 +532,7 @@ public class Order_ThanhToan_GUI extends JPanel {
         lblTongTienRight.setText(formatTien(tongTien));
 
         tinhTienThua();
+        capNhatTienKhachTraTheoPhuongThuc();
     }
 
     private void timKhachTheoSDT() {
@@ -604,18 +622,30 @@ public class Order_ThanhToan_GUI extends JPanel {
     }
 
     private void xuLyThanhToan() {
+        String phuongThuc = cboPhuongThuc.getSelectedItem().toString();
         double tienTra = parseTien(txtTienKhachTra.getText());
 
-        if (tienTra < tongCong) {
-            JOptionPane.showMessageDialog(this, "Tiền khách trả chưa đủ.");
-            return;
+        if ("Tiền mặt".equalsIgnoreCase(phuongThuc)) {
+            if (tienTra < tongCong) {
+                JOptionPane.showMessageDialog(this, "Tiền khách trả chưa đủ.");
+                return;
+            }
+        } else if ("Chuyển khoản".equalsIgnoreCase(phuongThuc) || "MoMo".equalsIgnoreCase(phuongThuc)) {
+            boolean daXacNhan = hienThiVietQRThanhToan(phuongThuc);
+            if (!daXacNhan) {
+                return;
+            }
+
+            tienTra = tongCong;
+            txtTienKhachTra.setText(formatTien(tongCong));
+        } else if ("Visa".equalsIgnoreCase(phuongThuc)) {
+            tienTra = tongCong;
+            txtTienKhachTra.setText(formatTien(tongCong));
         }
 
         String maKH = khachHang == null ? null : khachHang.getMaKH();
         String maKM = khuyenMaiDangDung == null ? null : khuyenMaiDangDung.getMaKM();
-        String phuongThuc = cboPhuongThuc.getSelectedItem().toString();
         double tienThua = tienTra - tongCong;
-
         boolean ok = hoaDonDAO.thanhToanHoaDon(
                 maHD,
                 maKH,
@@ -1133,5 +1163,94 @@ public class Order_ThanhToan_GUI extends JPanel {
         }
 
         return false;
+    }
+    private boolean hienThiVietQRThanhToan(String phuongThuc) {
+        final boolean[] daXacNhan = {false};
+
+        JDialog dlg = new JDialog(
+                SwingUtilities.getWindowAncestor(this),
+                "Thanh toán " + phuongThuc,
+                Dialog.ModalityType.APPLICATION_MODAL
+        );
+
+        JPanel root = new JPanel(new BorderLayout(12, 12));
+        root.setBackground(Color.WHITE);
+        root.setBorder(new EmptyBorder(18, 22, 18, 22));
+
+        JLabel lblTitle = new JLabel("Quét mã VietQR để thanh toán", SwingConstants.CENTER);
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 22));
+
+        JLabel lblInfo = new JLabel(
+                "<html><center>"
+                        + "Số tiền: <b>" + formatTien(tongCong) + " VNĐ</b><br>"
+                        + "Nội dung: <b>" + maHD + "</b>"
+                        + "</center></html>",
+                SwingConstants.CENTER
+        );
+        lblInfo.setFont(new Font("SansSerif", Font.PLAIN, 18));
+
+        JLabel lblQR = new JLabel("Đang tải QR...", SwingConstants.CENTER);
+        lblQR.setPreferredSize(new Dimension(360, 360));
+        lblQR.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180)));
+
+        try {
+            ImageIcon icon = new ImageIcon(new java.net.URL(taoLinkVietQR()));
+            Image img = icon.getImage().getScaledInstance(340, 340, Image.SCALE_SMOOTH);
+            lblQR.setText("");
+            lblQR.setIcon(new ImageIcon(img));
+        } catch (Exception ex) {
+            lblQR.setText("<html><center>Không tải được QR<br>Kiểm tra mạng</center></html>");
+        }
+
+        JButton btnDaThanhToan = new JButton("Xác nhận đã thanh toán");
+        JButton btnHuy = new JButton("Hủy");
+
+        btnDaThanhToan.setFont(new Font("SansSerif", Font.BOLD, 16));
+        btnHuy.setFont(new Font("SansSerif", Font.BOLD, 16));
+
+        btnDaThanhToan.addActionListener(e -> {
+            daXacNhan[0] = true;
+            dlg.dispose();
+        });
+
+        btnHuy.addActionListener(e -> {
+            daXacNhan[0] = false;
+            dlg.dispose();
+        });
+
+        JPanel center = new JPanel(new BorderLayout(10, 10));
+        center.setOpaque(false);
+        center.add(lblInfo, BorderLayout.NORTH);
+        center.add(lblQR, BorderLayout.CENTER);
+
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
+        bottom.setOpaque(false);
+        bottom.add(btnDaThanhToan);
+        bottom.add(btnHuy);
+
+        root.add(lblTitle, BorderLayout.NORTH);
+        root.add(center, BorderLayout.CENTER);
+        root.add(bottom, BorderLayout.SOUTH);
+
+        dlg.setContentPane(root);
+        dlg.setSize(480, 600);
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
+
+        return daXacNhan[0];
+    }
+
+    private String taoLinkVietQR() {
+        String bankId = "970436"; // Vietcombank. Đổi theo ngân hàng của bạn
+        String soTaiKhoan = "123456789"; // đổi số tài khoản nhận tiền
+        String tenChuTK = "NHA HANG HY VONG";
+        String noiDung = maHD;
+        long soTien = Math.round(tongCong);
+
+        return "https://img.vietqr.io/image/"
+                + bankId + "-" + soTaiKhoan + "-compact2.png"
+                + "?amount=" + soTien
+                + "&addInfo=" + noiDung
+                + "&accountName=" + tenChuTK.replace(" ", "%20");
     }
 }

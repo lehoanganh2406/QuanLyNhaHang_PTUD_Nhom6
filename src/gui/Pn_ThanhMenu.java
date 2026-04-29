@@ -36,6 +36,9 @@ public class Pn_ThanhMenu extends JPanel {
 
     private MenuItemPanel selectedMenu;
     private JPopupMenu currentPopupMenu;
+    private static final int MENU_MIN_WIDTH = 145;
+    private static final int MENU_HEIGHT = 42;
+    private static final int SUB_ITEM_HEIGHT = 38;
 
     private final TaiKhoan taiKhoanDangNhap;
     public interface Navigator {
@@ -340,50 +343,41 @@ public class Pn_ThanhMenu extends JPanel {
         }
 
         JPopupMenu popup = new JPopupMenu();
-        popup.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER_COLOR, 1, true),
-                new EmptyBorder(2, 2, 2, 2)
-        ));
+        popup.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, BORDER_COLOR));
         popup.setBackground(BG_SUB);
         popup.setOpaque(true);
         popup.setLayout(new BoxLayout(popup, BoxLayout.Y_AXIS));
 
-        int itemHeight = 38;
-        int width = menu.getPreferredSize().width;
+        int itemHeight = SUB_ITEM_HEIGHT;
 
-        try {
-            Point locationOnScreen = menu.getLocationOnScreen();
-            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-            if (locationOnScreen.x + width > screenSize.width) {
-                width = Math.max(140, screenSize.width - locationOnScreen.x - 10);
-            }
-        } catch (IllegalComponentStateException ex) {
-            width = menu.getPreferredSize().width;
-        }
+        int popupWidth = menu.getWidth() > 0 ? menu.getWidth() : menu.getPreferredSize().width;
+        int itemWidth = popupWidth - 2; // trừ viền trái + phải của popup
 
         for (int i = 0; i < menu.subItems.size(); i++) {
             SubMenuItemPanel src = menu.subItems.get(i);
             SubMenuItemPanel item = new SubMenuItemPanel(src.menuText, src.targetClassName, src.enabled);
 
-            item.setPreferredSize(new Dimension(width, itemHeight));
-            item.setMinimumSize(new Dimension(width, itemHeight));
-            item.setMaximumSize(new Dimension(width, itemHeight));
+            item.setPreferredSize(new Dimension(itemWidth, itemHeight));
+            item.setMinimumSize(new Dimension(itemWidth, itemHeight));
+            item.setMaximumSize(new Dimension(itemWidth, itemHeight));
 
             popup.add(item);
 
             if (i < menu.subItems.size() - 1) {
                 JPanel line = new JPanel();
                 line.setBackground(BORDER_COLOR);
-                line.setPreferredSize(new Dimension(width, 1));
-                line.setMaximumSize(new Dimension(width, 1));
-                line.setMinimumSize(new Dimension(width, 1));
+                line.setPreferredSize(new Dimension(itemWidth, 1));
+                line.setMaximumSize(new Dimension(itemWidth, 1));
+                line.setMinimumSize(new Dimension(itemWidth, 1));
                 line.setAlignmentX(Component.LEFT_ALIGNMENT);
                 popup.add(line);
             }
         }
 
+        popup.setPopupSize(popupWidth, popup.getPreferredSize().height);
+
         currentPopupMenu = popup;
-        currentPopupMenu.show(menu, 0, menu.getHeight());
+        currentPopupMenu.show(menu, 0, menu.getHeight() - 1);
     }
 
     private void updateAllMenuWidths() {
@@ -471,9 +465,9 @@ public class Pn_ThanhMenu extends JPanel {
                     BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(220, 185, 120)),
                     new EmptyBorder(0, 14, 0, 14)
             ));
-            setPreferredSize(new Dimension(170, 42));
-            setMinimumSize(new Dimension(170, 42));
-            setMaximumSize(new Dimension(170, 42));
+            setPreferredSize(new Dimension(MENU_MIN_WIDTH, MENU_HEIGHT));
+            setMinimumSize(new Dimension(MENU_MIN_WIDTH, MENU_HEIGHT));
+            setMaximumSize(new Dimension(MENU_MIN_WIDTH, MENU_HEIGHT));
 
             lblIcon = new JLabel();
             lblIcon.setIcon(loadIcon(iconPath, 16, 16));
@@ -578,25 +572,24 @@ public class Pn_ThanhMenu extends JPanel {
             Font font = new Font("SansSerif", Font.BOLD, 18);
             FontMetrics fm = getFontMetrics(font);
 
-            int parentTextWidth = fm.stringWidth(lblText.getText());
-            int baseWidth = 14 + 16 + 6 + parentTextWidth + 14;
+            int parentWidth = 14 + 16 + 6 + fm.stringWidth(lblText.getText()) + 14;
 
             if (hasSubMenu()) {
-                baseWidth += 6 + 20;
+                parentWidth += 6 + 20;
             }
 
-            int maxSubWidth = 0;
+            int subMaxWidth = 0;
             for (SubMenuItemPanel item : subItems) {
-                int subWidth = fm.stringWidth(item.menuText) + 24;
-                maxSubWidth = Math.max(maxSubWidth, subWidth);
+                int w = 12 + fm.stringWidth(item.menuText) + 30;
+                subMaxWidth = Math.max(subMaxWidth, w);
             }
 
-            int finalWidth = Math.max(baseWidth, maxSubWidth + 28);
-            finalWidth = Math.max(145, finalWidth);
+            int finalWidth = Math.max(parentWidth, subMaxWidth);
+            finalWidth = Math.max(MENU_MIN_WIDTH, finalWidth);
 
-            setPreferredSize(new Dimension(finalWidth, 42));
-            setMinimumSize(new Dimension(finalWidth, 42));
-            setMaximumSize(new Dimension(finalWidth, 42));
+            setPreferredSize(new Dimension(finalWidth, MENU_HEIGHT));
+            setMinimumSize(new Dimension(finalWidth, MENU_HEIGHT));
+            setMaximumSize(new Dimension(finalWidth, MENU_HEIGHT));
         }
     }
 

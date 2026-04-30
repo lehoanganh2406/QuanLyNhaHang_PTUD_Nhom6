@@ -173,7 +173,8 @@ public class TaiKhoan_GUI extends JFrame {
         addRow(pnlFields, gbc, 0, "Mã tài khoản", txtMaDangNhap, "Vai trò", cbVaiTro);
 
         txtTenDangNhap = createTextField();
-        txtTenDangNhap.setEditable(false);
+//        txtTenDangNhap.setEditable(false);
+        txtTenDangNhap.setEditable(true);
 
 
 
@@ -593,7 +594,8 @@ public class TaiKhoan_GUI extends JFrame {
         txtMaDangNhap.setText("");
         txtTenDangNhap.setText("");
         txtMatKhau.setText("");
-        txtTenDangNhap.setEnabled(true);
+//        txtTenDangNhap.setEnabled(true);
+        txtTenDangNhap.setEditable(true);
         txtMatKhau.setEnabled(true);
         cbNhanVien.setEnabled(true);
         cbVaiTro.setSelectedIndex(0);
@@ -771,23 +773,36 @@ public class TaiKhoan_GUI extends JFrame {
         txtMaDangNhap.setText(tableModel.getValueAt(row, 0).toString());
         txtTenDangNhap.setText(tableModel.getValueAt(row, 1).toString());
         cbVaiTro.setSelectedItem(tableModel.getValueAt(row, 2).toString());
-//        txtMatKhau.setText(tableModel.getValueAt(row, 3).toString());
+
         String mkThat = tableModel.getValueAt(row, 3).toString();
+        txtMatKhau.setText(PasswordUtil.maHoaMD5(mkThat));
 
-        txtMatKhau.setText(
-            PasswordUtil.maHoaMD5(mkThat)
-        );
+        txtTenDangNhap.setEditable(false);
 
-        txtTenDangNhap.setEnabled(false);
-        txtMatKhau.setEnabled(false);
-        cbNhanVien.setEnabled(false);
-        cbVaiTro.setEnabled(false);
+        txtMatKhau.setEditable(false);
+
+        cbNhanVien.setEnabled(true);
+        cbNhanVien.setFocusable(false);
+
+        cbVaiTro.setEnabled(true);
+        cbVaiTro.setFocusable(false);
+
+        cbTrangThai.setEnabled(true);
 
         cbNhanVien.setSelectedItem(tableModel.getValueAt(row, 4).toString());
         cbTrangThai.setSelectedItem(tableModel.getValueAt(row, 5).toString());
 
         TaiKhoan tk = dsTK.get(row);
         loadAnhNhanVien(tk.getMaNV().getAnhNhanVien());
+
+        txtMaDangNhap.setForeground(Color.BLACK);
+        txtTenDangNhap.setForeground(Color.BLACK);
+
+        cbVaiTro.setForeground(Color.BLACK);
+        cbNhanVien.setForeground(Color.BLACK);
+        cbTrangThai.setForeground(Color.BLACK);
+
+        txtMatKhau.setForeground(new Color(120, 140, 160));
     }
 
     private void loadData() {

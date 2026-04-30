@@ -40,6 +40,9 @@ public class XuLyMonAn_DigLog extends JDialog {
     private final String nextMaMon;
     private final MonAn_DAO dao = new MonAn_DAO();
 
+    
+    private gui.ThucDon_GUI parentGUI;
+
     private boolean saved = false;
     private String duongDanAnh = "";
 
@@ -51,11 +54,13 @@ public class XuLyMonAn_DigLog extends JDialog {
 
     private final List<LoaiMonAn> dsLoai = new ArrayList<>();
 
-    public XuLyMonAn_DigLog(Frame parent, Mode mode, MonAn monAn, String nextMaMon) {
+
+    public XuLyMonAn_DigLog(Frame parent,gui.ThucDon_GUI parentGUI, Mode mode, MonAn monAn, String nextMaMon) {
         super(parent, true);
         this.mode = mode;
         this.monAnCu = monAn;
         this.nextMaMon = nextMaMon;
+        this.parentGUI = parentGUI;
 
         String title = switch (mode) {
             case THEM -> "THÊM MÓN";
@@ -142,6 +147,21 @@ public class XuLyMonAn_DigLog extends JDialog {
         addRow(body, gbc, 3, "Đơn giá:", giaPanel);
 
         cbLoaiMon = new JComboBox<>();
+
+//        btnThemLoai = new JButton("+");
+//        btnThemLoai.setPreferredSize(new Dimension(40, 30));
+        btnThemLoai = new JButton();
+
+        ImageIcon iconPlus = new ImageIcon("img/cn_them.png");
+        Image img = iconPlus.getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
+
+        btnThemLoai.setIcon(new ImageIcon(img));
+        btnThemLoai.setPreferredSize(new Dimension(50, 30));
+
+        btnThemLoai.setFocusPainted(false);
+        btnThemLoai.setContentAreaFilled(false);
+        btnThemLoai.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180)));
+        btnThemLoai.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         for (LoaiMonAn lm : dsLoai) cbLoaiMon.addItem(lm.getTenLoaiMonAn());
         styleComboBox(cbLoaiMon);
 
@@ -183,6 +203,91 @@ public class XuLyMonAn_DigLog extends JDialog {
         scroll.setBorder(null);
         scroll.getViewport().setBackground(CLR_BG);
         scroll.getVerticalScrollBar().setUnitIncrement(12);
+
+        
+        btnThemLoai.addActionListener(e -> {
+            dao.LoaiMonAn_DAO loaiDAO = new dao.LoaiMonAn_DAO();
+
+            while (true) {
+                String tenLoai = JOptionPane.showInputDialog(
+                        this,
+                        "Nhập tên loại món:"
+                );
+
+                // bấm Cancel
+                if (tenLoai == null) {
+                    return;
+                }
+
+                tenLoai = tenLoai.trim();
+
+                // nhập rỗng
+                if (tenLoai.isEmpty()) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Tên loại món không được để trống!",
+                            "Lỗi nhập liệu",
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    continue;
+                }
+
+                // kiểm tra trùng
+                boolean biTrung = false;
+
+                for (LoaiMonAn lm : dsLoai) {
+                    if (lm.getTenLoaiMonAn()
+                            .trim()
+                            .equalsIgnoreCase(tenLoai)) {
+                        biTrung = true;
+                        break;
+                    }
+                }
+
+                if (biTrung) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Tên loại món đã tồn tại!\nVui lòng nhập tên khác.",
+                            "Trùng dữ liệu",
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    continue; // quay lại nhập tiếp
+                }
+
+                // hợp lệ → thêm mới
+                entity.LoaiMonAn loai =
+                        new entity.LoaiMonAn(null, tenLoai);
+
+                String maMoi =
+                        loaiDAO.themLoaiMonAnTraMa(loai);
+
+                if (maMoi != null) {
+                    loai.setMaLoaiMonAn(maMoi);
+
+                    dsLoai.add(loai);
+                    cbLoaiMon.addItem(loai.getTenLoaiMonAn());
+                    cbLoaiMon.setSelectedItem(loai.getTenLoaiMonAn());
+
+                    if (parentGUI != null) {
+                        parentGUI.reloadTabs();
+                    }
+
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Thêm loại món thành công!"
+                    );
+                } else {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Không thể thêm loại món!",
+                            "Lỗi",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
+
+                break; // thoát vòng lặp sau khi thêm thành công
+            }
+        });
         return scroll;
     }
 
@@ -339,10 +444,43 @@ public class XuLyMonAn_DigLog extends JDialog {
         txtDonGia.setText(String.format("%,.0f", mon.getDonGia()).replace(",", "."));
         txtMoTa.setText(mon.getMoTa() != null ? mon.getMoTa() : "");
 
-        if (mon.getMaLoaiMonAn() != null) {
-            for (int i = 0; i < dsLoai.size(); i++) {
-                if (dsLoai.get(i).getMaLoaiMonAn().equals(mon.getMaLoaiMonAn().getMaLoaiMonAn())) {
-                    cbLoaiMon.setSelectedIndex(i);
+
+        // Loại món
+        for (int i = 0; i < dsLoai.size(); i++) {
+            if (dsLoai.get(i).getMaLoaiMonAn().equals(mon.getMaLoaiMonAn().getMaLoaiMonAn())) {
+                cbLoaiMon.setSelectedIndex(i);
+                break;
+            }
+        }
+
+        // Trạng thái
+        cbTrangThai.setSelectedItem(mon.isTrangThai() ? "Đang phục vụ" : "Ngừng bán");
+
+        // Ảnh
+        duongDanAnh = mon.getAnhMon() != null ? mon.getAnhMon() : "";
+        if (duongDanAnh != null && !duongDanAnh.isEmpty()) {
+
+            String name = duongDanAnh;
+
+            if (name.contains(".")) {
+                name = name.substring(0, name.lastIndexOf("."));
+            }
+
+            String baseDir = System.getProperty("user.dir") + File.separator + "img";
+
+            String[] exts = {".png", ".jpg", ".jpeg"};
+
+            for (String ext : exts) {
+                File file = new File(baseDir + File.separator + name + ext);
+
+                if (file.exists()) {
+                    int sz = (int)(160 * SCALE);
+                    Image img = new ImageIcon(file.getAbsolutePath())
+                            .getImage()
+                            .getScaledInstance(sz, sz, Image.SCALE_SMOOTH);
+
+                    lblAnh.setIcon(new ImageIcon(img));
+                    lblAnh.setText("");
                     break;
                 }
             }
@@ -500,4 +638,61 @@ public class XuLyMonAn_DigLog extends JDialog {
     public boolean isSaved() {
         return saved;
     }
+
+
+//    private void styleComboBox(JComboBox<?> cb) {
+//        cb.setFont(new Font("SansSerif", Font.PLAIN, (int)(13 * SCALE)));
+//        cb.setBackground(Color.WHITE);
+//        cb.setFocusable(false);
+//        cb.setPreferredSize(new Dimension(0, (int)(30 * SCALE)));
+//        cb.setBorder(BorderFactory.createCompoundBorder(
+//                BorderFactory.createLineBorder(CLR_BORDER),
+//                BorderFactory.createEmptyBorder(2, 6, 2, 6)));
+//    }
+//    private void styleComboBox(JComboBox<?> cb) {
+//        cb.setFont(new Font("SansSerif", Font.PLAIN, (int)(13 * SCALE)));
+//        cb.setBackground(Color.WHITE);
+//        cb.setFocusable(false);
+//        cb.setPreferredSize(new Dimension(0, (int)(30 * SCALE)));
+//        cb.setBorder(BorderFactory.createEmptyBorder());
+//
+//        cb.setOpaque(true);
+//        cb.setLightWeightPopupEnabled(false);
+//    }
+
+    private void addRow(JPanel p, GridBagConstraints gbc, int row,
+                        String labelText, JComponent comp, Object unused) {
+        gbc.gridy = row; gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0; gbc.gridwidth = 1; gbc.weightx = 0; gbc.anchor = GridBagConstraints.WEST;
+        JLabel lbl = new JLabel(labelText);
+//        lbl.setFont(new Font("SansSerif", Font.PLAIN, (int)(13 * SCALE)));
+        lbl.setFont(LABEL_FONT);
+        p.add(lbl, gbc);
+
+        gbc.gridx = 1; gbc.gridwidth = 2; gbc.weightx = 1;
+        p.add(comp, gbc);
+    }
+
+//    private JButton createBtn(String text, Color bg) {
+//        JButton btn = new JButton(text) {
+//            @Override protected void paintComponent(Graphics g) {
+//                Graphics2D g2 = (Graphics2D) g.create();
+//                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+//                g2.setColor(getModel().isPressed() ? bg.darker() : bg);
+//                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+//                g2.dispose();
+//                super.paintComponent(g);
+//            }
+//        };
+//        btn.setFont(new Font("SansSerif", Font.BOLD, (int)(13 * SCALE)));
+//        btn.setForeground(new Color(30, 30, 30));
+//        btn.setContentAreaFilled(false);
+//        btn.setBorderPainted(false);
+//        btn.setFocusPainted(false);
+//        btn.setPreferredSize(new Dimension((int)(110 * SCALE), (int)(36 * SCALE)));
+//        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+//        return btn;
+//    }
+
+//    public boolean isSaved() { return saved; }
 }

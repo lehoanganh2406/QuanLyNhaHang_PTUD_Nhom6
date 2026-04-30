@@ -51,6 +51,8 @@ public class XuLyMonAn_DigLog extends JDialog {
     private final MonAn_DAO dao = new MonAn_DAO();
     private       boolean   saved = false;
     private       String    duongDanAnh = "";
+    
+    private gui.ThucDon_GUI parentGUI;
 
     // ── UI fields ─────────────────────────────────────────────────────────────
     private JLabel     lblAnh;
@@ -63,11 +65,12 @@ public class XuLyMonAn_DigLog extends JDialog {
 	private JButton btnThemLoai;
 
     // =========================================================================
-    public XuLyMonAn_DigLog(Frame parent, Mode mode, MonAn monAn, String nextMaMon) {
+    public XuLyMonAn_DigLog(Frame parent,gui.ThucDon_GUI parentGUI, Mode mode, MonAn monAn, String nextMaMon) {
         super(parent, true);
         this.mode      = mode;
         this.monAnCu   = monAn;
         this.nextMaMon = nextMaMon;
+        this.parentGUI = parentGUI;
 
         String title = switch (mode) {
             case THEM      -> "THÊM MÓN";
@@ -177,8 +180,20 @@ public class XuLyMonAn_DigLog extends JDialog {
 
         // ── Loại món ──────────────────────────────────────────────────────────
         cbLoaiMon = new JComboBox<>();
-        btnThemLoai = new JButton("+");
-        btnThemLoai.setPreferredSize(new Dimension(40, 30));
+//        btnThemLoai = new JButton("+");
+//        btnThemLoai.setPreferredSize(new Dimension(40, 30));
+        btnThemLoai = new JButton();
+
+        ImageIcon iconPlus = new ImageIcon("img/cn_them.png");
+        Image img = iconPlus.getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
+
+        btnThemLoai.setIcon(new ImageIcon(img));
+        btnThemLoai.setPreferredSize(new Dimension(50, 30));
+
+        btnThemLoai.setFocusPainted(false);
+        btnThemLoai.setContentAreaFilled(false);
+        btnThemLoai.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180)));
+        btnThemLoai.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         for (LoaiMonAn lm : dsLoai) cbLoaiMon.addItem(lm.getTenLoaiMonAn());
         styleComboBox(cbLoaiMon);
 //        addRow(body, gbc, 4, "Loại món:", cbLoaiMon, null);
@@ -228,25 +243,86 @@ public class XuLyMonAn_DigLog extends JDialog {
         scroll.getVerticalScrollBar().setUnitIncrement(12);
         
         btnThemLoai.addActionListener(e -> {
-            String tenLoai = JOptionPane.showInputDialog(this, "Nhập tên loại món:");
-
-            if (tenLoai == null || tenLoai.trim().isEmpty()) return;
-
             dao.LoaiMonAn_DAO loaiDAO = new dao.LoaiMonAn_DAO();
 
-            entity.LoaiMonAn loai = new entity.LoaiMonAn(null, tenLoai);
+            while (true) {
+                String tenLoai = JOptionPane.showInputDialog(
+                        this,
+                        "Nhập tên loại món:"
+                );
 
-            String maMoi = loaiDAO.themLoaiMonAnTraMa(loai);
+                // bấm Cancel
+                if (tenLoai == null) {
+                    return;
+                }
 
-            if (maMoi != null) {
-                loai.setMaLoaiMonAn(maMoi);
+                tenLoai = tenLoai.trim();
 
-                cbLoaiMon.addItem(loai.getTenLoaiMonAn());
+                // nhập rỗng
+                if (tenLoai.isEmpty()) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Tên loại món không được để trống!",
+                            "Lỗi nhập liệu",
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    continue;
+                }
 
-                // 🔥 reload tab ngoài
-                ((gui.ThucDon_GUI) getParent()).reloadTabs();
+                // kiểm tra trùng
+                boolean biTrung = false;
 
-                JOptionPane.showMessageDialog(this, "Thêm loại thành công!");
+                for (LoaiMonAn lm : dsLoai) {
+                    if (lm.getTenLoaiMonAn()
+                            .trim()
+                            .equalsIgnoreCase(tenLoai)) {
+                        biTrung = true;
+                        break;
+                    }
+                }
+
+                if (biTrung) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Tên loại món đã tồn tại!\nVui lòng nhập tên khác.",
+                            "Trùng dữ liệu",
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    continue; // quay lại nhập tiếp
+                }
+
+                // hợp lệ → thêm mới
+                entity.LoaiMonAn loai =
+                        new entity.LoaiMonAn(null, tenLoai);
+
+                String maMoi =
+                        loaiDAO.themLoaiMonAnTraMa(loai);
+
+                if (maMoi != null) {
+                    loai.setMaLoaiMonAn(maMoi);
+
+                    dsLoai.add(loai);
+                    cbLoaiMon.addItem(loai.getTenLoaiMonAn());
+                    cbLoaiMon.setSelectedItem(loai.getTenLoaiMonAn());
+
+                    if (parentGUI != null) {
+                        parentGUI.reloadTabs();
+                    }
+
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Thêm loại món thành công!"
+                    );
+                } else {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Không thể thêm loại món!",
+                            "Lỗi",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
+
+                break; // thoát vòng lặp sau khi thêm thành công
             }
         });
         return scroll;
@@ -305,7 +381,6 @@ public class XuLyMonAn_DigLog extends JDialog {
 
             String name = duongDanAnh;
 
-            // bỏ extension nếu có
             if (name.contains(".")) {
                 name = name.substring(0, name.lastIndexOf("."));
             }
@@ -475,14 +550,24 @@ public class XuLyMonAn_DigLog extends JDialog {
         return tf;
     }
 
+//    private void styleComboBox(JComboBox<?> cb) {
+//        cb.setFont(new Font("SansSerif", Font.PLAIN, (int)(13 * SCALE)));
+//        cb.setBackground(Color.WHITE);
+//        cb.setFocusable(false);
+//        cb.setPreferredSize(new Dimension(0, (int)(30 * SCALE)));
+//        cb.setBorder(BorderFactory.createCompoundBorder(
+//                BorderFactory.createLineBorder(CLR_BORDER),
+//                BorderFactory.createEmptyBorder(2, 6, 2, 6)));
+//    }
     private void styleComboBox(JComboBox<?> cb) {
         cb.setFont(new Font("SansSerif", Font.PLAIN, (int)(13 * SCALE)));
         cb.setBackground(Color.WHITE);
         cb.setFocusable(false);
         cb.setPreferredSize(new Dimension(0, (int)(30 * SCALE)));
-        cb.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(CLR_BORDER),
-                BorderFactory.createEmptyBorder(2, 6, 2, 6)));
+        cb.setBorder(BorderFactory.createEmptyBorder());
+
+        cb.setOpaque(true);
+        cb.setLightWeightPopupEnabled(false);
     }
 
     private void addRow(JPanel p, GridBagConstraints gbc, int row,

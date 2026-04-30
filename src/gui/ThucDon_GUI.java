@@ -112,6 +112,10 @@ public class ThucDon_GUI extends JPanel {
             "150000", "200000", "300000", "500000"
     };
 
+	private JButton btnXoaLoai;
+
+	private JButton btnSuaLoai;
+
     private static int sc(int value) {
         return (int) Math.round(value * UI_SCALE);
     }
@@ -282,12 +286,12 @@ public class ThucDon_GUI extends JPanel {
             JFrame parentFrame = getParentFrame();
             String maMoi = monDAO.getNextMaMon();
             XuLyMonAn_DigLog dlg = new XuLyMonAn_DigLog(
-
-                    parentFrame,
-                    XuLyMonAn_DigLog.Mode.THEM,
-                    null,
-                    maMoi
-            );
+            	    parentFrame,
+            	    this,
+            	    XuLyMonAn_DigLog.Mode.THEM,
+            	    null,
+            	    maMoi
+            	);
 
             dlg.setLocationRelativeTo(parentFrame);
             dlg.setVisible(true);
@@ -304,11 +308,12 @@ public class ThucDon_GUI extends JPanel {
             JFrame parentFrame = getParentFrame();
 
             XuLyMonAn_DigLog dlg = new XuLyMonAn_DigLog(
-                    parentFrame,
-                    XuLyMonAn_DigLog.Mode.CAP_NHAT,
-                    selectedMon,
-                    null
-            );
+            	    parentFrame,
+            	    this,
+            	    XuLyMonAn_DigLog.Mode.CAP_NHAT,
+            	    selectedMon,
+            	    null
+            	);
 
             dlg.setLocationRelativeTo(parentFrame);
             dlg.setVisible(true);
@@ -330,11 +335,12 @@ public class ThucDon_GUI extends JPanel {
             JFrame parentFrame = getParentFrame();
 
             XuLyMonAn_DigLog dlg = new XuLyMonAn_DigLog(
-                    parentFrame,
-                    XuLyMonAn_DigLog.Mode.CHI_TIET,
-                    selectedMon,
-                    null
-            );
+            	    parentFrame,
+            	    this,
+            	    XuLyMonAn_DigLog.Mode.CHI_TIET,
+            	    selectedMon,
+            	    null
+            	);
 
             dlg.setLocationRelativeTo(parentFrame);
             dlg.setVisible(true);
@@ -455,8 +461,45 @@ public class ThucDon_GUI extends JPanel {
         return main;
     }
 
+//    private void buildTabs() {
+//        pTabBar.removeAll();
+//
+//        JButton btnAll = createTabButton("Tất cả", true);
+//        btnAll.addActionListener(e -> {
+//            currentCategory = null;
+//            setActiveTab(btnAll);
+//            showOrLoadCategory("ALL");
+//        });
+//
+//        pTabBar.add(btnAll);
+//        activeTabBtn = btnAll;
+//
+//
+//        LoaiMonAn_DAO loaiDAO = new LoaiMonAn_DAO();
+//        List<LoaiMonAn> dsLoai = loaiDAO.getAllLoaiMonAn();
+//
+//        for (LoaiMonAn loai : dsLoai) {
+//            JButton btn = createTabButton(loai.getTenLoaiMonAn(), false);
+//            String maLoai = loai.getMaLoaiMonAn();
+//            btn.addActionListener(e -> {
+//                currentCategory = maLoai;
+//                setActiveTab(btn);
+//                showOrLoadCategory(maLoai);
+//            });
+//            pTabBar.add(btn);
+//        }
+//
+//        pTabBar.revalidate();
+//        pTabBar.repaint();
+//    }
+    
     private void buildTabs() {
         pTabBar.removeAll();
+        pTabBar.setLayout(new BorderLayout()); // QUAN TRỌNG
+
+        // ===== PANEL TRÁI =====
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, sc(8), sc(6)));
+        leftPanel.setOpaque(false);
 
         JButton btnAll = createTabButton("Tất cả", true);
         btnAll.addActionListener(e -> {
@@ -465,9 +508,8 @@ public class ThucDon_GUI extends JPanel {
             showOrLoadCategory("ALL");
         });
 
-        pTabBar.add(btnAll);
+        leftPanel.add(btnAll);
         activeTabBtn = btnAll;
-
 
         LoaiMonAn_DAO loaiDAO = new LoaiMonAn_DAO();
         List<LoaiMonAn> dsLoai = loaiDAO.getAllLoaiMonAn();
@@ -475,13 +517,113 @@ public class ThucDon_GUI extends JPanel {
         for (LoaiMonAn loai : dsLoai) {
             JButton btn = createTabButton(loai.getTenLoaiMonAn(), false);
             String maLoai = loai.getMaLoaiMonAn();
+
             btn.addActionListener(e -> {
                 currentCategory = maLoai;
                 setActiveTab(btn);
                 showOrLoadCategory(maLoai);
             });
-            pTabBar.add(btn);
+
+            leftPanel.add(btn);
         }
+
+        // ===== PANEL PHẢI =====
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, sc(10), sc(6)));
+        rightPanel.setOpaque(false);
+
+        // ICON SỬA
+        btnSuaLoai = new JButton();
+        btnSuaLoai.setIcon(loadIcon("img/cn_capnhat.png", 22, 22));
+        btnSuaLoai.setFocusPainted(false);
+        btnSuaLoai.setContentAreaFilled(false);
+        btnSuaLoai.setBorderPainted(false);
+        btnSuaLoai.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        btnSuaLoai.addActionListener(e -> {
+            if (currentCategory == null) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn loại món!");
+                return;
+            }
+
+            LoaiMonAn_DAO dao = new LoaiMonAn_DAO();
+            LoaiMonAn loai = dao.getLoaiMonAnTheoMa(currentCategory);
+
+            String tenMoi = JOptionPane.showInputDialog(
+                    this,
+                    "Nhập tên mới:",
+                    loai.getTenLoaiMonAn()
+            );
+
+            if (tenMoi == null || tenMoi.trim().isEmpty()) return;
+
+            tenMoi = tenMoi.trim();
+
+            // check trùng
+            for (LoaiMonAn lm : dao.getAllLoaiMonAn()) {
+                if (lm.getTenLoaiMonAn().equalsIgnoreCase(tenMoi)) {
+                    JOptionPane.showMessageDialog(this, "Tên loại bị trùng!");
+                    return;
+                }
+            }
+
+            loai.setTenLoaiMonAn(tenMoi);
+
+            if (dao.capNhatLoaiMonAn(loai)) {
+                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+                reloadTabs();
+            } else {
+                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
+            }
+        });
+
+        // ICON XÓA
+        btnXoaLoai = new JButton();
+        btnXoaLoai.setIcon(loadIcon("img/delete.png", 22, 22));
+        btnXoaLoai.setFocusPainted(false);
+        btnXoaLoai.setContentAreaFilled(false);
+        btnXoaLoai.setBorderPainted(false);
+        btnXoaLoai.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        btnXoaLoai.addActionListener(e -> {
+            if (currentCategory == null) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn loại món!");
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Bạn có chắc muốn xóa loại món này?",
+                    "Xác nhận",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm != JOptionPane.YES_OPTION) return;
+
+            LoaiMonAn_DAO dao = new LoaiMonAn_DAO();
+
+            boolean ok = dao.xoaLoaiMonAn(currentCategory);
+
+            if (ok) {
+                JOptionPane.showMessageDialog(this, "Xóa thành công!");
+                currentCategory = null;
+                reloadTabs();
+                showOrLoadCategory("ALL");
+            } else {
+            	JOptionPane.showMessageDialog(
+            	        this,
+            	        "Không thể xóa!\nVẫn còn món đang phục vụ.",
+            	        "Cảnh báo",
+            	        JOptionPane.WARNING_MESSAGE
+            	);
+            }
+        });
+
+        rightPanel.add(btnSuaLoai);
+        rightPanel.add(btnXoaLoai);
+
+        // ===== GHÉP =====
+        pTabBar.add(leftPanel, BorderLayout.CENTER);
+        pTabBar.add(rightPanel, BorderLayout.EAST);
 
         pTabBar.revalidate();
         pTabBar.repaint();
@@ -502,8 +644,40 @@ public class ThucDon_GUI extends JPanel {
         return btn;
     }
 
+//    private void setActiveTab(JButton btn) {
+//        for (Component c : pTabBar.getComponents()) {
+//            if (c instanceof JButton) {
+//                JButton b = (JButton) c;
+//                b.setBackground(C_TAB_BAR);
+//                b.setFont(new Font("Times New Roman", Font.PLAIN, sc(20)));
+//            }
+//        }
+//
+//        btn.setBackground(C_TAB_ACTIVE);
+//        btn.setFont(new Font("Times New Roman", Font.BOLD, sc(20)));
+//        activeTabBtn = btn;
+//    }
+    
     private void setActiveTab(JButton btn) {
+
+        // duyệt toàn bộ component trong pTabBar
         for (Component c : pTabBar.getComponents()) {
+
+            // nếu là panel → duyệt tiếp bên trong
+            if (c instanceof JPanel) {
+                JPanel panel = (JPanel) c;
+
+                for (Component inner : panel.getComponents()) {
+                    if (inner instanceof JButton) {
+                        JButton b = (JButton) inner;
+
+                        b.setBackground(C_TAB_BAR);
+                        b.setFont(new Font("Times New Roman", Font.PLAIN, sc(20)));
+                    }
+                }
+            }
+
+            // nếu lỡ có button nằm trực tiếp
             if (c instanceof JButton) {
                 JButton b = (JButton) c;
                 b.setBackground(C_TAB_BAR);
@@ -511,8 +685,10 @@ public class ThucDon_GUI extends JPanel {
             }
         }
 
+        // set tab đang chọn
         btn.setBackground(C_TAB_ACTIVE);
         btn.setFont(new Font("Times New Roman", Font.BOLD, sc(20)));
+
         activeTabBtn = btn;
     }
 

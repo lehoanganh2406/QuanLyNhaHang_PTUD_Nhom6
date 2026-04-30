@@ -142,18 +142,52 @@ public class LoaiMonAn_DAO {
 		return false;
 	}
 
+//	public boolean xoaLoaiMonAn(String maLoaiMonAn) {
+//		Connection con = ConnectDB.getInstance().getConnection();
+//
+//		String sql = "DELETE FROM LoaiMonAn WHERE maLoaiMonAn = ?";
+//
+//		try (PreparedStatement stmt = con.prepareStatement(sql)) {
+//			stmt.setString(1, maLoaiMonAn);
+//			return stmt.executeUpdate() > 0;
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//		}
+//
+//		return false;
+//	}
+	
 	public boolean xoaLoaiMonAn(String maLoaiMonAn) {
-		Connection con = ConnectDB.getInstance().getConnection();
+	    Connection con = ConnectDB.getInstance().getConnection();
 
-		String sql = "DELETE FROM LoaiMonAn WHERE maLoaiMonAn = ?";
+	    try {
+	        // 1. kiểm tra còn món đang bán
+	        String checkSql = "SELECT COUNT(*) FROM MonAn WHERE maLoaiMonAn = ? AND trangThai = 1";
+	        PreparedStatement psCheck = con.prepareStatement(checkSql);
+	        psCheck.setString(1, maLoaiMonAn);
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, maLoaiMonAn);
-			return stmt.executeUpdate() > 0;
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+	        ResultSet rs = psCheck.executeQuery();
+	        if (rs.next() && rs.getInt(1) > 0) {
+	            return false; // còn món đang bán → không cho xóa
+	        }
 
-		return false;
+	        // 2. XÓA TOÀN BỘ MÓN (đã ngừng bán)
+	        String deleteMonAn = "DELETE FROM MonAn WHERE maLoaiMonAn = ?";
+	        PreparedStatement psDeleteMon = con.prepareStatement(deleteMonAn);
+	        psDeleteMon.setString(1, maLoaiMonAn);
+	        psDeleteMon.executeUpdate();
+
+	        // 3. XÓA LOẠI
+	        String deleteLoai = "DELETE FROM LoaiMonAn WHERE maLoaiMonAn = ?";
+	        PreparedStatement psDeleteLoai = con.prepareStatement(deleteLoai);
+	        psDeleteLoai.setString(1, maLoaiMonAn);
+
+	        return psDeleteLoai.executeUpdate() > 0;
+
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+
+	    return false;
 	}
 }

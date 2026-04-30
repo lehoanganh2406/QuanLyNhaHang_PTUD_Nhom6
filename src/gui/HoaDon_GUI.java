@@ -30,7 +30,7 @@ public class HoaDon_GUI extends JFrame {
     private static final Color CLR_BORDER     = new Color(175, 160, 135);
 
     private static final Color CLR_BTN_CHITIET = new Color(100, 181, 246);
-    private static final Color CLR_BTN_TRACUU  = new Color(102, 187, 106);
+    private static final Color CLR_BTN_TRACUU = new Color(244, 164, 96);
     private static final Color CLR_BTN_LAMMOI  = new Color(102, 187, 106);
     private static final Color CLR_BTN_LOC     = new Color(250, 224, 187);
     private static final Color CLR_BTN_CAPNHAT = new Color(255, 213, 79);
@@ -74,7 +74,7 @@ public class HoaDon_GUI extends JFrame {
 
         con = ConnectDB.getConnection();
         loadData();
-        disableFormFields();
+//        disableFormFields();
     }
 
     public HoaDon_GUI() {
@@ -824,23 +824,63 @@ public class HoaDon_GUI extends JFrame {
         disableFormFields();
     }
 
+//    private void disableFormFields() {
+//        txtTenKhach.setEnabled(false);
+//        txtMaHoaDon.setEnabled(false);
+//        txtBan.setEnabled(false);
+//        txtTongTien.setEnabled(false);
+//        txtSDT.setEnabled(false);
+//        cbNhanVien.setEnabled(false);
+//        txtKhuyenMai.setEnabled(false);
+//        cboPhuongThucThanhToan.setEnabled(false);
+//        cboHinhThucPhucVu.setEnabled(true);
+//
+//        dtThoiGianVao.setEnabled(false);
+//        dtThoiGianRa.setEnabled(false);
+//
+//        cbTrangThai.setEnabled(true);
+//        txtLyDoHuy.setEnabled("Hủy".equalsIgnoreCase(String.valueOf(cbTrangThai.getSelectedItem()))
+//                || "Đã hủy".equalsIgnoreCase(String.valueOf(cbTrangThai.getSelectedItem())));
+//    }
+    
     private void disableFormFields() {
-        txtTenKhach.setEnabled(false);
-        txtMaHoaDon.setEnabled(false);
-        txtBan.setEnabled(false);
-        txtTongTien.setEnabled(false);
-        txtSDT.setEnabled(false);
-        cbNhanVien.setEnabled(false);
-        txtKhuyenMai.setEnabled(false);
-        cboPhuongThucThanhToan.setEnabled(true);
-        cboHinhThucPhucVu.setEnabled(true);
 
-        dtThoiGianVao.setEnabled(false);
+        txtTenKhach.setEditable(false);
+        txtMaHoaDon.setEditable(false);
+        txtBan.setEditable(false);
+        txtTongTien.setEditable(false);
+        txtSDT.setEditable(false);
+        txtKhuyenMai.setEditable(false);
+
+        // ===== DATE =====
+        dtThoiGianVao.setEnabled(true);
+        dtThoiGianVao.setFocusable(false);
+
         dtThoiGianRa.setEnabled(true);
+        dtThoiGianRa.setFocusable(false);
+        cbNhanVien.setEnabled(true);
+        cbNhanVien.setFocusable(false);
+
+        cboPhuongThucThanhToan.setEnabled(true);
+        cboPhuongThucThanhToan.setFocusable(false);
+
+        cboHinhThucPhucVu.setEnabled(true);
+        cboHinhThucPhucVu.setFocusable(false);
 
         cbTrangThai.setEnabled(true);
-        txtLyDoHuy.setEnabled("Hủy".equalsIgnoreCase(String.valueOf(cbTrangThai.getSelectedItem()))
-                || "Đã hủy".equalsIgnoreCase(String.valueOf(cbTrangThai.getSelectedItem())));
+
+        boolean isHuy = "Hủy".equalsIgnoreCase(String.valueOf(cbTrangThai.getSelectedItem()))
+                || "Đã hủy".equalsIgnoreCase(String.valueOf(cbTrangThai.getSelectedItem()));
+
+        txtLyDoHuy.setEditable(isHuy);
+
+        txtTenKhach.setForeground(Color.BLACK);
+        txtMaHoaDon.setForeground(Color.BLACK);
+        txtBan.setForeground(Color.BLACK);
+        txtTongTien.setForeground(Color.BLACK);
+        txtSDT.setForeground(Color.BLACK);
+        txtKhuyenMai.setForeground(Color.BLACK);
+        txtLyDoHuy.setForeground(Color.BLACK);
     }
 
     private void enableFormFields() {

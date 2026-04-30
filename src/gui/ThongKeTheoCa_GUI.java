@@ -4,6 +4,7 @@ import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -12,6 +13,9 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
+import java.awt.Window;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,17 +31,34 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Chunk;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Font.FontFamily;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
 
 import connectDB.ConnectDB;
 import entity.TaiKhoan;
@@ -130,8 +151,9 @@ public class ThongKeTheoCa_GUI extends JPanel {
         btnTongKet.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(22, 163, 74), 1, true),
                 new EmptyBorder(9, 22, 9, 22)));
-        btnTongKet.addActionListener(e -> showTongKetCaForm());
+        btnTongKet.addActionListener(e -> showTongKetCaDialog());
         p.add(btnTongKet);
+
         return p;
     }
 
@@ -209,13 +231,14 @@ public class ThongKeTheoCa_GUI extends JPanel {
 
         JPanel hdr = new JPanel(new BorderLayout());
         hdr.setOpaque(false);
+
         JLabel lblTop = new JLabel(title);
         lblTop.setFont(new Font("SansSerif", Font.BOLD, 15));
         lblTop.setForeground(new Color(51, 65, 85));
         hdr.add(lblTop, BorderLayout.WEST);
 
-        JLabel lblIcons = new JLabel("≡ ️");
-        lblIcons.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+        JLabel lblIcons = new JLabel("≡");
+        lblIcons.setFont(new Font("SansSerif", Font.PLAIN, 18));
         lblIcons.setForeground(Color.GRAY);
         hdr.add(lblIcons, BorderLayout.EAST);
 
@@ -236,7 +259,7 @@ public class ThongKeTheoCa_GUI extends JPanel {
         lblTitle.setForeground(new Color(30, 64, 175));
         w.add(lblTitle, BorderLayout.NORTH);
 
-        JPanel form = new JPanel(new GridLayout(8, 2, 10, 15));
+        JPanel form = new JPanel(new GridLayout(10, 2, 10, 15));
         form.setBackground(Color.WHITE);
 
         addFormRow(form, "Mã ca:", caDangChon == null ? "-" : caDangChon.maCa);
@@ -246,75 +269,335 @@ public class ThongKeTheoCa_GUI extends JPanel {
         addFormRow(form, "Số hóa đơn:", String.valueOf(thongKeCa.soHoaDon));
         addFormRow(form, "Doanh thu:", formatMoney(thongKeCa.doanhThu));
         addFormRow(form, "Tiền mặt:", formatMoney(thongKeCa.tienMat));
-        addFormRow(form, "Chuyển khoản/Visa:", formatMoney(thongKeCa.tienChuyenKhoan + thongKeCa.tienVisa));
+        addFormRow(form, "Chuyển khoản:", formatMoney(thongKeCa.tienChuyenKhoan));
+        addFormRow(form, "Visa:", formatMoney(thongKeCa.tienVisa));
+        addFormRow(form, "Món bán chạy:", thongKeCa.monBanChay == null ? "-" : thongKeCa.monBanChay);
 
         w.add(form, BorderLayout.CENTER);
         return w;
     }
 
-    private void showTongKetCaForm() {
+    private void showTongKetCaDialog() {
         if (caDangChon == null) {
             JOptionPane.showMessageDialog(this, "Không tìm thấy ca làm việc để tổng kết.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
-        rightFormContainer.removeAll();
+        ThongKeCaData data = tinhThongKeTheoCa(caDangChon);
 
-        JPanel w = new JPanel(new BorderLayout());
-        w.setBackground(Color.WHITE);
-        w.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(230, 230, 230), 1),
-                new EmptyBorder(15, 20, 15, 20)));
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Tổng kết ca", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setSize(1150, 720);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout());
+        dialog.getContentPane().setBackground(Color.WHITE);
 
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.setBackground(Color.WHITE);
+        JPanel main = new JPanel(new BorderLayout(0, 18));
+        main.setBackground(Color.WHITE);
+        main.setBorder(new EmptyBorder(18, 18, 18, 18));
 
-        JLabel lblTitle = new JLabel("XÁC NHẬN TỔNG KẾT CA", SwingConstants.CENTER);
+        JLabel lblTitle = new JLabel("TỔNG KẾT CA", SwingConstants.CENTER);
         lblTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
-        lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        lblTitle.setForeground(new Color(40, 167, 69));
-        mainPanel.add(lblTitle);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        lblTitle.setForeground(new Color(34, 139, 94));
+        main.add(lblTitle, BorderLayout.NORTH);
 
-        JPanel formPanel = new JPanel(new GridLayout(8, 2, 10, 15));
-        formPanel.setBackground(Color.WHITE);
-        addFormRow(formPanel, "Mã ca:", caDangChon.maCa);
-        addFormRow(formPanel, "Tên ca:", caDangChon.tenCa);
-        addFormRow(formPanel, "Thời gian mở:", formatDate(caDangChon.moCa));
-        addFormRow(formPanel, "Thời gian đóng:", caDangChon.dongCa == null ? "Sẽ đóng lúc xác nhận" : formatDate(caDangChon.dongCa));
-        addFormRow(formPanel, "Tiền mở ca:", formatMoney(caDangChon.tienMoCa));
-        addFormRow(formPanel, "Tiền mặt cuối ca:", formatMoney(thongKeCa.tienMat));
-        addFormRow(formPanel, "Tiền chuyển khoản:", formatMoney(thongKeCa.tienChuyenKhoan));
-        addFormRow(formPanel, "Tiền Visa:", formatMoney(thongKeCa.tienVisa));
-        mainPanel.add(formPanel);
-        mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        JPanel center = new JPanel(new BorderLayout(18, 18));
+        center.setOpaque(false);
 
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 0));
+        JPanel topInfo = new JPanel(new GridLayout(5, 4, 12, 12));
+        topInfo.setBackground(Color.WHITE);
+        topInfo.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(230, 230, 230), 1),
+                new EmptyBorder(14, 14, 14, 14)));
+
+        addFormRow(topInfo, "Mã ca:", caDangChon.maCa);
+        addFormRow(topInfo, "Tên ca:", caDangChon.tenCa);
+        addFormRow(topInfo, "Thời gian mở:", formatDate(caDangChon.moCa));
+        addFormRow(topInfo, "Thời gian đóng:", caDangChon.dongCa == null ? "Sẽ đóng khi xác nhận" : formatDate(caDangChon.dongCa));
+        addFormRow(topInfo, "Tiền mở ca:", formatMoney(caDangChon.tienMoCa));
+        addFormRow(topInfo, "Số hóa đơn:", String.valueOf(data.soHoaDon));
+        addFormRow(topInfo, "Doanh thu:", formatMoney(data.doanhThu));
+        addFormRow(topInfo, "Tiền mặt:", formatMoney(data.tienMat));
+        addFormRow(topInfo, "Chuyển khoản:", formatMoney(data.tienChuyenKhoan));
+        addFormRow(topInfo, "Visa:", formatMoney(data.tienVisa));
+        addFormRow(topInfo, "Tổng SL món:", String.valueOf(data.tongSoLuongMon));
+        addFormRow(topInfo, "Món bán chạy:", data.monBanChay == null ? "-" : data.monBanChay);
+        addFormRow(topInfo, "Người kết ca:", taiKhoanDangNhap == null ? "Quản lý" : taiKhoanDangNhap.getTenDangNhap());
+        addFormRow(topInfo, "Trạng thái ca:", caDangChon.dongCa == null ? "Đang mở" : "Đã đóng");
+        addFormRow(topInfo, "Số món khác nhau:", String.valueOf(data.soLoaiMon));
+        addFormRow(topInfo, "Tiền cuối ca:", formatMoney(caDangChon.tienMoCa + data.tienMat + data.tienChuyenKhoan + data.tienVisa));
+        addFormRow(topInfo, "", "");
+        addFormRow(topInfo, "", "");
+        addFormRow(topInfo, "", "");
+        addFormRow(topInfo, "", "");
+
+        center.add(topInfo, BorderLayout.NORTH);
+
+        JPanel bottom = new JPanel(new GridLayout(1, 2, 18, 0));
+        bottom.setOpaque(false);
+
+        JTable tblHoaDon = createHoaDonTable(data.dsHoaDon);
+        JTable tblMon = createMonTable(data.dsMon);
+
+        bottom.add(createTableBlock("DANH SÁCH THANH TOÁN TRONG CA", tblHoaDon));
+        bottom.add(createTableBlock("THỐNG KÊ MÓN ĂN TRONG CA", tblMon));
+
+        center.add(bottom, BorderLayout.CENTER);
+        main.add(center, BorderLayout.CENTER);
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         btnPanel.setBackground(Color.WHITE);
 
-        JButton btnXacNhan = new JButton("Xác Nhận");
-        btnXacNhan.setFont(new Font("SansSerif", Font.BOLD, 18));
-        btnXacNhan.setPreferredSize(new Dimension(150, 50));
-        btnXacNhan.setBackground(new Color(40, 167, 69));
+        JButton btnXuatPDF = new JButton("Xuất PDF");
+        btnXuatPDF.setFont(new Font("SansSerif", Font.BOLD, 16));
+        btnXuatPDF.setBackground(new Color(59, 130, 246));
+        btnXuatPDF.setForeground(Color.WHITE);
+        btnXuatPDF.setFocusPainted(false);
+        btnXuatPDF.setPreferredSize(new Dimension(150, 45));
+        btnXuatPDF.addActionListener(e -> xuatTongKetCaPDF(dialog, data));
+
+        JButton btnXacNhan = new JButton("Xác nhận kết ca");
+        btnXacNhan.setFont(new Font("SansSerif", Font.BOLD, 16));
+        btnXacNhan.setBackground(new Color(34, 197, 94));
         btnXacNhan.setForeground(Color.WHITE);
         btnXacNhan.setFocusPainted(false);
-        btnXacNhan.setOpaque(true);
-        btnXacNhan.setBorderPainted(false);
-        btnXacNhan.addActionListener(e -> xacNhanTongKetCa());
+        btnXacNhan.setPreferredSize(new Dimension(180, 45));
+        btnXacNhan.addActionListener(e -> xacNhanTongKetCa(dialog, data));
+
+        btnPanel.add(btnXuatPDF);
         btnPanel.add(btnXacNhan);
 
-        mainPanel.add(btnPanel);
-        w.add(mainPanel, BorderLayout.CENTER);
+        main.add(btnPanel, BorderLayout.SOUTH);
 
-        rightFormContainer.add(w, BorderLayout.CENTER);
-        rightFormContainer.revalidate();
-        rightFormContainer.repaint();
+        dialog.add(main, BorderLayout.CENTER);
+        dialog.setVisible(true);
     }
 
-    private void xacNhanTongKetCa() {
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Xác nhận tổng kết ca " + caDangChon.maCa + "?",
+    private JPanel createTableBlock(String title, JTable table) {
+        JPanel panel = new JPanel(new BorderLayout(0, 10));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(230, 230, 230), 1),
+                new EmptyBorder(12, 12, 12, 12)));
+
+        JLabel lbl = new JLabel(title);
+        lbl.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lbl.setForeground(new Color(30, 41, 59));
+        panel.add(lbl, BorderLayout.NORTH);
+
+        JScrollPane sp = new JScrollPane(table);
+        sp.getViewport().setBackground(Color.WHITE);
+        panel.add(sp, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private JTable createHoaDonTable(List<HoaDonCaRow> ds) {
+        String[] cols = { "Mã HĐ", "Thời gian", "PTTT", "Tổng tiền" };
+        DefaultTableModel model = new DefaultTableModel(cols, 0) {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        for (HoaDonCaRow hd : ds) {
+            model.addRow(new Object[]{
+                    hd.maHD,
+                    hd.thoiGian == null ? "-" : hd.thoiGian.format(DateTimeFormatter.ofPattern("dd/MM HH:mm")),
+                    hd.phuongThuc,
+                    formatMoney(hd.tongTien)
+            });
+        }
+
+        JTable table = new JTable(model);
+        styleTable(table);
+        return table;
+    }
+
+    private JTable createMonTable(List<MonThongKeRow> ds) {
+        String[] cols = { "Mã món", "Tên món", "SL", "Thành tiền" };
+        DefaultTableModel model = new DefaultTableModel(cols, 0) {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        for (MonThongKeRow m : ds) {
+            model.addRow(new Object[]{
+                    m.maMon,
+                    m.tenMon,
+                    m.soLuong,
+                    formatMoney(m.thanhTien)
+            });
+        }
+
+        JTable table = new JTable(model);
+        styleTable(table);
+        return table;
+    }
+
+    private void styleTable(JTable table) {
+        table.setRowHeight(34);
+        table.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        table.setGridColor(new Color(220, 220, 220));
+        table.setSelectionBackground(new Color(226, 232, 240));
+        table.setSelectionForeground(Color.BLACK);
+
+        JTableHeader header = table.getTableHeader();
+        header.setPreferredSize(new Dimension(0, 36));
+        header.setFont(new Font("SansSerif", Font.BOLD, 14));
+
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setCellRenderer(center);
+        }
+    }
+
+    private void xuatTongKetCaPDF(Component parent, ThongKeCaData data) {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Chọn nơi lưu báo cáo tổng kết ca");
+        chooser.setSelectedFile(new File("TongKetCa_" + caDangChon.maCa + ".pdf"));
+        chooser.setFileFilter(new FileNameExtensionFilter("PDF Files (*.pdf)", "pdf"));
+
+        int result = chooser.showSaveDialog(parent);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File file = chooser.getSelectedFile();
+        if (!file.getName().toLowerCase().endsWith(".pdf")) {
+            file = new File(file.getAbsolutePath() + ".pdf");
+        }
+
+        Document document = new Document(PageSize.A4, 30, 30, 30, 30);
+        FileOutputStream fos = null;
+
+        try {
+            fos = new FileOutputStream(file);
+            PdfWriter.getInstance(document, fos);
+            document.open();
+
+            BaseFont baseFont = BaseFont.createFont("C:/Windows/Fonts/arial.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+            com.itextpdf.text.Font fontTitle = new com.itextpdf.text.Font(baseFont, 18, com.itextpdf.text.Font.BOLD, new BaseColor(34, 139, 94));
+            com.itextpdf.text.Font fontSection = new com.itextpdf.text.Font(baseFont, 13, com.itextpdf.text.Font.BOLD, BaseColor.BLACK);
+            com.itextpdf.text.Font fontNormal = new com.itextpdf.text.Font(baseFont, 11, com.itextpdf.text.Font.NORMAL, BaseColor.BLACK);
+            com.itextpdf.text.Font fontHeader = new com.itextpdf.text.Font(baseFont, 11, com.itextpdf.text.Font.BOLD, BaseColor.WHITE);
+
+            Paragraph title = new Paragraph("TỔNG KẾT CA", fontTitle);
+            title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(14f);
+            document.add(title);
+
+            document.add(new Paragraph("Mã ca: " + safe(caDangChon.maCa), fontNormal));
+            document.add(new Paragraph("Tên ca: " + safe(caDangChon.tenCa), fontNormal));
+            document.add(new Paragraph("Thời gian mở: " + formatDate(caDangChon.moCa), fontNormal));
+            document.add(new Paragraph("Thời gian đóng: " + (caDangChon.dongCa == null ? "Sẽ đóng khi xác nhận" : formatDate(caDangChon.dongCa)), fontNormal));
+            document.add(new Paragraph("Người kết ca: " + (taiKhoanDangNhap == null ? "Quản lý" : taiKhoanDangNhap.getTenDangNhap()), fontNormal));
+            document.add(Chunk.NEWLINE);
+
+            document.add(new Paragraph("THÔNG TIN TỔNG HỢP", fontSection));
+            document.add(new Paragraph("Số hóa đơn: " + data.soHoaDon, fontNormal));
+            document.add(new Paragraph("Doanh thu: " + formatMoney(data.doanhThu), fontNormal));
+            document.add(new Paragraph("Tiền mặt: " + formatMoney(data.tienMat), fontNormal));
+            document.add(new Paragraph("Chuyển khoản: " + formatMoney(data.tienChuyenKhoan), fontNormal));
+            document.add(new Paragraph("Visa: " + formatMoney(data.tienVisa), fontNormal));
+            document.add(new Paragraph("Tổng số lượng món: " + data.tongSoLuongMon, fontNormal));
+            document.add(new Paragraph("Số món khác nhau: " + data.soLoaiMon, fontNormal));
+            document.add(new Paragraph("Món bán chạy: " + safe(data.monBanChay), fontNormal));
+            document.add(Chunk.NEWLINE);
+
+            document.add(new Paragraph("DANH SÁCH THANH TOÁN TRONG CA", fontSection));
+            document.add(Chunk.NEWLINE);
+
+            PdfPTable tableHoaDon = new PdfPTable(4);
+            tableHoaDon.setWidthPercentage(100);
+            tableHoaDon.setSpacingAfter(16f);
+            tableHoaDon.setWidths(new float[]{2.0f, 2.6f, 2.2f, 2.2f});
+
+            addHeaderCell(tableHoaDon, "Mã HĐ", fontHeader);
+            addHeaderCell(tableHoaDon, "Thời gian", fontHeader);
+            addHeaderCell(tableHoaDon, "PTTT", fontHeader);
+            addHeaderCell(tableHoaDon, "Tổng tiền", fontHeader);
+
+            for (HoaDonCaRow hd : data.dsHoaDon) {
+                addBodyCell(tableHoaDon, safe(hd.maHD), fontNormal);
+                addBodyCell(tableHoaDon, hd.thoiGian == null ? "-" : hd.thoiGian.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")), fontNormal);
+                addBodyCell(tableHoaDon, safe(hd.phuongThuc), fontNormal);
+                addBodyCell(tableHoaDon, formatMoney(hd.tongTien), fontNormal);
+            }
+
+            document.add(tableHoaDon);
+
+            document.add(new Paragraph("THỐNG KÊ MÓN ĂN TRONG CA", fontSection));
+            document.add(Chunk.NEWLINE);
+
+            PdfPTable tableMon = new PdfPTable(4);
+            tableMon.setWidthPercentage(100);
+            tableMon.setWidths(new float[]{1.8f, 4.2f, 1.2f, 2.2f});
+
+            addHeaderCell(tableMon, "Mã món", fontHeader);
+            addHeaderCell(tableMon, "Tên món", fontHeader);
+            addHeaderCell(tableMon, "SL", fontHeader);
+            addHeaderCell(tableMon, "Thành tiền", fontHeader);
+
+            for (MonThongKeRow m : data.dsMon) {
+                addBodyCell(tableMon, safe(m.maMon), fontNormal);
+                addBodyCell(tableMon, safe(m.tenMon), fontNormal);
+                addBodyCell(tableMon, String.valueOf(m.soLuong), fontNormal);
+                addBodyCell(tableMon, formatMoney(m.thanhTien), fontNormal);
+            }
+
+            document.add(tableMon);
+
+            JOptionPane.showMessageDialog(parent,
+                    "Xuất PDF thành công:\n" + file.getAbsolutePath(),
+                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(parent,
+                    "Xuất PDF thất bại: " + ex.getMessage(),
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            if (document.isOpen()) {
+                document.close();
+            }
+            try {
+                if (fos != null) fos.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void addHeaderCell(PdfPTable table, String text, com.itextpdf.text.Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setBackgroundColor(new BaseColor(208, 144, 106));
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setPadding(8f);
+        table.addCell(cell);
+    }
+
+    private void addBodyCell(PdfPTable table, String text, com.itextpdf.text.Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setPadding(7f);
+        table.addCell(cell);
+    }
+
+    private String safe(String s) {
+        return s == null ? "-" : s;
+    }
+
+    private void xacNhanTongKetCa(JDialog dialog, ThongKeCaData data) {
+        int confirm = JOptionPane.showConfirmDialog(dialog,
+                "Xác nhận tổng kết ca " + caDangChon.maCa + "?\nSau khi kết ca sẽ lưu dữ liệu và quay về đăng nhập.",
                 "Xác nhận",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
@@ -335,22 +618,39 @@ public class ThongKeTheoCa_GUI extends JPanel {
                     + "tienMatCuoiCa = ?, tienChuyenKhoanCuoiCa = ?, tienVisaCuoiCa = ? "
                     + "WHERE maCa = ?";
             stmt = con.prepareStatement(sql);
-            stmt.setDouble(1, thongKeCa.tienMat);
-            stmt.setDouble(2, thongKeCa.tienChuyenKhoan);
-            stmt.setDouble(3, thongKeCa.tienVisa);
+            stmt.setDouble(1, data.tienMat);
+            stmt.setDouble(2, data.tienChuyenKhoan);
+            stmt.setDouble(3, data.tienVisa);
             stmt.setString(4, caDangChon.maCa);
 
             if (stmt.executeUpdate() > 0) {
-                JOptionPane.showMessageDialog(this, "Đã lưu tổng kết ca thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
-                loadCaGanNhatVaThongKe();
+                JOptionPane.showMessageDialog(dialog, "Đã lưu tổng kết ca thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                dialog.dispose();
+                quayVeDangNhap();
             } else {
-                JOptionPane.showMessageDialog(this, "Không tìm thấy ca để cập nhật.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Không tìm thấy ca để cập nhật.", "Thông báo", JOptionPane.WARNING_MESSAGE);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Tổng kết ca thất bại: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(dialog, "Tổng kết ca thất bại: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         } finally {
             closeQuietly(stmt);
+        }
+    }
+
+    private void quayVeDangNhap() {
+        try {
+            Window window = SwingUtilities.getWindowAncestor(this);
+            if (window != null) {
+                window.dispose();
+            }
+            DangNhap_GUI login = new DangNhap_GUI();
+            login.setVisible(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Đã kết ca xong nhưng không mở lại được màn hình đăng nhập.\nBạn hãy mở lại ứng dụng thủ công.",
+                    "Thông báo", JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -358,9 +658,11 @@ public class ThongKeTheoCa_GUI extends JPanel {
         JLabel label = new JLabel(labelText);
         label.setFont(new Font("SansSerif", Font.BOLD, 15));
         label.setForeground(new Color(100, 116, 139));
+
         JLabel value = new JLabel(valueText == null ? "-" : valueText);
         value.setFont(new Font("SansSerif", Font.BOLD, 15));
         value.setForeground(new Color(15, 23, 42));
+
         panel.add(label);
         panel.add(value);
     }
@@ -492,12 +794,66 @@ public class ThongKeTheoCa_GUI extends JPanel {
                     data.doanhThuTheoGio[gio] = rs.getDouble("doanhThu");
                 }
             }
+            closeQuietly(rs);
+            closeQuietly(stmt);
+
+            sql = "SELECT maHD, thoiGianRa, phuongThucThanhToan, tongTien "
+                    + "FROM HoaDon "
+                    + "WHERE trangThai = N'Đã thanh toán' "
+                    + "AND thoiGianRa >= ? AND thoiGianRa <= ? "
+                    + "ORDER BY thoiGianRa";
+            stmt = con.prepareStatement(sql);
+            stmt.setTimestamp(1, Timestamp.valueOf(ca.moCa));
+            stmt.setTimestamp(2, Timestamp.valueOf(end));
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                HoaDonCaRow row = new HoaDonCaRow();
+                row.maHD = rs.getString("maHD");
+                row.thoiGian = toLocalDateTime(rs.getTimestamp("thoiGianRa"));
+                row.phuongThuc = rs.getString("phuongThucThanhToan");
+                row.tongTien = rs.getDouble("tongTien");
+                data.dsHoaDon.add(row);
+            }
+            closeQuietly(rs);
+            closeQuietly(stmt);
+
+            sql = "SELECT m.maMon, m.tenMon, "
+                    + "ISNULL(SUM(ct.soLuong - ISNULL(ct.soLuongHuy, 0)), 0) AS tongSL, "
+                    + "ISNULL(SUM((ct.soLuong - ISNULL(ct.soLuongHuy, 0)) * ct.donGia), 0) AS thanhTien "
+                    + "FROM HoaDon hd "
+                    + "JOIN ChiTietHoaDon ct ON hd.maHD = ct.maHD "
+                    + "JOIN MonAn m ON ct.maMon = m.maMon "
+                    + "WHERE hd.trangThai = N'Đã thanh toán' "
+                    + "AND hd.thoiGianRa >= ? AND hd.thoiGianRa <= ? "
+                    + "AND (ct.trangThai IS NULL OR ct.trangThai <> N'Đã hủy') "
+                    + "GROUP BY m.maMon, m.tenMon "
+                    + "ORDER BY tongSL DESC, thanhTien DESC";
+            stmt = con.prepareStatement(sql);
+            stmt.setTimestamp(1, Timestamp.valueOf(ca.moCa));
+            stmt.setTimestamp(2, Timestamp.valueOf(end));
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                MonThongKeRow row = new MonThongKeRow();
+                row.maMon = rs.getString("maMon");
+                row.tenMon = rs.getString("tenMon");
+                row.soLuong = rs.getInt("tongSL");
+                row.thanhTien = rs.getDouble("thanhTien");
+                data.dsMon.add(row);
+                data.tongSoLuongMon += row.soLuong;
+            }
+
+            data.soLoaiMon = data.dsMon.size();
+            if (!data.dsMon.isEmpty()) {
+                data.monBanChay = data.dsMon.get(0).tenMon;
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             closeQuietly(rs);
             closeQuietly(stmt);
         }
+
         return data;
     }
 
@@ -535,13 +891,32 @@ public class ThongKeTheoCa_GUI extends JPanel {
         double tienVisaCuoiCa;
     }
 
+    private static class HoaDonCaRow {
+        String maHD;
+        LocalDateTime thoiGian;
+        String phuongThuc;
+        double tongTien;
+    }
+
+    private static class MonThongKeRow {
+        String maMon;
+        String tenMon;
+        int soLuong;
+        double thanhTien;
+    }
+
     private static class ThongKeCaData {
         int soHoaDon;
+        int tongSoLuongMon;
+        int soLoaiMon;
         double doanhThu;
         double tienMat;
         double tienChuyenKhoan;
         double tienVisa;
+        String monBanChay;
         double[] doanhThuTheoGio = new double[24];
+        List<HoaDonCaRow> dsHoaDon = new ArrayList<>();
+        List<MonThongKeRow> dsMon = new ArrayList<>();
     }
 
     class MockAreaChartPanel extends JPanel {
@@ -594,6 +969,7 @@ public class ThongKeTheoCa_GUI extends JPanel {
             double groupW = (w - padLeft - 10) / (double) n;
             int[] px = new int[n];
             int[] py = new int[n];
+
             for (int i = 0; i < n; i++) {
                 int cx = padLeft + (int) (i * groupW) + (int) (groupW / 2);
                 px[i] = cx;

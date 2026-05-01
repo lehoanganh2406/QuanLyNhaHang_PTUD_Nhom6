@@ -83,7 +83,7 @@ public class DangNhap_GUI extends JFrame {
         lblTopIcon.setIcon(new ImageIcon(imgTop));
         panelRight.add(lblTopIcon);
 
-        JLabel lblTitle = new JLabel("Hy Vong Restaurant");
+        JLabel lblTitle = new JLabel("Nhà Hàng HyVong");
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
         lblTitle.setFont(new Font("Savoye LET", Font.ITALIC, 56));
         lblTitle.setForeground(Color.BLACK);

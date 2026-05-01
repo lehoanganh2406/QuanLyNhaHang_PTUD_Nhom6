@@ -188,12 +188,21 @@ public class Pn_ThanhMenu extends JPanel {
         mnThongKe.addSubItem("Tổng kết bán hàng", "TongKetBanHang_GUI");
 
         applyPermissionForRole(mnHeThong, mnDanhMuc, mnXuLy, mnTraCuu, mnThongKe);
+        pnTopMenu.add(createLogoHome());
 
-        addMenu(mnHeThong);
-        addMenu(mnDanhMuc);
-        addMenu(mnXuLy);
-        addMenu(mnTraCuu);
-        addMenu(mnThongKe);
+
+        if (isLeTan()) {
+            addMenu(mnHeThong); // Trang chủ, Đăng xuất, Hỗ trợ
+            addMenu(mnXuLy);    // Order, Đặt bàn
+            addMenu(mnTraCuu);  // Tra cứu
+            addMenu(mnThongKe); // Thống kê theo ca
+        } else {
+            addMenu(mnHeThong);
+            addMenu(mnDanhMuc);
+            addMenu(mnXuLy);
+            addMenu(mnTraCuu);
+            addMenu(mnThongKe);
+        }
 
         SwingUtilities.invokeLater(() -> {
             updateAllMenuWidths();
@@ -208,36 +217,22 @@ public class Pn_ThanhMenu extends JPanel {
                                         MenuItemPanel mnTraCuu,
                                         MenuItemPanel mnThongKe) {
 
-        if (isLeTan()) {
-            // Hệ thống: chỉ cho Trang chủ, Hỗ trợ, Đăng xuất
-            mnHeThong.setSubItemEnabled("Trang chủ", true);
-            mnHeThong.setSubItemEnabled("Quản lý tài khoản", false);
-            mnHeThong.setSubItemEnabled("Đăng xuất", true);
-            mnHeThong.setSubItemEnabled("Hỗ trợ", true);
+    	if (isLeTan()) {
+    	    mnHeThong.removeSubItem("Quản lý tài khoản");
 
-            // Danh mục: cấm hết
-            mnDanhMuc.setAllSubItemsEnabled(false);
+    	    mnXuLy.removeSubItem("Hóa đơn");
 
-            // Xử lý: chỉ cho Order, Đặt bàn
-            mnXuLy.setSubItemEnabled("Order", true);
-            mnXuLy.setSubItemEnabled("Đặt bàn", true);
-            mnXuLy.setSubItemEnabled("Hóa đơn", false);
+    	    mnThongKe.removeSubItem("Phân tích bán hàng");
+    	    mnThongKe.removeSubItem("Tổng kết bán hàng");
 
-            // Tra cứu: cho phép
-            mnTraCuu.setDirectPageEnabled(true);
-
-            // Thống kê: chỉ cho Thống kê theo ca
-            mnThongKe.setSubItemEnabled("Thống kê theo ca", true);
-            mnThongKe.setSubItemEnabled("Phân tích bán hàng", false);
-            mnThongKe.setSubItemEnabled("Tổng kết bán hàng", false);
-        } else {
-            // Quản lý hoặc quyền khác: cho tất cả
-            mnHeThong.setAllSubItemsEnabled(true);
-            mnDanhMuc.setAllSubItemsEnabled(true);
-            mnXuLy.setAllSubItemsEnabled(true);
-            mnTraCuu.setDirectPageEnabled(true);
-            mnThongKe.setAllSubItemsEnabled(true);
-        }
+    	    mnTraCuu.setDirectPageEnabled(true);
+    	} else {
+    	    mnHeThong.setAllSubItemsEnabled(true);
+    	    mnDanhMuc.setAllSubItemsEnabled(true);
+    	    mnXuLy.setAllSubItemsEnabled(true);
+    	    mnTraCuu.setDirectPageEnabled(true);
+    	    mnThongKe.setAllSubItemsEnabled(true);
+    	}
 
         mnHeThong.refreshParentEnabledState();
         mnDanhMuc.refreshParentEnabledState();
@@ -464,6 +459,16 @@ public class Pn_ThanhMenu extends JPanel {
 
         private String directPageClassName;
         private boolean directPageEnabled = true;
+        public void removeSubItem(String text) {
+            subItems.removeIf(item -> item.menuText.equalsIgnoreCase(text));
+
+            if (subItems.isEmpty()) {
+                remove(lblArrow);
+            }
+
+            revalidate();
+            repaint();
+        }
 
         public MenuItemPanel(String text, String iconPath) {
             setLayout(new FlowLayout(FlowLayout.LEFT, 6, 8));
@@ -725,5 +730,61 @@ public class Pn_ThanhMenu extends JPanel {
 
         DangNhap_GUI dangNhap = new DangNhap_GUI();
         dangNhap.setVisible(true);
+    }
+    private JPanel createLogoHome() {
+        ImageIcon icon = new ImageIcon("img/logo.png");
+
+        JPanel pnLogo = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+
+                if (icon.getIconWidth() <= 0) return;
+
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                Image img = icon.getImage();
+
+                int w = 50; // chiều ngang ảnh
+                int h = 42; // chiều cao ảnh
+
+                int x = (getWidth() - w) / 2;
+                int y = (getHeight() - h) / 2;
+
+                g2.drawImage(img, x, y, w, h, this);
+                g2.dispose();
+            }
+        };
+
+        pnLogo.setPreferredSize(new Dimension(60, MENU_HEIGHT));
+        pnLogo.setMinimumSize(new Dimension(60, MENU_HEIGHT));
+        pnLogo.setMaximumSize(new Dimension(60, MENU_HEIGHT));
+
+        pnLogo.setOpaque(true);
+        pnLogo.setBackground(BG_TOP);
+        pnLogo.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        pnLogo.setToolTipText("Trang chủ");
+
+        pnLogo.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                hideSubMenu();
+                navigateTo("TrangChu_GUI");
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                pnLogo.setBackground(BG_HOVER);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                pnLogo.setBackground(BG_TOP);
+            }
+        });
+
+        return pnLogo;
     }
 }

@@ -16,6 +16,7 @@ public class DongCa_DigLog extends JDialog {
     private JLabel lblMaCa;
     private JLabel lblTenCa;
     private JLabel lblThoiGianMo;
+    private JLabel lblThoiGianDong;
     private JLabel lblTienMoCa;
 
     private JLabel lblTienMat;
@@ -43,7 +44,7 @@ public class DongCa_DigLog extends JDialog {
         loadDuLieuCa();
         initEvents();
 
-        setSize(590, 430);
+        setSize(590, 475);
         setLocationRelativeTo(owner);
         setResizable(false);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -60,12 +61,13 @@ public class DongCa_DigLog extends JDialog {
         lblTitle.setForeground(new Color(210, 155, 70));
         pnMain.add(lblTitle, BorderLayout.NORTH);
 
-        JPanel pnCenter = new JPanel(new GridLayout(7, 2, 12, 12));
+        JPanel pnCenter = new JPanel(new GridLayout(8, 2, 12, 12));
         pnCenter.setBackground(new Color(245, 247, 250));
 
         lblMaCa = taoLabelValue();
         lblTenCa = taoLabelValue();
         lblThoiGianMo = taoLabelValue();
+        lblThoiGianDong = taoLabelValue();
         lblTienMoCa = taoLabelMoney();
 
         lblTienMat = taoLabelMoney();
@@ -80,6 +82,9 @@ public class DongCa_DigLog extends JDialog {
 
         pnCenter.add(taoLabelTitle("Thời gian mở ca:"));
         pnCenter.add(lblThoiGianMo);
+
+        pnCenter.add(taoLabelTitle("Thời gian đóng ca:"));
+        pnCenter.add(lblThoiGianDong);
 
         pnCenter.add(taoLabelTitle("Tiền mở ca:"));
         pnCenter.add(lblTienMoCa);
@@ -152,6 +157,8 @@ public class DongCa_DigLog extends JDialog {
 
         LocalDateTime thoiGianMo = caDangMo.getThoiGianMoCa();
         lblThoiGianMo.setText(thoiGianMo == null ? "" : thoiGianMo.format(dtf));
+
+        lblThoiGianDong.setText(LocalDateTime.now().format(dtf));
 
         lblTienMoCa.setText(formatTien(caDangMo.getTienMoCa()));
 

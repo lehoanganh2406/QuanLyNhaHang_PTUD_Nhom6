@@ -47,7 +47,7 @@ public class XuLyMonAn_DigLog extends JDialog {
     private String duongDanAnh = "";
 
     private JLabel lblAnh;
-    private JTextField txtMaMon, txtTenMon, txtDonGia;
+    private JTextField txtMaMon, txtTenMon, txtGiaGoc, txtDonGia;
     private JComboBox<String> cbLoaiMon, cbTrangThai;
     private JTextArea txtMoTa;
     private JButton btnThemLoai;
@@ -136,15 +136,51 @@ public class XuLyMonAn_DigLog extends JDialog {
         txtTenMon = createField();
         addRow(body, gbc, 2, "Tên món:", txtTenMon);
 
-        txtDonGia = createField();
-        JLabel lblVnd = new JLabel("VND");
-        lblVnd.setFont(LABEL_FONT);
+        txtGiaGoc = createField();
+        JLabel lblVnd1 = new JLabel("VND");
+        lblVnd1.setFont(LABEL_FONT);
 
-        JPanel giaPanel = new JPanel(new BorderLayout(8, 0));
-        giaPanel.setOpaque(false);
-        giaPanel.add(txtDonGia, BorderLayout.CENTER);
-        giaPanel.add(lblVnd, BorderLayout.EAST);
-        addRow(body, gbc, 3, "Đơn giá:", giaPanel);
+        JPanel giaGocPanel = new JPanel(new BorderLayout(8, 0));
+        giaGocPanel.setOpaque(false);
+        giaGocPanel.add(txtGiaGoc, BorderLayout.CENTER);
+        giaGocPanel.add(lblVnd1, BorderLayout.EAST);
+        addRow(body, gbc, 3, "Giá gốc:", giaGocPanel);
+
+        txtDonGia = createField();
+        txtDonGia.setEditable(false);
+        txtDonGia.setBackground(new Color(235, 230, 220));
+
+        JLabel lblVnd2 = new JLabel("VND");
+        lblVnd2.setFont(LABEL_FONT);
+
+        JPanel donGiaPanel = new JPanel(new BorderLayout(8, 0));
+        donGiaPanel.setOpaque(false);
+        donGiaPanel.add(txtDonGia, BorderLayout.CENTER);
+        donGiaPanel.add(lblVnd2, BorderLayout.EAST);
+        addRow(body, gbc, 4, "Giá bán:", donGiaPanel);
+
+        txtGiaGoc.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void updateDonGia() {
+                try {
+                    String raw = txtGiaGoc.getText().trim().replace(".", "").replace(",", "");
+                    if (raw.isEmpty()) {
+                        txtDonGia.setText("");
+                        return;
+                    }
+
+                    double giaGoc = Double.parseDouble(raw);
+                    double donGia = giaGoc * 1.4;
+
+                    txtDonGia.setText(String.format("%,.0f", donGia).replace(",", "."));
+                } catch (Exception e) {
+                    txtDonGia.setText("");
+                }
+            }
+
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { updateDonGia(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { updateDonGia(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { updateDonGia(); }
+        });
 
         cbLoaiMon = new JComboBox<>();
 
@@ -174,11 +210,11 @@ public class XuLyMonAn_DigLog extends JDialog {
         loaiPanel.setOpaque(false);
         loaiPanel.add(cbLoaiMon, BorderLayout.CENTER);
         loaiPanel.add(btnThemLoai, BorderLayout.EAST);
-        addRow(body, gbc, 4, "Loại món:", loaiPanel);
+        addRow(body, gbc, 5, "Loại món:", loaiPanel);
 
         cbTrangThai = new JComboBox<>(new String[]{"Đang phục vụ", "Ngừng bán"});
         styleComboBox(cbTrangThai);
-        addRow(body, gbc, 5, "Trạng thái:", cbTrangThai);
+        addRow(body, gbc, 6, "Trạng thái:", cbTrangThai);
 
         txtMoTa = new JTextArea(4, 20);
         txtMoTa.setFont(new Font("SansSerif", Font.ITALIC, 14));
@@ -190,9 +226,9 @@ public class XuLyMonAn_DigLog extends JDialog {
         JScrollPane moTaScroll = new JScrollPane(txtMoTa);
         moTaScroll.setBorder(BorderFactory.createLineBorder(CLR_BORDER));
         moTaScroll.setPreferredSize(new Dimension(0, 95));
-        addRow(body, gbc, 6, "Mô tả:", moTaScroll);
+        addRow(body, gbc, 7, "Mô tả:", moTaScroll);
 
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         gbc.gridx = 1;
         gbc.weighty = 1;
         body.add(Box.createVerticalGlue(), gbc);
@@ -441,6 +477,7 @@ public class XuLyMonAn_DigLog extends JDialog {
     private void fillForm(MonAn mon) {
         txtMaMon.setText(mon.getMaMon());
         txtTenMon.setText(mon.getTenMon());
+        txtGiaGoc.setText(String.format("%,.0f", mon.getGiaGoc()).replace(",", "."));
         txtDonGia.setText(String.format("%,.0f", mon.getDonGia()).replace(",", "."));
         txtMoTa.setText(mon.getMoTa() != null ? mon.getMoTa() : "");
 
@@ -523,7 +560,7 @@ public class XuLyMonAn_DigLog extends JDialog {
 
     private void save() {
         String tenMon = txtTenMon.getText().trim();
-        String giaStr = txtDonGia.getText().trim().replace(".", "").replace(",", "");
+        String giaStr = txtGiaGoc.getText().trim().replace(".", "").replace(",", "");
 
         if (tenMon.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập tên món!", "Lỗi", JOptionPane.WARNING_MESSAGE);
@@ -531,13 +568,13 @@ public class XuLyMonAn_DigLog extends JDialog {
             return;
         }
 
-        double donGia;
+        double giaGoc;
         try {
-            donGia = Double.parseDouble(giaStr);
-            if (donGia < 0) throw new NumberFormatException();
+            giaGoc = Double.parseDouble(giaStr);
+            if (giaGoc < 0) throw new NumberFormatException();
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Đơn giá không hợp lệ!", "Lỗi", JOptionPane.WARNING_MESSAGE);
-            txtDonGia.requestFocus();
+            JOptionPane.showMessageDialog(this, "Giá gốc không hợp lệ!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            txtGiaGoc.requestFocus();
             return;
         }
 
@@ -554,7 +591,8 @@ public class XuLyMonAn_DigLog extends JDialog {
                 loai,
                 tenMon,
                 duongDanAnh,
-                donGia,
+                giaGoc,
+                giaGoc * 1.4,
                 txtMoTa.getText().trim(),
                 trangThai
         );
@@ -622,7 +660,8 @@ public class XuLyMonAn_DigLog extends JDialog {
 
     private void setReadOnly(boolean ro) {
         txtTenMon.setEditable(!ro);
-        txtDonGia.setEditable(!ro);
+        txtGiaGoc.setEditable(!ro);
+        txtDonGia.setEditable(false);
         cbLoaiMon.setEnabled(!ro);
         cbTrangThai.setEnabled(!ro);
         txtMoTa.setEditable(!ro);
@@ -630,6 +669,7 @@ public class XuLyMonAn_DigLog extends JDialog {
 
         if (ro) {
             txtTenMon.setBackground(new Color(235, 230, 220));
+            txtGiaGoc.setBackground(new Color(235, 230, 220));
             txtDonGia.setBackground(new Color(235, 230, 220));
             txtMoTa.setBackground(new Color(235, 230, 220));
         }

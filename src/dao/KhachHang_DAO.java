@@ -232,7 +232,6 @@ public class KhachHang_DAO {
 
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
 			stmt.setString(1, maKH);
-
 			return stmt.executeUpdate() > 0;
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -240,7 +239,6 @@ public class KhachHang_DAO {
 
 		return false;
 	}
-	
 
 	public double layTongGiaoDichTheoMaKH(String maKH) {
 		double tong = 0;
@@ -262,5 +260,43 @@ public class KhachHang_DAO {
 		}
 
 		return tong;
+	}
+
+	// ===== PHẦN MỚI: PHÁT HIỆN KHÁCH HÀNG 6 THÁNG KHÔNG HOẠT ĐỘNG =====
+
+	public ArrayList<KhachHang> getKhachHangKhongHoatDong6Thang() {
+		ArrayList<KhachHang> dsKH = new ArrayList<>();
+		Connection con = ConnectDB.getInstance().getConnection();
+
+		String sql = "SELECT kh.maKH, kh.tenKH, kh.sdt, kh.diemTichLuy, "
+				+ "lkh.maLoaiKH, lkh.tenLoaiKH, "
+				+ "MAX(ISNULL(hd.thoiGianRa, hd.thoiGianVao)) AS lanHoatDongCuoi "
+				+ "FROM KhachHang kh "
+				+ "JOIN LoaiKhachHang lkh ON kh.maLoaiKH = lkh.maLoaiKH "
+				+ "JOIN HoaDon hd ON hd.maKH = kh.maKH "
+				+ "GROUP BY kh.maKH, kh.tenKH, kh.sdt, kh.diemTichLuy, lkh.maLoaiKH, lkh.tenLoaiKH "
+				+ "HAVING MAX(hd.thoiGianVao) < DATEADD(MONTH, -6, GETDATE())";
+		try (PreparedStatement stmt = con.prepareStatement(sql);
+			 ResultSet rs = stmt.executeQuery()) {
+
+			while (rs.next()) {
+				String maKH = rs.getString("maKH");
+				String tenKH = rs.getString("tenKH");
+				String sdt = rs.getString("sdt");
+				int diemTichLuy = rs.getInt("diemTichLuy");
+
+				String maLoaiKH = rs.getString("maLoaiKH");
+				String tenLoaiKH = rs.getString("tenLoaiKH");
+
+				LoaiKhachHang loaiKH = new LoaiKhachHang(maLoaiKH, tenLoaiKH);
+				KhachHang kh = new KhachHang(maKH, tenKH, sdt, loaiKH, diemTichLuy);
+
+				dsKH.add(kh);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return dsKH;
 	}
 }

@@ -14,9 +14,12 @@ import java.awt.Insets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -25,19 +28,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -46,7 +45,6 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
-import javax.swing.SpinnerDateModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
@@ -57,24 +55,36 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
+import com.toedter.calendar.JDateChooser;
+
 import connectDB.ConnectDB;
-import dao.KhuyenMai_DAO;
-import entity.KhuyenMai;
 import entity.TaiKhoan;
 
+/**
+ * GUI quản lý khuyến mãi dùng dữ liệu thật từ SQL Server.
+ * Dialog thêm/sửa dùng JDateChooser + spinner giờ/phút.
+ * Khi thêm khuyến mãi: không cho chọn thời gian bắt đầu nhỏ hơn thời gian hiện tại.
+ */
 public class KhuyenMai_GUI extends JPanel {
     private static final long serialVersionUID = 1L;
+
+    private static final Color BG = new Color(245, 245, 245);
+    private static final Color CARD = Color.WHITE;
+    private static final Color BORDER = new Color(228, 228, 228);
+    private static final Color PRIMARY = new Color(40, 100, 180);
+    private static final Color PRIMARY_LIGHT = new Color(225, 240, 255);
+    private static final Color GREEN = new Color(46, 125, 50);
+    private static final Color GREEN_LIGHT = new Color(230, 244, 234);
+    private static final Color RED = new Color(198, 40, 40);
+    private static final Color RED_LIGHT = new Color(255, 235, 238);
 
     private static final String STATUS_DANG_AP_DUNG = "Đang áp dụng";
     private static final String STATUS_NGUNG_AP_DUNG = "Ngưng áp dụng";
     private static final String STATUS_CHUA_AP_DUNG = "Chưa áp dụng";
     private static final String STATUS_HET_HAN = "Hết hạn";
+    private static final String PLACEHOLDER_SEARCH = "Tìm theo mã, tên khuyến mãi, loại, đối tượng...";
 
-    private final TaiKhoan taiKhoanDangNhap;
-    private final KhuyenMai_DAO khuyenMaiDAO = new KhuyenMai_DAO();
-
-    private final List<KhuyenMai> dsKhuyenMai = new ArrayList<>();
-    private final Map<String, String> loaiKhuyenMaiMap = new LinkedHashMap<>();
+    private TaiKhoan taiKhoanDangNhap;
 
     private JTextField txtSearch;
     private JComboBox<String> cboTrangThaiLoc;
@@ -83,21 +93,21 @@ public class KhuyenMai_GUI extends JPanel {
     private JLabel lblTongKM;
     private JLabel lblDangApDung;
     private JLabel lblSapHetHan;
-    private JLabel lblNgungApDung;
+    private JLabel lblNgungHetHan;
     private JTextArea txtDetail;
 
-    private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private final List<KhuyenMaiRow> dsKhuyenMai = new ArrayList<>();
+    private final Map<String, String> loaiKhuyenMaiMap = new LinkedHashMap<>();
     private final DecimalFormat moneyFormat = new DecimalFormat("#,##0");
+    private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     public KhuyenMai_GUI(TaiKhoan tk) {
         this.taiKhoanDangNhap = tk;
         ConnectDB.getInstance().connect();
-
         setLayout(new BorderLayout());
-        setBackground(new Color(245, 245, 245));
+        setBackground(BG);
         add(createMainPanel(), BorderLayout.CENTER);
-
-        napDuLieuVaRender();
+        loadData();
     }
 
     public KhuyenMai_GUI() {
@@ -106,7 +116,7 @@ public class KhuyenMai_GUI extends JPanel {
 
     private JPanel createMainPanel() {
         JPanel main = new JPanel(new BorderLayout(18, 0));
-        main.setBackground(new Color(245, 245, 245));
+        main.setBackground(BG);
         main.setBorder(new EmptyBorder(18, 18, 18, 18));
         main.add(createLeftPanel(), BorderLayout.CENTER);
         main.add(createRightPanel(), BorderLayout.EAST);
@@ -129,53 +139,39 @@ public class KhuyenMai_GUI extends JPanel {
         title.setFont(new Font("SansSerif", Font.BOLD, 28));
         outer.add(title, BorderLayout.NORTH);
 
-        JPanel actionCard = new JPanel(new BorderLayout(0, 10));
-        actionCard.setBackground(Color.WHITE);
-        actionCard.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(228, 228, 228), 1, true),
-                new EmptyBorder(14, 16, 14, 16)));
+        JPanel actionCard = createCardPanel(new BorderLayout(0, 12));
 
         JPanel filterRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         filterRow.setOpaque(false);
-
-        txtSearch = new JTextField(26);
-        txtSearch.setToolTipText("Tìm theo mã, tên khuyến mãi, loại, đối tượng hoặc ghi chú");
-        txtSearch.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        txtSearch.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(220, 220, 220), 1, true),
-                new EmptyBorder(8, 10, 8, 10)));
-        txtSearch.getDocument().addDocumentListener(new DocumentListener() {
-            @Override public void insertUpdate(DocumentEvent e) { renderData(); }
-            @Override public void removeUpdate(DocumentEvent e) { renderData(); }
-            @Override public void changedUpdate(DocumentEvent e) { renderData(); }
+        filterRow.add(new JLabel("Tìm khuyến mãi:"));
+        txtSearch = createPlaceholderTextField(PLACEHOLDER_SEARCH, 32);
+        txtSearch.getDocument().addDocumentListener(new SimpleDocumentListener() {
+            @Override public void update(DocumentEvent e) { renderData(); }
         });
         filterRow.add(txtSearch);
 
+        filterRow.add(new JLabel("Trạng thái:"));
         cboTrangThaiLoc = new JComboBox<>(new String[] {
                 "Tất cả", STATUS_DANG_AP_DUNG, STATUS_CHUA_AP_DUNG, STATUS_HET_HAN, STATUS_NGUNG_AP_DUNG
         });
         cboTrangThaiLoc.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        cboTrangThaiLoc.setPreferredSize(new Dimension(170, 36));
+        cboTrangThaiLoc.setPreferredSize(new Dimension(170, 38));
         cboTrangThaiLoc.addActionListener(e -> renderData());
         filterRow.add(cboTrangThaiLoc);
 
-        JButton btnRefresh = createActionButton("Làm mới", new Color(245, 235, 220), new Color(120, 90, 70));
-        btnRefresh.addActionListener(e -> napDuLieuVaRender());
+        JButton btnRefresh = createButton("Làm mới", new Color(245, 235, 220), new Color(120, 90, 70));
+        btnRefresh.addActionListener(e -> loadData());
         filterRow.add(btnRefresh);
         actionCard.add(filterRow, BorderLayout.NORTH);
 
         JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonRow.setOpaque(false);
-
-        JButton btnAdd = createActionButton("Thêm khuyến mãi", new Color(225, 240, 255), new Color(40, 100, 180));
+        JButton btnAdd = createButton("+ Thêm khuyến mãi", PRIMARY_LIGHT, PRIMARY);
+        JButton btnEdit = createButton("Sửa khuyến mãi", GREEN_LIGHT, GREEN);
+        JButton btnDelete = createButton("Xóa / Ngưng áp dụng", RED_LIGHT, RED);
         btnAdd.addActionListener(e -> moDialogThemKhuyenMai());
-
-        JButton btnEdit = createActionButton("Sửa khuyến mãi", new Color(230, 244, 234), new Color(46, 125, 50));
         btnEdit.addActionListener(e -> moDialogSuaKhuyenMai());
-
-        JButton btnDelete = createActionButton("Xóa / Ngưng áp dụng", new Color(255, 235, 238), new Color(198, 40, 40));
-        btnDelete.addActionListener(e -> xuLyXoaKhuyenMai());
-
+        btnDelete.addActionListener(e -> xuLyXoaHoacNgung());
         buttonRow.add(btnAdd);
         buttonRow.add(btnEdit);
         buttonRow.add(btnDelete);
@@ -186,32 +182,32 @@ public class KhuyenMai_GUI extends JPanel {
     }
 
     private JPanel createTablePanel() {
-        JPanel card = new JPanel(new BorderLayout(0, 12));
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(228, 228, 228), 1, true),
-                new EmptyBorder(14, 14, 14, 14)));
-
-        String[] columns = {
-                "Mã KM", "Tên khuyến mãi", "Loại", "Giá trị", "Đối tượng", "Điều kiện", "Bắt đầu", "Kết thúc", "Trạng thái"
-        };
+        JPanel card = createCardPanel(new BorderLayout(0, 12));
+        String[] columns = { "Mã KM", "Tên khuyến mãi", "Loại", "Giá trị", "Đối tượng", "Điều kiện", "Bắt đầu", "Kết thúc", "Trạng thái" };
         tableModel = new DefaultTableModel(columns, 0) {
             private static final long serialVersionUID = 1L;
             @Override public boolean isCellEditable(int row, int column) { return false; }
         };
-        table = new JTable(tableModel);
+        table = new JTable(tableModel) {
+            private static final long serialVersionUID = 1L;
+            @Override public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
+                Component c = super.prepareRenderer(renderer, row, column);
+                if (!isRowSelected(row)) c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(250, 250, 250));
+                return c;
+            }
+        };
         table.setRowHeight(44);
         table.setFont(new Font("SansSerif", Font.PLAIN, 14));
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setGridColor(new Color(235, 235, 235));
         table.setSelectionBackground(new Color(235, 244, 255));
         table.setSelectionForeground(Color.BLACK);
-        table.getSelectionModel().addListSelectionListener(e -> capNhatChiTietKhuyenMai());
+        table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) capNhatChiTietKhuyenMai();
+        });
         table.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    moDialogSuaKhuyenMai();
-                }
+                if (e.getClickCount() == 2) moDialogSuaKhuyenMai();
             }
         });
 
@@ -226,37 +222,14 @@ public class KhuyenMai_GUI extends JPanel {
         DefaultTableCellRenderer left = new DefaultTableCellRenderer();
         left.setHorizontalAlignment(JLabel.LEFT);
         left.setBorder(new EmptyBorder(0, 10, 0, 0));
-
-        table.getColumnModel().getColumn(0).setCellRenderer(center);
+        for (int i = 0; i < columns.length; i++) table.getColumnModel().getColumn(i).setCellRenderer(center);
         table.getColumnModel().getColumn(1).setCellRenderer(left);
-        table.getColumnModel().getColumn(2).setCellRenderer(center);
-        table.getColumnModel().getColumn(3).setCellRenderer(center);
-        table.getColumnModel().getColumn(4).setCellRenderer(center);
-        table.getColumnModel().getColumn(5).setCellRenderer(center);
-        table.getColumnModel().getColumn(6).setCellRenderer(center);
-        table.getColumnModel().getColumn(7).setCellRenderer(center);
-        table.getColumnModel().getColumn(8).setCellRenderer(center);
-
-        table.getColumnModel().getColumn(0).setPreferredWidth(80);
-        table.getColumnModel().getColumn(1).setPreferredWidth(200);
-        table.getColumnModel().getColumn(2).setPreferredWidth(110);
-        table.getColumnModel().getColumn(3).setPreferredWidth(90);
-        table.getColumnModel().getColumn(4).setPreferredWidth(120);
-        table.getColumnModel().getColumn(5).setPreferredWidth(110);
-        table.getColumnModel().getColumn(6).setPreferredWidth(135);
-        table.getColumnModel().getColumn(7).setPreferredWidth(135);
-        table.getColumnModel().getColumn(8).setPreferredWidth(120);
+        setColumnWidths(table, 80, 210, 110, 100, 120, 110, 140, 140, 130);
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.getViewport().setBackground(Color.WHITE);
         scrollPane.setBorder(new LineBorder(new Color(235, 235, 235), 1));
         card.add(scrollPane, BorderLayout.CENTER);
-
-        JLabel hint = new JLabel("Gợi ý: Khuyến mãi đã dùng trong hóa đơn sẽ được ngưng áp dụng thay vì xóa khỏi CSDL.");
-        hint.setFont(new Font("SansSerif", Font.ITALIC, 13));
-        hint.setForeground(new Color(120, 120, 120));
-        card.add(hint, BorderLayout.SOUTH);
-
         return card;
     }
 
@@ -266,60 +239,40 @@ public class KhuyenMai_GUI extends JPanel {
         right.setOpaque(false);
         right.setPreferredSize(new Dimension(370, 0));
 
-        JPanel statsCard = createCard();
-        statsCard.setLayout(new GridLayout(2, 2, 12, 12));
+        JPanel statsCard = createCardPanel(new GridLayout(2, 2, 12, 12));
         lblTongKM = createMetricLabel("0");
         lblDangApDung = createMetricLabel("0");
         lblSapHetHan = createMetricLabel("0");
-        lblNgungApDung = createMetricLabel("0");
+        lblNgungHetHan = createMetricLabel("0");
         statsCard.add(createMetricPanel("Tổng KM", lblTongKM, new Color(245, 248, 255)));
         statsCard.add(createMetricPanel("Đang áp dụng", lblDangApDung, new Color(235, 248, 239)));
         statsCard.add(createMetricPanel("Sắp hết hạn", lblSapHetHan, new Color(255, 248, 230)));
-        statsCard.add(createMetricPanel("Ngưng/Hết hạn", lblNgungApDung, new Color(255, 239, 239)));
+        statsCard.add(createMetricPanel("Ngưng/Hết hạn", lblNgungHetHan, new Color(255, 239, 239)));
 
-        JPanel detailCard = createCard();
-        detailCard.setLayout(new BorderLayout(0, 10));
+        JPanel detailCard = createCardPanel(new BorderLayout(0, 10));
         JLabel title = new JLabel("Chi tiết khuyến mãi");
         title.setFont(new Font("SansSerif", Font.BOLD, 18));
         detailCard.add(title, BorderLayout.NORTH);
-        txtDetail = new JTextArea(14, 20);
+        txtDetail = new JTextArea(18, 20);
         txtDetail.setEditable(false);
         txtDetail.setLineWrap(true);
         txtDetail.setWrapStyleWord(true);
         txtDetail.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        txtDetail.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(225, 225, 225), 1, true),
-                new EmptyBorder(10, 10, 10, 10)));
+        txtDetail.setBorder(new EmptyBorder(10, 10, 10, 10));
         txtDetail.setText("Chọn một khuyến mãi trong bảng để xem chi tiết.");
         detailCard.add(new JScrollPane(txtDetail), BorderLayout.CENTER);
-
-        JPanel noteCard = createCard();
-        noteCard.setLayout(new BoxLayout(noteCard, BoxLayout.Y_AXIS));
-        JLabel noteTitle = new JLabel("Quy tắc xử lý");
-        noteTitle.setFont(new Font("SansSerif", Font.BOLD, 17));
-        noteCard.add(noteTitle);
-        noteCard.add(Box.createRigidArea(new Dimension(0, 8)));
-        noteCard.add(createGuideLabel("• Giảm phần trăm không vượt quá 100%."));
-        noteCard.add(Box.createRigidArea(new Dimension(0, 6)));
-        noteCard.add(createGuideLabel("• Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu."));
-        noteCard.add(Box.createRigidArea(new Dimension(0, 6)));
-        noteCard.add(createGuideLabel("• Khuyến mãi đã dùng trong hóa đơn không xóa thật, chỉ ngưng áp dụng."));
 
         right.add(statsCard);
         right.add(Box.createRigidArea(new Dimension(0, 16)));
         right.add(detailCard);
-        right.add(Box.createRigidArea(new Dimension(0, 16)));
-        right.add(noteCard);
         right.add(Box.createVerticalGlue());
         return right;
     }
 
-    private JPanel createCard() {
-        JPanel panel = new JPanel();
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(228, 228, 228), 1, true),
-                new EmptyBorder(16, 16, 16, 16)));
+    private JPanel createCardPanel(java.awt.LayoutManager layout) {
+        JPanel panel = new JPanel(layout);
+        panel.setBackground(CARD);
+        panel.setBorder(BorderFactory.createCompoundBorder(new LineBorder(BORDER, 1, true), new EmptyBorder(14, 14, 14, 14)));
         return panel;
     }
 
@@ -327,9 +280,7 @@ public class KhuyenMai_GUI extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(0, 8));
         panel.setOpaque(true);
         panel.setBackground(bg);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(228, 228, 228), 1, true),
-                new EmptyBorder(14, 14, 14, 14)));
+        panel.setBorder(BorderFactory.createCompoundBorder(new LineBorder(BORDER, 1, true), new EmptyBorder(14, 14, 14, 14)));
         JLabel lblTitle = new JLabel(title);
         lblTitle.setFont(new Font("SansSerif", Font.PLAIN, 13));
         lblTitle.setForeground(new Color(90, 90, 90));
@@ -345,528 +296,550 @@ public class KhuyenMai_GUI extends JPanel {
         return label;
     }
 
-    private JLabel createGuideLabel(String text) {
-        JLabel label = new JLabel("<html><div style='width:300px; line-height:1.5; color:#555555;'>" + text + "</div></html>");
-        label.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        return label;
+    private JButton createButton(String text, Color bg, Color fg) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btn.setBackground(bg);
+        btn.setForeground(fg);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(220, 220, 220), 1, true), new EmptyBorder(8, 14, 8, 14)));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
     }
 
-    private JButton createActionButton(String text, Color bg, Color fg) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("SansSerif", Font.BOLD, 13));
-        button.setFocusPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setBackground(bg);
-        button.setForeground(fg);
-        button.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(fg.brighter(), 1, true),
-                new EmptyBorder(8, 14, 8, 14)));
-        return button;
-    }
-
-    private void napDuLieuVaRender() {
-        loaiKhuyenMaiMap.clear();
-        napLoaiKhuyenMai();
-
-        dsKhuyenMai.clear();
-        for (Object obj : khuyenMaiDAO.getAllKhuyenMai()) {
-            if (obj instanceof KhuyenMai) {
-                dsKhuyenMai.add((KhuyenMai) obj);
+    private JTextField createPlaceholderTextField(String placeholder, int columns) {
+        JTextField tf = new JTextField(placeholder, columns);
+        tf.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        tf.setForeground(Color.GRAY);
+        tf.setToolTipText(placeholder);
+        tf.setBorder(BorderFactory.createCompoundBorder(new LineBorder(new Color(220, 220, 220), 1, true), new EmptyBorder(8, 10, 8, 10)));
+        tf.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override public void focusGained(java.awt.event.FocusEvent e) {
+                if (tf.getText().equals(placeholder)) {
+                    tf.setText("");
+                    tf.setForeground(Color.BLACK);
+                }
             }
-        }
-        renderData();
+            @Override public void focusLost(java.awt.event.FocusEvent e) {
+                if (tf.getText().trim().isEmpty()) {
+                    tf.setText(placeholder);
+                    tf.setForeground(Color.GRAY);
+                }
+            }
+        });
+        return tf;
     }
 
-    private void napLoaiKhuyenMai() {
+    private void setColumnWidths(JTable table, int... widths) {
+        for (int i = 0; i < widths.length && i < table.getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        }
+    }
+
+    private void loadData() {
+        try {
+            ConnectDB.getInstance().connect();
+            capNhatTrangThaiKhuyenMaiTheoThoiGian();
+            loaiKhuyenMaiMap.clear();
+            loaiKhuyenMaiMap.putAll(loadLoaiKhuyenMai());
+            dsKhuyenMai.clear();
+            dsKhuyenMai.addAll(loadKhuyenMai());
+            renderData();
+            updateStats();
+            capNhatChiTietKhuyenMai();
+        } catch (Exception ex) {
+            showError("Không thể tải dữ liệu khuyến mãi", ex);
+        }
+    }
+
+    private void capNhatTrangThaiKhuyenMaiTheoThoiGian() {
+        String sql = "UPDATE KhuyenMai SET trangThai = CASE "
+                + "WHEN trangThai = N'Ngưng áp dụng' THEN trangThai "
+                + "WHEN GETDATE() < thoiGianBatDau THEN N'Chưa áp dụng' "
+                + "WHEN GETDATE() > thoiGianKetThuc THEN N'Hết hạn' "
+                + "ELSE N'Đang áp dụng' END";
+        try (Statement st = ConnectDB.getConnection().createStatement()) {
+            st.executeUpdate(sql);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private Map<String, String> loadLoaiKhuyenMai() throws Exception {
+        Map<String, String> map = new LinkedHashMap<>();
         String sql = "SELECT maLoaiKM, tenLoaiKM FROM LoaiKhuyenMai ORDER BY maLoaiKM";
-        try (PreparedStatement stmt = ConnectDB.getConnection().prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                loaiKhuyenMaiMap.put(rs.getString("maLoaiKM"), rs.getString("tenLoaiKM"));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            loaiKhuyenMaiMap.put("LKM01", "Phần trăm");
-            loaiKhuyenMaiMap.put("LKM02", "Số tiền");
-            loaiKhuyenMaiMap.put("LKM03", "Thành viên");
+        try (PreparedStatement ps = ConnectDB.getConnection().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) map.put(rs.getString("maLoaiKM"), rs.getString("tenLoaiKM"));
         }
+        return map;
+    }
+
+    private List<KhuyenMaiRow> loadKhuyenMai() throws Exception {
+        List<KhuyenMaiRow> list = new ArrayList<>();
+        String sql = "SELECT km.*, lkm.tenLoaiKM FROM KhuyenMai km INNER JOIN LoaiKhuyenMai lkm ON km.maLoaiKM = lkm.maLoaiKM ORDER BY km.maKM";
+        try (PreparedStatement ps = ConnectDB.getConnection().prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                KhuyenMaiRow km = new KhuyenMaiRow();
+                km.maKM = rs.getString("maKM");
+                km.maLoaiKM = rs.getString("maLoaiKM");
+                km.tenLoaiKM = rs.getString("tenLoaiKM");
+                km.maNV = rs.getString("maNV");
+                km.giaTri = rs.getDouble("giaTri");
+                km.tenKhuyenMai = rs.getString("tenKhuyenMai");
+                Timestamp bd = rs.getTimestamp("thoiGianBatDau");
+                Timestamp kt = rs.getTimestamp("thoiGianKetThuc");
+                km.thoiGianBatDau = bd == null ? null : bd.toLocalDateTime();
+                km.thoiGianKetThuc = kt == null ? null : kt.toLocalDateTime();
+                km.doiTuongApDung = rs.getString("doiTuongApDung");
+                km.dieuKienApDung = rs.getDouble("dieuKienApDung");
+                km.ghiChu = rs.getString("ghiChu");
+                km.trangThaiDB = rs.getString("trangThai");
+                km.trangThaiHienThi = tinhTrangThai(km);
+                list.add(km);
+            }
+        }
+        return list;
+    }
+
+    private String tinhTrangThai(KhuyenMaiRow km) {
+        if (km.trangThaiDB != null && km.trangThaiDB.trim().equalsIgnoreCase(STATUS_NGUNG_AP_DUNG)) return STATUS_NGUNG_AP_DUNG;
+        LocalDateTime now = LocalDateTime.now();
+        if (km.thoiGianBatDau != null && now.isBefore(km.thoiGianBatDau)) return STATUS_CHUA_AP_DUNG;
+        if (km.thoiGianKetThuc != null && now.isAfter(km.thoiGianKetThuc)) return STATUS_HET_HAN;
+        return STATUS_DANG_AP_DUNG;
     }
 
     private void renderData() {
+        String keyword = getSearchKeyword();
+        String statusFilter = String.valueOf(cboTrangThaiLoc.getSelectedItem());
         tableModel.setRowCount(0);
-        for (KhuyenMai km : dsKhuyenMai) {
-            if (!phuHopBoLoc(km)) continue;
+        for (KhuyenMaiRow km : dsKhuyenMai) {
+            if (!matches(km, keyword)) continue;
+            if (!"Tất cả".equals(statusFilter) && !statusFilter.equals(km.trangThaiHienThi)) continue;
             tableModel.addRow(new Object[] {
-                    km.getMaKM(),
-                    km.getTenKhuyenMai(),
-                    layTenLoaiKM(km),
+                    km.maKM,
+                    km.tenKhuyenMai,
+                    km.tenLoaiKM,
                     formatGiaTri(km),
-                    safe(km.getDoiTuongApDung(), "-"),
-                    formatTien(km.getDieuKienApDung()),
-                    formatDate(km.getThoiGianBatDau()),
-                    formatDate(km.getThoiGianKetThuc()),
-                    layTrangThaiHienThi(km)
+                    nvl(km.doiTuongApDung),
+                    moneyFormat.format(km.dieuKienApDung),
+                    formatDateTime(km.thoiGianBatDau),
+                    formatDateTime(km.thoiGianKetThuc),
+                    km.trangThaiHienThi
             });
         }
-        capNhatThongKe();
-        capNhatChiTietKhuyenMai();
+        updateStats();
     }
 
-    private boolean phuHopBoLoc(KhuyenMai km) {
-        String keyword = normalize(txtSearch == null ? "" : txtSearch.getText());
-        String trangThaiLoc = Objects.toString(cboTrangThaiLoc == null ? "Tất cả" : cboTrangThaiLoc.getSelectedItem(), "Tất cả");
-        String trangThai = layTrangThaiHienThi(km);
-        if (!"Tất cả".equalsIgnoreCase(trangThaiLoc) && !trangThaiLoc.equalsIgnoreCase(trangThai)) {
-            return false;
-        }
-        if (keyword.isEmpty()) return true;
-        return normalize(km.getMaKM()).contains(keyword)
-                || normalize(km.getTenKhuyenMai()).contains(keyword)
-                || normalize(layTenLoaiKM(km)).contains(keyword)
-                || normalize(km.getDoiTuongApDung()).contains(keyword)
-                || normalize(km.getGhiChu()).contains(keyword)
-                || normalize(trangThai).contains(keyword);
+    private String getSearchKeyword() {
+        String s = txtSearch.getText() == null ? "" : txtSearch.getText().trim();
+        if (s.equals(PLACEHOLDER_SEARCH)) return "";
+        return s.toLowerCase(Locale.ROOT);
     }
 
-    private void capNhatThongKe() {
-        int tong = 0;
-        int dang = 0;
-        int sapHetHan = 0;
-        int ngungHoacHetHan = 0;
-        LocalDateTime now = LocalDateTime.now();
-        for (KhuyenMai km : dsKhuyenMai) {
-            if (!phuHopBoLoc(km)) continue;
-            tong++;
-            String status = layTrangThaiHienThi(km);
-            if (STATUS_DANG_AP_DUNG.equalsIgnoreCase(status)) dang++;
-            if (km.getThoiGianKetThuc() != null
-                    && !km.getThoiGianKetThuc().isBefore(now)
-                    && km.getThoiGianKetThuc().isBefore(now.plusDays(7))) {
-                sapHetHan++;
-            }
-            if (STATUS_NGUNG_AP_DUNG.equalsIgnoreCase(status) || STATUS_HET_HAN.equalsIgnoreCase(status)) {
-                ngungHoacHetHan++;
-            }
-        }
+    private boolean matches(KhuyenMaiRow km, String keyword) {
+        if (keyword == null || keyword.isEmpty()) return true;
+        return safe(km.maKM).contains(keyword)
+                || safe(km.tenKhuyenMai).contains(keyword)
+                || safe(km.tenLoaiKM).contains(keyword)
+                || safe(km.doiTuongApDung).contains(keyword)
+                || safe(km.ghiChu).contains(keyword)
+                || safe(km.trangThaiHienThi).contains(keyword);
+    }
+
+    private String safe(String s) { return s == null ? "" : s.toLowerCase(Locale.ROOT); }
+    private String nvl(String s) { return s == null || s.trim().isEmpty() ? "Tất cả" : s; }
+    private String formatDateTime(LocalDateTime dt) { return dt == null ? "" : dt.format(dtf); }
+
+    private String formatGiaTri(KhuyenMaiRow km) {
+        String loai = km.tenLoaiKM == null ? "" : km.tenLoaiKM.toLowerCase(Locale.ROOT);
+        if (loai.contains("phần") || loai.contains("thành viên")) return moneyFormat.format(km.giaTri) + "%";
+        return moneyFormat.format(km.giaTri) + " đ";
+    }
+
+    private void updateStats() {
+        int tong = dsKhuyenMai.size();
+        long dang = dsKhuyenMai.stream().filter(km -> STATUS_DANG_AP_DUNG.equals(km.trangThaiHienThi)).count();
+        long sapHetHan = dsKhuyenMai.stream().filter(km -> STATUS_DANG_AP_DUNG.equals(km.trangThaiHienThi)
+                && km.thoiGianKetThuc != null
+                && !km.thoiGianKetThuc.isBefore(LocalDateTime.now())
+                && !km.thoiGianKetThuc.isAfter(LocalDateTime.now().plusDays(7))).count();
+        long ngungHetHan = dsKhuyenMai.stream().filter(km -> STATUS_NGUNG_AP_DUNG.equals(km.trangThaiHienThi) || STATUS_HET_HAN.equals(km.trangThaiHienThi)).count();
         lblTongKM.setText(String.valueOf(tong));
         lblDangApDung.setText(String.valueOf(dang));
         lblSapHetHan.setText(String.valueOf(sapHetHan));
-        lblNgungApDung.setText(String.valueOf(ngungHoacHetHan));
+        lblNgungHetHan.setText(String.valueOf(ngungHetHan));
     }
 
     private void capNhatChiTietKhuyenMai() {
-        KhuyenMai km = layKhuyenMaiDangChon();
+        KhuyenMaiRow km = getSelectedKhuyenMai();
         if (km == null) {
             txtDetail.setText("Chọn một khuyến mãi trong bảng để xem chi tiết.");
             return;
         }
-        StringBuilder sb = new StringBuilder();
-        sb.append("Mã KM: ").append(km.getMaKM());
-        sb.append("\nTên: ").append(km.getTenKhuyenMai());
-        sb.append("\nLoại: ").append(layTenLoaiKM(km));
-        sb.append("\nGiá trị: ").append(formatGiaTri(km));
-        sb.append("\nĐối tượng: ").append(safe(km.getDoiTuongApDung(), "-"));
-        sb.append("\nĐiều kiện áp dụng: ").append(formatTien(km.getDieuKienApDung()));
-        sb.append("\nBắt đầu: ").append(formatDate(km.getThoiGianBatDau()));
-        sb.append("\nKết thúc: ").append(formatDate(km.getThoiGianKetThuc()));
-        sb.append("\nTrạng thái lưu: ").append(safe(km.getTrangThai(), "-"));
-        sb.append("\nTrạng thái hiển thị: ").append(layTrangThaiHienThi(km));
-        sb.append("\nSố hóa đơn đã dùng: ").append(demHoaDonDungKM(km.getMaKM()));
-        sb.append("\n\nGhi chú:\n").append(safe(km.getGhiChu(), "Không có ghi chú."));
-        txtDetail.setText(sb.toString());
+        txtDetail.setText("Mã khuyến mãi: " + km.maKM + "\n"
+                + "Tên khuyến mãi: " + km.tenKhuyenMai + "\n"
+                + "Loại: " + km.tenLoaiKM + "\n"
+                + "Giá trị: " + formatGiaTri(km) + "\n"
+                + "Đối tượng áp dụng: " + nvl(km.doiTuongApDung) + "\n"
+                + "Điều kiện áp dụng: " + moneyFormat.format(km.dieuKienApDung) + " đ\n"
+                + "Bắt đầu: " + formatDateTime(km.thoiGianBatDau) + "\n"
+                + "Kết thúc: " + formatDateTime(km.thoiGianKetThuc) + "\n"
+                + "Trạng thái thực tế: " + km.trangThaiHienThi + "\n"
+                + "Nhân viên tạo/sửa: " + nvl(km.maNV) + "\n"
+                + "Ghi chú: " + nvl(km.ghiChu));
+    }
+
+    private KhuyenMaiRow getSelectedKhuyenMai() {
+        int row = table.getSelectedRow();
+        if (row < 0) return null;
+        String ma = String.valueOf(table.getValueAt(row, 0));
+        for (KhuyenMaiRow km : dsKhuyenMai) if (km.maKM.equals(ma)) return km;
+        return null;
     }
 
     private void moDialogThemKhuyenMai() {
-        KhuyenMaiForm form = new KhuyenMaiForm(null);
-        while (true) {
-            int option = JOptionPane.showConfirmDialog(this, form.panel, "Thêm khuyến mãi", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-            if (option != JOptionPane.OK_OPTION) return;
-            KhuyenMaiData data = form.layDuLieu();
-            String loi = kiemTraDuLieu(data);
-            if (loi != null) {
-                thongBao(loi);
-                continue;
+        KhuyenMaiForm form = new KhuyenMaiForm(null, true);
+        int result = JOptionPane.showConfirmDialog(this, form, "Thêm khuyến mãi", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result != JOptionPane.OK_OPTION) return;
+        if (!form.validateInput()) return;
+
+        try {
+            String sql = "INSERT INTO KhuyenMai(maLoaiKM, maNV, giaTri, tenKhuyenMai, thoiGianBatDau, thoiGianKetThuc, doiTuongApDung, dieuKienApDung, ghiChu, trangThai) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement ps = ConnectDB.getConnection().prepareStatement(sql)) {
+                fillStatementFromForm(ps, form, null);
+                ps.executeUpdate();
             }
-            if (themKhuyenMai(data)) {
-                thongBao("Đã thêm khuyến mãi " + data.maKM + ".");
-                napDuLieuVaRender();
-                chonDongTheoMa(data.maKM);
-                return;
-            }
-            thongBaoLoi("Thêm khuyến mãi thất bại.");
-            return;
+            JOptionPane.showMessageDialog(this, "Thêm khuyến mãi thành công.");
+            loadData();
+        } catch (Exception ex) {
+            showError("Không thể thêm khuyến mãi", ex);
         }
     }
 
     private void moDialogSuaKhuyenMai() {
-        KhuyenMai km = layKhuyenMaiDangChon();
-        if (km == null) {
-            thongBao("Vui lòng chọn một khuyến mãi trước.");
+        KhuyenMaiRow selected = getSelectedKhuyenMai();
+        if (selected == null) {
+            JOptionPane.showMessageDialog(this, "Bạn cần chọn một khuyến mãi trước.", "Chưa chọn khuyến mãi", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        KhuyenMaiForm form = new KhuyenMaiForm(km);
-        while (true) {
-            int option = JOptionPane.showConfirmDialog(this, form.panel, "Sửa khuyến mãi", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-            if (option != JOptionPane.OK_OPTION) return;
-            KhuyenMaiData data = form.layDuLieu();
-            String loi = kiemTraDuLieu(data);
-            if (loi != null) {
-                thongBao(loi);
-                continue;
-            }
-            if (capNhatKhuyenMai(data)) {
-                thongBao("Đã cập nhật khuyến mãi " + data.maKM + ".");
-                napDuLieuVaRender();
-                chonDongTheoMa(data.maKM);
-                return;
-            }
-            thongBaoLoi("Cập nhật khuyến mãi thất bại.");
-            return;
-        }
-    }
+        KhuyenMaiForm form = new KhuyenMaiForm(selected, false);
+        int result = JOptionPane.showConfirmDialog(this, form, "Sửa khuyến mãi " + selected.maKM, JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result != JOptionPane.OK_OPTION) return;
+        if (!form.validateInput()) return;
 
-    private void xuLyXoaKhuyenMai() {
-        KhuyenMai km = layKhuyenMaiDangChon();
-        if (km == null) {
-            thongBao("Vui lòng chọn một khuyến mãi trước.");
-            return;
-        }
-        int soHD = demHoaDonDungKM(km.getMaKM());
-        String msg;
-        if (soHD > 0) {
-            msg = "Khuyến mãi này đã được dùng trong " + soHD + " hóa đơn.\n"
-                    + "Hệ thống sẽ không xóa khỏi CSDL mà chuyển sang trạng thái Ngưng áp dụng.\n\n"
-                    + "Bạn có muốn tiếp tục không?";
-        } else {
-            msg = "Bạn có chắc muốn xóa khuyến mãi " + km.getMaKM() + " không?";
-        }
-        int confirm = JOptionPane.showConfirmDialog(this, msg, "Xác nhận", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        if (confirm != JOptionPane.YES_OPTION) return;
-
-        boolean ok = soHD > 0 ? ngungApDungKhuyenMai(km.getMaKM()) : xoaKhuyenMai(km.getMaKM());
-        if (ok) {
-            thongBao(soHD > 0 ? "Đã ngưng áp dụng khuyến mãi." : "Đã xóa khuyến mãi.");
-            napDuLieuVaRender();
-        } else {
-            thongBaoLoi("Xử lý khuyến mãi thất bại.");
-        }
-    }
-
-    private String kiemTraDuLieu(KhuyenMaiData data) {
-        if (data.tenKhuyenMai.isEmpty()) return "Tên khuyến mãi không được để trống.";
-        if (data.maLoaiKM == null || data.maLoaiKM.isEmpty()) return "Vui lòng chọn loại khuyến mãi.";
-        if (data.giaTri <= 0) return "Giá trị khuyến mãi phải lớn hơn 0.";
-        String tenLoai = loaiKhuyenMaiMap.getOrDefault(data.maLoaiKM, "");
-        if ((tenLoai.toLowerCase(Locale.ROOT).contains("phần trăm") || tenLoai.toLowerCase(Locale.ROOT).contains("thành viên"))
-                && data.giaTri > 100) {
-            return "Khuyến mãi phần trăm/thành viên không được vượt quá 100%.";
-        }
-        if (data.thoiGianBatDau == null || data.thoiGianKetThuc == null) return "Vui lòng nhập thời gian bắt đầu và kết thúc.";
-        if (data.thoiGianKetThuc.isBefore(data.thoiGianBatDau)) return "Thời gian kết thúc phải lớn hơn hoặc bằng thời gian bắt đầu.";
-        if (data.dieuKienApDung < 0) return "Điều kiện áp dụng không được âm.";
-        return null;
-    }
-
-    private boolean themKhuyenMai(KhuyenMaiData d) {
-        String sql = "INSERT INTO KhuyenMai(maKM, maLoaiKM, maNV, giaTri, tenKhuyenMai, thoiGianBatDau, thoiGianKetThuc, doiTuongApDung, dieuKienApDung, ghiChu, trangThai) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement stmt = ConnectDB.getConnection().prepareStatement(sql)) {
-            ganThamSoKhuyenMai(stmt, d, true);
-            return stmt.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    private boolean capNhatKhuyenMai(KhuyenMaiData d) {
-        String sql = "UPDATE KhuyenMai SET maLoaiKM = ?, maNV = ?, giaTri = ?, tenKhuyenMai = ?, thoiGianBatDau = ?, thoiGianKetThuc = ?, "
-                + "doiTuongApDung = ?, dieuKienApDung = ?, ghiChu = ?, trangThai = ? WHERE maKM = ?";
-        try (PreparedStatement stmt = ConnectDB.getConnection().prepareStatement(sql)) {
-            ganThamSoKhuyenMai(stmt, d, false);
-            return stmt.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    private void ganThamSoKhuyenMai(PreparedStatement stmt, KhuyenMaiData d, boolean insert) throws Exception {
-        if (insert) {
-            stmt.setString(1, d.maKM);
-            stmt.setString(2, d.maLoaiKM);
-            stmt.setString(3, d.maNV);
-            stmt.setDouble(4, d.giaTri);
-            stmt.setString(5, d.tenKhuyenMai);
-            stmt.setTimestamp(6, Timestamp.valueOf(d.thoiGianBatDau));
-            stmt.setTimestamp(7, Timestamp.valueOf(d.thoiGianKetThuc));
-            stmt.setString(8, nullIfBlank(d.doiTuongApDung));
-            stmt.setDouble(9, d.dieuKienApDung);
-            stmt.setString(10, nullIfBlank(d.ghiChu));
-            stmt.setString(11, d.trangThai);
-        } else {
-            stmt.setString(1, d.maLoaiKM);
-            stmt.setString(2, d.maNV);
-            stmt.setDouble(3, d.giaTri);
-            stmt.setString(4, d.tenKhuyenMai);
-            stmt.setTimestamp(5, Timestamp.valueOf(d.thoiGianBatDau));
-            stmt.setTimestamp(6, Timestamp.valueOf(d.thoiGianKetThuc));
-            stmt.setString(7, nullIfBlank(d.doiTuongApDung));
-            stmt.setDouble(8, d.dieuKienApDung);
-            stmt.setString(9, nullIfBlank(d.ghiChu));
-            stmt.setString(10, d.trangThai);
-            stmt.setString(11, d.maKM);
-        }
-    }
-
-    private boolean xoaKhuyenMai(String maKM) {
-        try (PreparedStatement stmt = ConnectDB.getConnection().prepareStatement("DELETE FROM KhuyenMai WHERE maKM = ?")) {
-            stmt.setString(1, maKM);
-            return stmt.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    private boolean ngungApDungKhuyenMai(String maKM) {
-        try (PreparedStatement stmt = ConnectDB.getConnection().prepareStatement("UPDATE KhuyenMai SET trangThai = N'Ngưng áp dụng' WHERE maKM = ?")) {
-            stmt.setString(1, maKM);
-            return stmt.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    private int demHoaDonDungKM(String maKM) {
-        try (PreparedStatement stmt = ConnectDB.getConnection().prepareStatement("SELECT COUNT(*) FROM HoaDon WHERE maKM = ?")) {
-            stmt.setString(1, maKM);
-            try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next() ? rs.getInt(1) : 0;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return 0;
-        }
-    }
-
-    private KhuyenMai layKhuyenMaiDangChon() {
-        int row = table == null ? -1 : table.getSelectedRow();
-        if (row < 0) return null;
-        int modelRow = table.convertRowIndexToModel(row);
-        String ma = Objects.toString(tableModel.getValueAt(modelRow, 0), "");
-        for (KhuyenMai km : dsKhuyenMai) {
-            if (Objects.equals(km.getMaKM(), ma)) return km;
-        }
-        return null;
-    }
-
-    private void chonDongTheoMa(String ma) {
-        if (ma == null) return;
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            if (ma.equals(tableModel.getValueAt(i, 0))) {
-                int view = table.convertRowIndexToView(i);
-                table.setRowSelectionInterval(view, view);
-                table.scrollRectToVisible(table.getCellRect(view, 0, true));
-                return;
-            }
-        }
-    }
-
-    private String taoMaKhuyenMaiMoi() {
-        int max = 0;
-        Pattern pattern = Pattern.compile("(\\d+)");
-        for (KhuyenMai km : dsKhuyenMai) {
-            Matcher matcher = pattern.matcher(safe(km.getMaKM(), ""));
-            while (matcher.find()) {
-                try { max = Math.max(max, Integer.parseInt(matcher.group(1))); } catch (Exception ignored) {}
-            }
-        }
-        return "KM" + String.format("%03d", max + 1);
-    }
-
-    private String layMaNhanVienHienTai() {
         try {
-            if (taiKhoanDangNhap != null && taiKhoanDangNhap.getMaNV() != null
-                    && taiKhoanDangNhap.getMaNV().getMaNV() != null) {
-                return taiKhoanDangNhap.getMaNV().getMaNV();
+            String sql = "UPDATE KhuyenMai SET maLoaiKM = ?, maNV = ?, giaTri = ?, tenKhuyenMai = ?, thoiGianBatDau = ?, thoiGianKetThuc = ?, doiTuongApDung = ?, dieuKienApDung = ?, ghiChu = ?, trangThai = ? WHERE maKM = ?";
+            try (PreparedStatement ps = ConnectDB.getConnection().prepareStatement(sql)) {
+                fillStatementFromForm(ps, form, selected.maKM);
+                ps.executeUpdate();
             }
-        } catch (Exception ignored) {}
-
-        try (PreparedStatement stmt = ConnectDB.getConnection().prepareStatement("SELECT TOP 1 maNV FROM NhanVien ORDER BY maNV");
-             ResultSet rs = stmt.executeQuery()) {
-            if (rs.next()) return rs.getString(1);
-        } catch (Exception e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Cập nhật khuyến mãi thành công.");
+            loadData();
+        } catch (Exception ex) {
+            showError("Không thể sửa khuyến mãi", ex);
         }
-        return "NV001";
     }
 
-    private String layTenLoaiKM(KhuyenMai km) {
-        if (km == null || km.getMaLoaiKM() == null) return "-";
-        String maLoai = km.getMaLoaiKM().getMaLoaiKM();
-        String tenLoai = km.getMaLoaiKM().getTenLoaiKM();
-        if (tenLoai != null && !tenLoai.trim().isEmpty()) return tenLoai;
-        return loaiKhuyenMaiMap.getOrDefault(maLoai, maLoai);
+    private void fillStatementFromForm(PreparedStatement ps, KhuyenMaiForm form, String maKMForUpdate) throws Exception {
+        LocalDateTime bd = form.getBatDau();
+        LocalDateTime kt = form.getKetThuc();
+        String trangThai = form.getTrangThaiMuonLuu();
+        ps.setString(1, form.getMaLoaiKM());
+        ps.setString(2, getCurrentMaNV());
+        ps.setDouble(3, form.getGiaTri());
+        ps.setString(4, form.getTenKhuyenMai());
+        ps.setTimestamp(5, Timestamp.valueOf(bd));
+        ps.setTimestamp(6, Timestamp.valueOf(kt));
+        ps.setString(7, form.getDoiTuongApDung());
+        ps.setDouble(8, form.getDieuKienApDung());
+        ps.setString(9, form.getGhiChu());
+        ps.setString(10, trangThai);
+        if (maKMForUpdate != null) ps.setString(11, maKMForUpdate);
     }
 
-    private String layTrangThaiHienThi(KhuyenMai km) {
-        if (km == null) return "-";
-        String stored = safe(km.getTrangThai(), STATUS_DANG_AP_DUNG).trim();
-        if (STATUS_NGUNG_AP_DUNG.equalsIgnoreCase(stored)) return STATUS_NGUNG_AP_DUNG;
-        LocalDateTime now = LocalDateTime.now();
-        if (km.getThoiGianBatDau() != null && now.isBefore(km.getThoiGianBatDau())) return STATUS_CHUA_AP_DUNG;
-        if (km.getThoiGianKetThuc() != null && now.isAfter(km.getThoiGianKetThuc())) return STATUS_HET_HAN;
-        return stored.isEmpty() ? STATUS_DANG_AP_DUNG : stored;
-    }
-
-    private String formatGiaTri(KhuyenMai km) {
-        String tenLoai = layTenLoaiKM(km).toLowerCase(Locale.ROOT);
-        if (tenLoai.contains("phần trăm") || tenLoai.contains("thành viên")) {
-            return removeTrailingZero(km.getGiaTri()) + "%";
+    private String getCurrentMaNV() throws Exception {
+        if (taiKhoanDangNhap != null && taiKhoanDangNhap.getMaNV() != null && taiKhoanDangNhap.getMaNV().getMaNV() != null) {
+            return taiKhoanDangNhap.getMaNV().getMaNV();
         }
-        return formatTien(km.getGiaTri());
+        try (PreparedStatement ps = ConnectDB.getConnection().prepareStatement("SELECT TOP 1 maNV FROM NhanVien ORDER BY maNV");
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getString("maNV");
+        }
+        throw new Exception("Không tìm thấy nhân viên để lưu khuyến mãi.");
     }
 
-    private String formatTien(double value) {
-        if (value <= 0) return "0";
-        return moneyFormat.format(value) + " đ";
+    private void xuLyXoaHoacNgung() {
+        KhuyenMaiRow km = getSelectedKhuyenMai();
+        if (km == null) {
+            JOptionPane.showMessageDialog(this, "Bạn cần chọn một khuyến mãi trước.", "Chưa chọn khuyến mãi", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        try {
+            if (daDuocDungTrongHoaDon(km.maKM)) {
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "Khuyến mãi này đã được dùng trong hóa đơn nên không xóa thật.\nBạn có muốn chuyển sang trạng thái 'Ngưng áp dụng' không?",
+                        "Ngưng áp dụng", JOptionPane.YES_NO_OPTION);
+                if (confirm != JOptionPane.YES_OPTION) return;
+                try (PreparedStatement ps = ConnectDB.getConnection().prepareStatement("UPDATE KhuyenMai SET trangThai = N'Ngưng áp dụng' WHERE maKM = ?")) {
+                    ps.setString(1, km.maKM);
+                    ps.executeUpdate();
+                }
+                JOptionPane.showMessageDialog(this, "Đã ngưng áp dụng khuyến mãi.");
+            } else {
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "Khuyến mãi chưa dùng trong hóa đơn. Bạn có muốn xóa khỏi CSDL không?",
+                        "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+                if (confirm != JOptionPane.YES_OPTION) return;
+                try (PreparedStatement ps = ConnectDB.getConnection().prepareStatement("DELETE FROM KhuyenMai WHERE maKM = ?")) {
+                    ps.setString(1, km.maKM);
+                    ps.executeUpdate();
+                }
+                JOptionPane.showMessageDialog(this, "Xóa khuyến mãi thành công.");
+            }
+            loadData();
+        } catch (Exception ex) {
+            showError("Không thể xóa/ngưng khuyến mãi", ex);
+        }
     }
 
-    private String removeTrailingZero(double value) {
+    private boolean daDuocDungTrongHoaDon(String maKM) throws Exception {
+        try (PreparedStatement ps = ConnectDB.getConnection().prepareStatement("SELECT COUNT(*) FROM HoaDon WHERE maKM = ?")) {
+            ps.setString(1, maKM);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
+
+    private void showError(String message, Exception ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, message + ":\n" + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private class KhuyenMaiForm extends JPanel {
+        private static final long serialVersionUID = 1L;
+        private JTextField txtTen;
+        private JComboBox<ComboLoaiKM> cboLoai;
+        private JTextField txtGiaTri;
+        private JComboBox<String> cboDoiTuong;
+        private JTextField txtDieuKien;
+        private DateTimePickerPanel pickerBatDau;
+        private DateTimePickerPanel pickerKetThuc;
+        private JTextArea txtGhiChu;
+        private JComboBox<String> cboTrangThai;
+        private boolean themMoi;
+
+        KhuyenMaiForm(KhuyenMaiRow km, boolean themMoi) {
+            this.themMoi = themMoi;
+            setLayout(new GridBagLayout());
+            setPreferredSize(new Dimension(650, 520));
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.insets = new Insets(7, 7, 7, 7);
+            gbc.anchor = GridBagConstraints.WEST;
+
+            txtTen = new JTextField(28);
+            cboLoai = new JComboBox<>();
+            DefaultComboBoxModel<ComboLoaiKM> modelLoai = new DefaultComboBoxModel<>();
+            for (Map.Entry<String, String> e : loaiKhuyenMaiMap.entrySet()) modelLoai.addElement(new ComboLoaiKM(e.getKey(), e.getValue()));
+            cboLoai.setModel(modelLoai);
+            txtGiaTri = new JTextField(12);
+            cboDoiTuong = new JComboBox<>(new String[] { "Tất cả", "Thường", "Vàng", "Kim cương" });
+            txtDieuKien = new JTextField(12);
+            pickerBatDau = new DateTimePickerPanel(themMoi ? LocalDateTime.now().plusMinutes(5) : (km == null ? LocalDateTime.now().plusMinutes(5) : km.thoiGianBatDau), true);
+            pickerKetThuc = new DateTimePickerPanel(themMoi ? LocalDateTime.now().plusDays(7) : (km == null ? LocalDateTime.now().plusDays(7) : km.thoiGianKetThuc), true);
+            txtGhiChu = new JTextArea(4, 28);
+            txtGhiChu.setLineWrap(true);
+            txtGhiChu.setWrapStyleWord(true);
+            cboTrangThai = new JComboBox<>(new String[] { STATUS_DANG_AP_DUNG, STATUS_NGUNG_AP_DUNG });
+
+            Font f = new Font("SansSerif", Font.PLAIN, 14);
+            txtTen.setFont(f); cboLoai.setFont(f); txtGiaTri.setFont(f); cboDoiTuong.setFont(f); txtDieuKien.setFont(f); txtGhiChu.setFont(f); cboTrangThai.setFont(f);
+
+            if (km != null) {
+                txtTen.setText(km.tenKhuyenMai);
+                selectLoai(km.maLoaiKM);
+                txtGiaTri.setText(removeTrailingZero(km.giaTri));
+                cboDoiTuong.setSelectedItem(nvl(km.doiTuongApDung));
+                txtDieuKien.setText(removeTrailingZero(km.dieuKienApDung));
+                txtGhiChu.setText(km.ghiChu == null ? "" : km.ghiChu);
+                cboTrangThai.setSelectedItem(STATUS_NGUNG_AP_DUNG.equals(km.trangThaiDB) ? STATUS_NGUNG_AP_DUNG : STATUS_DANG_AP_DUNG);
+            } else {
+                txtDieuKien.setText("0");
+            }
+
+            addRow(gbc, 0, "Tên khuyến mãi:", txtTen);
+            addRow(gbc, 1, "Loại khuyến mãi:", cboLoai);
+            addRow(gbc, 2, "Giá trị:", txtGiaTri);
+            addRow(gbc, 3, "Đối tượng áp dụng:", cboDoiTuong);
+            addRow(gbc, 4, "Điều kiện tối thiểu:", txtDieuKien);
+            addRow(gbc, 5, "Thời gian bắt đầu:", pickerBatDau);
+            addRow(gbc, 6, "Thời gian kết thúc:", pickerKetThuc);
+            addRow(gbc, 7, "Trạng thái lưu:", cboTrangThai);
+
+            gbc.gridx = 0; gbc.gridy = 8; gbc.gridwidth = 1; gbc.weightx = 0; gbc.fill = GridBagConstraints.NONE;
+            add(new JLabel("Ghi chú:"), gbc);
+            gbc.gridx = 1; gbc.weightx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
+            add(new JScrollPane(txtGhiChu), gbc);
+
+            JLabel hint = new JLabel("Ngày bắt đầu khi thêm mới không được nhỏ hơn thời gian hiện tại; ngày kết thúc phải sau ngày bắt đầu.");
+            hint.setFont(new Font("SansSerif", Font.ITALIC, 12));
+            hint.setForeground(Color.GRAY);
+            gbc.gridx = 0; gbc.gridy = 9; gbc.gridwidth = 2; gbc.fill = GridBagConstraints.HORIZONTAL;
+            add(hint, gbc);
+        }
+
+        private void addRow(GridBagConstraints gbc, int y, String label, JComponent comp) {
+            gbc.gridx = 0; gbc.gridy = y; gbc.gridwidth = 1; gbc.weightx = 0; gbc.fill = GridBagConstraints.NONE;
+            add(new JLabel(label), gbc);
+            gbc.gridx = 1; gbc.weightx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
+            add(comp, gbc);
+        }
+
+        private void selectLoai(String maLoai) {
+            for (int i = 0; i < cboLoai.getItemCount(); i++) {
+                if (cboLoai.getItemAt(i).maLoai.equals(maLoai)) {
+                    cboLoai.setSelectedIndex(i);
+                    return;
+                }
+            }
+        }
+
+        boolean validateInput() {
+            if (getTenKhuyenMai().isEmpty()) {
+                JOptionPane.showMessageDialog(KhuyenMai_GUI.this, "Tên khuyến mãi không được để trống.");
+                return false;
+            }
+            if (cboLoai.getSelectedItem() == null) {
+                JOptionPane.showMessageDialog(KhuyenMai_GUI.this, "Bạn cần chọn loại khuyến mãi.");
+                return false;
+            }
+            double giaTri;
+            double dieuKien;
+            try {
+                giaTri = getGiaTri();
+                dieuKien = getDieuKienApDung();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(KhuyenMai_GUI.this, "Giá trị và điều kiện phải là số.");
+                return false;
+            }
+            if (giaTri <= 0) {
+                JOptionPane.showMessageDialog(KhuyenMai_GUI.this, "Giá trị khuyến mãi phải lớn hơn 0.");
+                return false;
+            }
+            if (dieuKien < 0) {
+                JOptionPane.showMessageDialog(KhuyenMai_GUI.this, "Điều kiện áp dụng không được âm.");
+                return false;
+            }
+            String loai = ((ComboLoaiKM) cboLoai.getSelectedItem()).tenLoai.toLowerCase(Locale.ROOT);
+            if ((loai.contains("phần") || loai.contains("thành viên")) && giaTri > 100) {
+                JOptionPane.showMessageDialog(KhuyenMai_GUI.this, "Khuyến mãi phần trăm/thành viên không được vượt quá 100%.");
+                return false;
+            }
+            LocalDateTime bd = getBatDau();
+            LocalDateTime kt = getKetThuc();
+            if (bd == null || kt == null) {
+                JOptionPane.showMessageDialog(KhuyenMai_GUI.this, "Bạn cần chọn đủ ngày bắt đầu và ngày kết thúc.");
+                return false;
+            }
+            if (themMoi && bd.isBefore(LocalDateTime.now().minusSeconds(2))) {
+                JOptionPane.showMessageDialog(KhuyenMai_GUI.this, "Thời gian bắt đầu không được nhỏ hơn thời gian hiện tại.");
+                return false;
+            }
+            if (!kt.isAfter(bd)) {
+                JOptionPane.showMessageDialog(KhuyenMai_GUI.this, "Thời gian kết thúc phải sau thời gian bắt đầu.");
+                return false;
+            }
+            return true;
+        }
+
+        String getTenKhuyenMai() { return txtTen.getText().trim(); }
+        String getMaLoaiKM() { return ((ComboLoaiKM) cboLoai.getSelectedItem()).maLoai; }
+        double getGiaTri() { return parseNumber(txtGiaTri.getText()); }
+        String getDoiTuongApDung() { return String.valueOf(cboDoiTuong.getSelectedItem()); }
+        double getDieuKienApDung() { return parseNumber(txtDieuKien.getText()); }
+        LocalDateTime getBatDau() { return pickerBatDau.getDateTime(); }
+        LocalDateTime getKetThuc() { return pickerKetThuc.getDateTime(); }
+        String getGhiChu() { return txtGhiChu.getText().trim(); }
+        String getTrangThaiMuonLuu() {
+            if (STATUS_NGUNG_AP_DUNG.equals(cboTrangThai.getSelectedItem())) return STATUS_NGUNG_AP_DUNG;
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime bd = getBatDau();
+            LocalDateTime kt = getKetThuc();
+            if (bd != null && now.isBefore(bd)) return STATUS_CHUA_AP_DUNG;
+            if (kt != null && now.isAfter(kt)) return STATUS_HET_HAN;
+            return STATUS_DANG_AP_DUNG;
+        }
+    }
+
+    private class DateTimePickerPanel extends JPanel {
+        private static final long serialVersionUID = 1L;
+        private JDateChooser dateChooser;
+        private JSpinner spHour;
+        private JSpinner spMinute;
+
+        DateTimePickerPanel(LocalDateTime initial, boolean minToday) {
+            setLayout(new FlowLayout(FlowLayout.LEFT, 6, 0));
+            setOpaque(false);
+            if (initial == null) initial = LocalDateTime.now().plusMinutes(5);
+            dateChooser = new JDateChooser();
+            dateChooser.setDateFormatString("dd/MM/yyyy");
+            dateChooser.setPreferredSize(new Dimension(145, 34));
+            dateChooser.setDate(Date.from(initial.atZone(ZoneId.systemDefault()).toInstant()));
+            if (minToday) {
+                LocalDate today = LocalDate.now();
+                dateChooser.setMinSelectableDate(Date.from(today.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+            }
+            spHour = new JSpinner(new SpinnerNumberModel(initial.getHour(), 0, 23, 1));
+            spMinute = new JSpinner(new SpinnerNumberModel(initial.getMinute(), 0, 59, 1));
+            spHour.setPreferredSize(new Dimension(62, 34));
+            spMinute.setPreferredSize(new Dimension(62, 34));
+            add(dateChooser);
+            add(new JLabel("Giờ:"));
+            add(spHour);
+            add(new JLabel("Phút:"));
+            add(spMinute);
+        }
+
+        LocalDateTime getDateTime() {
+            Date d = dateChooser.getDate();
+            if (d == null) return null;
+            LocalDate date = d.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            int hour = ((Number) spHour.getValue()).intValue();
+            int minute = ((Number) spMinute.getValue()).intValue();
+            return LocalDateTime.of(date, LocalTime.of(hour, minute));
+        }
+    }
+
+    private static double parseNumber(String s) {
+        if (s == null || s.trim().isEmpty()) return 0;
+        return Double.parseDouble(s.trim().replace(".", "").replace(",", ""));
+    }
+
+    private static String removeTrailingZero(double value) {
         if (value == Math.rint(value)) return String.valueOf((long) value);
         return String.valueOf(value);
     }
 
-    private String formatDate(LocalDateTime dateTime) {
-        return dateTime == null ? "-" : dtf.format(dateTime);
+    private static abstract class SimpleDocumentListener implements DocumentListener {
+        public abstract void update(DocumentEvent e);
+        @Override public void insertUpdate(DocumentEvent e) { update(e); }
+        @Override public void removeUpdate(DocumentEvent e) { update(e); }
+        @Override public void changedUpdate(DocumentEvent e) { update(e); }
     }
 
-    private JPanel createFormPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setOpaque(false);
-        panel.setPreferredSize(new Dimension(650, 520));
-        return panel;
+    private static class ComboLoaiKM {
+        String maLoai;
+        String tenLoai;
+        ComboLoaiKM(String maLoai, String tenLoai) { this.maLoai = maLoai; this.tenLoai = tenLoai; }
+        @Override public String toString() { return maLoai + " - " + tenLoai; }
     }
 
-    private void addFormRow(JPanel panel, int row, String label, Component comp) {
-        GridBagConstraints gbcLabel = new GridBagConstraints();
-        gbcLabel.gridx = 0;
-        gbcLabel.gridy = row;
-        gbcLabel.anchor = GridBagConstraints.NORTHWEST;
-        gbcLabel.insets = new Insets(8, 0, 8, 14);
-        JLabel lbl = new JLabel(label + ":");
-        lbl.setFont(new Font("SansSerif", Font.BOLD, 13));
-        lbl.setPreferredSize(new Dimension(145, 28));
-        panel.add(lbl, gbcLabel);
-
-        GridBagConstraints gbcComp = new GridBagConstraints();
-        gbcComp.gridx = 1;
-        gbcComp.gridy = row;
-        gbcComp.weightx = 1;
-        gbcComp.fill = GridBagConstraints.HORIZONTAL;
-        gbcComp.insets = new Insets(8, 0, 8, 0);
-        if (comp instanceof JComponent) {
-            ((JComponent) comp).setFont(new Font("SansSerif", Font.PLAIN, 13));
-        }
-        if (comp instanceof JScrollPane) {
-            comp.setPreferredSize(new Dimension(430, 90));
-        } else {
-            comp.setPreferredSize(new Dimension(430, 30));
-        }
-        panel.add(comp, gbcComp);
-    }
-
-    private JLabel createPreviewLabel(String text) {
-        JLabel label = new JLabel(text);
-        label.setFont(new Font("SansSerif", Font.BOLD, 13));
-        label.setForeground(new Color(40, 100, 180));
-        return label;
-    }
-
-    private JTextArea createDialogTextArea() {
-        JTextArea area = new JTextArea(4, 24);
-        area.setLineWrap(true);
-        area.setWrapStyleWord(true);
-        area.setBorder(new EmptyBorder(6, 6, 6, 6));
-        return area;
-    }
-
-    private Date toDate(LocalDateTime ldt) {
-        LocalDateTime value = ldt == null ? LocalDateTime.now() : ldt;
-        return Date.from(value.atZone(ZoneId.systemDefault()).toInstant());
-    }
-
-    private LocalDateTime toLocalDateTime(Date date) {
-        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-    }
-
-    private ComboItem<String>[] taoDanhSachLoaiKM() {
-        List<ComboItem<String>> items = new ArrayList<>();
-        for (Map.Entry<String, String> entry : loaiKhuyenMaiMap.entrySet()) {
-            items.add(new ComboItem<>(entry.getValue(), entry.getKey()));
-        }
-        @SuppressWarnings("unchecked")
-        ComboItem<String>[] arr = items.toArray(new ComboItem[0]);
-        return arr;
-    }
-
-    private void chonLoaiKM(JComboBox<ComboItem<String>> combo, String maLoai) {
-        for (int i = 0; i < combo.getItemCount(); i++) {
-            if (Objects.equals(combo.getItemAt(i).getValue(), maLoai)) {
-                combo.setSelectedIndex(i);
-                return;
-            }
-        }
-    }
-
-    private String normalize(String value) {
-        return safe(value, "").trim().toLowerCase(Locale.ROOT);
-    }
-
-    private String safe(String value, String fallback) {
-        return value == null ? fallback : value;
-    }
-
-    private String nullIfBlank(String value) {
-        return value == null || value.trim().isEmpty() ? null : value.trim();
-    }
-
-    private void thongBao(String message) {
-        JOptionPane.showMessageDialog(this, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    private void thongBaoLoi(String message) {
-        JOptionPane.showMessageDialog(this, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
-    }
-
-    private static class ComboItem<T> {
-        private final String label;
-        private final T value;
-        ComboItem(String label, T value) { this.label = label; this.value = value; }
-        public String getLabel() { return label; }
-        public T getValue() { return value; }
-        @Override public String toString() { return label; }
-    }
-
-    private static class ComboRenderer<T> extends DefaultListCellRenderer {
-        private static final long serialVersionUID = 1L;
-        @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (value instanceof ComboItem) {
-                @SuppressWarnings("unchecked")
-                ComboItem<T> item = (ComboItem<T>) value;
-                setText(item.getLabel());
-            }
-            return this;
-        }
-    }
-
-    private static class KhuyenMaiData {
+    private static class KhuyenMaiRow {
         String maKM;
         String maLoaiKM;
+        String tenLoaiKM;
         String maNV;
         double giaTri;
         String tenKhuyenMai;
@@ -875,76 +848,7 @@ public class KhuyenMai_GUI extends JPanel {
         String doiTuongApDung;
         double dieuKienApDung;
         String ghiChu;
-        String trangThai;
-    }
-
-    private class KhuyenMaiForm {
-        JPanel panel;
-        JTextField txtMa;
-        JTextField txtTen;
-        JComboBox<ComboItem<String>> cboLoai;
-        JSpinner spnGiaTri;
-        JComboBox<String> cboDoiTuong;
-        JSpinner spnDieuKien;
-        JSpinner spnBatDau;
-        JSpinner spnKetThuc;
-        JComboBox<String> cboTrangThai;
-        JTextArea txtGhiChu;
-
-        KhuyenMaiForm(KhuyenMai km) {
-            txtMa = new JTextField(km == null ? taoMaKhuyenMaiMoi() : km.getMaKM());
-            txtMa.setEditable(false);
-
-            txtTen = new JTextField(km == null ? "" : safe(km.getTenKhuyenMai(), ""));
-            cboLoai = new JComboBox<>(taoDanhSachLoaiKM());
-            cboLoai.setRenderer(new ComboRenderer<>());
-            if (km != null && km.getMaLoaiKM() != null) chonLoaiKM(cboLoai, km.getMaLoaiKM().getMaLoaiKM());
-
-            spnGiaTri = new JSpinner(new SpinnerNumberModel(km == null ? 10.0 : km.getGiaTri(), 0.0, 999999999.0, 1.0));
-            cboDoiTuong = new JComboBox<>(new String[] { "Tất cả KH", "Thường", "Vàng", "Kim cương" });
-            if (km != null && km.getDoiTuongApDung() != null) cboDoiTuong.setSelectedItem(km.getDoiTuongApDung());
-            spnDieuKien = new JSpinner(new SpinnerNumberModel(km == null ? 0.0 : km.getDieuKienApDung(), 0.0, 999999999.0, 10000.0));
-
-            spnBatDau = new JSpinner(new SpinnerDateModel(toDate(km == null ? LocalDateTime.now() : km.getThoiGianBatDau()), null, null, java.util.Calendar.MINUTE));
-            spnBatDau.setEditor(new JSpinner.DateEditor(spnBatDau, "dd/MM/yyyy HH:mm"));
-            spnKetThuc = new JSpinner(new SpinnerDateModel(toDate(km == null ? LocalDateTime.now().plusMonths(1) : km.getThoiGianKetThuc()), null, null, java.util.Calendar.MINUTE));
-            spnKetThuc.setEditor(new JSpinner.DateEditor(spnKetThuc, "dd/MM/yyyy HH:mm"));
-
-            cboTrangThai = new JComboBox<>(new String[] { STATUS_DANG_AP_DUNG, STATUS_NGUNG_AP_DUNG });
-            cboTrangThai.setSelectedItem(km == null ? STATUS_DANG_AP_DUNG : safe(km.getTrangThai(), STATUS_DANG_AP_DUNG));
-
-            txtGhiChu = createDialogTextArea();
-            txtGhiChu.setText(km == null ? "" : safe(km.getGhiChu(), ""));
-
-            panel = createFormPanel();
-            addFormRow(panel, 0, "Mã khuyến mãi", txtMa);
-            addFormRow(panel, 1, "Tên khuyến mãi", txtTen);
-            addFormRow(panel, 2, "Loại khuyến mãi", cboLoai);
-            addFormRow(panel, 3, "Giá trị", spnGiaTri);
-            addFormRow(panel, 4, "Đối tượng áp dụng", cboDoiTuong);
-            addFormRow(panel, 5, "Điều kiện hóa đơn", spnDieuKien);
-            addFormRow(panel, 6, "Thời gian bắt đầu", spnBatDau);
-            addFormRow(panel, 7, "Thời gian kết thúc", spnKetThuc);
-            addFormRow(panel, 8, "Trạng thái", cboTrangThai);
-            addFormRow(panel, 9, "Ghi chú", new JScrollPane(txtGhiChu));
-        }
-
-        KhuyenMaiData layDuLieu() {
-            KhuyenMaiData d = new KhuyenMaiData();
-            d.maKM = txtMa.getText().trim();
-            @SuppressWarnings("unchecked")
-            ComboItem<String> itemLoai = (ComboItem<String>) cboLoai.getSelectedItem();
-            d.maLoaiKM = itemLoai == null ? null : itemLoai.getValue();
-            d.maNV = layMaNhanVienHienTai();
-            d.giaTri = ((Number) spnGiaTri.getValue()).doubleValue();
-            d.tenKhuyenMai = txtTen.getText().trim();
-            d.thoiGianBatDau = toLocalDateTime((Date) spnBatDau.getValue());
-            d.thoiGianKetThuc = toLocalDateTime((Date) spnKetThuc.getValue());
-            d.doiTuongApDung = Objects.toString(cboDoiTuong.getSelectedItem(), "Tất cả KH");
-            d.dieuKienApDung = ((Number) spnDieuKien.getValue()).doubleValue();
-            d.ghiChu = txtGhiChu.getText();
-            d.trangThai = Objects.toString(cboTrangThai.getSelectedItem(), STATUS_DANG_AP_DUNG);
-            return d;
-        }
+        String trangThaiDB;
+        String trangThaiHienThi;
     }
 }

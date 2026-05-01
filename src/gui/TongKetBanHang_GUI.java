@@ -16,6 +16,11 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,6 +39,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -43,6 +49,9 @@ import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -100,9 +109,9 @@ public class TongKetBanHang_GUI extends JPanel {
         contentContainer.setBorder(new EmptyBorder(22, 32, 36, 32));
 
         contentContainer.add(wrapInNorth(createHeaderPanel()));
-        contentContainer.add(Box.createRigidArea(new Dimension(0, 35)));
+        contentContainer.add(Box.createRigidArea(new Dimension(0, 28)));
         contentContainer.add(wrapInNorth(createKpiPanel()));
-        contentContainer.add(Box.createRigidArea(new Dimension(0, 40)));
+        contentContainer.add(Box.createRigidArea(new Dimension(0, 28)));
         contentContainer.add(wrapInNorth(createMidScaleSection()));
 
         JScrollPane scroll = new JScrollPane(contentContainer);
@@ -235,9 +244,7 @@ public class TongKetBanHang_GUI extends JPanel {
                 new EmptyBorder(0, 0, 0, 0)));
         btnExport.setFocusPainted(false);
         btnExport.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnExport.addActionListener(e -> JOptionPane.showMessageDialog(this,
-                "Dữ liệu tổng kết đã được tải từ CSDL. Nếu cần xuất file, có thể bổ sung chức năng Excel/PDF sau.",
-                "Xuất báo cáo", JOptionPane.INFORMATION_MESSAGE));
+        btnExport.addActionListener(e -> exportBaoCaoExcel());
 
         JPanel innerBtnWrap = new JPanel(new BorderLayout());
         innerBtnWrap.setOpaque(false);
@@ -286,6 +293,7 @@ public class TongKetBanHang_GUI extends JPanel {
 
         JPanel leftCol = new JPanel(new BorderLayout(0, 15));
         leftCol.setOpaque(false);
+
         JLabel lblDetailsTitle = new JLabel("DANH SÁCH CHI TIẾT");
         lblDetailsTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
         lblDetailsTitle.setForeground(new Color(30, 41, 59));
@@ -296,6 +304,7 @@ public class TongKetBanHang_GUI extends JPanel {
             private static final long serialVersionUID = 1L;
             @Override public boolean isCellEditable(int row, int column) { return false; }
         };
+
         JTable table = new JTable(tableModel);
         table.setFont(new Font("SansSerif", Font.PLAIN, 15));
         table.setRowHeight(42);
@@ -310,11 +319,13 @@ public class TongKetBanHang_GUI extends JPanel {
         th.setForeground(new Color(50, 50, 50));
         th.setPreferredSize(new Dimension(0, 42));
         ((DefaultTableCellRenderer) th.getDefaultRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
+
         DefaultTableCellRenderer centerRender = new DefaultTableCellRenderer();
         centerRender.setHorizontalAlignment(SwingConstants.CENTER);
         for (int i = 0; i < table.getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setCellRenderer(centerRender);
         }
+
         int[] widths = { 50, 105, 170, 80, 45, 100 };
         for (int i = 0; i < widths.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
@@ -323,9 +334,16 @@ public class TongKetBanHang_GUI extends JPanel {
         JScrollPane tblScroll = new JScrollPane(table);
         tblScroll.setBorder(new LineBorder(new Color(230, 230, 230)));
         tblScroll.getViewport().setBackground(Color.WHITE);
-        tblScroll.setPreferredSize(new Dimension(0, 250));
         tblScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         tblScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+        tableModel.addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                capNhatChieuCaoBang(table, tblScroll);
+            }
+        });
+        capNhatChieuCaoBang(table, tblScroll);
 
         JPanel footer = new JPanel(new GridLayout(1, 3, 0, 0));
         footer.setOpaque(false);
@@ -340,19 +358,265 @@ public class TongKetBanHang_GUI extends JPanel {
         tableWrap.setOpaque(false);
         tableWrap.add(tblScroll, BorderLayout.CENTER);
         tableWrap.add(footer, BorderLayout.SOUTH);
+
         leftCol.add(tableWrap, BorderLayout.CENTER);
         mid.add(leftCol, BorderLayout.CENTER);
 
-        JPanel rightCol = new JPanel(new GridLayout(2, 1, 0, 30));
+        JPanel rightCol = new JPanel(new GridLayout(2, 1, 0, 24));
         rightCol.setOpaque(false);
-        rightCol.setPreferredSize(new Dimension(470, 0));
-        rightCol.setMinimumSize(new Dimension(430, 0));
+        rightCol.setPreferredSize(new Dimension(500, 0));
+        rightCol.setMinimumSize(new Dimension(470, 0));
+
         chartTopMon = new MockBarTopMon();
         chartDoanhThu = new MockLineDoanhThu();
-        rightCol.add(createChartWrapper("BIỂU ĐỒ TOP MÓN BÁN CHẠY", chartTopMon));
-        rightCol.add(createChartWrapper("DOANH THU THEO NGÀY", chartDoanhThu));
+
+        JPanel chart1 = createChartWrapper("BIỂU ĐỒ TOP MÓN BÁN CHẠY", chartTopMon);
+        JPanel chart2 = createChartWrapper("DOANH THU THEO NGÀY", chartDoanhThu);
+        chart1.setPreferredSize(new Dimension(500, 280));
+        chart2.setPreferredSize(new Dimension(500, 280));
+
+        rightCol.add(chart1);
+        rightCol.add(chart2);
+
         mid.add(rightCol, BorderLayout.EAST);
         return mid;
+    }
+
+    private void capNhatChieuCaoBang(JTable table, JScrollPane scrollPane) {
+        int soDong = Math.max(table.getRowCount(), 1);
+        int chieuCaoHeader = table.getTableHeader().getPreferredSize().height;
+        int chieuCaoDong = table.getRowHeight();
+
+        int chieuCaoBang = chieuCaoHeader + soDong * chieuCaoDong + 2;
+        int chieuCaoToiDa = 430;
+        int chieuCaoCuoi = Math.min(chieuCaoBang, chieuCaoToiDa);
+
+        scrollPane.setPreferredSize(new Dimension(0, chieuCaoCuoi));
+        scrollPane.revalidate();
+        scrollPane.repaint();
+    }
+
+    private void exportBaoCaoExcel() {
+        if (tableModel.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất báo cáo.");
+            return;
+        }
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Lưu báo cáo doanh thu");
+        chooser.setFileFilter(new FileNameExtensionFilter("Excel 97-2003 (*.xls)", "xls"));
+        chooser.setSelectedFile(new File("BaoCaoDoanhThu.xls"));
+
+        int result = chooser.showSaveDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File file = chooser.getSelectedFile();
+        if (!file.getName().toLowerCase().endsWith(".xls")) {
+            file = new File(file.getAbsolutePath() + ".xls");
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+
+            writer.write('\uFEFF');
+            writer.write("<?xml version=\"1.0\"?>\n");
+            writer.write("<?mso-application progid=\"Excel.Sheet\"?>\n");
+            writer.write("<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"\n");
+            writer.write(" xmlns:o=\"urn:schemas-microsoft-com:office:office\"\n");
+            writer.write(" xmlns:x=\"urn:schemas-microsoft-com:office:excel\"\n");
+            writer.write(" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n");
+            writer.write(" xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n");
+
+            writer.write("<Styles>\n");
+
+            writer.write("<Style ss:ID=\"Default\" ss:Name=\"Normal\">");
+            writer.write("<Alignment ss:Vertical=\"Center\"/>");
+            writer.write("<Borders/>");
+            writer.write("<Font ss:FontName=\"Arial\" ss:Size=\"11\"/>");
+            writer.write("<Interior/>");
+            writer.write("<NumberFormat/>");
+            writer.write("<Protection/>");
+            writer.write("</Style>\n");
+
+            writer.write("<Style ss:ID=\"Title\">");
+            writer.write("<Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\"/>");
+            writer.write("<Font ss:FontName=\"Arial\" ss:Bold=\"1\" ss:Size=\"18\"/>");
+            writer.write("</Style>\n");
+
+            writer.write("<Style ss:ID=\"SubInfo\">");
+            writer.write("<Alignment ss:Horizontal=\"Left\" ss:Vertical=\"Center\"/>");
+            writer.write("<Font ss:FontName=\"Arial\" ss:Size=\"11\"/>");
+            writer.write("</Style>\n");
+
+            writer.write("<Style ss:ID=\"Header\">");
+            writer.write("<Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\"/>");
+            writer.write("<Borders>");
+            writer.write("<Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("</Borders>");
+            writer.write("<Font ss:FontName=\"Arial\" ss:Bold=\"1\" ss:Size=\"12\"/>");
+            writer.write("<Interior ss:Color=\"#E9EEF7\" ss:Pattern=\"Solid\"/>");
+            writer.write("</Style>\n");
+
+            writer.write("<Style ss:ID=\"CellCenter\">");
+            writer.write("<Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\"/>");
+            writer.write("<Borders>");
+            writer.write("<Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("</Borders>");
+            writer.write("<Font ss:FontName=\"Arial\" ss:Size=\"12\"/>");
+            writer.write("</Style>\n");
+
+            writer.write("<Style ss:ID=\"CellLeft\">");
+            writer.write("<Alignment ss:Horizontal=\"Left\" ss:Vertical=\"Center\"/>");
+            writer.write("<Borders>");
+            writer.write("<Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("</Borders>");
+            writer.write("<Font ss:FontName=\"Arial\" ss:Size=\"12\"/>");
+            writer.write("</Style>\n");
+
+            writer.write("<Style ss:ID=\"CellMoney\">");
+            writer.write("<Alignment ss:Horizontal=\"Right\" ss:Vertical=\"Center\"/>");
+            writer.write("<Borders>");
+            writer.write("<Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("</Borders>");
+            writer.write("<Font ss:FontName=\"Arial\" ss:Size=\"12\"/>");
+            writer.write("</Style>\n");
+
+            writer.write("<Style ss:ID=\"Footer\">");
+            writer.write("<Alignment ss:Horizontal=\"Left\" ss:Vertical=\"Center\"/>");
+            writer.write("<Borders>");
+            writer.write("<Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("<Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/>");
+            writer.write("</Borders>");
+            writer.write("<Font ss:FontName=\"Arial\" ss:Bold=\"1\" ss:Size=\"13\"/>");
+            writer.write("<Interior ss:Color=\"#F4F4F6\" ss:Pattern=\"Solid\"/>");
+            writer.write("</Style>\n");
+
+            writer.write("</Styles>\n");
+
+            writer.write("<Worksheet ss:Name=\"BaoCaoDoanhThu\">\n");
+            writer.write("<Table>\n");
+
+            writer.write("<Column ss:Width=\"70\"/>");
+            writer.write("<Column ss:Width=\"130\"/>");
+            writer.write("<Column ss:Width=\"190\"/>");
+            writer.write("<Column ss:Width=\"100\"/>");
+            writer.write("<Column ss:Width=\"70\"/>");
+            writer.write("<Column ss:Width=\"130\"/>");
+
+            writer.write("<Row ss:Height=\"28\">");
+            writer.write("<Cell ss:MergeAcross=\"5\" ss:StyleID=\"Title\"><Data ss:Type=\"String\">BÁO CÁO DOANH THU</Data></Cell>");
+            writer.write("</Row>\n");
+
+            writer.write("<Row ss:Height=\"22\">");
+            writer.write("<Cell ss:MergeAcross=\"5\" ss:StyleID=\"SubInfo\"><Data ss:Type=\"String\">Từ ngày: "
+                    + escapeXml(getDateText(startChooser))
+                    + "    |    Đến ngày: "
+                    + escapeXml(getDateText(endChooser))
+                    + "</Data></Cell>");
+            writer.write("</Row>\n");
+
+            writer.write("<Row ss:Height=\"22\">");
+            writer.write("<Cell ss:MergeAcross=\"5\" ss:StyleID=\"SubInfo\"><Data ss:Type=\"String\">Tổng món bán: "
+                    + escapeXml(lblTongMonBan.getText())
+                    + "    |    Tổng số lượng: "
+                    + escapeXml(lblTongSoLuong.getText())
+                    + "    |    Doanh thu: "
+                    + escapeXml(lblDoanhThu.getText())
+                    + "    |    Bán chạy nhất: "
+                    + escapeXml(lblBanChayNhat.getText())
+                    + "</Data></Cell>");
+            writer.write("</Row>\n");
+
+            writer.write("<Row ss:Height=\"12\"></Row>\n");
+
+            writer.write("<Row ss:Height=\"24\">");
+            for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                writer.write("<Cell ss:StyleID=\"Header\"><Data ss:Type=\"String\">"
+                        + escapeXml(tableModel.getColumnName(i))
+                        + "</Data></Cell>");
+            }
+            writer.write("</Row>\n");
+
+            for (int r = 0; r < tableModel.getRowCount(); r++) {
+                writer.write("<Row ss:Height=\"24\">");
+                for (int c = 0; c < tableModel.getColumnCount(); c++) {
+                    Object value = tableModel.getValueAt(r, c);
+                    String text = value == null ? "" : value.toString();
+
+                    String styleId;
+                    if (c == 2) {
+                        styleId = "CellLeft";
+                    } else if (c == 5) {
+                        styleId = "CellMoney";
+                    } else {
+                        styleId = "CellCenter";
+                    }
+
+                    writer.write("<Cell ss:StyleID=\"" + styleId + "\"><Data ss:Type=\"String\">"
+                            + escapeXml(text)
+                            + "</Data></Cell>");
+                }
+                writer.write("</Row>\n");
+            }
+
+            writer.write("<Row ss:Height=\"28\">");
+            writer.write("<Cell ss:MergeAcross=\"1\" ss:StyleID=\"Footer\"><Data ss:Type=\"String\">"
+                    + escapeXml(lblFooterDong.getText())
+                    + "</Data></Cell>");
+            writer.write("<Cell ss:MergeAcross=\"1\" ss:StyleID=\"Footer\"><Data ss:Type=\"String\">"
+                    + escapeXml(lblFooterSL.getText())
+                    + "</Data></Cell>");
+            writer.write("<Cell ss:MergeAcross=\"1\" ss:StyleID=\"Footer\"><Data ss:Type=\"String\">"
+                    + escapeXml(lblFooterTien.getText())
+                    + "</Data></Cell>");
+            writer.write("</Row>\n");
+
+            writer.write("</Table>\n");
+            writer.write("</Worksheet>\n");
+            writer.write("</Workbook>\n");
+
+            JOptionPane.showMessageDialog(this,
+                    "Xuất báo cáo thành công!\nFile Excel: " + file.getAbsolutePath());
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Xuất báo cáo thất bại:\n" + ex.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private String getDateText(JDateChooser chooser) {
+        Date date = chooser.getDate();
+        if (date == null) return "";
+        LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return localDate.format(dateFormat);
+    }
+
+    private String escapeXml(String value) {
+        if (value == null) return "";
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&apos;");
     }
 
     private JLabel createFooterLabel(String text) {
@@ -567,6 +831,7 @@ public class TongKetBanHang_GUI extends JPanel {
             int h = getHeight();
             int padLeft = 20;
             int padBottom = 40;
+
             g2.setColor(new Color(200, 200, 200));
             g2.drawLine(padLeft, h - padBottom, w, h - padBottom);
             g2.drawLine(padLeft, 10, padLeft, h - padBottom);
@@ -582,26 +847,32 @@ public class TongKetBanHang_GUI extends JPanel {
             double max = 0;
             for (int i = 0; i < n; i++) max = Math.max(max, data.get(i).soLuong);
             if (max <= 0) max = 1;
+
             double groupW = (w - padLeft) / (double) n;
-            int barW = 38;
+            int barW = 42;
             g2.setFont(new Font("SansSerif", Font.PLAIN, 12));
             FontMetrics fm = g2.getFontMetrics();
-            int maxBarHeightPixels = h - padBottom - 20;
+            int maxBarHeightPixels = h - padBottom - 25;
+
             for (int i = 0; i < n; i++) {
                 ItemSale item = data.get(i);
                 int cx = padLeft + (int) (i * groupW) + (int) (groupW / 2);
                 String label = item.tenMon.length() > 8 ? item.tenMon.substring(0, 8) + "..." : item.tenMon;
                 int textW = fm.stringWidth(label);
+
                 g2.setColor(Color.DARK_GRAY);
                 g2.drawString(label, cx - textW / 2, h - 12);
+
                 int barH = (int) (item.soLuong / max * maxBarHeightPixels);
                 int y = h - padBottom - barH;
+
                 g2.setColor(new Color(80, 160, 250));
                 if (barH > 0) {
                     g2.fillRoundRect(cx - barW / 2, y, barW, barH, 12, 12);
                     if (barH > 6) g2.fillRect(cx - barW / 2, h - padBottom - 6, barW, 6);
                 }
             }
+
             g2.setColor(new Color(200, 200, 200));
             Stroke oldStr = g2.getStroke();
             g2.setStroke(new BasicStroke(1.5f));
@@ -625,6 +896,7 @@ public class TongKetBanHang_GUI extends JPanel {
             int h = getHeight();
             int padLeft = 20;
             int padBottom = 40;
+
             g2.setColor(new Color(200, 200, 200));
             g2.drawLine(padLeft, h - padBottom, w, h - padBottom);
             g2.drawLine(padLeft, 10, padLeft, h - padBottom);
@@ -640,23 +912,29 @@ public class TongKetBanHang_GUI extends JPanel {
             double max = 0;
             for (int i = 0; i < n; i++) max = Math.max(max, data.get(i).doanhThu);
             if (max <= 0) max = 1;
+
             double groupW = (w - padLeft) / (double) n;
             int[] px = new int[n];
             int[] py = new int[n];
             g2.setFont(new Font("SansSerif", Font.PLAIN, 12));
-            int maxLineHeight = h - padBottom - 20;
+            int maxLineHeight = h - padBottom - 25;
+
             for (int i = 0; i < n; i++) {
                 DaySale d = data.get(i);
                 int cx = padLeft + (int) (i * groupW) + (int) (groupW / 2);
                 px[i] = cx;
+
                 int textW = g2.getFontMetrics().stringWidth(d.label);
                 g2.setColor(Color.DARK_GRAY);
                 g2.drawString(d.label, cx - textW / 2, h - 12);
+
                 int pointH = (int) (d.doanhThu / max * maxLineHeight);
                 py[i] = h - padBottom - pointH;
+
                 g2.setColor(new Color(30, 90, 250));
-                g2.fillOval(cx - 3, py[i] - 3, 6, 6);
+                g2.fillOval(cx - 4, py[i] - 4, 8, 8);
             }
+
             g2.setColor(new Color(30, 90, 250));
             Stroke oldStr = g2.getStroke();
             g2.setStroke(new BasicStroke(3.0f));

@@ -1,6 +1,18 @@
 package gui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import dao.PhieuDatBan_DAO;
 import java.util.ArrayList;
@@ -64,7 +76,7 @@ public class TrangChu_GUI extends JFrame {
     private JPanel createTrangChuPanel() {
         backgroundImage = new ImageIcon("img/trangchu.png").getImage();
 
-        JPanel panel = new JPanel(new BorderLayout()) {
+        JPanel panel = new JPanel(null) {
             private static final long serialVersionUID = 1L;
 
             @Override
@@ -76,7 +88,53 @@ public class TrangChu_GUI extends JFrame {
             }
         };
 
+        JPanel pnChucNang = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 70, 0));
+        pnChucNang.setOpaque(false);
+
+        pnChucNang.add(taoNutTrangChu("img/datban.png", "ĐẶT BÀN", "DatBan_GUI"));
+        pnChucNang.add(taoNutTrangChu("img/order.png", "ORDER", "Order_Ban_GUI"));
+        pnChucNang.add(taoNutTrangChu("img/tracuu.png", "TRA CỨU", "TraCuu_GUI"));
+        pnChucNang.add(taoNutTrangChu("img/ketca.png", "KẾT CA", "ThongKeTheoCa_GUI"));
+
+        panel.add(pnChucNang);
+
+        panel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                pnChucNang.setBounds(0, panel.getHeight() - 180, panel.getWidth(), 150);
+            }
+        });
+
         return panel;
+    }
+    private JPanel taoNutTrangChu(String iconPath, String text, String pageName) {
+        JPanel p = new JPanel(new BorderLayout(0, 8));
+        p.setOpaque(false);
+        p.setPreferredSize(new java.awt.Dimension(130, 145));
+        p.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+
+        JLabel lblIcon = new JLabel();
+        lblIcon.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+
+        ImageIcon icon = new ImageIcon(iconPath);
+        Image img = icon.getImage().getScaledInstance(125, 90, Image.SCALE_SMOOTH);
+        lblIcon.setIcon(new ImageIcon(img));
+
+        JLabel lblText = new JLabel(text, javax.swing.SwingConstants.CENTER);
+        lblText.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 18));
+        lblText.setForeground(new java.awt.Color(235, 205, 135));
+
+        p.add(lblIcon, BorderLayout.CENTER);
+        p.add(lblText, BorderLayout.SOUTH);
+
+        p.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                showPage(pageName);
+            }
+        });
+
+        return p;
     }
 
     public void showPage(String pageName) {
@@ -179,11 +237,7 @@ public class TrangChu_GUI extends JFrame {
         return taiKhoanDangNhap;
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new TrangChu_GUI(null).setVisible(true);
-        });
-    }
+    
     public void showCustomPage(String pageName, JPanel page) {
         if (pageName == null || page == null) return;
 

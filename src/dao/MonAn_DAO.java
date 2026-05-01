@@ -12,279 +12,256 @@ import entity.MonAn;
 
 public class MonAn_DAO {
 
-	public MonAn_DAO() {
-	}
-	
-	
-	
-	public String getNextMaMon() {
+    public MonAn_DAO() {
+    }
+
+    public String getNextMaMon() {
         Connection con = ConnectDB.getInstance().getConnection();
-        // Lấy số thứ tự lớn nhất từ các mã có dạng MM + số
+
         String sql = "SELECT MAX(CAST(SUBSTRING(maMon, 3, LEN(maMon)) AS INT)) "
-                   + "FROM MonAn WHERE maMon LIKE 'MM%' "
-                   + "AND ISNUMERIC(SUBSTRING(maMon, 3, LEN(maMon))) = 1";
- 
+                + "FROM MonAn WHERE maMon LIKE 'MM%' "
+                + "AND ISNUMERIC(SUBSTRING(maMon, 3, LEN(maMon))) = 1";
+
         try (PreparedStatement stmt = con.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
+
             if (rs.next()) {
                 int maxNum = rs.getInt(1);
                 return String.format("MM%03d", maxNum + 1);
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
- 
-        return "MM001"; // fallback
+
+        return "MM001";
     }
 
-	public ArrayList<MonAn> getAllMonAn() {
-		ArrayList<MonAn> dsMon = new ArrayList<>();
-		Connection con = ConnectDB.getInstance().getConnection();
+    private MonAn taoMonAnTuResultSet(ResultSet rs) throws SQLException {
+        String maMon = rs.getString("maMon");
+        String maLoai = rs.getString("maLoaiMonAn");
+        String tenLoai = rs.getString("tenLoaiMonAn");
+        String tenMon = rs.getString("tenMon");
+        String anhMon = rs.getString("anhMon");
+        double giaGoc = rs.getDouble("giaGoc");
+        double donGia = rs.getDouble("donGia");
+        String moTa = rs.getString("moTa");
+        boolean trangThai = rs.getBoolean("trangThai");
 
-		String sql = "SELECT m.maMon, m.maLoaiMonAn, l.tenLoaiMonAn, "
-				+ "m.tenMon, m.anhMon, m.donGia, m.moTa, m.trangThai "
-				+ "FROM MonAn m "
-				+ "JOIN LoaiMonAn l ON m.maLoaiMonAn = l.maLoaiMonAn "
-				+ "ORDER BY m.maMon";
+        LoaiMonAn loai = new LoaiMonAn(maLoai, tenLoai);
+        return new MonAn(maMon, loai, tenMon, anhMon, giaGoc, donGia, moTa, trangThai);
+    }
 
-		try (PreparedStatement stmt = con.prepareStatement(sql);
-			 ResultSet rs = stmt.executeQuery()) {
+    public ArrayList<MonAn> getAllMonAn() {
+        ArrayList<MonAn> dsMon = new ArrayList<>();
+        Connection con = ConnectDB.getInstance().getConnection();
 
-			while (rs.next()) {
-				String maMon = rs.getString("maMon");
-				String maLoai = rs.getString("maLoaiMonAn");
-				String tenLoai = rs.getString("tenLoaiMonAn");
-				String tenMon = rs.getString("tenMon");
-				String anhMon = rs.getString("anhMon");
-				double donGia = rs.getDouble("donGia");
-				String moTa = rs.getString("moTa");
-				boolean trangThai = rs.getBoolean("trangThai");
+        String sql = "SELECT m.maMon, m.maLoaiMonAn, l.tenLoaiMonAn, "
+                + "m.tenMon, m.anhMon, m.giaGoc, m.donGia, m.moTa, m.trangThai "
+                + "FROM MonAn m "
+                + "JOIN LoaiMonAn l ON m.maLoaiMonAn = l.maLoaiMonAn "
+                + "ORDER BY m.maMon";
 
-				LoaiMonAn loai = new LoaiMonAn(maLoai, tenLoai);
-				MonAn mon = new MonAn(maMon, loai, tenMon, anhMon, donGia, moTa, trangThai);
+        try (PreparedStatement stmt = con.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
 
-				dsMon.add(mon);
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+            while (rs.next()) {
+                dsMon.add(taoMonAnTuResultSet(rs));
+            }
 
-		return dsMon;
-	}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-	public MonAn getMonAnTheoMa(String maCanTim) {
-		Connection con = ConnectDB.getInstance().getConnection();
+        return dsMon;
+    }
 
-		String sql = "SELECT m.maMon, m.maLoaiMonAn, l.tenLoaiMonAn, "
-				+ "m.tenMon, m.anhMon, m.donGia, m.moTa, m.trangThai "
-				+ "FROM MonAn m "
-				+ "JOIN LoaiMonAn l ON m.maLoaiMonAn = l.maLoaiMonAn "
-				+ "WHERE m.maMon = ?";
+    public MonAn getMonAnTheoMa(String maCanTim) {
+        Connection con = ConnectDB.getInstance().getConnection();
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, maCanTim);
+        String sql = "SELECT m.maMon, m.maLoaiMonAn, l.tenLoaiMonAn, "
+                + "m.tenMon, m.anhMon, m.giaGoc, m.donGia, m.moTa, m.trangThai "
+                + "FROM MonAn m "
+                + "JOIN LoaiMonAn l ON m.maLoaiMonAn = l.maLoaiMonAn "
+                + "WHERE m.maMon = ?";
 
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next()) {
-					String maMon = rs.getString("maMon");
-					String maLoai = rs.getString("maLoaiMonAn");
-					String tenLoai = rs.getString("tenLoaiMonAn");
-					String tenMon = rs.getString("tenMon");
-					String anhMon = rs.getString("anhMon");
-					double donGia = rs.getDouble("donGia");
-					String moTa = rs.getString("moTa");
-					boolean trangThai = rs.getBoolean("trangThai");
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, maCanTim);
 
-					LoaiMonAn loai = new LoaiMonAn(maLoai, tenLoai);
-					return new MonAn(maMon, loai, tenMon, anhMon, donGia, moTa, trangThai);
-				}
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return taoMonAnTuResultSet(rs);
+                }
+            }
 
-		return null;
-	}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-	public ArrayList<MonAn> timMonTheoTen(String tuKhoa) {
-		ArrayList<MonAn> dsMon = new ArrayList<>();
-		Connection con = ConnectDB.getInstance().getConnection();
+        return null;
+    }
 
-		String sql = "SELECT m.maMon, m.maLoaiMonAn, l.tenLoaiMonAn, "
-				+ "m.tenMon, m.anhMon, m.donGia, m.moTa, m.trangThai "
-				+ "FROM MonAn m "
-				+ "JOIN LoaiMonAn l ON m.maLoaiMonAn = l.maLoaiMonAn "
-				+ "WHERE m.tenMon LIKE ? "
-				+ "ORDER BY m.maMon";
+    public ArrayList<MonAn> timMonTheoTen(String tuKhoa) {
+        ArrayList<MonAn> dsMon = new ArrayList<>();
+        Connection con = ConnectDB.getInstance().getConnection();
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, "%" + tuKhoa + "%");
+        String sql = "SELECT m.maMon, m.maLoaiMonAn, l.tenLoaiMonAn, "
+                + "m.tenMon, m.anhMon, m.giaGoc, m.donGia, m.moTa, m.trangThai "
+                + "FROM MonAn m "
+                + "JOIN LoaiMonAn l ON m.maLoaiMonAn = l.maLoaiMonAn "
+                + "WHERE m.tenMon LIKE ? "
+                + "ORDER BY m.maMon";
 
-			try (ResultSet rs = stmt.executeQuery()) {
-				while (rs.next()) {
-					String maMon = rs.getString("maMon");
-					String maLoai = rs.getString("maLoaiMonAn");
-					String tenLoai = rs.getString("tenLoaiMonAn");
-					String tenMon = rs.getString("tenMon");
-					String anhMon = rs.getString("anhMon");
-					double donGia = rs.getDouble("donGia");
-					String moTa = rs.getString("moTa");
-					boolean trangThai = rs.getBoolean("trangThai");
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, "%" + tuKhoa + "%");
 
-					LoaiMonAn loai = new LoaiMonAn(maLoai, tenLoai);
-					MonAn mon = new MonAn(maMon, loai, tenMon, anhMon, donGia, moTa, trangThai);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    dsMon.add(taoMonAnTuResultSet(rs));
+                }
+            }
 
-					dsMon.add(mon);
-				}
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-		return dsMon;
-	}
+        return dsMon;
+    }
 
-	public ArrayList<MonAn> getMonTheoLoai(String maLoaiCanTim) {
-		ArrayList<MonAn> dsMon = new ArrayList<>();
-		Connection con = ConnectDB.getInstance().getConnection();
+    public ArrayList<MonAn> getMonTheoLoai(String maLoaiCanTim) {
+        ArrayList<MonAn> dsMon = new ArrayList<>();
+        Connection con = ConnectDB.getInstance().getConnection();
 
-		String sql = "SELECT m.maMon, m.maLoaiMonAn, l.tenLoaiMonAn, "
-				+ "m.tenMon, m.anhMon, m.donGia, m.moTa, m.trangThai "
-				+ "FROM MonAn m "
-				+ "JOIN LoaiMonAn l ON m.maLoaiMonAn = l.maLoaiMonAn "
-				+ "WHERE m.maLoaiMonAn = ? "
-				+ "ORDER BY m.maMon";
+        String sql = "SELECT m.maMon, m.maLoaiMonAn, l.tenLoaiMonAn, "
+                + "m.tenMon, m.anhMon, m.giaGoc, m.donGia, m.moTa, m.trangThai "
+                + "FROM MonAn m "
+                + "JOIN LoaiMonAn l ON m.maLoaiMonAn = l.maLoaiMonAn "
+                + "WHERE m.maLoaiMonAn = ? "
+                + "ORDER BY m.maMon";
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, maLoaiCanTim);
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, maLoaiCanTim);
 
-			try (ResultSet rs = stmt.executeQuery()) {
-				while (rs.next()) {
-					String maMon = rs.getString("maMon");
-					String maLoai = rs.getString("maLoaiMonAn");
-					String tenLoai = rs.getString("tenLoaiMonAn");
-					String tenMon = rs.getString("tenMon");
-					String anhMon = rs.getString("anhMon");
-					double donGia = rs.getDouble("donGia");
-					String moTa = rs.getString("moTa");
-					boolean trangThai = rs.getBoolean("trangThai");
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    dsMon.add(taoMonAnTuResultSet(rs));
+                }
+            }
 
-					LoaiMonAn loai = new LoaiMonAn(maLoai, tenLoai);
-					MonAn mon = new MonAn(maMon, loai, tenMon, anhMon, donGia, moTa, trangThai);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-					dsMon.add(mon);
-				}
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+        return dsMon;
+    }
 
-		return dsMon;
-	}
+    public boolean themMonAn(MonAn mon) {
+        Connection con = ConnectDB.getInstance().getConnection();
 
-	public boolean themMonAn(MonAn mon) {
-		Connection con = ConnectDB.getInstance().getConnection();
+        String sql = "INSERT INTO MonAn (maLoaiMonAn, tenMon, anhMon, giaGoc, moTa, trangThai) "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
 
-		// maMon để DB tự sinh
-		String sql = "INSERT INTO MonAn (maLoaiMonAn, tenMon, anhMon, donGia, moTa, trangThai) "
-				+ "VALUES (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, mon.getMaLoaiMonAn().getMaLoaiMonAn());
+            stmt.setString(2, mon.getTenMon());
+            stmt.setString(3, mon.getAnhMon());
+            stmt.setDouble(4, mon.getGiaGoc());
+            stmt.setString(5, mon.getMoTa());
+            stmt.setBoolean(6, mon.isTrangThai());
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, mon.getMaLoaiMonAn().getMaLoaiMonAn());
-			stmt.setString(2, mon.getTenMon());
-			stmt.setString(3, mon.getAnhMon());
-			stmt.setDouble(4, mon.getDonGia());
-			stmt.setString(5, mon.getMoTa());
-			stmt.setBoolean(6, mon.isTrangThai());
+            return stmt.executeUpdate() > 0;
 
-			return stmt.executeUpdate() > 0;
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	public String themMonAnTraMa(MonAn mon) {
-		Connection con = ConnectDB.getInstance().getConnection();
+    public String themMonAnTraMa(MonAn mon) {
+        Connection con = ConnectDB.getInstance().getConnection();
 
-		String sql = "INSERT INTO MonAn (maLoaiMonAn, tenMon, anhMon, donGia, moTa, trangThai) "
-				+ "OUTPUT INSERTED.maMon "
-				+ "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO MonAn (maLoaiMonAn, tenMon, anhMon, giaGoc, moTa, trangThai) "
+                + "OUTPUT INSERTED.maMon "
+                + "VALUES (?, ?, ?, ?, ?, ?)";
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, mon.getMaLoaiMonAn().getMaLoaiMonAn());
-			stmt.setString(2, mon.getTenMon());
-			stmt.setString(3, mon.getAnhMon());
-			stmt.setDouble(4, mon.getDonGia());
-			stmt.setString(5, mon.getMoTa());
-			stmt.setBoolean(6, mon.isTrangThai());
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, mon.getMaLoaiMonAn().getMaLoaiMonAn());
+            stmt.setString(2, mon.getTenMon());
+            stmt.setString(3, mon.getAnhMon());
+            stmt.setDouble(4, mon.getGiaGoc());
+            stmt.setString(5, mon.getMoTa());
+            stmt.setBoolean(6, mon.isTrangThai());
 
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next()) {
-					return rs.getString(1);
-				}
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString(1);
+                }
+            }
 
-		return null;
-	}
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-	public boolean capNhatMonAn(MonAn mon) {
-		Connection con = ConnectDB.getInstance().getConnection();
+        return null;
+    }
 
-		String sql = "UPDATE MonAn "
-				+ "SET maLoaiMonAn = ?, tenMon = ?, anhMon = ?, donGia = ?, moTa = ?, trangThai = ? "
-				+ "WHERE maMon = ?";
+    public boolean capNhatMonAn(MonAn mon) {
+        Connection con = ConnectDB.getInstance().getConnection();
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, mon.getMaLoaiMonAn().getMaLoaiMonAn());
-			stmt.setString(2, mon.getTenMon());
-			stmt.setString(3, mon.getAnhMon());
-			stmt.setDouble(4, mon.getDonGia());
-			stmt.setString(5, mon.getMoTa());
-			stmt.setBoolean(6, mon.isTrangThai());
-			stmt.setString(7, mon.getMaMon());
+        String sql = "UPDATE MonAn "
+                + "SET maLoaiMonAn = ?, tenMon = ?, anhMon = ?, giaGoc = ?, moTa = ?, trangThai = ? "
+                + "WHERE maMon = ?";
 
-			return stmt.executeUpdate() > 0;
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, mon.getMaLoaiMonAn().getMaLoaiMonAn());
+            stmt.setString(2, mon.getTenMon());
+            stmt.setString(3, mon.getAnhMon());
+            stmt.setDouble(4, mon.getGiaGoc());
+            stmt.setString(5, mon.getMoTa());
+            stmt.setBoolean(6, mon.isTrangThai());
+            stmt.setString(7, mon.getMaMon());
 
-		return false;
-	}
+            return stmt.executeUpdate() > 0;
 
-	public boolean capNhatTrangThai(String maMon, boolean trangThai) {
-		Connection con = ConnectDB.getInstance().getConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-		String sql = "UPDATE MonAn SET trangThai = ? WHERE maMon = ?";
+        return false;
+    }
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setBoolean(1, trangThai);
-			stmt.setString(2, maMon);
+    public boolean capNhatTrangThai(String maMon, boolean trangThai) {
+        Connection con = ConnectDB.getInstance().getConnection();
 
-			return stmt.executeUpdate() > 0;
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+        String sql = "UPDATE MonAn SET trangThai = ? WHERE maMon = ?";
 
-		return false;
-	}
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setBoolean(1, trangThai);
+            stmt.setString(2, maMon);
 
-	public boolean xoaMonAn(String maMon) {
-		Connection con = ConnectDB.getInstance().getConnection();
+            return stmt.executeUpdate() > 0;
 
-		String sql = "DELETE FROM MonAn WHERE maMon = ?";
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, maMon);
-			return stmt.executeUpdate() > 0;
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+        return false;
+    }
 
-		return false;
-	}
+    public boolean xoaMonAn(String maMon) {
+        Connection con = ConnectDB.getInstance().getConnection();
+
+        String sql = "DELETE FROM MonAn WHERE maMon = ?";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, maMon);
+            return stmt.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }

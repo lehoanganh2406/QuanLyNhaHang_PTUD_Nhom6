@@ -921,10 +921,13 @@ public class Order_Mon_GUI extends JPanel {
                     MonAn mon = timMonTheoMaLocal(ct.getMaMon().getMaMon());
 
                     if (mon == null) {
+                        mon = monAnDAO.getMonAnTheoMa(ct.getMaMon().getMaMon());
+                    }
+
+                    if (mon == null) {
                         mon = new MonAn();
                         mon.setMaMon(ct.getMaMon().getMaMon());
                         mon.setTenMon(ct.getMaMon().getTenMon());
-                        mon.setDonGia(ct.getDonGia());
                     }
 
                     gioHang.put(mon.getMaMon(), new OrderItem(
@@ -1910,10 +1913,13 @@ public class Order_Mon_GUI extends JPanel {
                     MonAn mon = timMonTheoMaLocal(pdm.getMaMon().getMaMon());
 
                     if (mon == null) {
+                        mon = monAnDAO.getMonAnTheoMa(pdm.getMaMon().getMaMon());
+                    }
+
+                    if (mon == null) {
                         mon = new MonAn();
                         mon.setMaMon(pdm.getMaMon().getMaMon());
                         mon.setTenMon(pdm.getMaMon().getTenMon());
-                        mon.setDonGia(pdm.getDonGia());
                     }
 
                     gioHang.put(mon.getMaMon(), new OrderItem(

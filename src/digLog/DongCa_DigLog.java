@@ -9,6 +9,7 @@ import javax.swing.border.EmptyBorder;
 
 import dao.CaLamViec_DAO;
 import entity.CaLamViec;
+import gui.DangNhap_GUI;
 
 public class DongCa_DigLog extends JDialog {
     private static final long serialVersionUID = 1L;
@@ -207,8 +208,17 @@ public class DongCa_DigLog extends JDialog {
 
         if (ok) {
             dongCaThanhCong = true;
+
+            Window owner = SwingUtilities.getWindowAncestor(this);
             dispose();
-        } else {
+
+            if (owner != null) {
+                owner.dispose();
+            }
+
+            DangNhap_GUI dangNhap = new DangNhap_GUI();
+            dangNhap.setVisible(true);
+        }else {
             JOptionPane.showMessageDialog(this,
                     "Đóng ca thất bại!",
                     "Lỗi",

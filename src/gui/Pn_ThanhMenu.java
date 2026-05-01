@@ -1,6 +1,10 @@
 package gui;
 
 import java.awt.*;
+import dao.CaLamViec_DAO;
+import entity.CaLamViec;
+import digLog.DongCa_DigLog;
+
 import java.awt.event.*;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -405,6 +409,11 @@ public class Pn_ThanhMenu extends JPanel {
             return;
         }
 
+        if ("DangNhap_GUI".equals(targetClassName)) {
+            xuLyDangXuat();
+            return;
+        }
+
         hideSubMenu();
 
         if (navigator != null) {
@@ -650,5 +659,71 @@ public class Pn_ThanhMenu extends JPanel {
             lblText.setForeground(enabled ? FG_NORMAL : FG_DISABLED);
             setCursor(enabled ? new Cursor(Cursor.HAND_CURSOR) : new Cursor(Cursor.DEFAULT_CURSOR));
         }
+    }
+    private void xuLyDangXuat() {
+        hideSubMenu();
+
+        int chon = JOptionPane.showConfirmDialog(
+                this,
+                "Bạn có muốn đóng ca trước khi đăng xuất không?",
+                "Xác nhận đăng xuất",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (chon == JOptionPane.YES_OPTION) {
+            try {
+                CaLamViec_DAO caDAO = new CaLamViec_DAO();
+                CaLamViec caDangMo = caDAO.layCaDangMo();
+
+                if (caDangMo == null) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Không có ca nào đang mở.",
+                            "Thông báo",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                    moLaiDangNhap();
+                    return;
+                }
+
+                Window owner = SwingUtilities.getWindowAncestor(this);
+
+                DongCa_DigLog dlg;
+                if (owner instanceof Frame) {
+                    dlg = new DongCa_DigLog((Frame) owner, caDangMo);
+                } else {
+                    dlg = new DongCa_DigLog(null, caDangMo);
+                }
+
+                dlg.setVisible(true);
+
+                if (dlg.isDongCaThanhCong()) {
+                    moLaiDangNhap();
+                }
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Lỗi khi đóng ca!",
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+
+        } else if (chon == JOptionPane.NO_OPTION) {
+            System.exit(0);
+        }
+    }
+    private void moLaiDangNhap() {
+        Window w = SwingUtilities.getWindowAncestor(this);
+
+        if (w != null) {
+            w.dispose();
+        }
+
+        DangNhap_GUI dangNhap = new DangNhap_GUI();
+        dangNhap.setVisible(true);
     }
 }

@@ -9,6 +9,8 @@ import java.awt.event.*;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
+import java.awt.Desktop;
+import java.net.URI;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -393,13 +395,31 @@ public class Pn_ThanhMenu extends JPanel {
             return;
         }
 
+//        if ("__HOTRO__".equals(targetClassName)) {
+//            JOptionPane.showMessageDialog(
+//                    this,
+//                    "Liên hệ quản lý hệ thống hoặc bộ phận kỹ thuật để được hỗ trợ.",
+//                    "Hỗ trợ",
+//                    JOptionPane.INFORMATION_MESSAGE
+//            );
+//            hideSubMenu();
+//            return;
+//        }
+        
         if ("__HOTRO__".equals(targetClassName)) {
-            JOptionPane.showMessageDialog(
+            try {
+                Desktop.getDesktop().browse(
+                    new java.net.URI("https://ngoctien2000.github.io/restaurant-help/")
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(
                     this,
-                    "Liên hệ quản lý hệ thống hoặc bộ phận kỹ thuật để được hỗ trợ.",
-                    "Hỗ trợ",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
+                    "Không mở được trang hỗ trợ!",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE
+                );
+            }
             hideSubMenu();
             return;
         }

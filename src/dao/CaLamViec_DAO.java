@@ -132,9 +132,9 @@ public class CaLamViec_DAO {
             con = ConnectDB.getInstance().getConnection();
 
             String sql = "INSERT INTO CaLamViec " +
-                         "(tenCa, thoiGianMoCa, thoiGianDongCa, tienMoCa, " +
-                         "tienMatCuoiCa, tienChuyenKhoanCuoiCa, tienVisaCuoiCa, maTaiKhoan) " +
-                         "VALUES (?, ?, NULL, ?, 0, 0, 0, ?)";
+                    "(tenCa, thoiGianMoCa, thoiGianDongCa, tienMoCa, " +
+                    "tienMatCuoiCa, tienChuyenKhoanCuoiCa, tienVisaCuoiCa, tongDoanhThu, maTaiKhoan) " +
+                    "VALUES (?, ?, NULL, ?, 0, 0, 0, 0, ?)";
 
             stmt = con.prepareStatement(sql);
             stmt.setString(1, tenCa);
@@ -173,6 +173,7 @@ public class CaLamViec_DAO {
         ca.setTienMatCuoiCa(rs.getDouble("tienMatCuoiCa"));
         ca.setTienChuyenKhoanCuoiCa(rs.getDouble("tienChuyenKhoanCuoiCa"));
         ca.setTienVisaCuoiCa(rs.getDouble("tienVisaCuoiCa"));
+        ca.setTongDoanhThu(rs.getDouble("tongDoanhThu"));
 
         return ca;
     }
@@ -190,7 +191,7 @@ public class CaLamViec_DAO {
             e.printStackTrace();
         }
     }
-    public boolean dongCa(String maCa, double tienMat, double tienChuyenKhoan, double tienVisa) {
+    public boolean dongCa(String maCa, double tienMat, double tienChuyenKhoan, double tienVisa, double tongDoanhThu) {
         Connection con = null;
         PreparedStatement stmt = null;
 
@@ -202,17 +203,20 @@ public class CaLamViec_DAO {
                 SET thoiGianDongCa = ?,
                     tienMatCuoiCa = ?,
                     tienChuyenKhoanCuoiCa = ?,
-                    tienVisaCuoiCa = ?
+                    tienVisaCuoiCa = ?,
+                    tongDoanhThu = ?
                 WHERE maCa = ?
                   AND thoiGianDongCa IS NULL
             """;
 
             stmt = con.prepareStatement(sql);
+
             stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
             stmt.setDouble(2, tienMat);
             stmt.setDouble(3, tienChuyenKhoan);
             stmt.setDouble(4, tienVisa);
-            stmt.setString(5, maCa);
+            stmt.setDouble(5, tongDoanhThu);
+            stmt.setString(6, maCa);
 
             return stmt.executeUpdate() > 0;
 
@@ -224,30 +228,30 @@ public class CaLamViec_DAO {
 
         return false;
     }
-    public double tinhTienTheoPhuongThuc(String phuongThuc) {
+    public double tinhTienTheoPhuongThuc(String phuongThuc, LocalDateTime thoiGianMoCa) {
         String sql = """
-            SELECT ISNULL(SUM(tongTien + thueVAT), 0)
+            SELECT ISNULL(SUM(tongTien), 0)
             FROM HoaDon
-            WHERE trangThai = N'Đã thanh toán'
-              AND phuongThucThanhToan = ?
-              AND thoiGianVao >= (
-                  SELECT TOP 1 thoiGianMoCa
-                  FROM CaLamViec
-                  WHERE thoiGianDongCa IS NULL
-                  ORDER BY thoiGianMoCa DESC
-              )
-              AND thoiGianVao <= GETDATE()
+            WHERE LTRIM(RTRIM(trangThai)) = N'Đã thanh toán'
+              AND LTRIM(RTRIM(phuongThucThanhToan)) = ?
+              AND thoiGianRa IS NOT NULL
+              AND thoiGianRa >= ?
         """;
 
         try {
             Connection con = ConnectDB.getInstance().getConnection();
             PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, phuongThuc);
+
+            ps.setString(1, phuongThuc.trim());
+            ps.setTimestamp(2, Timestamp.valueOf(thoiGianMoCa));
 
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 return rs.getDouble(1);
             }
+
+            rs.close();
+            ps.close();
 
         } catch (Exception e) {
             e.printStackTrace();

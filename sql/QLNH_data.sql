@@ -84,10 +84,13 @@ CREATE TABLE CaLamViec (
     tenCa NVARCHAR(100) NOT NULL,
     thoiGianMoCa DATETIME NOT NULL,
     thoiGianDongCa DATETIME NULL,
+
     tienMoCa DECIMAL(18,2) NOT NULL DEFAULT 0,
     tienMatCuoiCa DECIMAL(18,2) NOT NULL DEFAULT 0,
     tienChuyenKhoanCuoiCa DECIMAL(18,2) NOT NULL DEFAULT 0,
     tienVisaCuoiCa DECIMAL(18,2) NOT NULL DEFAULT 0,
+    tongDoanhThu DECIMAL(18,2) NOT NULL DEFAULT 0,
+
     maTaiKhoan VARCHAR(20) NOT NULL,
 
     CONSTRAINT FK_CaLamViec_TaiKhoan FOREIGN KEY (maTaiKhoan) REFERENCES TaiKhoan(maTaiKhoan),
@@ -95,7 +98,8 @@ CREATE TABLE CaLamViec (
     CONSTRAINT CK_CaLamViec_TienMoCa CHECK (tienMoCa >= 0),
     CONSTRAINT CK_CaLamViec_TienMatCuoiCa CHECK (tienMatCuoiCa >= 0),
     CONSTRAINT CK_CaLamViec_TienChuyenKhoanCuoiCa CHECK (tienChuyenKhoanCuoiCa >= 0),
-    CONSTRAINT CK_CaLamViec_TienVisaCuoiCa CHECK (tienVisaCuoiCa >= 0)
+    CONSTRAINT CK_CaLamViec_TienVisaCuoiCa CHECK (tienVisaCuoiCa >= 0),
+    CONSTRAINT CK_CaLamViec_TongDoanhThu CHECK (tongDoanhThu >= 0)
 );
 GO
 
@@ -693,8 +697,8 @@ VALUES
 ('HD00002', '2026-04-06 19:00:00', '2026-04-06 21:00:00', 'PDB00002', 'KH00002', NULL, 'A05', 'NV003',
  590000, 700000, 49000, 61000, N'Chuyển khoản', N'Tại bàn', N'Đã thanh toán', NULL),
 
-('HD00003', '2026-04-07 12:00:00', NULL, NULL, 'KH00003', NULL, 'B01', 'NV002',
- 0, 0, 0, 0, NULL, N'Tại bàn', N'Chưa thanh toán', NULL);
+('HD00003', '2026-04-07 12:00:00', '2026-04-07 13:30:00', NULL, 'KH00003', NULL, 'B01', 'NV002',
+ 0, 0, 0, 0, NULL, N'Tại bàn', N'Đã thanh toán', NULL);
 GO
 ALTER SEQUENCE seq_HoaDon RESTART WITH 4;
 GO

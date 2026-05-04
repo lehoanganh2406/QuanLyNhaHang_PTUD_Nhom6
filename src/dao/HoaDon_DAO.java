@@ -7,6 +7,7 @@ import java.util.List;
 import connectDB.ConnectDB;
 import entity.Ban;
 import entity.HoaDon;
+import entity.PhieuDatBan;
 
 public class HoaDon_DAO {
 
@@ -92,6 +93,12 @@ public class HoaDon_DAO {
                 Ban ban = new Ban();
                 ban.setMaBan(rs.getString("maBan"));
                 hd.setMaBan(ban);
+                String maPhieu = rs.getString("maPhieuDatBan");
+                if (maPhieu != null && !maPhieu.trim().isEmpty()) {
+                    PhieuDatBan pdb = new PhieuDatBan();
+                    pdb.setMaPhieuDatBan(maPhieu);
+                    hd.setMaPhieuDatBan(pdb);
+                }
 
                 hd.setTongTien(rs.getDouble("tongTien"));
                 hd.setTienKhachTra(rs.getDouble("tienKhachTra"));

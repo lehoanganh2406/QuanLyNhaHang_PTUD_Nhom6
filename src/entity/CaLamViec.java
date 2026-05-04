@@ -13,6 +13,14 @@ public class CaLamViec {
 	private double tienMatCuoiCa;
 	private double tienChuyenKhoanCuoiCa;
 	private double tienVisaCuoiCa;
+	private double tongDoanhThu;
+	
+	public double getTongDoanhThu() {
+		return tongDoanhThu;
+	}
+	public void setTongDoanhThu(double tongDoanhThu) {
+		this.tongDoanhThu = tongDoanhThu;
+	}
 	public String getMaCa() {
 		return maCa;
 	}
@@ -67,9 +75,12 @@ public class CaLamViec {
 	public void setTienVisaCuoiCa(double tienVisaCuoiCa) {
 		this.tienVisaCuoiCa = tienVisaCuoiCa;
 	}
+	public CaLamViec() {
+		// TODO Auto-generated constructor stub
+	}
 	public CaLamViec(String maCa, String tenCa, LocalDateTime thoiGianMoCa, LocalDateTime thoiGianDongCa,
 			TaiKhoan maTaiKhoan, double tienMoCa, double tienMatCuoiCa, double tienChuyenKhoanCuoiCa,
-			double tienVisaCuoiCa) {
+			double tienVisaCuoiCa, double tongDoanhThu) {
 		super();
 		this.maCa = maCa;
 		this.tenCa = tenCa;
@@ -80,15 +91,7 @@ public class CaLamViec {
 		this.tienMatCuoiCa = tienMatCuoiCa;
 		this.tienChuyenKhoanCuoiCa = tienChuyenKhoanCuoiCa;
 		this.tienVisaCuoiCa = tienVisaCuoiCa;
+		this.tongDoanhThu = tongDoanhThu;
 	}
-	@Override
-	public String toString() {
-		return "CaLamViec [maCa=" + maCa + ", tenCa=" + tenCa + ", thoiGianMoCa=" + thoiGianMoCa + ", thoiGianDongCa="
-				+ thoiGianDongCa + ", maTaiKhoan=" + maTaiKhoan + ", tienMoCa=" + tienMoCa + ", tienMatCuoiCa="
-				+ tienMatCuoiCa + ", tienChuyenKhoanCuoiCa=" + tienChuyenKhoanCuoiCa + ", tienVisaCuoiCa="
-				+ tienVisaCuoiCa + "]";
-	}
-	public CaLamViec() {
-		// TODO Auto-generated constructor stub
-	}
+	
 }

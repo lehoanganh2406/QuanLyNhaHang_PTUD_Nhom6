@@ -1,6 +1,15 @@
 package digLog;
 
 import java.awt.*;
+import java.io.FileOutputStream;
+import javax.swing.JFileChooser;
+
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfWriter;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -23,6 +32,7 @@ public class DongCa_DigLog extends JDialog {
     private JLabel lblTienMat;
     private JLabel lblChuyenKhoan;
     private JLabel lblVisa;
+    private JLabel lblTongDoanhThu;
 
     private JButton btnDongCa;
     private JButton btnHuy;
@@ -33,6 +43,7 @@ public class DongCa_DigLog extends JDialog {
     private double tienMatCuoiCa;
     private double tienChuyenKhoanCuoiCa;
     private double tienVisaCuoiCa;
+    private double tongDoanhThu;
 
     private boolean dongCaThanhCong = false;
 
@@ -62,7 +73,7 @@ public class DongCa_DigLog extends JDialog {
         lblTitle.setForeground(new Color(210, 155, 70));
         pnMain.add(lblTitle, BorderLayout.NORTH);
 
-        JPanel pnCenter = new JPanel(new GridLayout(8, 2, 12, 12));
+        JPanel pnCenter = new JPanel(new GridLayout(9, 2, 12, 12));
         pnCenter.setBackground(new Color(245, 247, 250));
 
         lblMaCa = taoLabelValue();
@@ -74,6 +85,7 @@ public class DongCa_DigLog extends JDialog {
         lblTienMat = taoLabelMoney();
         lblChuyenKhoan = taoLabelMoney();
         lblVisa = taoLabelMoney();
+        lblTongDoanhThu = taoLabelMoney();
 
         pnCenter.add(taoLabelTitle("Mã ca:"));
         pnCenter.add(lblMaCa);
@@ -98,6 +110,9 @@ public class DongCa_DigLog extends JDialog {
 
         pnCenter.add(taoLabelTitle("Visa cuối ca:"));
         pnCenter.add(lblVisa);
+        
+        pnCenter.add(taoLabelTitle("Tổng doanh thu:"));
+        pnCenter.add(lblTongDoanhThu);
 
         pnMain.add(pnCenter, BorderLayout.CENTER);
 
@@ -163,17 +178,20 @@ public class DongCa_DigLog extends JDialog {
 
         lblTienMoCa.setText(formatTien(caDangMo.getTienMoCa()));
 
-        double tienMatBanHang = caDAO.tinhTienTheoPhuongThuc("Tiền mặt");
-        double tienCKBanHang = caDAO.tinhTienTheoPhuongThuc("Chuyển khoản");
-        double tienVisaBanHang = caDAO.tinhTienTheoPhuongThuc("Visa");
+        double tienMatBanHang = caDAO.tinhTienTheoPhuongThuc("Tiền mặt", caDangMo.getThoiGianMoCa());
+        double tienCKBanHang = caDAO.tinhTienTheoPhuongThuc("Chuyển khoản", caDangMo.getThoiGianMoCa());
+        double tienVisaBanHang = caDAO.tinhTienTheoPhuongThuc("Visa", caDangMo.getThoiGianMoCa());
 
         tienMatCuoiCa = caDangMo.getTienMoCa() + tienMatBanHang;
         tienChuyenKhoanCuoiCa = tienCKBanHang;
         tienVisaCuoiCa = tienVisaBanHang;
 
+        tongDoanhThu = tienMatCuoiCa + tienChuyenKhoanCuoiCa + tienVisaCuoiCa;
+
         lblTienMat.setText(formatTien(tienMatCuoiCa));
         lblChuyenKhoan.setText(formatTien(tienChuyenKhoanCuoiCa));
         lblVisa.setText(formatTien(tienVisaCuoiCa));
+        lblTongDoanhThu.setText(formatTien(tongDoanhThu));
     }
 
     private void initEvents() {
@@ -203,11 +221,14 @@ public class DongCa_DigLog extends JDialog {
                 caDangMo.getMaCa(),
                 tienMatCuoiCa,
                 tienChuyenKhoanCuoiCa,
-                tienVisaCuoiCa
+                tienVisaCuoiCa,
+                tongDoanhThu
         );
 
         if (ok) {
             dongCaThanhCong = true;
+
+            hienThiFormTongKetCa();
 
             Window owner = SwingUtilities.getWindowAncestor(this);
             dispose();
@@ -218,7 +239,8 @@ public class DongCa_DigLog extends JDialog {
 
             DangNhap_GUI dangNhap = new DangNhap_GUI();
             dangNhap.setVisible(true);
-        }else {
+
+        } else {
             JOptionPane.showMessageDialog(this,
                     "Đóng ca thất bại!",
                     "Lỗi",
@@ -232,5 +254,137 @@ public class DongCa_DigLog extends JDialog {
 
     public boolean isDongCaThanhCong() {
         return dongCaThanhCong;
+    }
+    private void xuatPDFTongKetCa() {
+        try {
+            java.io.File folder = new java.io.File("PDF");
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
+
+            String fileName = "TongKetCa_" + caDangMo.getMaCa() + ".pdf";
+            String path = folder.getAbsolutePath() + java.io.File.separator + fileName;
+
+            Document doc = new Document();
+            PdfWriter.getInstance(doc, new FileOutputStream(path));
+            doc.open();
+
+            com.itextpdf.text.Font titleFont =
+                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
+            com.itextpdf.text.Font normalFont =
+                    FontFactory.getFont(FontFactory.HELVETICA, 12);
+
+            Paragraph title = new Paragraph("TONG KET CA LAM VIEC", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(20);
+            doc.add(title);
+
+            doc.add(new Paragraph("Mã ca: " + caDangMo.getMaCa(), normalFont));
+            doc.add(new Paragraph("Tên ca: " + caDangMo.getTenCa(), normalFont));
+            doc.add(new Paragraph("Thời gian mở ca: " + lblThoiGianMo.getText(), normalFont));
+            doc.add(new Paragraph("Thời gian đóng ca: " + lblThoiGianDong.getText(), normalFont));
+            doc.add(new Paragraph("Tiền mở ca: " + lblTienMoCa.getText() + " VND", normalFont));
+            doc.add(new Paragraph("Tiền mặt cuối ca: " + lblTienMat.getText() + " VND", normalFont));
+            doc.add(new Paragraph("Chuyển khoản cuối ca: " + lblChuyenKhoan.getText() + " VND", normalFont));
+            doc.add(new Paragraph("Visa cuối ca: " + lblVisa.getText() + " VND", normalFont));
+            doc.add(new Paragraph("Tổng doanh thu: " + formatTien(tongDoanhThu) + " VND", normalFont));
+
+            doc.close();
+
+            JOptionPane.showMessageDialog(this,
+                    "Xuất PDF thành công!\nFile được lưu tại:\n" + path,
+                    "Thông báo",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Xuất PDF thất bại!",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    private void hienThiFormTongKetCa() {
+        JDialog dlg = new JDialog(
+                SwingUtilities.getWindowAncestor(this),
+                "Tổng kết ca",
+                Dialog.ModalityType.APPLICATION_MODAL
+        );
+
+        JPanel root = new JPanel(new BorderLayout(12, 12));
+        root.setBackground(Color.WHITE);
+        root.setBorder(new EmptyBorder(20, 26, 20, 26));
+
+        JLabel lblTitle = new JLabel("TỔNG KẾT CA LÀM VIỆC", SwingConstants.CENTER);
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 24));
+        lblTitle.setForeground(new Color(210, 155, 70));
+
+        JPanel pnInfo = new JPanel(new GridLayout(9, 2, 12, 12));
+        pnInfo.setBackground(Color.WHITE);
+
+        pnInfo.add(taoLabelTitle("Mã ca:"));
+        pnInfo.add(taoValuePopup(caDangMo.getMaCa()));
+
+        pnInfo.add(taoLabelTitle("Tên ca:"));
+        pnInfo.add(taoValuePopup(caDangMo.getTenCa()));
+
+        pnInfo.add(taoLabelTitle("Thời gian mở ca:"));
+        pnInfo.add(taoValuePopup(lblThoiGianMo.getText()));
+
+        pnInfo.add(taoLabelTitle("Thời gian đóng ca:"));
+        pnInfo.add(taoValuePopup(lblThoiGianDong.getText()));
+
+        pnInfo.add(taoLabelTitle("Tiền mở ca:"));
+        pnInfo.add(taoValuePopup(lblTienMoCa.getText()));
+
+        pnInfo.add(taoLabelTitle("Tiền mặt cuối ca:"));
+        pnInfo.add(taoValuePopup(lblTienMat.getText()));
+
+        pnInfo.add(taoLabelTitle("Chuyển khoản cuối ca:"));
+        pnInfo.add(taoValuePopup(lblChuyenKhoan.getText()));
+
+        pnInfo.add(taoLabelTitle("Visa cuối ca:"));
+        pnInfo.add(taoValuePopup(lblVisa.getText()));
+
+        pnInfo.add(taoLabelTitle("Tổng doanh thu:"));
+        pnInfo.add(taoValuePopup(formatTien(tongDoanhThu)));
+
+        JButton btnXuatPDF = new JButton("Xuất PDF");
+        JButton btnHuy = new JButton("Hủy");
+
+        btnXuatPDF.setFont(new Font("SansSerif", Font.BOLD, 16));
+        btnHuy.setFont(new Font("SansSerif", Font.BOLD, 16));
+
+        btnXuatPDF.setPreferredSize(new Dimension(130, 40));
+        btnHuy.setPreferredSize(new Dimension(100, 40));
+
+        btnXuatPDF.addActionListener(e -> xuatPDFTongKetCa());
+        btnHuy.addActionListener(e -> dlg.dispose());
+
+        JPanel pnBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        pnBottom.setBackground(Color.WHITE);
+        pnBottom.add(btnHuy);
+        pnBottom.add(btnXuatPDF);
+
+        root.add(lblTitle, BorderLayout.NORTH);
+        root.add(pnInfo, BorderLayout.CENTER);
+        root.add(pnBottom, BorderLayout.SOUTH);
+
+        dlg.setContentPane(root);
+        dlg.setSize(620, 520);
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
+    }
+    private JLabel taoValuePopup(String text) {
+        JLabel lbl = new JLabel(text == null ? "" : text);
+        lbl.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lbl.setForeground(new Color(30, 90, 60));
+        lbl.setOpaque(true);
+        lbl.setBackground(new Color(248, 248, 248));
+        lbl.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(190, 190, 190)),
+                BorderFactory.createEmptyBorder(6, 10, 6, 10)
+        ));
+        return lbl;
     }
 }

@@ -786,4 +786,11 @@ public class ThongKeTheoCa_GUI extends JPanel {
             }
         }
     }
+    @Override
+    public void setVisible(boolean aFlag) {
+        super.setVisible(aFlag);
+        if (aFlag) {
+            SwingUtilities.invokeLater(this::loadCaGanNhatVaThongKe);
+        }
+    }
 }

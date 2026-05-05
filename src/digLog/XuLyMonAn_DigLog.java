@@ -201,10 +201,10 @@ public class XuLyMonAn_DigLog extends JDialog {
         for (LoaiMonAn lm : dsLoai) cbLoaiMon.addItem(lm.getTenLoaiMonAn());
         styleComboBox(cbLoaiMon);
 
-        btnThemLoai = new JButton("+");
-        btnThemLoai.setFont(new Font("SansSerif", Font.BOLD, 16));
-        btnThemLoai.setFocusPainted(false);
-        btnThemLoai.setPreferredSize(new Dimension(42, 34));
+//        btnThemLoai = new JButton("+");
+//        btnThemLoai.setFont(new Font("SansSerif", Font.BOLD, 16));
+//        btnThemLoai.setFocusPainted(false);
+//        btnThemLoai.setPreferredSize(new Dimension(42, 34));
 
         JPanel loaiPanel = new JPanel(new BorderLayout(6, 0));
         loaiPanel.setOpaque(false);
@@ -233,7 +233,7 @@ public class XuLyMonAn_DigLog extends JDialog {
         gbc.weighty = 1;
         body.add(Box.createVerticalGlue(), gbc);
 
-        btnThemLoai.addActionListener(e -> themLoaiMonMoi());
+//        btnThemLoai.addActionListener(e -> themLoaiMonMoi());
 
         JScrollPane scroll = new JScrollPane(body);
         scroll.setBorder(null);
@@ -312,6 +312,7 @@ public class XuLyMonAn_DigLog extends JDialog {
                             this,
                             "Thêm loại món thành công!"
                     );
+                    return ; 
                 } else {
                     JOptionPane.showMessageDialog(
                             this,
@@ -609,32 +610,185 @@ public class XuLyMonAn_DigLog extends JDialog {
         }
     }
 
-    private void chonAnh() {
-        JFileChooser fc = new JFileChooser();
-        fc.setCurrentDirectory(new File(System.getProperty("user.dir") + "/img"));
-        fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
-                "Ảnh (jpg, jpeg, png, gif)", "jpg", "jpeg", "png", "gif"));
+ // true  = cho phép 2 món dùng chung 1 ảnh
+ // false = mỗi ảnh chỉ dùng cho 1 món
+ private static final boolean ALLOW_SHARED_IMAGE = false;
 
-        if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File file = fc.getSelectedFile();
+ private void chonAnh() {
+     String baseDir = System.getProperty("user.dir") + File.separator + "img";
+     File folder = new File(baseDir);
 
-            try {
-                File folder = new File(System.getProperty("user.dir") + "/img");
-                if (!folder.exists()) folder.mkdirs();
+     if (!folder.exists() || !folder.isDirectory()) {
+         JOptionPane.showMessageDialog(this,
+                 "Không tìm thấy thư mục img/\nĐường dẫn: " + baseDir,
+                 "Lỗi", JOptionPane.ERROR_MESSAGE);
+         return;
+     }
 
-                String fileName = System.currentTimeMillis() + "_" + file.getName();
-                File dest = new File(folder, fileName);
-                Files.copy(file.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+     // Lấy danh sách ảnh trong thư mục img/
+     File[] files = folder.listFiles(f ->
+             f.isFile() && f.getName().matches("(?i).+\\.(png|jpg|jpeg|gif)")
+     );
 
-                duongDanAnh = fileName;
-                setAnhPreview(dest);
+     if (files == null || files.length == 0) {
+         JOptionPane.showMessageDialog(this,
+                 "Thư mục img/ không có ảnh nào.\n"
+                 + "Hãy đặt file ảnh vào thư mục img/ trước.",
+                 "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+         return;
+     }
 
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Lỗi khi chọn ảnh!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
+     java.util.Arrays.sort(files, (a, b) ->
+             a.getName().compareToIgnoreCase(b.getName()));
+
+     // --- Lấy danh sách ảnh đã được các món khác dùng ---
+     java.util.Set<String> anhDaDung = new java.util.HashSet<>();
+     if (!ALLOW_SHARED_IMAGE) {
+         MonAn_DAO daoCheck = new MonAn_DAO();
+         List<MonAn> tatCaMon = daoCheck.getAllMonAn();
+         for (MonAn ma : tatCaMon) {
+             if (ma.getAnhMon() == null || ma.getAnhMon().trim().isEmpty()) continue;
+             // Nếu đang SỬA → bỏ qua chính món đó để có thể giữ nguyên ảnh
+             if (monAnCu != null && monAnCu.getMaMon().equals(ma.getMaMon())) continue;
+             anhDaDung.add(ma.getAnhMon().trim().toLowerCase());
+         }
+     }
+
+     // --- Xây dựng dialog ---
+     JDialog dlg = new JDialog(this, "Chọn ảnh món ăn", true);
+     dlg.setSize(740, 500);
+     dlg.setLocationRelativeTo(this);
+     dlg.setLayout(new BorderLayout(10, 10));
+
+     // List file bên trái
+     DefaultListModel<String> listModel = new DefaultListModel<>();
+     for (File f : files) listModel.addElement(f.getName());
+
+     JList<String> fileList = new JList<>(listModel);
+     fileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+     fileList.setFont(new Font("SansSerif", Font.PLAIN, 14));
+
+     // Tô đỏ ảnh đã được dùng
+     java.util.Set<String> finalAnhDaDung = anhDaDung;
+     fileList.setCellRenderer(new DefaultListCellRenderer() {
+         @Override
+         public Component getListCellRendererComponent(
+                 JList<?> list, Object value, int index,
+                 boolean isSelected, boolean cellHasFocus) {
+             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+             if (!ALLOW_SHARED_IMAGE
+                     && finalAnhDaDung.contains(value.toString().toLowerCase())) {
+                 if (!isSelected) {
+                     setBackground(new Color(255, 220, 220));
+                     setForeground(new Color(160, 0, 0));
+                 }
+                 setText("🔒 " + value);
+             }
+             return this;
+         }
+     });
+
+     JScrollPane listScroll = new JScrollPane(fileList);
+     listScroll.setPreferredSize(new Dimension(250, 400));
+
+     // Preview bên phải
+     JLabel lblPv = new JLabel("Chọn ảnh để xem trước", SwingConstants.CENTER);
+     lblPv.setPreferredSize(new Dimension(380, 340));
+     lblPv.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+     lblPv.setFont(new Font("SansSerif", Font.ITALIC, 13));
+     lblPv.setForeground(Color.GRAY);
+     lblPv.setBackground(CLR_IMG_BG);
+     lblPv.setOpaque(true);
+
+     JLabel lblTenFile = new JLabel(" ", SwingConstants.CENTER);
+     lblTenFile.setFont(new Font("SansSerif", Font.BOLD, 13));
+
+     JPanel rightPanel = new JPanel(new BorderLayout(6, 6));
+     rightPanel.add(lblPv, BorderLayout.CENTER);
+     rightPanel.add(lblTenFile, BorderLayout.SOUTH);
+
+     // Chọn item → preview
+     File[] finalFiles = files;
+     fileList.addListSelectionListener(e -> {
+         if (e.getValueIsAdjusting()) return;
+         int idx = fileList.getSelectedIndex();
+         if (idx < 0) return;
+
+         File imgFile = finalFiles[idx];
+         if (imgFile.exists()) {
+             Image img = new ImageIcon(imgFile.getAbsolutePath())
+                     .getImage().getScaledInstance(340, 260, Image.SCALE_SMOOTH);
+             lblPv.setIcon(new ImageIcon(img));
+             lblPv.setText("");
+         }
+         lblTenFile.setText(imgFile.getName());
+     });
+
+     // Nút bấm
+     JButton btnChon = new JButton("✔ Chọn ảnh này");
+     btnChon.setFont(new Font("SansSerif", Font.BOLD, 14));
+     btnChon.setBackground(new Color(42, 170, 76));
+     btnChon.setForeground(Color.WHITE);
+     btnChon.setFocusPainted(false);
+     btnChon.setOpaque(true);
+
+     JButton btnHuyDlg = new JButton("Huỷ");
+     btnHuyDlg.setFont(new Font("SansSerif", Font.PLAIN, 14));
+
+     final boolean[] confirmed = {false};
+
+     btnChon.addActionListener(ev -> {
+         int idx = fileList.getSelectedIndex();
+         if (idx < 0) {
+             JOptionPane.showMessageDialog(dlg, "Vui lòng chọn một ảnh!");
+             return;
+         }
+
+         String tenFile = finalFiles[idx].getName();
+
+         // Chặn nếu ảnh đã dùng bởi món khác
+         if (!ALLOW_SHARED_IMAGE
+                 && finalAnhDaDung.contains(tenFile.toLowerCase())) {
+             JOptionPane.showMessageDialog(dlg,
+                     "Ảnh \"" + tenFile + "\" đã được dùng bởi món khác!\n"
+                     + "Vui lòng chọn ảnh khác hoặc đặt ảnh mới vào thư mục img/.",
+                     "Không thể chọn", JOptionPane.WARNING_MESSAGE);
+             return;
+         }
+
+         // Lưu tên file (đúng như trong DB), không copy, không rename
+         duongDanAnh = tenFile;
+         setAnhPreview(finalFiles[idx]);
+         confirmed[0] = true;
+         dlg.dispose();
+     });
+
+     btnHuyDlg.addActionListener(ev -> dlg.dispose());
+
+     JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 8));
+     btnPanel.add(btnHuyDlg);
+     btnPanel.add(btnChon);
+
+     JPanel center = new JPanel(new BorderLayout(10, 0));
+     center.setBorder(new EmptyBorder(10, 10, 0, 10));
+     center.add(listScroll, BorderLayout.WEST);
+     center.add(rightPanel, BorderLayout.CENTER);
+
+     // Ghi chú phía trên
+     JLabel lblNote = new JLabel(
+             ALLOW_SHARED_IMAGE
+                 ? "  Chọn ảnh từ thư mục img/ — không tạo file mới"
+                 : "  Ảnh đã được dùng bởi món khác  |  Chỉ chọn ảnh chưa được dùng",
+             SwingConstants.LEFT);
+     lblNote.setFont(new Font("SansSerif", Font.ITALIC, 12));
+     lblNote.setForeground(new Color(120, 80, 0));
+     lblNote.setBorder(new EmptyBorder(8, 12, 0, 0));
+
+     dlg.add(lblNote, BorderLayout.NORTH);
+     dlg.add(center, BorderLayout.CENTER);
+     dlg.add(btnPanel, BorderLayout.SOUTH);
+     dlg.setVisible(true);
+ }
 
     private void loadLoaiMonFromDB() {
         dsLoai.clear();

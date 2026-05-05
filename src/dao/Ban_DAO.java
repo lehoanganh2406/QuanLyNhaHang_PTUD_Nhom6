@@ -216,11 +216,10 @@ public class Ban_DAO {
 	    ArrayList<String[]> ds = new ArrayList<>();
 	    Connection con = ConnectDB.getConnection();
 
-	    String sql = "SELECT maBan, tenBan, trangThai FROM Ban ORDER BY tenBan";
+	    String sql = "SELECT maBan, tenBan, soChoNgoi, trangThai FROM Ban ORDER BY tenBan";
 
-	    try {
-	        PreparedStatement stmt = con.prepareStatement(sql);
-	        ResultSet rs = stmt.executeQuery();
+	    try (PreparedStatement stmt = con.prepareStatement(sql);
+	         ResultSet rs = stmt.executeQuery()) {
 
 	        while (rs.next()) {
 	            String trangThai = rs.getString("trangThai");
@@ -229,9 +228,10 @@ public class Ban_DAO {
 	            }
 
 	            ds.add(new String[] {
-	                rs.getString("maBan"),
-	                rs.getString("tenBan"),
-	                trangThai
+	                    rs.getString("maBan"),
+	                    rs.getString("tenBan"),
+	                    String.valueOf(rs.getInt("soChoNgoi")),
+	                    trangThai
 	            });
 	        }
 	    } catch (Exception e) {
@@ -247,46 +247,62 @@ public class Ban_DAO {
 
 	    String sql = """
 	        SELECT 
-	            b.maBan,
-	            b.tenBan,
-	            CASE
-	                WHEN EXISTS (
-	                    SELECT 1
-	                    FROM HoaDon hd
-	                    WHERE hd.maBan = b.maBan
-	                      AND hd.thoiGianVao <= ?
-	                      AND (hd.thoiGianRa IS NULL OR hd.thoiGianRa >= ?)
-	                ) THEN N'Đang phục vụ'
+    b.maBan,
+    b.tenBan,
+    b.soChoNgoi,
+    CASE
+        WHEN b.trangThai IN (N'Đang phục vụ', N'Bàn đang phục vụ')
+            THEN N'Đang phục vụ'
 
-	                WHEN EXISTS (
-	                    SELECT 1
-	                    FROM PhieuDatBan pdb
-	                    WHERE pdb.maBan = b.maBan
-	                      AND (pdb.trangThai IS NULL OR pdb.trangThai <> N'Đã hủy')
-	                      AND pdb.thoiGianDen < DATEADD(HOUR, 2, ?)
-	                      AND DATEADD(HOUR, 2, pdb.thoiGianDen) > ?
-	                ) THEN N'Đã đặt'
+        WHEN EXISTS (
+            SELECT 1
+            FROM HoaDon hd
+            WHERE hd.maBan = b.maBan
+              AND hd.thoiGianVao <= ?
+              AND hd.thoiGianRa IS NULL
+              AND (hd.trangThai IS NULL OR hd.trangThai <> N'Đã hủy')
+        ) THEN N'Đang phục vụ'
 
-	                ELSE N'Bàn trống'
-	            END AS trangThaiHienTai
-	        FROM Ban b
-	        ORDER BY b.tenBan
+        WHEN EXISTS (
+            SELECT 1
+            FROM PhieuDatBan pdb
+            WHERE pdb.maBan = b.maBan
+              AND pdb.trangThai = N'Đã nhận bàn'
+              AND pdb.thoiGianDen < DATEADD(HOUR, 2, ?)
+              AND DATEADD(HOUR, 2, pdb.thoiGianDen) > ?
+        ) THEN N'Đang phục vụ'
+
+        WHEN EXISTS (
+            SELECT 1
+            FROM PhieuDatBan pdb
+            WHERE pdb.maBan = b.maBan
+              AND pdb.trangThai IN (N'Đang chờ', N'Đã đặt')
+              AND pdb.thoiGianDen < DATEADD(HOUR, 2, ?)
+              AND DATEADD(HOUR, 2, pdb.thoiGianDen) > ?
+        ) THEN N'Đã đặt'
+
+        ELSE N'Bàn trống'
+    END AS trangThaiHienTai
+FROM Ban b
+ORDER BY b.tenBan
 	    """;
 
-	    try {
-	        PreparedStatement stmt = con.prepareStatement(sql);
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
 	        stmt.setTimestamp(1, thoiGianChon);
 	        stmt.setTimestamp(2, thoiGianChon);
 	        stmt.setTimestamp(3, thoiGianChon);
 	        stmt.setTimestamp(4, thoiGianChon);
+	        stmt.setTimestamp(5, thoiGianChon);
 
-	        ResultSet rs = stmt.executeQuery();
-	        while (rs.next()) {
-	            ds.add(new String[] {
-	                rs.getString("maBan"),
-	                rs.getString("tenBan"),
-	                rs.getString("trangThaiHienTai")
-	            });
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            while (rs.next()) {
+	            	ds.add(new String[]{
+	            		    rs.getString("maBan"),
+	            		    rs.getString("tenBan"),
+	            		    String.valueOf(rs.getInt("soChoNgoi")), // THÊM
+	            		    rs.getString("trangThaiHienTai")
+	            		});
+	            }
 	        }
 	    } catch (Exception e) {
 	        e.printStackTrace();
@@ -299,39 +315,50 @@ public class Ban_DAO {
 	    Connection con = ConnectDB.getConnection();
 
 	    String sql = """
-	        SELECT 
-	            b.maBan,
-	            b.tenBan,
-	            kv.tenKhuVuc,
-	            b.soChoNgoi,
-	            CASE
-	                WHEN EXISTS (
-	                    SELECT 1
-	                    FROM HoaDon hd
-	                    WHERE hd.maBan = b.maBan
-	                      AND CAST(hd.thoiGianVao AS DATE) = ?
-	                      AND (hd.trangThai IS NULL OR hd.trangThai <> N'Đã hủy')
-	                      AND hd.thoiGianRa IS NULL
-	                ) THEN N'Đang phục vụ'
+	    	    SELECT 
+	    	        b.maBan,
+	    	        b.tenBan,
+	    	        kv.tenKhuVuc,
+	    	        b.soChoNgoi,
+	    	        CASE
+	    	            WHEN b.trangThai IN (N'Đang phục vụ', N'Bàn đang phục vụ', N'Đã nhận bàn')
+	    	                THEN N'Đang phục vụ'
 
-	                WHEN EXISTS (
-	                    SELECT 1
-	                    FROM PhieuDatBan pdb
-	                    WHERE pdb.maBan = b.maBan
-	                      AND CAST(pdb.thoiGianDen AS DATE) = ?
-	                      AND (pdb.trangThai IS NULL OR pdb.trangThai <> N'Đã hủy')
-	                ) THEN N'Đã đặt'
+	    	            WHEN EXISTS (
+	    	                SELECT 1
+	    	                FROM HoaDon hd
+	    	                WHERE hd.maBan = b.maBan
+	    	                  AND CAST(hd.thoiGianVao AS DATE) = ?
+	    	                  AND (hd.trangThai IS NULL OR hd.trangThai <> N'Đã hủy')
+	    	                  AND hd.thoiGianRa IS NULL
+	    	            ) THEN N'Đang phục vụ'
 
-	                ELSE N'Trống'
-	            END AS trangThaiHienTai
-	        FROM Ban b
-	        JOIN KhuVuc kv ON b.maKhuVuc = kv.maKhuVuc
-	        ORDER BY b.maBan
-	    """;
+	    	            WHEN EXISTS (
+	    	                SELECT 1
+	    	                FROM PhieuDatBan pdb
+	    	                WHERE pdb.maBan = b.maBan
+	    	                  AND CAST(pdb.thoiGianDen AS DATE) = ?
+	    	                  AND pdb.trangThai = N'Đã nhận bàn'
+	    	            ) THEN N'Đang phục vụ'
 
+	    	            WHEN EXISTS (
+	    	                SELECT 1
+	    	                FROM PhieuDatBan pdb
+	    	                WHERE pdb.maBan = b.maBan
+	    	                  AND CAST(pdb.thoiGianDen AS DATE) = ?
+	    	                  AND pdb.trangThai IN (N'Đang chờ', N'Đã đặt')
+	    	            ) THEN N'Đã đặt'
+
+	    	            ELSE N'Trống'
+	    	        END AS trangThaiHienTai
+	    	    FROM Ban b
+	    	    JOIN KhuVuc kv ON b.maKhuVuc = kv.maKhuVuc
+	    	    ORDER BY b.maBan
+	    	""";
 	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
-	        stmt.setDate(1, ngayChon);
-	        stmt.setDate(2, ngayChon);
+	    	stmt.setDate(1, ngayChon);
+	    	stmt.setDate(2, ngayChon);
+	    	stmt.setDate(3, ngayChon);
 
 	        try (ResultSet rs = stmt.executeQuery()) {
 	            while (rs.next()) {
@@ -360,13 +387,16 @@ public class Ban_DAO {
 	            b.tenBan,
 	            kv.tenKhuVuc,
 	            CASE
+	                WHEN b.trangThai IN (N'Đang phục vụ', N'Bàn đang phục vụ')
+	                    THEN N'Đang phục vụ'
+
 	                WHEN EXISTS (
 	                    SELECT 1
 	                    FROM HoaDon hd
 	                    WHERE hd.maBan = b.maBan
 	                      AND CAST(hd.thoiGianVao AS DATE) = ?
-	                      AND (hd.trangThai IS NULL OR hd.trangThai <> N'Đã hủy')
 	                      AND hd.thoiGianRa IS NULL
+	                      AND (hd.trangThai IS NULL OR hd.trangThai <> N'Đã hủy')
 	                ) THEN N'Đang phục vụ'
 
 	                WHEN EXISTS (
@@ -374,7 +404,15 @@ public class Ban_DAO {
 	                    FROM PhieuDatBan pdb
 	                    WHERE pdb.maBan = b.maBan
 	                      AND CAST(pdb.thoiGianDen AS DATE) = ?
-	                      AND (pdb.trangThai IS NULL OR pdb.trangThai <> N'Đã hủy')
+	                      AND pdb.trangThai = N'Đã nhận bàn'
+	                ) THEN N'Đang phục vụ'
+
+	                WHEN EXISTS (
+	                    SELECT 1
+	                    FROM PhieuDatBan pdb
+	                    WHERE pdb.maBan = b.maBan
+	                      AND CAST(pdb.thoiGianDen AS DATE) = ?
+	                      AND pdb.trangThai IN (N'Đang chờ', N'Đã đặt')
 	                ) THEN N'Đã đặt'
 
 	                ELSE N'Trống'
@@ -388,16 +426,17 @@ public class Ban_DAO {
 	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
 	        stmt.setDate(1, ngayChon);
 	        stmt.setDate(2, ngayChon);
-	        stmt.setString(3, "%" + tuKhoa + "%");
+	        stmt.setDate(3, ngayChon);
 	        stmt.setString(4, "%" + tuKhoa + "%");
+	        stmt.setString(5, "%" + tuKhoa + "%");
 
 	        try (ResultSet rs = stmt.executeQuery()) {
 	            while (rs.next()) {
-	                ds.add(new String[] {
-	                    rs.getString("maBan"),
-	                    rs.getString("tenBan"),
-	                    rs.getString("tenKhuVuc"),
-	                    rs.getString("trangThaiHienTai")
+	                ds.add(new String[]{
+	                        rs.getString("maBan"),
+	                        rs.getString("tenBan"),
+	                        rs.getString("tenKhuVuc"),
+	                        rs.getString("trangThaiHienTai")
 	                });
 	            }
 	        }

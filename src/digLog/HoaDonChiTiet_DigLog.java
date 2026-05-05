@@ -27,6 +27,8 @@ public class HoaDonChiTiet_DigLog extends JPanel {
             String tieuDe,
             String maHD,
             String tenBan,
+            String maPhieuDatBan,
+            double tienCoc,
             String tenKH,
             String tenNV,
             String thoiGian,
@@ -38,8 +40,9 @@ public class HoaDonChiTiet_DigLog extends JPanel {
             double tienKhachTra,
             double tienThua,
             String phuongThuc,
+            int diemCongThem,
             List<ChiTietHoaDon> dsCT
-    ) {
+    )  {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
@@ -58,6 +61,7 @@ public class HoaDonChiTiet_DigLog extends JPanel {
         // ===== THÔNG TIN TRÊN =====
         billPanel.add(info("Mã hóa đơn", maHD));
         billPanel.add(info("Bàn", tenBan));
+        billPanel.add(info("Phiếu đặt bàn", maPhieuDatBan == null || maPhieuDatBan.trim().isEmpty() ? "Không có" : maPhieuDatBan));
         billPanel.add(info("Khách hàng", tenKH));
         billPanel.add(info("Nhân viên", tenNV));
         billPanel.add(info("Ngày giờ", thoiGian));
@@ -88,14 +92,15 @@ public class HoaDonChiTiet_DigLog extends JPanel {
         }
 
         // ===== THÔNG TIN TIỀN DƯỚI =====
-        billPanel.add(Box.createVerticalStrut(14));
         billPanel.add(info("Tổng tiền", formatTien(tongTien)));
         billPanel.add(info("VAT", formatTien(vat)));
         billPanel.add(info("Khuyến mãi", formatKhuyenMai(tenKM, tienGiam)));
+        billPanel.add(info("Tiền cọc", formatTien(tienCoc)));
         billPanel.add(info("Tổng cộng", formatTien(tongCong)));
         billPanel.add(info("Phương thức", phuongThuc));
         billPanel.add(info("Khách trả", formatTien(tienKhachTra)));
         billPanel.add(info("Tiền thừa", formatTien(tienThua)));
+        billPanel.add(info("Điểm tích lũy được cộng", "+" + diemCongThem));
 
         JButton btnIn = new JButton("In hóa đơn / Xuất PDF");
         JButton btnDong = new JButton("Đóng");
@@ -193,13 +198,13 @@ public class HoaDonChiTiet_DigLog extends JPanel {
 
     private boolean inHoaDon() {
         try {
-            File dir = new File("HoaDonPDF");
+            File dir = new File("PDF");
             if (!dir.exists()) dir.mkdirs();
 
             String maHD = layGiaTriTuBill("Mã hóa đơn");
             if (maHD == null || maHD.trim().isEmpty()) maHD = "HoaDon";
 
-            String filePath = "HoaDonPDF/" + maHD + ".pdf";
+            String filePath = "PDF/" + maHD + ".pdf";
 
             Document document = new Document(PageSize.A4, 36, 36, 36, 36);
             PdfWriter.getInstance(document, new FileOutputStream(filePath));
@@ -221,6 +226,7 @@ public class HoaDonChiTiet_DigLog extends JPanel {
 
             document.add(new Paragraph("Ma hoa don: " + layGiaTriTuBill("Mã hóa đơn"), normalFont));
             document.add(new Paragraph("Ban: " + layGiaTriTuBill("Bàn"), normalFont));
+            document.add(new Paragraph("Phieu dat ban: " + layGiaTriTuBill("Phiếu đặt bàn"), normalFont));
             document.add(new Paragraph("Khach hang: " + layGiaTriTuBill("Khách hàng"), normalFont));
             document.add(new Paragraph("Nhan vien: " + layGiaTriTuBill("Nhân viên"), normalFont));
             document.add(new Paragraph("Ngay gio: " + layGiaTriTuBill("Ngày giờ"), normalFont));
@@ -261,10 +267,17 @@ public class HoaDonChiTiet_DigLog extends JPanel {
             document.add(new Paragraph("Tong tien: " + layGiaTriTuBill("Tổng tiền"), normalFont));
             document.add(new Paragraph("VAT: " + layGiaTriTuBill("VAT"), normalFont));
             document.add(new Paragraph("Khuyen mai: " + removeVietnamese(layGiaTriTuBill("Khuyến mãi")), normalFont));
+            document.add(new Paragraph("Tien coc: " + layGiaTriTuBill("Tiền cọc"), normalFont));
             document.add(new Paragraph("Tong cong: " + layGiaTriTuBill("Tổng cộng"), boldFont));
             document.add(new Paragraph("Phuong thuc: " + removeVietnamese(layGiaTriTuBill("Phương thức")), normalFont));
             document.add(new Paragraph("Khach tra: " + layGiaTriTuBill("Khách trả"), normalFont));
             document.add(new Paragraph("Tien thua: " + layGiaTriTuBill("Tiền thừa"), normalFont));
+            document.add(new Paragraph("Diem tich luy duoc cong: " + layGiaTriTuBill("Điểm tích lũy được cộng"), normalFont));
+            document.add(new Paragraph("----------------------------------------", normalFont));
+
+            Paragraph thanks = new Paragraph("Cam on quy khach\nHen gap lai quy khach!", normalFont);
+            thanks.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+            document.add(thanks);
 
             document.close();
 

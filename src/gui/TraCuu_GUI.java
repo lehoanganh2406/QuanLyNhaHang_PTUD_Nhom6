@@ -2752,7 +2752,7 @@ public class TraCuu_GUI extends JPanel {
                     String maPhieu = row[0];
 
                     Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-                    PhieuDatBan_DigLog dlg = new PhieuDatBan_DigLog(owner, maPhieu);
+                    PhieuDatBan_DigLog dlg = new PhieuDatBan_DigLog(owner, maPhieu, taiKhoanDangNhap);
                     dlg.setLocationRelativeTo(this);
                     dlg.setVisible(true);
                     return;

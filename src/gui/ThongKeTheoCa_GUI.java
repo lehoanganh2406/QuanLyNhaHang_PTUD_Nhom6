@@ -104,13 +104,10 @@ public class ThongKeTheoCa_GUI extends JPanel {
         lblTitle.setFont(new Font("SansSerif", Font.BOLD, 28));
         lblTitle.setForeground(new Color(30, 41, 59));
 
-        JLabel lblSub = new JLabel("Theo dõi doanh thu, hóa đơn thanh toán và món ăn bán trong ca từ dữ liệu SQL");
-        lblSub.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        lblSub.setForeground(new Color(100, 116, 139));
+        
 
         titleBox.add(lblTitle);
         titleBox.add(Box.createRigidArea(new Dimension(0, 4)));
-        titleBox.add(lblSub);
         hdr.add(titleBox, BorderLayout.WEST);
 
         lblCa = new JLabel("Ca --", SwingConstants.CENTER);
@@ -519,11 +516,12 @@ public class ThongKeTheoCa_GUI extends JPanel {
             con = ConnectDB.getConnection();
             if (con == null) return data;
 
+            // 1. Doanh thu từ hóa đơn đã thanh toán
             String sql = "SELECT COUNT(*) AS soHD, "
                     + "ISNULL(SUM(tongTien), 0) AS doanhThu, "
                     + "ISNULL(SUM(CASE WHEN phuongThucThanhToan = N'Tiền mặt' THEN tongTien ELSE 0 END), 0) AS tienMat, "
                     + "ISNULL(SUM(CASE WHEN phuongThucThanhToan = N'Chuyển khoản' THEN tongTien ELSE 0 END), 0) AS tienChuyenKhoan, "
-                    + "ISNULL(SUM(CASE WHEN phuongThucThanhToan = N'Visa' THEN tongTien ELSE 0 END), 0) AS tienVisa "
+                    + "ISNULL(SUM(CASE WHEN phuongThucThanhToan IN (N'Visa', N'VISA') THEN tongTien ELSE 0 END), 0) AS tienVisa "
                     + "FROM HoaDon "
                     + "WHERE trangThai = N'Đã thanh toán' "
                     + "AND thoiGianRa >= ? AND thoiGianRa <= ?";
@@ -544,15 +542,59 @@ public class ThongKeTheoCa_GUI extends JPanel {
             closeQuietly(rs);
             closeQuietly(stmt);
 
-            sql = "SELECT DATEPART(HOUR, thoiGianRa) AS gio, ISNULL(SUM(tongTien), 0) AS doanhThu "
-                    + "FROM HoaDon "
-                    + "WHERE trangThai = N'Đã thanh toán' "
-                    + "AND thoiGianRa >= ? AND thoiGianRa <= ? "
-                    + "GROUP BY DATEPART(HOUR, thoiGianRa)";
+            // 2. Cộng tiền cọc đặt bàn phát sinh trong ca
+            sql = "SELECT "
+                    + "ISNULL(SUM(tienCoc), 0) AS tongCoc, "
+                    + "ISNULL(SUM(CASE WHEN phuongThucThanhToanCoc = N'Tiền mặt' THEN tienCoc ELSE 0 END), 0) AS cocTienMat, "
+                    + "ISNULL(SUM(CASE WHEN phuongThucThanhToanCoc = N'Chuyển khoản' THEN tienCoc ELSE 0 END), 0) AS cocChuyenKhoan, "
+                    + "ISNULL(SUM(CASE WHEN phuongThucThanhToanCoc IN (N'Visa', N'VISA') THEN tienCoc ELSE 0 END), 0) AS cocVisa "
+                    + "FROM PhieuDatBan "
+                    + "WHERE thoiGianDatPhieu >= ? "
+                    + "AND thoiGianDatPhieu <= ? "
+                    + "AND trangThai <> N'Đã hủy'";
 
             stmt = con.prepareStatement(sql);
             stmt.setTimestamp(1, Timestamp.valueOf(ca.moCa));
             stmt.setTimestamp(2, Timestamp.valueOf(end));
+            rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                double tongCoc = rs.getDouble("tongCoc");
+                double cocTienMat = rs.getDouble("cocTienMat");
+                double cocChuyenKhoan = rs.getDouble("cocChuyenKhoan");
+                double cocVisa = rs.getDouble("cocVisa");
+
+                data.doanhThu += tongCoc;
+                data.tienMat += cocTienMat;
+                data.tienChuyenKhoan += cocChuyenKhoan;
+                data.tienVisa += cocVisa;
+            }
+
+            closeQuietly(rs);
+            closeQuietly(stmt);
+
+            // 3. Doanh thu theo giờ: hóa đơn + tiền cọc
+            sql = "SELECT gio, SUM(doanhThu) AS doanhThu "
+                    + "FROM ( "
+                    + "    SELECT DATEPART(HOUR, thoiGianRa) AS gio, ISNULL(SUM(tongTien), 0) AS doanhThu "
+                    + "    FROM HoaDon "
+                    + "    WHERE trangThai = N'Đã thanh toán' "
+                    + "    AND thoiGianRa >= ? AND thoiGianRa <= ? "
+                    + "    GROUP BY DATEPART(HOUR, thoiGianRa) "
+                    + "    UNION ALL "
+                    + "    SELECT DATEPART(HOUR, thoiGianDatPhieu) AS gio, ISNULL(SUM(tienCoc), 0) AS doanhThu "
+                    + "    FROM PhieuDatBan "
+                    + "    WHERE thoiGianDatPhieu >= ? AND thoiGianDatPhieu <= ? "
+                    + "    AND trangThai <> N'Đã hủy' "
+                    + "    GROUP BY DATEPART(HOUR, thoiGianDatPhieu) "
+                    + ") x "
+                    + "GROUP BY gio";
+
+            stmt = con.prepareStatement(sql);
+            stmt.setTimestamp(1, Timestamp.valueOf(ca.moCa));
+            stmt.setTimestamp(2, Timestamp.valueOf(end));
+            stmt.setTimestamp(3, Timestamp.valueOf(ca.moCa));
+            stmt.setTimestamp(4, Timestamp.valueOf(end));
             rs = stmt.executeQuery();
 
             while (rs.next()) {
@@ -565,6 +607,7 @@ public class ThongKeTheoCa_GUI extends JPanel {
             closeQuietly(rs);
             closeQuietly(stmt);
 
+            // 4. Danh sách hóa đơn thanh toán trong ca
             sql = "SELECT maHD, thoiGianRa, phuongThucThanhToan, tongTien "
                     + "FROM HoaDon "
                     + "WHERE trangThai = N'Đã thanh toán' "
@@ -588,6 +631,32 @@ public class ThongKeTheoCa_GUI extends JPanel {
             closeQuietly(rs);
             closeQuietly(stmt);
 
+            // 5. Thêm dòng tiền cọc vào bảng danh sách thanh toán
+            sql = "SELECT maPhieuDatBan, thoiGianDatPhieu, phuongThucThanhToanCoc, tienCoc "
+                    + "FROM PhieuDatBan "
+                    + "WHERE thoiGianDatPhieu >= ? AND thoiGianDatPhieu <= ? "
+                    + "AND trangThai <> N'Đã hủy' "
+                    + "AND tienCoc > 0 "
+                    + "ORDER BY thoiGianDatPhieu";
+
+            stmt = con.prepareStatement(sql);
+            stmt.setTimestamp(1, Timestamp.valueOf(ca.moCa));
+            stmt.setTimestamp(2, Timestamp.valueOf(end));
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                HoaDonCaRow row = new HoaDonCaRow();
+                row.maHD = "Cọc " + rs.getString("maPhieuDatBan");
+                row.thoiGian = toLocalDateTime(rs.getTimestamp("thoiGianDatPhieu"));
+                row.phuongThuc = rs.getString("phuongThucThanhToanCoc");
+                row.tongTien = rs.getDouble("tienCoc");
+                data.dsHoaDon.add(row);
+            }
+
+            closeQuietly(rs);
+            closeQuietly(stmt);
+
+            // 6. Thống kê món ăn trong ca
             sql = "SELECT m.maMon, m.tenMon, "
                     + "ISNULL(SUM(ct.soLuong - ISNULL(ct.soLuongHuy, 0)), 0) AS tongSL, "
                     + "ISNULL(SUM((ct.soLuong - ISNULL(ct.soLuongHuy, 0)) * ct.donGia), 0) AS thanhTien "
@@ -784,6 +853,13 @@ public class ThongKeTheoCa_GUI extends JPanel {
                 g2.setColor(new Color(80, 150, 200));
                 g2.drawOval(px[i] - 3, py[i] - 3, 6, 6);
             }
+        }
+    }
+    @Override
+    public void setVisible(boolean aFlag) {
+        super.setVisible(aFlag);
+        if (aFlag) {
+            SwingUtilities.invokeLater(this::loadCaGanNhatVaThongKe);
         }
     }
 }

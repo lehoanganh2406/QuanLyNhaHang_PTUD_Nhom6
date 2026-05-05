@@ -14,11 +14,28 @@ public class PhieuDatBan {
 	private double tienCoc;
 	private String ghiChu;
 	private String trangThai;
+	private String phuongThucThanhToanCoc;
+	private LocalDateTime thoiGianDatPhieu;
 
 	// thêm 3 cột mới
 	private String phuongThucHoanTien;
 	private String lyDoHuy;
 	private double tienHoanTra;
+	public String getPhuongThucThanhToanCoc() {
+	    return phuongThucThanhToanCoc;
+	}
+
+	public void setPhuongThucThanhToanCoc(String phuongThucThanhToanCoc) {
+	    this.phuongThucThanhToanCoc = phuongThucThanhToanCoc;
+	}
+
+	public LocalDateTime getThoiGianDatPhieu() {
+	    return thoiGianDatPhieu;
+	}
+
+	public void setThoiGianDatPhieu(LocalDateTime thoiGianDatPhieu) {
+	    this.thoiGianDatPhieu = thoiGianDatPhieu;
+	}
 
 	public String getMaPhieuDatBan() {
 		return maPhieuDatBan;
@@ -116,9 +133,11 @@ public class PhieuDatBan {
 		this.tienHoanTra = tienHoanTra;
 	}
 
+	
+
 	public PhieuDatBan(String maPhieuDatBan, Ban maBan, String tenKhach, String sdt, int soLuongNguoi,
-			LocalDateTime thoiGianDen, double tienCoc, String ghiChu, String trangThai,
-			String phuongThucHoanTien, String lyDoHuy, double tienHoanTra) {
+			LocalDateTime thoiGianDen, double tienCoc, String ghiChu, String trangThai, String phuongThucThanhToanCoc,
+			LocalDateTime thoiGianDatPhieu, String phuongThucHoanTien, String lyDoHuy, double tienHoanTra) {
 		super();
 		this.maPhieuDatBan = maPhieuDatBan;
 		this.maBan = maBan;
@@ -129,23 +148,11 @@ public class PhieuDatBan {
 		this.tienCoc = tienCoc;
 		this.ghiChu = ghiChu;
 		this.trangThai = trangThai;
+		this.phuongThucThanhToanCoc = phuongThucThanhToanCoc;
+		this.thoiGianDatPhieu = thoiGianDatPhieu;
 		this.phuongThucHoanTien = phuongThucHoanTien;
 		this.lyDoHuy = lyDoHuy;
 		this.tienHoanTra = tienHoanTra;
-	}
-
-	public PhieuDatBan(String maPhieuDatBan, Ban maBan, String tenKhach, String sdt, int soLuongNguoi,
-			LocalDateTime thoiGianDen, double tienCoc, String ghiChu, String trangThai) {
-		super();
-		this.maPhieuDatBan = maPhieuDatBan;
-		this.maBan = maBan;
-		this.tenKhach = tenKhach;
-		this.sdt = sdt;
-		this.soLuongNguoi = soLuongNguoi;
-		this.thoiGianDen = thoiGianDen;
-		this.tienCoc = tienCoc;
-		this.ghiChu = ghiChu;
-		this.trangThai = trangThai;
 	}
 
 	public PhieuDatBan(String maPhieuDatBan) {
@@ -156,20 +163,4 @@ public class PhieuDatBan {
 	public PhieuDatBan() {
 	}
 
-	@Override
-	public String toString() {
-		return "PhieuDatBan [maPhieuDatBan=" + maPhieuDatBan
-				+ ", maBan=" + maBan
-				+ ", tenKhach=" + tenKhach
-				+ ", sdt=" + sdt
-				+ ", soLuongNguoi=" + soLuongNguoi
-				+ ", thoiGianDen=" + thoiGianDen
-				+ ", tienCoc=" + tienCoc
-				+ ", ghiChu=" + ghiChu
-				+ ", trangThai=" + trangThai
-				+ ", phuongThucHoanTien=" + phuongThucHoanTien
-				+ ", lyDoHuy=" + lyDoHuy
-				+ ", tienHoanTra=" + tienHoanTra
-				+ "]";
-	}
 }

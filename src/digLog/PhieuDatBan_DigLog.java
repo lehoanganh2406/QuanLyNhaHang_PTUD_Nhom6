@@ -31,10 +31,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -59,11 +61,21 @@ import com.toedter.calendar.JDateChooser;
 
 import connectDB.ConnectDB;
 import dao.Ban_DAO;
+import dao.ChiTietHoaDon_DAO;
+import dao.HoaDon_DAO;
 import dao.MonAn_DAO;
 import dao.PhieuDatBan_DAO;
 import dao.PhieuDatMon_DAO;
+import entity.ChiTietHoaDon;
+import entity.HoaDon;
 import entity.MonAn;
 import entity.PhieuDatMon;
+import entity.TaiKhoan;
+import gui.Order_Mon_GUI;
+import gui.TrangChu_GUI;
+import dao.KhachHang_DAO;
+import entity.KhachHang;
+import entity.LoaiKhachHang;
 
 public class PhieuDatBan_DigLog extends JDialog {
 
@@ -92,6 +104,8 @@ public class PhieuDatBan_DigLog extends JDialog {
     private JTable tblBan;
     private DefaultTableModel modelBan;
     private JScrollPane scrMonDatTruoc;
+    private TaiKhoan taiKhoanDangNhap;
+    private JComboBox<String> cboPTThanhToanCoc;
 
     private Timestamp thoiGianDaChon;
     private ArrayList<String[]> dsBanTheoGio = new ArrayList<>();
@@ -118,6 +132,7 @@ public class PhieuDatBan_DigLog extends JDialog {
     private static final String PH_SDT = "Nhập số điện thoại";
     private static final String PH_GIO = "Chọn ngày giờ";
     private static final String PH_BAN = "Tìm kiếm bàn...";
+    private final KhachHang_DAO khachHangDAO = new KhachHang_DAO();
 
  
     public PhieuDatBan_DigLog(Frame owner) {
@@ -135,7 +150,7 @@ public class PhieuDatBan_DigLog extends JDialog {
         capNhatTienCocTheoMonDatTruoc();
     }
 
-    public PhieuDatBan_DigLog(Frame owner, String maPhieuDatBan) {
+    public PhieuDatBan_DigLog(Frame owner, String maPhieuDatBan, TaiKhoan tk) {
         super(owner, "Phiếu đặt bàn", true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setMinimumSize(new Dimension(700, 720));
@@ -144,10 +159,10 @@ public class PhieuDatBan_DigLog extends JDialog {
 
         this.maPhieuHienTai = maPhieuDatBan;
         this.cheDoChiTiet = true;
+        this.taiKhoanDangNhap = tk;
 
         initUI();
         initEvents();
-        loadDanhSachBanTheoGioChon();
         setModeChiTiet();
         loadPhieuDatBanLenForm(maPhieuDatBan);
     }
@@ -229,6 +244,13 @@ public class PhieuDatBan_DigLog extends JDialog {
         datPlaceholder(txtBan, PH_BAN);
 
         txtTienCoc = createTextField("200.000", inputFont);
+        cboPTThanhToanCoc = new javax.swing.JComboBox<>(new String[]{
+                "Tiền mặt", "Chuyển khoản", "VISA"
+        });
+        cboPTThanhToanCoc.setFont(inputFont);
+        cboPTThanhToanCoc.setPreferredSize(new Dimension(300, 36));
+        cboPTThanhToanCoc.setBorder(new LineBorder(BORDER, 1));
+        cboPTThanhToanCoc.setBackground(Color.WHITE);
         txtTienCoc.setEditable(false);
         txtTienCoc.setBackground(DISABLED_BG);
         txtTienCoc.setForeground(Color.DARK_GRAY);
@@ -241,7 +263,7 @@ public class PhieuDatBan_DigLog extends JDialog {
         txtGhiChu.setBackground(Color.WHITE);
 
         btnCalendar = createIconButton("📅", 14);
-        btnSearchBan = createIconButton("⌕", 16);
+        btnSearchBan = createIconButton("⌕", 25);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 8, 8, 8);
@@ -257,6 +279,7 @@ public class PhieuDatBan_DigLog extends JDialog {
         addFormRow(formPanel, gbc, row++, "Số lượng khách", lblFont, spnSoLuongKhach);
         addFormRow(formPanel, gbc, row++, "Bàn", lblFont, wrapField(txtBan, btnSearchBan));
         addFormRow(formPanel, gbc, row++, "Tiền cọc", lblFont, wrapField(txtTienCoc, null));
+        addFormRow(formPanel, gbc, row++, "PT thanh toán cọc", lblFont, cboPTThanhToanCoc);
 
         gbc.gridx = 0;
         gbc.gridy = row;
@@ -489,19 +512,16 @@ public class PhieuDatBan_DigLog extends JDialog {
     }
 
     private void capNhatTienCocTheoMonDatTruoc() {
-        double tongTien = 0;
+        double tongTienMon = 0;
 
         if (dsMonDatTam != null) {
             for (PhieuDatMon pdm : dsMonDatTam) {
-                tongTien += pdm.getSoLuong() * pdm.getDonGia();
+                tongTienMon += pdm.getSoLuong() * pdm.getDonGia();
             }
         }
 
-        if (tongTien <= 0) {
-            txtTienCoc.setText("200.000");
-        } else {
-            txtTienCoc.setText(formatTienVND(tongTien));
-        }
+        double tienCoc = Math.max(200000, tongTienMon);
+        txtTienCoc.setText(formatTienVND(tienCoc));
     }
 
     private String formatTienVND(double soTien) {
@@ -632,6 +652,19 @@ public class PhieuDatBan_DigLog extends JDialog {
 
     private void initEvents() {
         btnThoat.addActionListener(e -> dispose());
+        txtSoDienThoai.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent e) {
+                tuDongDienKhachHangTheoSDT();
+            }
+        });
+        spnSoLuongKhach.addChangeListener(e -> {
+            if (thoiGianDaChon != null) {
+                loadDanhSachBanTheoGioChon();
+            }
+        });
+
+        txtSoDienThoai.addActionListener(e -> tuDongDienKhachHangTheoSDT());
 
         btnCalendar.addActionListener(e -> {
             if (!btnCalendar.isEnabled()) return;
@@ -753,35 +786,85 @@ public class PhieuDatBan_DigLog extends JDialog {
         });
 
         btnNhanBan.addActionListener(e -> {
-            if (!btnNhanBan.isEnabled()) return;
-            if (maPhieuHienTai == null || maPhieuHienTai.trim().isEmpty()) return;
-
-            int confirm = JOptionPane.showConfirmDialog(
-                    this,
-                    "Bạn có chắc muốn nhận bàn phiếu này không?",
-                    "Xác nhận",
-                    JOptionPane.YES_NO_OPTION
-            );
-
-            if (confirm == JOptionPane.YES_OPTION) {
-                try {
-                    PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
-                    if (dao.capNhatTrangThai(maPhieuHienTai, "Đã nhận bàn")) {
-                        trangThaiHienTai = "Đã nhận bàn";
-
-                        Ban_DAO banDAO = new Ban_DAO();
-                        if (maBanDuocChon != null && !maBanDuocChon.trim().isEmpty()) {
-                            banDAO.capNhatTrangThaiBan(maBanDuocChon, "Đã nhận bàn");
-                        }
-                        JOptionPane.showMessageDialog(this, "Nhận bàn thành công!");
-                        dispose();
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Nhận bàn thất bại!");
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(this, "Có lỗi khi nhận bàn!");
+            try {
+                if (maPhieuHienTai == null || maPhieuHienTai.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Không có phiếu đặt bàn.");
+                    return;
                 }
+
+                // 1. Cập nhật trạng thái phiếu
+                PhieuDatBan_DAO phieuDAO = new PhieuDatBan_DAO();
+                phieuDAO.capNhatTrangThai(maPhieuHienTai, "Đã nhận bàn");
+
+                // 2. Cập nhật trạng thái bàn
+                Ban_DAO banDAO = new Ban_DAO();
+                banDAO.capNhatTrangThaiBan(maBanDuocChon, "Đang phục vụ");
+
+                // 3. Tạo hóa đơn ngay
+                HoaDon_DAO hoaDonDAO = new HoaDon_DAO();
+                String maHD = hoaDonDAO.taoMaHoaDonMoi();
+
+                String maNV = null;
+                if (taiKhoanDangNhap != null && taiKhoanDangNhap.getMaNV() != null) {
+                    maNV = taiKhoanDangNhap.getMaNV().getMaNV();
+                }
+
+                boolean taoHD = hoaDonDAO.themHoaDonMoi(
+                        maHD,
+                        maBanDuocChon,
+                        maNV,
+                        maPhieuHienTai,
+                        null,
+                        "Tại bàn",
+                        "Chưa thanh toán"
+                );
+
+                if (!taoHD) {
+                    JOptionPane.showMessageDialog(this, "Tạo hóa đơn thất bại!");
+                    return;
+                }
+
+                // 4. Lấy món đặt trước
+                PhieuDatMon_DAO phieuDatMonDAO = new PhieuDatMon_DAO();
+                ArrayList<PhieuDatMon> dsMon = phieuDatMonDAO.getDanhSachTheoMaPhieu(maPhieuHienTai);
+
+                ChiTietHoaDon_DAO ctDAO = new ChiTietHoaDon_DAO();
+
+                for (PhieuDatMon pdm : dsMon) {
+                    ChiTietHoaDon ct = new ChiTietHoaDon(
+                            new HoaDon(maHD),
+                            new MonAn(pdm.getMaMon().getMaMon()),
+                            pdm.getSoLuong(),
+                            pdm.getDonGia(),
+                            pdm.getGhiChu() == null ? "" : pdm.getGhiChu(),
+                            "Đang phục vụ",
+                            null,
+                            0,
+                            null
+                    );
+
+                    ctDAO.themChiTietHoaDon(ct);
+                }
+
+                dispose();
+
+                Window w = getOwner();
+                if (w instanceof TrangChu_GUI) {
+                    ((TrangChu_GUI) w).showCustomPage(
+                            "Order_Mon_GUI",
+                            new Order_Mon_GUI(
+                                    taiKhoanDangNhap,
+                                    maBanDuocChon,
+                                    txtBan.getText().trim(),
+                                    maPhieuHienTai,
+                                    true
+                            )
+                    );
+                }
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Lỗi khi nhận bàn!");
             }
         });
 
@@ -818,6 +901,7 @@ public class PhieuDatBan_DigLog extends JDialog {
         if (!validateForm()) {
             return;
         }
+        themKhachHangNeuChuaCo();
 
         try {
             PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
@@ -842,6 +926,8 @@ public class PhieuDatBan_DigLog extends JDialog {
 
             BigDecimal tienCoc = new BigDecimal(tienCocText);
 
+            String phuongThucCoc = cboPTThanhToanCoc.getSelectedItem().toString();
+
             String maPhieuMoi = dao.themPhieuDatBan(
                     maBanDuocChon,
                     txtKhachHang.getText().trim(),
@@ -850,7 +936,8 @@ public class PhieuDatBan_DigLog extends JDialog {
                     thoiGianDaChon,
                     tienCoc,
                     txtGhiChu.getText().trim(),
-                    "Đang chờ"
+                    "Đang chờ",
+                    phuongThucCoc
             );
 
             if (maPhieuMoi != null) {
@@ -864,12 +951,7 @@ public class PhieuDatBan_DigLog extends JDialog {
                 boolean capNhatBanOK = banDAO.capNhatTrangThaiBan(maBanDuocChon, "Đang chờ");
 
                 if (luuMonOK && capNhatBanOK) {
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "Đặt bàn thành công! Mã phiếu: " + maPhieuMoi,
-                            "Thông báo",
-                            JOptionPane.INFORMATION_MESSAGE
-                    );
+                    
                     dispose();
                 } else {
                     JOptionPane.showMessageDialog(
@@ -1060,6 +1142,7 @@ public class PhieuDatBan_DigLog extends JDialog {
             }
 
             apDungTrangThaiForm(trangThaiHienTai);
+            SwingUtilities.invokeLater(() -> kiemTraPhieuDangMoCoQuaGio());
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -1269,11 +1352,11 @@ public class PhieuDatBan_DigLog extends JDialog {
         cboGio.setPreferredSize(new Dimension(70, 32));
         cboPhut.setPreferredSize(new Dimension(70, 32));
 
-        Calendar nowPlus1h = Calendar.getInstance();
-        nowPlus1h.add(Calendar.HOUR_OF_DAY, 1);
+        Calendar nowPlus30p = Calendar.getInstance();
+        nowPlus30p.add(Calendar.MINUTE, 30);
 
-        int gioMacDinh = nowPlus1h.get(Calendar.HOUR_OF_DAY);
-        int phutMacDinh = nowPlus1h.get(Calendar.MINUTE);
+        int gioMacDinh = nowPlus30p.get(Calendar.HOUR_OF_DAY);
+        int phutMacDinh = nowPlus30p.get(Calendar.MINUTE);
 
         if (gioMacDinh < 9) {
             gioMacDinh = 9;
@@ -1348,15 +1431,15 @@ public class PhieuDatBan_DigLog extends JDialog {
                     && homNayCal.get(Calendar.DAY_OF_YEAR) == ngayChon.get(Calendar.DAY_OF_YEAR);
 
             if (cungNgay) {
-                Timestamp mocToiThieu = new Timestamp(nowPlus1h.getTimeInMillis());
+            	Timestamp mocToiThieu = new Timestamp(nowPlus30p.getTimeInMillis());
 
-                if (tgChon.before(mocToiThieu)) {
-                    JOptionPane.showMessageDialog(
-                            dlg,
-                            "Nếu đặt trong hôm nay thì giờ vào phải sau thời điểm hiện tại ít nhất 1 tiếng!"
-                    );
-                    return;
-                }
+            	if (tgChon.before(mocToiThieu)) {
+            	    JOptionPane.showMessageDialog(
+            	            dlg,
+            	            "Nếu đặt trong hôm nay thì giờ vào phải sau thời điểm hiện tại ít nhất 30 phút!"
+            	    );
+            	    return;
+            	}
             }
 
             thoiGianDaChon = tgChon;
@@ -1380,7 +1463,7 @@ public class PhieuDatBan_DigLog extends JDialog {
         popupBan = new JPopupMenu();
         popupBan.setLayout(new BorderLayout());
 
-        modelBan = new DefaultTableModel(new Object[]{"Tên bàn", "Trạng thái"}, 0) {
+        modelBan = new DefaultTableModel(new Object[]{"Tên bàn", "Số chỗ", "Trạng thái"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -1439,7 +1522,16 @@ public class PhieuDatBan_DigLog extends JDialog {
             }
 
             for (String[] ban : dsBanTheoGio) {
-                modelBan.addRow(new Object[]{ban[1], ban[2]});
+            	int soKhach = (int) spnSoLuongKhach.getValue();
+            	int soCho = Integer.parseInt(ban[2]);
+
+            	if (soCho >= soKhach) {
+            	    modelBan.addRow(new Object[]{
+            	        ban[1],   // tên bàn
+            	        ban[2],   // số chỗ
+            	        ban[3]    // trạng thái
+            	    });
+            	}
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1455,11 +1547,20 @@ public class PhieuDatBan_DigLog extends JDialog {
     private void locBan(String keyword) {
         modelBan.setRowCount(0);
 
-        for (String[] ban : dsBanTheoGio) {
-            String tenBan = ban[1] == null ? "" : ban[1];
+        int soKhach = (int) spnSoLuongKhach.getValue();
 
-            if (keyword.isEmpty() || tenBan.toLowerCase().contains(keyword.toLowerCase())) {
-                modelBan.addRow(new Object[]{ban[1], ban[2]});
+        for (String[] ban : dsBanTheoGio) {
+            String tenBan = ban[1];
+            int soCho = Integer.parseInt(ban[2]);
+
+            if ((keyword.isEmpty() || tenBan.toLowerCase().contains(keyword.toLowerCase()))
+                    && soCho >= soKhach) {
+
+                modelBan.addRow(new Object[]{
+                        ban[1],
+                        ban[2],
+                        ban[3]
+                });
             }
         }
     }
@@ -1544,6 +1645,90 @@ public class PhieuDatBan_DigLog extends JDialog {
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
             super.paintComponent(g);
             g2.dispose();
+        }
+    }
+    private void tuDongDienKhachHangTheoSDT() {
+        String sdt = txtSoDienThoai.getText().trim();
+
+        if (sdt.isEmpty() || sdt.equals(PH_SDT) || !sdt.matches("\\d{10}")) {
+            return;
+        }
+
+        KhachHang kh = khachHangDAO.getKhachHangTheoSDT(sdt);
+
+        if (kh != null) {
+            txtKhachHang.setText(kh.getTenKH());
+            txtKhachHang.setForeground(Color.BLACK);
+        }
+    }
+
+    private void themKhachHangNeuChuaCo() {
+        String sdt = txtSoDienThoai.getText().trim();
+        String tenKH = txtKhachHang.getText().trim();
+
+        if (sdt.isEmpty() || sdt.equals(PH_SDT)) return;
+        if (tenKH.isEmpty() || tenKH.equals(PH_KHACH)) return;
+
+        KhachHang khCu = khachHangDAO.getKhachHangTheoSDT(sdt);
+        if (khCu != null) return;
+
+        LoaiKhachHang loai = new LoaiKhachHang();
+        loai.setMaLoaiKH("LKH01"); // loại khách thường / mặc định
+
+        KhachHang khMoi = new KhachHang(
+                null,
+                tenKH,
+                sdt,
+                loai,
+                0
+        );
+
+        khachHangDAO.themKhachHangKhongCanMa(khMoi);
+    }
+    private void kiemTraPhieuDangMoCoQuaGio() {
+        try {
+            if (maPhieuHienTai == null || thoiGianDaChon == null) return;
+
+            if (!"Đang chờ".equalsIgnoreCase(trangThaiHienTai)
+                    && !"Đã đặt".equalsIgnoreCase(trangThaiHienTai)) {
+                return;
+            }
+
+            long phutTre = (System.currentTimeMillis() - thoiGianDaChon.getTime()) / (60 * 1000);
+
+            if (phutTre < 30) return;
+
+            int chon = JOptionPane.showConfirmDialog(
+                    this,
+                    "Phiếu đặt bàn đã trễ quá 30 phút.\n\n"
+                            + "Mã phiếu: " + maPhieuHienTai + "\n"
+                            + "Bàn: " + txtBan.getText().trim() + "\n"
+                            + "Khách: " + txtKhachHang.getText().trim() + "\n"
+                            + "SĐT: " + txtSoDienThoai.getText().trim() + "\n"
+                            + "Giờ đến: " + txtGioKhachVao.getText().trim() + "\n\n"
+                            + "Bạn có muốn gia hạn thêm 30 phút không?",
+                    "Cảnh báo quá giờ đặt bàn",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+            );
+
+            PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
+
+            if (chon == JOptionPane.YES_OPTION) {
+                dao.giaHanThoiGianCho(maPhieuHienTai);
+                loadPhieuDatBanLenForm(maPhieuHienTai);
+            } else {
+                dao.capNhatTrangThai(maPhieuHienTai, "Quá giờ");
+
+                Ban_DAO banDAO = new Ban_DAO();
+                banDAO.capNhatTrangThaiBan(maBanDuocChon, "Bàn trống");
+
+                trangThaiHienTai = "Quá giờ";
+                apDungTrangThaiForm(trangThaiHienTai);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

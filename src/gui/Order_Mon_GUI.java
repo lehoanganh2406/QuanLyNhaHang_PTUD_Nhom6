@@ -187,6 +187,15 @@ public class Order_Mon_GUI extends JPanel {
 
     private void napDuLieuBanKhiMoForm() {
         try {
+            // Ưu tiên load hóa đơn đang phục vụ trước
+            HoaDon hd = hoaDonDAO.timHoaDonChuaThanhToanTheoBan(maBan);
+
+            if (hd != null) {
+                loadMonDangPhucVuTheoBan();
+                return;
+            }
+
+            // Chỉ khi chưa có hóa đơn thì mới load món đặt trước
             if (maPhieuDatBan != null && !maPhieuDatBan.trim().isEmpty()) {
                 loadMonDatTheoPhieu(maPhieuDatBan);
                 return;
@@ -195,6 +204,7 @@ public class Order_Mon_GUI extends JPanel {
             if (laBanDangPhucVu) {
                 loadMonDangPhucVuTheoBan();
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }

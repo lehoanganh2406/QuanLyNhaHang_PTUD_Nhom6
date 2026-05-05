@@ -1,6 +1,7 @@
 package gui;
 
 import java.awt.BorderLayout;
+import dao.Ban_DAO;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -25,6 +26,9 @@ import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
+
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -45,6 +49,7 @@ public class TrangChu_GUI extends JFrame {
     private Timer timerKiemTraQuaGio;
 
     private final Map<String, JPanel> pageCache = new HashMap<>();
+    private final java.util.Set<String> daThongBao = new java.util.HashSet<>();
 
     public TrangChu_GUI(TaiKhoan tk) {
         this.taiKhoanDangNhap = tk;
@@ -144,29 +149,36 @@ public class TrangChu_GUI extends JFrame {
 
         if ("TrangChu_GUI".equals(pageName)) {
             cardLayout.show(contentPanel, "TrangChu_GUI");
+            SwingUtilities.invokeLater(() -> kiemTraPhieuQuaGio());
             return;
         }
 
-        if (!pageCache.containsKey(pageName)) {
-            JPanel page = createPageFromOldFrame(pageName);
-
-            if (page == null) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Trang " + pageName + " chưa tạo được.\nKiểm tra class có tồn tại không hoặc constructor có TaiKhoan không.",
-                        "Lỗi chuyển trang",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                return;
-            }
-
-            contentPanel.add(page, pageName);
-            pageCache.put(pageName, page);
+        // Nếu trang cũ đã có trong cache thì xóa ra để tạo mới
+        if (pageCache.containsKey(pageName)) {
+            JPanel oldPage = pageCache.get(pageName);
+            contentPanel.remove(oldPage);
+            pageCache.remove(pageName);
         }
+
+        JPanel page = createPageFromOldFrame(pageName);
+
+        if (page == null) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Trang " + pageName + " chưa tạo được.\nKiểm tra class có tồn tại không hoặc constructor có TaiKhoan không.",
+                    "Lỗi chuyển trang",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        contentPanel.add(page, pageName);
+        pageCache.put(pageName, page);
 
         cardLayout.show(contentPanel, pageName);
         contentPanel.revalidate();
         contentPanel.repaint();
+        SwingUtilities.invokeLater(() -> kiemTraPhieuQuaGio());
     }
 
     private JPanel createPageFromOldFrame(String className) {
@@ -252,9 +264,10 @@ public class TrangChu_GUI extends JFrame {
         cardLayout.show(contentPanel, pageName);
         contentPanel.revalidate();
         contentPanel.repaint();
+        SwingUtilities.invokeLater(() -> kiemTraPhieuQuaGio());
     }
     private void batDauKiemTraPhieuQuaGio() {
-        timerKiemTraQuaGio = new Timer(60 * 1000, e -> kiemTraPhieuQuaGio());
+        timerKiemTraQuaGio = new Timer(10 * 1000, e -> kiemTraPhieuQuaGio());
         timerKiemTraQuaGio.setInitialDelay(3000);
         timerKiemTraQuaGio.start();
     }
@@ -268,13 +281,21 @@ public class TrangChu_GUI extends JFrame {
 
             for (String[] row : ds) {
                 String maPhieu = row[0];
+
+                if (daThongBao.contains(maPhieu)) continue;
+
                 String maBan = row[1];
                 String tenKhach = row[2];
                 String sdt = row[3];
                 String gioDen = row[4];
+                Window activeWindow = KeyboardFocusManager
+                        .getCurrentKeyboardFocusManager()
+                        .getActiveWindow();
+
+                Component parent = activeWindow != null ? activeWindow : this;
 
                 int chon = JOptionPane.showConfirmDialog(
-                        this,
+                        parent,
                         "Phiếu đặt bàn đã trễ quá 30 phút.\n\n"
                                 + "Mã phiếu: " + maPhieu + "\n"
                                 + "Bàn: " + maBan + "\n"
@@ -291,7 +312,13 @@ public class TrangChu_GUI extends JFrame {
                     dao.giaHanThoiGianCho(maPhieu);
                 } else {
                     dao.capNhatTrangThai(maPhieu, "Quá giờ");
+
+                    Ban_DAO banDAO = new Ban_DAO();
+                    banDAO.capNhatTrangThaiBan(maBan, "Bàn trống");
                 }
+
+                daThongBao.add(maPhieu);
+            
             }
 
         } catch (Exception ex) {

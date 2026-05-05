@@ -400,28 +400,35 @@ public class Order_Ban_GUI extends JPanel {
             dsTatCaBanTheoNgay.clear();
 
             List<String[]> ds = banDAO.getDanhSachBanTheoNgay(ngaySql);
+
             if (ds != null) {
                 for (String[] row : ds) {
-                    if (row == null || row.length < 5) continue;
-
-                    String trangThaiGoc = row[4];
-
-                    if (!"Bàn đang phục vụ".equalsIgnoreCase(chuanHoaTrangThai(trangThaiGoc))) {
-                        row[4] = "Bàn trống";
-                    } else {
-                        row[4] = "Bàn đang phục vụ";
+                    if (row == null || row.length < 5) {
+                        continue;
                     }
+
+                    // row[4] là trạng thái load từ CSDL
+                    // Không tự ép về bàn trống nữa
+                    row[4] = chuanHoaTrangThai(row[4]);
 
                     dsTatCaBanTheoNgay.add(row);
                 }
             }
 
+            // Hàm này chỉ thêm trạng thái "Bàn đặt" theo mốc giờ đặt bàn
+            // Không đè bàn đang phục vụ
             capNhatTrangThaiBanDatTuPhieuDat(ngaySql);
+
             doDuLieuBanLenGiaoDien();
 
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Không thể tải danh sách bàn theo ngày.");
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Không thể tải danh sách bàn theo ngày.",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 
@@ -794,16 +801,17 @@ public class Order_Ban_GUI extends JPanel {
             if ("Bàn đặt".equalsIgnoreCase(trangThai)) {
                 String[] phieu = timPhieuDatGanNhatCuaBan(ban.getMaBan());
 
-                int confirm = JOptionPane.showConfirmDialog(
-                        Order_Ban_GUI.this,
-                        "Bàn này đã được đặt.\nBạn có muốn nhận bàn không?",
-                        "Xác nhận nhận bàn",
-                        JOptionPane.YES_NO_OPTION
-                );
-
-                if (confirm == JOptionPane.YES_OPTION) {
-                    moManHinhOrderMon(ban, phieu);
+                if (phieu == null || phieu.length == 0 || phieu[0] == null) {
+                    JOptionPane.showMessageDialog(
+                            Order_Ban_GUI.this,
+                            "Không tìm thấy phiếu đặt bàn của bàn này!",
+                            "Thông báo",
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    return;
                 }
+
+                moPhieuDatBanDialog(phieu[0]);
                 return;
             }
 
@@ -825,13 +833,51 @@ public class Order_Ban_GUI extends JPanel {
             moManHinhOrderMon(ban, null);
         }
     }
+    private void moPhieuDatBanDialog(String maPhieuDatBan) {
+        try {
+            Window window = SwingUtilities.getWindowAncestor(this);
+            JFrame parentFrame = null;
+
+            if (window instanceof JFrame) {
+                parentFrame = (JFrame) window;
+            }
+
+            digLog.PhieuDatBan_DigLog dialog =
+                    new digLog.PhieuDatBan_DigLog(parentFrame, maPhieuDatBan, taiKhoanDangNhap);
+
+            dialog.setLocationRelativeTo(window);
+            dialog.setVisible(true);
+
+            // đóng dialog xong thì load lại bàn từ CSDL
+            taiDanhSachBanTheoNgay();
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Không mở được phiếu đặt bàn!",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
+    public void reloadData() {
+        napKhuVucTuCSDL();
+        taiDanhSachBanTheoNgay();
+    }
     private void moManHinhOrderMon(Ban ban, String[] phieu) {
         try {
             stopTimers();
 
             String maPhieuDatBan = null;
+
             if (phieu != null && phieu.length > 0) {
                 maPhieuDatBan = phieu[0];
+            } else {
+                String[] phieuGanNhat = timPhieuDaNhanBanCuaBan(ban.getMaBan());
+                if (phieuGanNhat != null && phieuGanNhat.length > 0) {
+                    maPhieuDatBan = phieuGanNhat[0];
+                }
             }
 
             boolean laBanDangPhucVu = "Bàn đang phục vụ".equalsIgnoreCase(
@@ -991,5 +1037,33 @@ public class Order_Ban_GUI extends JPanel {
 
             dim.height += rowHeight;
         }
+    }
+    private String[] timPhieuDaNhanBanCuaBan(String maBan) {
+        try {
+            if (dcNgayChon.getDate() == null) return null;
+
+            java.sql.Date ngaySql = new java.sql.Date(boTime(dcNgayChon.getDate()).getTime());
+            ArrayList<String[]> dsPhieu = phieuDatBanDAO.getPhieuDatBanTheoNgay(ngaySql);
+
+            if (dsPhieu == null || dsPhieu.isEmpty()) return null;
+
+            for (String[] phieu : dsPhieu) {
+                if (phieu == null || phieu.length < 9) continue;
+
+                String maBanPhieu = phieu[1];
+                String trangThaiPhieu = phieu[8];
+
+                if (maBanPhieu == null || !maBanPhieu.equalsIgnoreCase(maBan)) continue;
+
+                if ("Đã nhận bàn".equalsIgnoreCase(trangThaiPhieu)) {
+                    return phieu;
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }

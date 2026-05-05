@@ -19,6 +19,12 @@ import javax.swing.border.EmptyBorder;
 import dao.CaLamViec_DAO;
 import entity.CaLamViec;
 import gui.DangNhap_GUI;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+
+import connectDB.ConnectDB;
 
 public class DongCa_DigLog extends JDialog {
     private static final long serialVersionUID = 1L;
@@ -162,9 +168,7 @@ public class DongCa_DigLog extends JDialog {
     }
 
     private void loadDuLieuCa() {
-        if (caDangMo == null) {
-            return;
-        }
+        if (caDangMo == null) return;
 
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
@@ -172,21 +176,84 @@ public class DongCa_DigLog extends JDialog {
         lblTenCa.setText(caDangMo.getTenCa());
 
         LocalDateTime thoiGianMo = caDangMo.getThoiGianMoCa();
+        LocalDateTime thoiGianDong = LocalDateTime.now();
+
         lblThoiGianMo.setText(thoiGianMo == null ? "" : thoiGianMo.format(dtf));
-
-        lblThoiGianDong.setText(LocalDateTime.now().format(dtf));
-
+        lblThoiGianDong.setText(thoiGianDong.format(dtf));
         lblTienMoCa.setText(formatTien(caDangMo.getTienMoCa()));
 
-        double tienMatBanHang = caDAO.tinhTienTheoPhuongThuc("Tiền mặt", caDangMo.getThoiGianMoCa());
-        double tienCKBanHang = caDAO.tinhTienTheoPhuongThuc("Chuyển khoản", caDangMo.getThoiGianMoCa());
-        double tienVisaBanHang = caDAO.tinhTienTheoPhuongThuc("Visa", caDangMo.getThoiGianMoCa());
+        double tienMatBanHang = 0;
+        double tienCKBanHang = 0;
+        double tienVisaBanHang = 0;
 
-        tienMatCuoiCa = caDangMo.getTienMoCa() + tienMatBanHang;
-        tienChuyenKhoanCuoiCa = tienCKBanHang;
-        tienVisaCuoiCa = tienVisaBanHang;
+        double cocTienMat = 0;
+        double cocChuyenKhoan = 0;
+        double cocVisa = 0;
 
-        tongDoanhThu = tienMatCuoiCa + tienChuyenKhoanCuoiCa + tienVisaCuoiCa;
+        String sqlHoaDon = """
+            SELECT
+                ISNULL(SUM(CASE WHEN LTRIM(RTRIM(phuongThucThanhToan)) = N'Tiền mặt' THEN tongTien ELSE 0 END), 0) AS tienMat,
+                ISNULL(SUM(CASE WHEN LTRIM(RTRIM(phuongThucThanhToan)) = N'Chuyển khoản' THEN tongTien ELSE 0 END), 0) AS chuyenKhoan,
+                ISNULL(SUM(CASE WHEN UPPER(LTRIM(RTRIM(phuongThucThanhToan))) = N'VISA' THEN tongTien ELSE 0 END), 0) AS visa
+            FROM HoaDon
+            WHERE LTRIM(RTRIM(trangThai)) = N'Đã thanh toán'
+              AND thoiGianRa IS NOT NULL
+              AND thoiGianRa >= ?
+              AND thoiGianRa <= ?
+        """;
+
+        String sqlCoc = """
+            SELECT
+                ISNULL(SUM(CASE WHEN LTRIM(RTRIM(phuongThucThanhToanCoc)) = N'Tiền mặt' THEN tienCoc ELSE 0 END), 0) AS tienMat,
+                ISNULL(SUM(CASE WHEN LTRIM(RTRIM(phuongThucThanhToanCoc)) = N'Chuyển khoản' THEN tienCoc ELSE 0 END), 0) AS chuyenKhoan,
+                ISNULL(SUM(CASE WHEN UPPER(LTRIM(RTRIM(phuongThucThanhToanCoc))) = N'VISA' THEN tienCoc ELSE 0 END), 0) AS visa
+            FROM PhieuDatBan
+            WHERE thoiGianDatPhieu IS NOT NULL
+              AND thoiGianDatPhieu >= ?
+              AND thoiGianDatPhieu <= ?
+              AND ISNULL(LTRIM(RTRIM(trangThai)), N'') <> N'Đã hủy'
+        """;
+
+        try {
+            Connection con = ConnectDB.getConnection();
+
+            PreparedStatement ps = con.prepareStatement(sqlHoaDon);
+            ps.setTimestamp(1, Timestamp.valueOf(thoiGianMo));
+            ps.setTimestamp(2, Timestamp.valueOf(thoiGianDong));
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                tienMatBanHang = rs.getDouble("tienMat");
+                tienCKBanHang = rs.getDouble("chuyenKhoan");
+                tienVisaBanHang = rs.getDouble("visa");
+            }
+            rs.close();
+            ps.close();
+
+            ps = con.prepareStatement(sqlCoc);
+            ps.setTimestamp(1, Timestamp.valueOf(thoiGianMo));
+            ps.setTimestamp(2, Timestamp.valueOf(thoiGianDong));
+
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                cocTienMat = rs.getDouble("tienMat");
+                cocChuyenKhoan = rs.getDouble("chuyenKhoan");
+                cocVisa = rs.getDouble("visa");
+            }
+            rs.close();
+            ps.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        tienMatCuoiCa = caDangMo.getTienMoCa() + tienMatBanHang + cocTienMat;
+        tienChuyenKhoanCuoiCa = tienCKBanHang + cocChuyenKhoan;
+        tienVisaCuoiCa = tienVisaBanHang + cocVisa;
+
+        tongDoanhThu =
+                tienMatBanHang + tienCKBanHang + tienVisaBanHang
+              + cocTienMat + cocChuyenKhoan + cocVisa;
 
         lblTienMat.setText(formatTien(tienMatCuoiCa));
         lblChuyenKhoan.setText(formatTien(tienChuyenKhoanCuoiCa));

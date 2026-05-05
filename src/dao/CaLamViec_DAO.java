@@ -16,6 +16,193 @@ public class CaLamViec_DAO {
 
     public CaLamViec_DAO() {
     }
+    public java.util.ArrayList<Object[]> getAllCaLamViecQuanLy() {
+        java.util.ArrayList<Object[]> ds = new java.util.ArrayList<>();
+
+        String sql = """
+            SELECT 
+                ca.maCa,
+                ca.tenCa,
+                ca.thoiGianMoCa,
+                ca.thoiGianDongCa,
+                tk.tenDangNhap,
+                nv.hoTen,
+                ca.tienMoCa,
+                CASE WHEN ca.thoiGianDongCa IS NULL THEN
+    ca.tienMoCa
+    + ISNULL((
+        SELECT SUM(hd.tongTien)
+        FROM HoaDon hd
+        WHERE hd.trangThai = N'Đã thanh toán'
+          AND hd.phuongThucThanhToan = N'Tiền mặt'
+          AND hd.thoiGianRa >= ca.thoiGianMoCa
+          AND hd.thoiGianRa <= GETDATE()
+    ), 0)
+    + ISNULL((
+        SELECT SUM(pdb.tienCoc)
+        FROM PhieuDatBan pdb
+        WHERE pdb.phuongThucThanhToanCoc = N'Tiền mặt'
+          AND pdb.thoiGianDatPhieu >= ca.thoiGianMoCa
+          AND pdb.thoiGianDatPhieu <= GETDATE()
+          AND pdb.trangThai <> N'Đã hủy'
+    ), 0)
+ELSE ca.tienMatCuoiCa END AS tienMatCuoiCa,
+
+CASE WHEN ca.thoiGianDongCa IS NULL THEN
+    ISNULL((
+        SELECT SUM(hd.tongTien)
+        FROM HoaDon hd
+        WHERE hd.trangThai = N'Đã thanh toán'
+          AND hd.phuongThucThanhToan = N'Chuyển khoản'
+          AND hd.thoiGianRa >= ca.thoiGianMoCa
+          AND hd.thoiGianRa <= GETDATE()
+    ), 0)
+    + ISNULL((
+        SELECT SUM(pdb.tienCoc)
+        FROM PhieuDatBan pdb
+        WHERE pdb.phuongThucThanhToanCoc = N'Chuyển khoản'
+          AND pdb.thoiGianDatPhieu >= ca.thoiGianMoCa
+          AND pdb.thoiGianDatPhieu <= GETDATE()
+          AND pdb.trangThai <> N'Đã hủy'
+    ), 0)
+ELSE ca.tienChuyenKhoanCuoiCa END AS tienChuyenKhoanCuoiCa,
+
+CASE WHEN ca.thoiGianDongCa IS NULL THEN
+    ISNULL((
+        SELECT SUM(hd.tongTien)
+        FROM HoaDon hd
+        WHERE hd.trangThai = N'Đã thanh toán'
+          AND UPPER(hd.phuongThucThanhToan) = N'VISA'
+          AND hd.thoiGianRa >= ca.thoiGianMoCa
+          AND hd.thoiGianRa <= GETDATE()
+    ), 0)
+    + ISNULL((
+        SELECT SUM(pdb.tienCoc)
+        FROM PhieuDatBan pdb
+        WHERE UPPER(pdb.phuongThucThanhToanCoc) = N'VISA'
+          AND pdb.thoiGianDatPhieu >= ca.thoiGianMoCa
+          AND pdb.thoiGianDatPhieu <= GETDATE()
+          AND pdb.trangThai <> N'Đã hủy'
+    ), 0)
+ELSE ca.tienVisaCuoiCa END AS tienVisaCuoiCa,
+
+CASE WHEN ca.thoiGianDongCa IS NULL THEN
+    ISNULL((
+        SELECT SUM(hd.tongTien)
+        FROM HoaDon hd
+        WHERE hd.trangThai = N'Đã thanh toán'
+          AND hd.thoiGianRa >= ca.thoiGianMoCa
+          AND hd.thoiGianRa <= GETDATE()
+    ), 0)
+    + ISNULL((
+        SELECT SUM(pdb.tienCoc)
+        FROM PhieuDatBan pdb
+        WHERE pdb.thoiGianDatPhieu >= ca.thoiGianMoCa
+          AND pdb.thoiGianDatPhieu <= GETDATE()
+          AND pdb.trangThai <> N'Đã hủy'
+    ), 0)
+ELSE ca.tongDoanhThu END AS tongDoanhThu,
+                CASE WHEN ca.thoiGianDongCa IS NULL THEN N'Đang mở' ELSE N'Đã đóng' END AS trangThai
+            FROM CaLamViec ca
+            JOIN TaiKhoan tk ON ca.maTaiKhoan = tk.maTaiKhoan
+            JOIN NhanVien nv ON tk.maNV = nv.maNV
+            ORDER BY ca.thoiGianMoCa DESC
+        """;
+
+        try {
+            Connection con = ConnectDB.getInstance().getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                ds.add(new Object[]{
+                        rs.getString("maCa"),
+                        rs.getString("tenCa"),
+                        rs.getTimestamp("thoiGianMoCa"),
+                        rs.getTimestamp("thoiGianDongCa"),
+                        rs.getString("tenDangNhap"),
+                        rs.getString("hoTen"),
+                        rs.getDouble("tienMoCa"),
+                        rs.getDouble("tienMatCuoiCa"),
+                        rs.getDouble("tienChuyenKhoanCuoiCa"),
+                        rs.getDouble("tienVisaCuoiCa"),
+                        rs.getDouble("tongDoanhThu"),
+                        rs.getString("trangThai")
+                });
+            }
+
+            rs.close();
+            ps.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return ds;
+    }
+
+    public boolean moCaVoiTenCa(String tenCa, double tienMoCa, TaiKhoan taiKhoan) {
+        if (taiKhoan == null || tenCa == null || tenCa.trim().isEmpty()) {
+            return false;
+        }
+
+        if (layCaDangMo() != null) {
+            return false;
+        }
+
+        String sql = """
+            INSERT INTO CaLamViec
+            (tenCa, thoiGianMoCa, thoiGianDongCa, tienMoCa,
+             tienMatCuoiCa, tienChuyenKhoanCuoiCa, tienVisaCuoiCa, tongDoanhThu, maTaiKhoan)
+            VALUES (?, ?, NULL, ?, 0, 0, 0, 0, ?)
+        """;
+
+        try {
+            Connection con = ConnectDB.getInstance().getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+
+            ps.setString(1, tenCa.trim());
+            ps.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
+            ps.setDouble(3, tienMoCa);
+            ps.setString(4, taiKhoan.getMaTaiKhoan());
+
+            boolean ok = ps.executeUpdate() > 0;
+            ps.close();
+            return ok;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+    public int demSoCaTrongNgay(java.time.LocalDate ngay) {
+        String sql = """
+            SELECT COUNT(*)
+            FROM CaLamViec
+            WHERE CAST(thoiGianMoCa AS DATE) = ?
+        """;
+
+        try {
+            Connection con = ConnectDB.getInstance().getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setDate(1, java.sql.Date.valueOf(ngay));
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                rs.close();
+                ps.close();
+                return count;
+            }
+
+            rs.close();
+            ps.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
 
     public CaLamViec layCaDangMo() {
         Connection con = null;
@@ -84,16 +271,15 @@ public class CaLamViec_DAO {
     }
 
     public String xacDinhTenCaMoi() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDate today = now.toLocalDate();
+        LocalDate today = LocalDate.now();
 
         CaLamViec caDangMo = layCaDangMo();
         if (caDangMo != null) {
             return null;
         }
 
-        boolean coCaSang = daCoCaSangTrongNgay(today);
-        boolean coCaChieu = daCoCaChieuTrongNgay(today);
+        boolean coCaSang = tonTaiCaTheoTenTrongNgay(today, "Ca sáng");
+        boolean coCaChieu = tonTaiCaTheoTenTrongNgay(today, "Ca chiều");
 
         if (!coCaSang) {
             return "Ca sáng";
@@ -103,7 +289,8 @@ public class CaLamViec_DAO {
             return "Ca chiều";
         }
 
-        return "Ca phụ 3";
+        int soCaTrongNgay = demSoCaTrongNgay(today);
+        return "Ca phụ " + (soCaTrongNgay + 1);
     }
 
     public String layTenCaHienThi() {
@@ -248,6 +435,41 @@ public class CaLamViec_DAO {
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 return rs.getDouble(1);
+            }
+
+            rs.close();
+            ps.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+    public double tinhTienCocTheoPhuongThuc(String phuongThuc, LocalDateTime thoiGianMoCa) {
+        String sql = """
+            SELECT ISNULL(SUM(tienCoc), 0)
+            FROM PhieuDatBan
+            WHERE LTRIM(RTRIM(phuongThucThanhToanCoc)) = ?
+              AND thoiGianDatPhieu IS NOT NULL
+              AND thoiGianDatPhieu >= ?
+              AND thoiGianDatPhieu <= GETDATE()
+              AND trangThai <> N'Đã hủy'
+        """;
+
+        try {
+            Connection con = ConnectDB.getInstance().getConnection();
+            PreparedStatement ps = con.prepareStatement(sql);
+
+            ps.setString(1, phuongThuc.trim());
+            ps.setTimestamp(2, Timestamp.valueOf(thoiGianMoCa));
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                double tien = rs.getDouble(1);
+                rs.close();
+                ps.close();
+                return tien;
             }
 
             rs.close();

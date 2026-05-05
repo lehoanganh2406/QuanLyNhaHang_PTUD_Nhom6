@@ -4,7 +4,10 @@ import com.toedter.calendar.JDateChooser;
 
 import connectDB.ConnectDB;
 import dao.HoaDon_DAO;
-import digLog.ChiTietHoaDon_DigLog;
+import digLog.HoaDonChiTiet_DigLog;
+import dao.ChiTietHoaDon_DAO;
+import entity.ChiTietHoaDon;
+import java.util.List;
 import entity.TaiKhoan;
 
 import javax.swing.*;
@@ -55,6 +58,7 @@ public class HoaDon_GUI extends JFrame {
     private DefaultTableModel tableModel;
 
     private HoaDon_DAO hd_dao = new HoaDon_DAO();
+    private ChiTietHoaDon_DAO cthdDAO = new ChiTietHoaDon_DAO();
 
     private JButton btnChiTiet, btnTraCuu, btnLamMoi, btnLoc, btnCapNhat;
 
@@ -229,21 +233,7 @@ public class HoaDon_GUI extends JFrame {
         btnTraCuu.addActionListener(e -> traCuu());
         btnLoc.addActionListener(e -> locHoaDon());
 
-        btnChiTiet.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row < 0) {
-                JOptionPane.showMessageDialog(this, "Chọn hóa đơn!");
-                return;
-            }
-
-            String maHD = table.getValueAt(row, 0).toString();
-            JFrame parentFrame = getParentFrame();
-
-            ChiTietHoaDon_DigLog dlg = new ChiTietHoaDon_DigLog(parentFrame, maHD);
-            dlg.setLocationRelativeTo(parentFrame);
-            dlg.setVisible(true);
-        });
-
+        btnChiTiet.addActionListener(e -> moChiTietHoaDonDangChon());
         return wrapper;
     }
 
@@ -307,6 +297,14 @@ public class HoaDon_GUI extends JFrame {
                 }
 
                 return c;
+            }
+        });
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && table.getSelectedRow() >= 0) {
+                    moChiTietHoaDonDangChon();
+                }
             }
         });
 
@@ -689,7 +687,7 @@ public class HoaDon_GUI extends JFrame {
                         row[5],
                         row[6],
                         row[7],
-                        row[8],
+                        formatMoneyValue(row[8]),
                         row[10],
                         row[11],
                         row[12],
@@ -747,7 +745,7 @@ public class HoaDon_GUI extends JFrame {
             	    row[5],   // sdt
             	    row[6],   // khuyến mãi
             	    row[7],   // bàn
-            	    row[8],   // tổng tiền
+            	    formatMoneyValue(row[8]),   // tổng tiền
             	    row[10],  // phương thức TT
             	    row[11],  // hình thức PV
             	    row[12],  // trạng thái
@@ -929,7 +927,7 @@ public class HoaDon_GUI extends JFrame {
             	    row[5],   // sdt
             	    row[6],   // khuyến mãi
             	    row[7],   // bàn
-            	    row[8],   // tổng tiền
+            	    formatMoneyValue(row[8]),   // tổng tiền
             	    row[10],  // phương thức TT
             	    row[11],  // hình thức PV
             	    row[12],  // trạng thái
@@ -1254,5 +1252,126 @@ public class HoaDon_GUI extends JFrame {
             super.paint(g, c);
         }
 
+    }
+    private void moChiTietHoaDonDangChon() {
+        int row = table.getSelectedRow();
+
+        if (row < 0) {
+            JOptionPane.showMessageDialog(this, "Chọn hóa đơn!");
+            return;
+        }
+
+        int modelRow = table.convertRowIndexToModel(row);
+        String maHD = getSafe(tableModel.getValueAt(modelRow, 0));
+
+        Object[] hd = hd_dao.getHoaDonByMa(maHD);
+        if (hd == null) {
+            JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn!");
+            return;
+        }
+
+        List<ChiTietHoaDon> dsCT = cthdDAO.getChiTietTheoMaHD(maHD);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd-MM-yyyy");
+
+        Timestamp vao = (Timestamp) hd[1];
+        Timestamp ra = (Timestamp) hd[2];
+
+        String thoiGian = (vao == null ? "" : sdf.format(vao))
+                + " - "
+                + (ra == null ? "" : sdf.format(ra));
+
+        String tenKH = getSafe(hd[3]);
+        String tenNV = getSafe(hd[4]);
+        String tenKM = getSafe(hd[6]);
+        String tenBan = getSafe(hd[7]);
+
+        double tongTien = toDouble(hd[8]);
+        double tienKhachTra = toDouble(hd[9]);
+        double vat = toDouble(hd[10]);
+        double tienThua = toDouble(hd[11]);
+        String phuongThuc = getSafe(hd[12]);
+
+        String maPhieuDatBan = getSafe(hd[16]);
+        double tienCoc = toDouble(hd[17]);
+
+        double tongCong = tongTien;
+        double tienGiam = 0;
+
+        int diemCongThem = (int) (tongTien / 100000);
+
+        JDialog dlg = new JDialog(
+                getParentFrame(),
+                "Chi tiết hóa đơn",
+                Dialog.ModalityType.APPLICATION_MODAL
+        );
+
+        dlg.setContentPane(new HoaDonChiTiet_DigLog(
+                "HÓA ĐƠN THANH TOÁN",
+                maHD,
+                tenBan,
+                maPhieuDatBan,
+                tienCoc,
+                tenKH,
+                tenNV,
+                thoiGian,
+                tenKM,
+                tienGiam,
+                tongTien,
+                vat,
+                tongCong,
+                tienKhachTra,
+                tienThua,
+                phuongThuc,
+                diemCongThem,
+                dsCT
+        ));
+
+        dlg.setSize(650, 760);
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
+    }
+    private double toDouble(Object value) {
+        try {
+            if (value == null) return 0;
+            if (value instanceof Number) {
+                return ((Number) value).doubleValue();
+            }
+
+            String s = value.toString()
+                    .replace("VNĐ", "")
+                    .replace("đ", "")
+                    .replace(".", "")
+                    .replace(",", "")
+                    .trim();
+
+            if (s.isEmpty()) return 0;
+            return Double.parseDouble(s);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+    private String formatMoneyValue(Object value) {
+        try {
+            if (value == null) return "0";
+
+            double money;
+            if (value instanceof Number) {
+                money = ((Number) value).doubleValue();
+            } else {
+                String s = value.toString()
+                        .replace("VNĐ", "")
+                        .replace("đ", "")
+                        .replace(".", "")
+                        .replace(",", "")
+                        .trim();
+                if (s.isEmpty()) return "0";
+                money = Double.parseDouble(s);
+            }
+
+            return String.format("%,.0f", money).replace(",", ".");
+        } catch (Exception e) {
+            return value == null ? "0" : value.toString();
+        }
     }
 }

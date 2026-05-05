@@ -165,6 +165,7 @@ public class Pn_ThanhMenu extends JPanel {
         MenuItemPanel mnHeThong = new MenuItemPanel("Hệ thống", "img/mn_hethong.png");
         mnHeThong.addSubItem("Trang chủ", "TrangChu_GUI");
         mnHeThong.addSubItem("Quản lý tài khoản", "TaiKhoan_GUI");
+        mnHeThong.addSubItem("Quản lý ca", "QuanLyCa_GUI");
         mnHeThong.addSubItem("Đăng xuất", "DangNhap_GUI");
         mnHeThong.addSubItem("Hỗ trợ", "__HOTRO__");
 

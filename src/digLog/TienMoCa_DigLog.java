@@ -168,21 +168,9 @@ public class TienMoCa_DigLog extends JDialog {
             return;
         }
 
-        double tienMoCa;
-        try {
-            tienText = tienText.replace(",", "").replace(" ", "");
-            tienMoCa = Double.parseDouble(tienText);
+        double tienMoCa = parseTienNhap(tienText);
 
-            if (tienMoCa < 0) {
-                JOptionPane.showMessageDialog(this,
-                        "Tiền mở ca không được nhỏ hơn 0.",
-                        "Thông báo",
-                        JOptionPane.WARNING_MESSAGE);
-                txtTienMoCa.requestFocus();
-                txtTienMoCa.selectAll();
-                return;
-            }
-        } catch (NumberFormatException ex) {
+        if (tienMoCa < 0) {
             JOptionPane.showMessageDialog(this,
                     "Tiền mở ca không hợp lệ. Vui lòng nhập số.",
                     "Lỗi",
@@ -230,5 +218,25 @@ public class TienMoCa_DigLog extends JDialog {
 
     public boolean isMoCaThanhCong() {
         return moCaThanhCong;
+    }
+    private double parseTienNhap(String text) {
+        try {
+            if (text == null) return 0;
+
+            String s = text.trim()
+                    .replace("VNĐ", "")
+                    .replace("đ", "")
+                    .replace(" ", "");
+
+            if (s.matches("\\d{1,3}(\\.\\d{3})+")) {
+                s = s.replace(".", "");
+            }
+
+            s = s.replace(",", "");
+
+            return Double.parseDouble(s);
+        } catch (Exception e) {
+            return -1;
+        }
     }
 }

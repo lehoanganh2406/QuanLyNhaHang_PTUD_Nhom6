@@ -249,7 +249,8 @@ public class DatBan_GUI extends JPanel {
                 } else {
                 	PhieuDatBan_DigLog dialog = new PhieuDatBan_DigLog(
                 	        (JFrame) SwingUtilities.getWindowAncestor(DatBan_GUI.this),
-                	        item.maPhieu
+                	        item.maPhieu,
+                	        taiKhoanDangNhap
                 	);
                 	dialog.setLocationRelativeTo(SwingUtilities.getWindowAncestor(DatBan_GUI.this));
                 	dialog.setVisible(true);

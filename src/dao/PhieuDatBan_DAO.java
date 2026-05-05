@@ -11,53 +11,60 @@ import java.util.ArrayList;
 
 public class PhieuDatBan_DAO {
 
-    public String themPhieuDatBan(
-            String maBan,
-            String tenKhach,
-            String sdt,
-            int soLuongNguoi,
-            Timestamp thoiGianDen,
-            BigDecimal tienCoc,
-            String ghiChu,
-            String trangThai
-    ) {
-        Connection con = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
+	public String themPhieuDatBan(
+	        String maBan,
+	        String tenKhach,
+	        String sdt,
+	        int soLuongNguoi,
+	        Timestamp thoiGianDen,
+	        BigDecimal tienCoc,
+	        String ghiChu,
+	        String trangThai,
+	        String phuongThucThanhToanCoc
+	) {
+	    Connection con = null;
+	    PreparedStatement stmt = null;
+	    ResultSet rs = null;
 
-        try {
-            con = ConnectDB.getConnection();
+	    try {
+	        con = ConnectDB.getConnection();
 
-            String sql = "INSERT INTO PhieuDatBan "
-                    + "(maBan, tenKhach, sdt, soLuongNguoi, thoiGianDen, tienCoc, ghiChu, trangThai, "
-                    + " phuongThucHoanTien, lyDoHuy, tienHoanTra) "
-                    + "OUTPUT INSERTED.maPhieuDatBan "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	        String sql = "INSERT INTO PhieuDatBan "
+	                + "(maBan, tenKhach, sdt, soLuongNguoi, thoiGianDen, tienCoc, ghiChu, trangThai, "
+	                + " phuongThucThanhToanCoc, thoiGianDatPhieu, phuongThucHoanTien, lyDoHuy, tienHoanTra) "
+	                + "OUTPUT INSERTED.maPhieuDatBan "
+	                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-            stmt = con.prepareStatement(sql);
-            stmt.setString(1, maBan);
-            stmt.setString(2, tenKhach);
-            stmt.setString(3, sdt);
-            stmt.setInt(4, soLuongNguoi);
-            stmt.setTimestamp(5, thoiGianDen);
-            stmt.setBigDecimal(6, tienCoc);
-            stmt.setString(7, (ghiChu == null || ghiChu.trim().isEmpty()) ? null : ghiChu.trim());
-            stmt.setString(8, trangThai);
-            stmt.setString(9, null);
-            stmt.setString(10, null);
-            stmt.setBigDecimal(11, BigDecimal.ZERO);
+	        stmt = con.prepareStatement(sql);
+	        stmt.setString(1, maBan);
+	        stmt.setString(2, tenKhach);
+	        stmt.setString(3, sdt);
+	        stmt.setInt(4, soLuongNguoi);
+	        stmt.setTimestamp(5, thoiGianDen);
+	        stmt.setBigDecimal(6, tienCoc);
+	        stmt.setString(7, (ghiChu == null || ghiChu.trim().isEmpty()) ? null : ghiChu.trim());
+	        stmt.setString(8, trangThai);
+	        stmt.setString(9, phuongThucThanhToanCoc);
 
-            rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getString(1);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            closeResources(rs, stmt);
-        }
-        return null;
-    }
+	     // thời gian đặt phiếu = đúng lúc bấm nút Đặt bàn trên Java
+	     stmt.setTimestamp(10, new Timestamp(System.currentTimeMillis()));
+
+	     stmt.setString(11, null);
+	     stmt.setString(12, null);
+	     stmt.setBigDecimal(13, BigDecimal.ZERO);
+
+	        rs = stmt.executeQuery();
+	        if (rs.next()) {
+	            return rs.getString(1);
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    } finally {
+	        closeResources(rs, stmt);
+	    }
+
+	    return null;
+	}
 
     public boolean kiemTraTrungLich(String maBan, Timestamp thoiGianDen, int soPhutMacDinh) {
         Connection con = null;
@@ -100,7 +107,7 @@ public class PhieuDatBan_DAO {
             con = ConnectDB.getConnection();
 
             String sql = "SELECT maPhieuDatBan, maBan, tenKhach, sdt, soLuongNguoi, "
-                    + "thoiGianDen, tienCoc, ghiChu, trangThai, "
+                    + "thoiGianDen, tienCoc, ghiChu, trangThai,phuongThucThanhToanCoc, thoiGianDatPhieu, "
                     + "phuongThucHoanTien, lyDoHuy, tienHoanTra "
                     + "FROM PhieuDatBan "
                     + "WHERE CAST(thoiGianDen AS DATE) = ? "
@@ -111,7 +118,7 @@ public class PhieuDatBan_DAO {
 
             rs = stmt.executeQuery();
             while (rs.next()) {
-                String[] row = new String[12];
+                String[] row = new String[14];
                 row[0] = rs.getString("maPhieuDatBan");
                 row[1] = rs.getString("maBan");
                 row[2] = rs.getString("tenKhach");
@@ -124,6 +131,8 @@ public class PhieuDatBan_DAO {
                 row[9] = rs.getString("phuongThucHoanTien");
                 row[10] = rs.getString("lyDoHuy");
                 row[11] = rs.getBigDecimal("tienHoanTra") == null ? "0" : rs.getBigDecimal("tienHoanTra").toPlainString();
+                row[12] = rs.getString("phuongThucThanhToanCoc");
+                row[13] = String.valueOf(rs.getTimestamp("thoiGianDatPhieu"));
                 ds.add(row);
             }
         } catch (Exception e) {
@@ -144,7 +153,7 @@ public class PhieuDatBan_DAO {
             con = ConnectDB.getConnection();
 
             String sql = "SELECT maPhieuDatBan, maBan, tenKhach, sdt, soLuongNguoi, "
-                    + "thoiGianDen, tienCoc, ghiChu, trangThai, "
+                    + "thoiGianDen, tienCoc, ghiChu, trangThai,phuongThucThanhToanCoc, thoiGianDatPhieu, "
                     + "phuongThucHoanTien, lyDoHuy, tienHoanTra "
                     + "FROM PhieuDatBan "
                     + "WHERE maPhieuDatBan = ?";
@@ -154,7 +163,7 @@ public class PhieuDatBan_DAO {
 
             rs = stmt.executeQuery();
             if (rs.next()) {
-                String[] row = new String[12];
+                String[] row = new String[14];
                 row[0] = rs.getString("maPhieuDatBan");
                 row[1] = rs.getString("maBan");
                 row[2] = rs.getString("tenKhach");
@@ -167,6 +176,8 @@ public class PhieuDatBan_DAO {
                 row[9] = rs.getString("phuongThucHoanTien");
                 row[10] = rs.getString("lyDoHuy");
                 row[11] = rs.getBigDecimal("tienHoanTra") == null ? "0" : rs.getBigDecimal("tienHoanTra").toPlainString();
+                row[12] = rs.getString("phuongThucThanhToanCoc");
+                row[13] = String.valueOf(rs.getTimestamp("thoiGianDatPhieu"));
                 return row;
             }
         } catch (Exception e) {
@@ -259,13 +270,18 @@ public class PhieuDatBan_DAO {
         String sql = """
             SELECT maPhieuDatBan, maBan, tenKhach, sdt, thoiGianDen
             FROM PhieuDatBan
-            WHERE trangThai = N'Đang chờ'
-              AND DATEDIFF(MINUTE, thoiGianDen, GETDATE()) >= 30
+            WHERE trangThai IN (N'Đang chờ', N'Đã đặt')
+              AND thoiGianDen IS NOT NULL
+              AND DATEADD(MINUTE, 30, thoiGianDen) <= ?
         """;
 
         try {
             Connection con = ConnectDB.getConnection();
             PreparedStatement ps = con.prepareStatement(sql);
+
+            // dùng giờ Java hiện tại, không dùng GETDATE() SQL nữa
+            ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
@@ -277,6 +293,10 @@ public class PhieuDatBan_DAO {
                         String.valueOf(rs.getTimestamp("thoiGianDen"))
                 });
             }
+
+            rs.close();
+            ps.close();
+
         } catch (Exception e) {
             e.printStackTrace();
         }

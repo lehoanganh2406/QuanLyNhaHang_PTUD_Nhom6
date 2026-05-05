@@ -25,5 +25,8 @@ public class LoaiKhachHang {
 	public String toString() {
 		return "LoaiKhachHang [maLoaiKH=" + maLoaiKH + ", tenLoaiKH=" + tenLoaiKH + "]";
 	}
+	public LoaiKhachHang() {
+		// TODO Auto-generated constructor stub
+	}
 	
 }

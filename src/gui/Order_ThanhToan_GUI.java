@@ -490,6 +490,7 @@ public class Order_ThanhToan_GUI extends JPanel {
         String[] phieu = phieuDatBanDAO.timTheoMaPhieu(maPhieuDatBan);
 
         if (phieu != null) {
+            // tiền cọc
             try {
                 tienCoc = Double.parseDouble(phieu[6]);
                 lblTienCoc.setText(formatTien(tienCoc));
@@ -497,6 +498,29 @@ public class Order_ThanhToan_GUI extends JPanel {
                 tienCoc = 0;
                 lblTienCoc.setText("0");
             }
+
+            // lấy khách theo SĐT trên phiếu đặt
+            try {
+                String sdtPhieu = phieu[3];
+
+                if (sdtPhieu != null && !sdtPhieu.trim().isEmpty()) {
+                    txtSDT.setText(sdtPhieu);
+                    txtSDT.setForeground(Color.BLACK);
+
+                    khachHang = khachHangDAO.getKhachHangTheoSDT(sdtPhieu);
+
+                    if (khachHang != null) {
+                        lblTenKH.setText(getThongTinKhachHang(khachHang));
+                        lblDiemTichLuy.setText(String.valueOf(khachHang.getDiemTichLuy()));
+                    } else {
+                        lblTenKH.setText(phieu[2]); // tên khách trên phiếu
+                        lblDiemTichLuy.setText("0");
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         } else {
             lblTienCoc.setText("0");
         }
@@ -703,8 +727,20 @@ public class Order_ThanhToan_GUI extends JPanel {
         if (ok) {
             banDAO.capNhatTrangThaiBan(maBan, "Bàn trống");
 
+            if (lblMaPhieuDatBan != null 
+                    && lblMaPhieuDatBan.getText() != null 
+                    && !"Không có".equalsIgnoreCase(lblMaPhieuDatBan.getText())) {
+
+                phieuDatBanDAO.capNhatTrangThai(lblMaPhieuDatBan.getText(), "Hoàn thành");
+            }
+
+            int diemCongThem = 0;
+
             if (khachHang != null) {
-            	int diemMoi = khachHang.getDiemTichLuy() + (int) (tongCong / 100000);
+                double tongChiTieuTinhDiem = tongCong + tienCoc;
+                diemCongThem = (int) (tongChiTieuTinhDiem / 100000);
+
+                int diemMoi = khachHang.getDiemTichLuy() + diemCongThem;
                 khachHangDAO.capNhatDiemTichLuy(khachHang.getMaKH(), diemMoi);
             }
 
@@ -732,6 +768,7 @@ public class Order_ThanhToan_GUI extends JPanel {
                     tienTra,
                     tienThua,
                     phuongThuc,
+                    diemCongThem,
                     dsCT
             ));
             dlg.setSize(650, 760);
@@ -1182,6 +1219,7 @@ public class Order_ThanhToan_GUI extends JPanel {
                 0,
                 0,
                 cboPhuongThuc.getSelectedItem().toString(),
+                0,
                 dsCT
         ));
 

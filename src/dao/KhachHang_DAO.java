@@ -241,25 +241,35 @@ public class KhachHang_DAO {
 	}
 
 	public double layTongGiaoDichTheoMaKH(String maKH) {
-		double tong = 0;
-		Connection con = ConnectDB.getInstance().getConnection();
+	    double tong = 0;
+	    Connection con = ConnectDB.getInstance().getConnection();
 
-		String sql = "SELECT ISNULL(SUM(tienKhachTra), 0) AS tongGiaoDich "
-				+ "FROM HoaDon WHERE maKH = ? AND trangThai = N'Đã thanh toán'";
+	    String sql = """
+	        SELECT ISNULL(SUM(
+	            ISNULL(hd.tienKhachTra, 0)
+	            - ISNULL(hd.tienThua, 0)
+	            + ISNULL(pdb.tienCoc, 0)
+	        ), 0) AS tongGiaoDich
+	        FROM HoaDon hd
+	        LEFT JOIN PhieuDatBan pdb 
+	            ON hd.maPhieuDatBan = pdb.maPhieuDatBan
+	        WHERE hd.maKH = ?
+	          AND hd.trangThai = N'Đã thanh toán'
+	    """;
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, maKH);
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        stmt.setString(1, maKH);
 
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next()) {
-					tong = rs.getDouble("tongGiaoDich");
-				}
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            if (rs.next()) {
+	                tong = rs.getDouble("tongGiaoDich");
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
 
-		return tong;
+	    return tong;
 	}
 
 	// ===== PHẦN MỚI: PHÁT HIỆN KHÁCH HÀNG 6 THÁNG KHÔNG HOẠT ĐỘNG =====

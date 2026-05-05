@@ -40,6 +40,7 @@ public class HoaDonChiTiet_DigLog extends JPanel {
             double tienKhachTra,
             double tienThua,
             String phuongThuc,
+            int diemCongThem,
             List<ChiTietHoaDon> dsCT
     )  {
         setLayout(new BorderLayout());
@@ -99,6 +100,7 @@ public class HoaDonChiTiet_DigLog extends JPanel {
         billPanel.add(info("Phương thức", phuongThuc));
         billPanel.add(info("Khách trả", formatTien(tienKhachTra)));
         billPanel.add(info("Tiền thừa", formatTien(tienThua)));
+        billPanel.add(info("Điểm tích lũy được cộng", "+" + diemCongThem));
 
         JButton btnIn = new JButton("In hóa đơn / Xuất PDF");
         JButton btnDong = new JButton("Đóng");
@@ -270,6 +272,12 @@ public class HoaDonChiTiet_DigLog extends JPanel {
             document.add(new Paragraph("Phuong thuc: " + removeVietnamese(layGiaTriTuBill("Phương thức")), normalFont));
             document.add(new Paragraph("Khach tra: " + layGiaTriTuBill("Khách trả"), normalFont));
             document.add(new Paragraph("Tien thua: " + layGiaTriTuBill("Tiền thừa"), normalFont));
+            document.add(new Paragraph("Diem tich luy duoc cong: " + layGiaTriTuBill("Điểm tích lũy được cộng"), normalFont));
+            document.add(new Paragraph("----------------------------------------", normalFont));
+
+            Paragraph thanks = new Paragraph("Cam on quy khach\nHen gap lai quy khach!", normalFont);
+            thanks.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
+            document.add(thanks);
 
             document.close();
 

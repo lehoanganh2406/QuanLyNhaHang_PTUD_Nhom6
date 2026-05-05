@@ -134,14 +134,19 @@ public class HoaDon_DAO {
                        hd.maBan,
                        hd.tongTien,
                        hd.tienKhachTra,
+                       hd.thueVAT,
+                       hd.tienThua,
                        hd.phuongThucThanhToan,
                        hd.hinhThucPhucVu,
                        hd.trangThai,
-                       hd.lyDoHuy
+                       hd.lyDoHuy,
+                       hd.maPhieuDatBan,
+                       ISNULL(pdb.tienCoc, 0) AS tienCoc
                 FROM HoaDon hd
                 LEFT JOIN KhachHang kh ON hd.maKH = kh.maKH
                 LEFT JOIN NhanVien nv ON hd.maNV = nv.maNV
                 LEFT JOIN KhuyenMai km ON hd.maKM = km.maKM
+                LEFT JOIN PhieuDatBan pdb ON hd.maPhieuDatBan = pdb.maPhieuDatBan
                 WHERE hd.maHD = ?
             """;
 
@@ -152,20 +157,24 @@ public class HoaDon_DAO {
 
             if (rs.next()) {
                 return new Object[]{
-                        rs.getString("maHD"),
-                        rs.getTimestamp("thoiGianVao"),
-                        rs.getTimestamp("thoiGianRa"),
-                        rs.getString("tenKH"),
-                        rs.getString("hoTen"),
-                        rs.getString("sdt"),
-                        rs.getString("tenKhuyenMai"),
-                        rs.getString("maBan"),
-                        rs.getBigDecimal("tongTien"),
-                        rs.getBigDecimal("tienKhachTra"),
-                        rs.getString("phuongThucThanhToan"),
-                        rs.getString("hinhThucPhucVu"),
-                        rs.getString("trangThai"),
-                        rs.getString("lyDoHuy")
+                        rs.getString("maHD"),              // 0
+                        rs.getTimestamp("thoiGianVao"),    // 1
+                        rs.getTimestamp("thoiGianRa"),     // 2
+                        rs.getString("tenKH"),             // 3
+                        rs.getString("hoTen"),             // 4
+                        rs.getString("sdt"),               // 5
+                        rs.getString("tenKhuyenMai"),      // 6
+                        rs.getString("maBan"),             // 7
+                        rs.getDouble("tongTien"),          // 8
+                        rs.getDouble("tienKhachTra"),      // 9
+                        rs.getDouble("thueVAT"),           // 10
+                        rs.getDouble("tienThua"),          // 11
+                        rs.getString("phuongThucThanhToan"), // 12
+                        rs.getString("hinhThucPhucVu"),    // 13
+                        rs.getString("trangThai"),         // 14
+                        rs.getString("lyDoHuy"),           // 15
+                        rs.getString("maPhieuDatBan"),     // 16
+                        rs.getDouble("tienCoc")            // 17
                 };
             }
 

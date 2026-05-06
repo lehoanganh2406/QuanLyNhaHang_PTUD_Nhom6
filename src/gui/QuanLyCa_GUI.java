@@ -61,6 +61,7 @@ public class QuanLyCa_GUI extends JPanel {
 
         initEvents();
         loadData();
+        
     }
 
     public QuanLyCa_GUI() {
@@ -309,40 +310,53 @@ public class QuanLyCa_GUI extends JPanel {
     }
 
     private void loadData() {
+        // LẤY TOÀN BỘ CA
         dsCa = caDAO.getAllCaLamViecQuanLy();
+
+        for (Object[] caRow : dsCa) {
+            if ("Đang mở".equalsIgnoreCase(String.valueOf(caRow[11]))) {
+                String maCa = caRow[0].toString();
+                caRow[7]  = caDAO.layTienMatHienTai(maCa);
+                caRow[8]  = caDAO.layChuyenKhoanHienTai(maCa);
+                caRow[9]  = caDAO.layVisaHienTai(maCa);
+                caRow[10] = caDAO.layTongDoanhThuHienTai(maCa);
+            }
+        }
+
         render(dsCa);
         capNhatThongKe(dsCa);
     }
 
-    private void render(ArrayList<Object[]> data) {
-        model.setRowCount(0);
+
+    private void render(java.util.ArrayList<Object[]> data) {
+        model.setRowCount(0); // xóa cũ
 
         for (Object[] r : data) {
             model.addRow(new Object[]{
-                    r[0],
-                    r[1],
-                    formatDate(r[2]),
-                    formatDate(r[3]),
-                    r[4],
-                    r[5],
-                    formatMoney(r[6]),
-                    formatMoney(r[7]),
-                    formatMoney(r[8]),
-                    formatMoney(r[9]),
-                    formatMoney(r[10]),
-                    r[11]
+                    r[0],                 // Mã ca
+                    r[1],                 // Tên ca
+                    formatDate(r[2]),     // Giờ mở
+                    formatDate(r[3]),     // Giờ đóng
+                    r[4],                 // Tài khoản
+                    r[5],                 // Nhân viên (tài khoản)
+                    formatMoney(r[6]),    // Tiền mở ca
+                    formatMoney(r[7]),    // Tiền mặt hiện tại
+                    formatMoney(r[8]),    // Chuyển khoản
+                    formatMoney(r[9]),    // Visa
+                    formatMoney(r[10]),   // Tổng doanh thu
+                    r[11]                 // Trạng thái
             });
         }
     }
 
-    private void capNhatThongKe(ArrayList<Object[]> data) {
+    private void capNhatThongKe(java.util.ArrayList<Object[]> data) {
         int tongCa = data.size();
         int dangMo = 0;
         double doanhThu = 0;
         double tienMat = 0;
 
         for (Object[] r : data) {
-            if ("Đang mở".equalsIgnoreCase(safe(r[11]))) {
+            if ("Đang mở".equalsIgnoreCase(String.valueOf(r[11]))) {
                 dangMo++;
             }
             doanhThu += toDouble(r[10]);

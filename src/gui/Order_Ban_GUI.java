@@ -144,11 +144,13 @@ public class Order_Ban_GUI extends JPanel {
         panel.setBackground(BG_LEFT);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setPreferredSize(new Dimension(215, 100));
-        panel.setBorder(new EmptyBorder(0, 6, 0, 8));
+        panel.setBorder(new EmptyBorder(0, 0, 0, 3));
 
         JPanel pnlTimeWrap = new JPanel(new BorderLayout());
         pnlTimeWrap.setOpaque(false);
-        pnlTimeWrap.setBorder(new EmptyBorder(4, 0, 12, 0));
+        pnlTimeWrap.setBorder(new EmptyBorder(4, 0, 4, 0));
+        pnlTimeWrap.setPreferredSize(new Dimension(198, 100));
+        pnlTimeWrap.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
 
         JPanel pnlTime = new JPanel();
         pnlTime.setBackground(BG_TIME);
@@ -172,18 +174,32 @@ public class Order_Ban_GUI extends JPanel {
         pnlTime.add(lblNgay);
         pnlTimeWrap.add(pnlTime, BorderLayout.CENTER);
 
-        JLabel lblTrangThai = new JLabel("Trạng thái bàn");
+        JLabel lblTrangThai = new JLabel("Trạng thái bàn", SwingConstants.LEFT);
         lblTrangThai.setFont(new Font("SansSerif", Font.BOLD, 18));
         lblTrangThai.setForeground(Color.BLACK);
-        lblTrangThai.setBorder(new EmptyBorder(0, 18, 0, 0));
+        lblTrangThai.setHorizontalAlignment(SwingConstants.LEFT);
+
+        JPanel pnlTrangThaiTitle = new JPanel(new BorderLayout());
+        pnlTrangThaiTitle.setOpaque(false);
+        pnlTrangThaiTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // ÉP wrapper rộng full panel trái
+        pnlTrangThaiTitle.setPreferredSize(new Dimension(215, 28));
+        pnlTrangThaiTitle.setMaximumSize(new Dimension(215, 28));
+        pnlTrangThaiTitle.setMinimumSize(new Dimension(215, 28));
+
+        pnlTrangThaiTitle.setBorder(new EmptyBorder(0, 0, 0, 0));
+        pnlTrangThaiTitle.add(lblTrangThai, BorderLayout.WEST);
 
         JPanel line = new JPanel();
         line.setBackground(Color.BLACK);
         line.setMaximumSize(new Dimension(Integer.MAX_VALUE, 2));
         line.setPreferredSize(new Dimension(190, 2));
+        
 
         panel.add(pnlTimeWrap);
-        panel.add(lblTrangThai);
+        panel.add(Box.createVerticalStrut(12));
+        panel.add(pnlTrangThaiTitle);
         panel.add(Box.createVerticalStrut(6));
         panel.add(line);
         panel.add(Box.createVerticalStrut(14));

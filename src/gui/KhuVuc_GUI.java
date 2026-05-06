@@ -268,25 +268,13 @@ public class KhuVuc_GUI extends JPanel {
         txtDetail.setText("Chọn một khu vực trong bảng để xem chi tiết.");
         detailCard.add(new JScrollPane(txtDetail), BorderLayout.CENTER);
 
-        JPanel noteCard = createCard();
-        noteCard.setLayout(new BoxLayout(noteCard, BoxLayout.Y_AXIS));
-        JLabel noteTitle = new JLabel("Quy tắc xử lý");
-        noteTitle.setFont(new Font("SansSerif", Font.BOLD, 17));
-        noteCard.add(noteTitle);
-        noteCard.add(Box.createRigidArea(new Dimension(0, 8)));
-        noteCard.add(createGuideLabel("• Ký hiệu khu vực dùng để sinh mã bàn như A, B, C."));
-        noteCard.add(Box.createRigidArea(new Dimension(0, 6)));
-        noteCard.add(createGuideLabel("• Khu vực đã có bàn thì không được xóa."));
-        noteCard.add(Box.createRigidArea(new Dimension(0, 6)));
-        noteCard.add(createGuideLabel("• Không giảm sức chứa thấp hơn số bàn đang có."));
-        noteCard.add(Box.createRigidArea(new Dimension(0, 6)));
-        noteCard.add(createGuideLabel("• Không ngưng hoạt động khu vực đang có bàn phục vụ/đặt hôm nay."));
+        
 
         right.add(statsCard);
         right.add(Box.createRigidArea(new Dimension(0, 16)));
         right.add(detailCard);
         right.add(Box.createRigidArea(new Dimension(0, 16)));
-        right.add(noteCard);
+
         right.add(Box.createVerticalGlue());
         return right;
     }

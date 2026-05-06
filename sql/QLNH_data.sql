@@ -510,11 +510,27 @@ VALUES
 ('TK04', 'NV004', 'nhanvien', N'Lễ tân', 1, 'NV004');
 GO
 
-INSERT INTO CaLamViec (maCa, tenCa, thoiGianMoCa, thoiGianDongCa, tienMoCa, tienMatCuoiCa, tienChuyenKhoanCuoiCa, tienVisaCuoiCa, maTaiKhoan)
+INSERT INTO CaLamViec (
+    maCa, tenCa, thoiGianMoCa, thoiGianDongCa,
+    tienMoCa, tienMatCuoiCa, tienChuyenKhoanCuoiCa, tienVisaCuoiCa,
+    tongDoanhThu,
+    maTaiKhoan
+)
 VALUES
-('CL001', N'Ca sáng', '2026-04-07 09:00:00', '2026-04-07 17:00:00', 1000000, 2000000, 1500000, 300000, 'TK01'),
-('CL002', N'Ca chiều', '2026-04-07 17:00:00', '2026-04-07 23:00:00', 1000000, 1800000, 1200000, 250000, 'TK02'),
-('CL003', N'Ca sáng', '2026-04-08 09:00:00', '2026-04-08 17:00:00', 1000000, 2200000, 1700000, 350000, 'TK03');
+('CL001', N'Ca sáng', '2026-04-07 09:00:00', '2026-04-07 17:00:00',
+ 1000000, 2000000, 1500000, 300000,
+ 3800000,
+ 'TK01'),
+
+('CL002', N'Ca chiều', '2026-04-07 17:00:00', '2026-04-07 23:00:00',
+ 1000000, 1800000, 1200000, 250000,
+ 3250000,
+ 'TK02'),
+
+('CL003', N'Ca sáng', '2026-04-08 09:00:00', '2026-04-08 17:00:00',
+ 1000000, 2200000, 1700000, 350000,
+ 4250000,
+ 'TK03');
 GO
 
 ALTER SEQUENCE seq_NhanVien RESTART WITH 5;

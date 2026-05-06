@@ -123,10 +123,10 @@ public class PhieuDatBan_DigLog extends JDialog {
     private final Color PLACEHOLDER = new Color(145, 145, 145);
     
     private static final Dimension SIZE_KHONG_MON_THEM = new Dimension(700, 680);
-    private static final Dimension SIZE_CO_MON_THEM = new Dimension(700, 800);
+    private static final Dimension SIZE_CO_MON_THEM = new Dimension(700, 820);
 
     private static final Dimension SIZE_KHONG_MON_CHI_TIET = new Dimension(700, 660);
-    private static final Dimension SIZE_CO_MON_CHI_TIET = new Dimension(700, 780);
+    private static final Dimension SIZE_CO_MON_CHI_TIET = new Dimension(700, 840);
 
     private static final String PH_KHACH = "Nhập tên khách hàng";
     private static final String PH_SDT = "Nhập số điện thoại";

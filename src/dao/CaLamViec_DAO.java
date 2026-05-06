@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 import connectDB.ConnectDB;
 import entity.CaLamViec;
@@ -294,12 +295,39 @@ ELSE ca.tongDoanhThu END AS tongDoanhThu,
     }
 
     public String layTenCaHienThi() {
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+
+        // Kiểm tra có ca đang mở không
         CaLamViec caDangMo = layCaDangMo();
         if (caDangMo != null) {
             return caDangMo.getTenCa() + " (đang mở)";
         }
 
-        return xacDinhTenCaMoi();
+        // Kiểm tra ca sáng / chiều trong ngày
+        boolean coCaSang = tonTaiCaTheoTenTrongNgay(today, "Ca sáng");
+        boolean coCaChieu = tonTaiCaTheoTenTrongNgay(today, "Ca chiều");
+
+        // Giờ chuẩn cho ca sáng và chiều
+        LocalTime gioBatDauCaSang = LocalTime.of(9, 0);
+        LocalTime gioKetThucCaSang = LocalTime.of(17, 0);
+
+        LocalTime gioBatDauCaChieu = LocalTime.of(17, 0);
+        LocalTime gioKetThucCaChieu = LocalTime.of(23, 0);
+
+        // Nếu ca sáng chưa mở và giờ hiện tại chưa quá 17h -> mở ca sáng
+        if (!coCaSang && now.isBefore(gioKetThucCaSang)) {
+            return "Ca sáng";
+        }
+
+        // Nếu ca chiều chưa mở và giờ hiện tại trong 17h-23h -> mở ca chiều
+        if (!coCaChieu && now.isAfter(gioBatDauCaChieu) && now.isBefore(gioKetThucCaChieu)) {
+            return "Ca chiều";
+        }
+
+        // Nếu đã qua giờ chiều hoặc cả 2 ca sáng chiều đã tồn tại, tạo ca phụ
+        int soCaTrongNgay = demSoCaTrongNgay(today);
+        return "Ca phụ " + (soCaTrongNgay + 1);
     }
 
     public boolean moCa(double tienMoCa, TaiKhoan taiKhoan) {
@@ -480,5 +508,81 @@ ELSE ca.tongDoanhThu END AS tongDoanhThu,
         }
 
         return 0;
+    }
+    public double layTienMatHienTai(String maCa) {
+        CaLamViec ca = layCaTheoMa(maCa);
+        if (ca == null) return 0; // tránh null
+        if (ca.getThoiGianDongCa() == null) {
+            double tienMat = ca.getTienMoCa();
+            tienMat += tinhTienTheoPhuongThuc("Tiền mặt", ca.getThoiGianMoCa());
+            tienMat += tinhTienCocTheoPhuongThuc("Tiền mặt", ca.getThoiGianMoCa());
+            return tienMat;
+        }
+        return ca.getTienMatCuoiCa();
+    }
+
+    public double layTongDoanhThuHienTai(String maCa) {
+        CaLamViec ca = layCaTheoMa(maCa);
+        if (ca == null) return 0; // tránh null
+        if (ca.getThoiGianDongCa() == null) {
+            return tinhTongHoaDonVaCoc(ca.getThoiGianMoCa());
+        }
+        return ca.getTongDoanhThu();
+    } 
+    public double tinhTongHoaDonVaCoc(LocalDateTime thoiGianMoCa) {
+        double tong = 0;
+        tong += tinhTienTheoPhuongThuc("Tiền mặt", thoiGianMoCa);
+        tong += tinhTienTheoPhuongThuc("Chuyển khoản", thoiGianMoCa);
+        tong += tinhTienTheoPhuongThuc("VISA", thoiGianMoCa);
+        tong += tinhTienCocTheoPhuongThuc("Tiền mặt", thoiGianMoCa);
+        tong += tinhTienCocTheoPhuongThuc("Chuyển khoản", thoiGianMoCa);
+        tong += tinhTienCocTheoPhuongThuc("VISA", thoiGianMoCa);
+        return tong;
+    }
+    public double layChuyenKhoanHienTai(String maCa) {
+        CaLamViec ca = layCaTheoMa(maCa);
+        if (ca == null) return 0;
+        if (ca.getThoiGianDongCa() == null) {
+            double ck = tinhTienTheoPhuongThuc("Chuyển khoản", ca.getThoiGianMoCa());
+            ck += tinhTienCocTheoPhuongThuc("Chuyển khoản", ca.getThoiGianMoCa());
+            return ck;
+        }
+        return ca.getTienChuyenKhoanCuoiCa();
+    }
+
+    public double layVisaHienTai(String maCa) {
+        CaLamViec ca = layCaTheoMa(maCa);
+        if (ca == null) return 0;
+        if (ca.getThoiGianDongCa() == null) {
+            double visa = tinhTienTheoPhuongThuc("VISA", ca.getThoiGianMoCa());
+            visa += tinhTienCocTheoPhuongThuc("VISA", ca.getThoiGianMoCa());
+            return visa;
+        }
+        return ca.getTienVisaCuoiCa();
+    }
+    
+    public CaLamViec layCaTheoMa(String maCa) {
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        CaLamViec ca = null;
+
+        try {
+            con = ConnectDB.getInstance().getConnection();
+            String sql = "SELECT * FROM CaLamViec WHERE maCa = ?";
+            stmt = con.prepareStatement(sql);
+            stmt.setString(1, maCa);
+            rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                ca = mapCaLamViec(rs); // map tất cả cột ra entity
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            close(rs, stmt);
+        }
+
+        return ca; // trả về null nếu không tìm thấy
     }
 }

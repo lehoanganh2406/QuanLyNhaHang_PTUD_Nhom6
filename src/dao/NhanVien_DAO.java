@@ -3,6 +3,7 @@ package dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +33,33 @@ public class NhanVien_DAO {
         }
 
         return ds;
+    }
+    
+    public List<NhanVien> getNhanVienDayDu() {
+        List<NhanVien> dsNV = new ArrayList<>();
+        Connection con = ConnectDB.getConnection();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        String sql = "SELECT maNV, hoTen, chucVu, anhNhanVien FROM NhanVien";
+
+        try {
+            stmt = con.prepareStatement(sql);
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                NhanVien nv = new NhanVien();
+                nv.setMaNV(rs.getString("maNV"));
+                nv.setHoTen(rs.getString("hoTen"));
+                nv.setChucVu(rs.getString("chucVu"));
+                nv.setAnhNhanVien(rs.getString("anhNhanVien"));
+                dsNV.add(nv);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return dsNV;
     }
     public NhanVien getNhanVienTheoSDT(String sdtCanTim) {
         try {

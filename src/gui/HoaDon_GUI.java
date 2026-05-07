@@ -171,7 +171,10 @@ public class HoaDon_GUI extends JFrame {
         });
 
         addRow(pnlFields, gbc, 6, "Hình thức phục vụ", cboHinhThucPhucVu, "", new JLabel());
-        cbTrangThai.addActionListener(e -> xuLyTrangThai());
+        cbTrangThai.addActionListener(e -> {
+            xuLyTrangThai();
+            updateLyDoHuyStatus(); 
+        });
 
         outer.add(pnlFields, BorderLayout.CENTER);
         outer.add(buildRightButtons(), BorderLayout.EAST);
@@ -364,6 +367,21 @@ public class HoaDon_GUI extends JFrame {
             txtLyDoHuy.setEnabled(false);
         }
     }
+    
+    private void updateLyDoHuyStatus() {
+        String trangThai = cbTrangThai.getSelectedItem() == null
+                ? ""
+                : cbTrangThai.getSelectedItem().toString();
+     
+        if ("Hủy".equalsIgnoreCase(trangThai) || "Đã hủy".equalsIgnoreCase(trangThai)) {
+            txtLyDoHuy.setEditable(true);
+            txtLyDoHuy.setForeground(Color.BLACK);
+        } else {
+            txtLyDoHuy.setText("");
+            txtLyDoHuy.setEditable(false);
+            txtLyDoHuy.setForeground(Color.GRAY);
+        }
+    }
 
     private void loadNhanVienToCombo() {
         cbNhanVien.removeAllItems();
@@ -424,58 +442,63 @@ public class HoaDon_GUI extends JFrame {
 
     private void capNhatHoaDon() {
         int row = table.getSelectedRow();
-
+     
         if (row < 0) {
             JOptionPane.showMessageDialog(this, "Chọn hóa đơn cần cập nhật!");
             return;
         }
-
+     
         String maHD = txtMaHoaDon.getText().trim();
-        String tenNV = getComboValue(cbNhanVien);
-        String tenKM = getComboValue(txtKhuyenMai);
         String trangThai = getComboValue(cbTrangThai);
         String lyDoHuy = txtLyDoHuy.getText().trim();
         String phuongThucThanhToan = getComboValue(cboPhuongThucThanhToan);
-        String hinhThucPhucVu = getComboValue(cboHinhThucPhucVu);
-//        if (trangThai.isEmpty()) {
-//            JOptionPane.showMessageDialog(this, "Vui lòng chọn trạng thái!");
-//            cbTrangThai.requestFocus();
-//            return;
-//        }
-
-        if (("Hủy".equalsIgnoreCase(trangThai) || "Đã hủy".equalsIgnoreCase(trangThai)) && lyDoHuy.isEmpty()) {
+     
+        if (trangThai.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn trạng thái!");
+            cbTrangThai.requestFocus();
+            return;
+        }
+     
+        // ===== KIỂM TRA ĐIỀU KIỆN: NẾU CHỌN "HỦY" THÌ BẮT BUỘC NHẬP LÝ DO =====
+        if (("Hủy".equalsIgnoreCase(trangThai) || "Đã hủy".equalsIgnoreCase(trangThai)) 
+                && lyDoHuy.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập lý do hủy!");
             txtLyDoHuy.requestFocus();
             return;
         }
-
+     
+        // Nếu không phải "Hủy", xóa lý do hủy (set thành null)
         if (!"Hủy".equalsIgnoreCase(trangThai) && !"Đã hủy".equalsIgnoreCase(trangThai)) {
             lyDoHuy = null;
         }
-
-        Timestamp thoiGianRa = null;
-        Date d = dtThoiGianRa.getDate();
-
-        if (d != null) {
-            thoiGianRa = new Timestamp(d.getTime());
-        }
-
+     
         if (maHD.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Mã hóa đơn không hợp lệ!");
             return;
         }
-
+     
+        String tenNV = getSafe(tableModel.getValueAt(row, 4));
+        String tenKM = getSafe(tableModel.getValueAt(row, 6));
+        String hinhThucPhucVu = getSafe(tableModel.getValueAt(row, 10));
+     
+        Timestamp thoiGianRa = null;
+        Date d = dtThoiGianRa.getDate();
+        if (d != null) {
+            thoiGianRa = new Timestamp(d.getTime());
+        }
+     
+        // ===== CẬP NHẬT HÓA ĐƠN =====
         boolean kq = hd_dao.updateHoaDon(
                 maHD,
                 tenNV,
                 tenKM,
-                trangThai,
-                lyDoHuy,
+                trangThai,              
+                lyDoHuy,                
                 thoiGianRa,
-                phuongThucThanhToan,
+                phuongThucThanhToan,   
                 hinhThucPhucVu
         );
-
+     
         if (kq) {
             JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
             loadData();
@@ -709,50 +732,168 @@ public class HoaDon_GUI extends JFrame {
     }
     
     
+//    private void locHoaDon() {
+//    	String trangThai = getComboValue(cbTrangThai);
+//
+//    	if (trangThai.isEmpty()) {
+//    	    JOptionPane.showMessageDialog(this, "Vui lòng chọn trạng thái cần lọc!");
+//    	    return;
+//    	}
+//
+//        tableModel.setRowCount(0);
+//
+//        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd-MM-yyyy");
+//        java.util.List<Object[]> ds = hd_dao.getHoaDonByTrangThai(trangThai);
+//
+//        if (ds.isEmpty()) {
+//            JOptionPane.showMessageDialog(
+//                    this,
+//                    "Không có hóa đơn nào với trạng thái: " + trangThai,
+//                    "Thông báo",
+//                    JOptionPane.INFORMATION_MESSAGE
+//            );
+//            return;
+//        }
+//
+//        for (Object[] row : ds) {
+//            Timestamp vao = (Timestamp) row[1];
+//            Timestamp ra = (Timestamp) row[2];
+//
+//            tableModel.addRow(new Object[]{
+//            	    row[0],
+//            	    vao != null ? sdf.format(vao) : "",
+//            	    ra != null ? sdf.format(ra) : "",
+//            	    row[3],   // khách hàng
+//            	    row[4],   // nhân viên
+//            	    row[5],   // sdt
+//            	    row[6],   // khuyến mãi
+//            	    row[7],   // bàn
+//            	    formatMoneyValue(row[8]),   // tổng tiền
+//            	    row[10],  // phương thức TT
+//            	    row[11],  // hình thức PV
+//            	    row[12],  // trạng thái
+//            	    row[13]   // lý do hủy
+//            	});
+//        }
+//    }
+    
     private void locHoaDon() {
-    	String trangThai = getComboValue(cbTrangThai);
+        Date tuNgay = dtThoiGianVao.getDate();
+        Date denNgay = dtThoiGianRa.getDate();
 
-    	if (trangThai.isEmpty()) {
-    	    JOptionPane.showMessageDialog(this, "Vui lòng chọn trạng thái cần lọc!");
-    	    return;
-    	}
+        // Trạng thái là điều kiện phụ, không bắt buộc
+        String trangThai = getComboValue(cbTrangThai).trim().toLowerCase();
 
-        tableModel.setRowCount(0);
-
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd-MM-yyyy");
-        java.util.List<Object[]> ds = hd_dao.getHoaDonByTrangThai(trangThai);
-
-        if (ds.isEmpty()) {
+        // Không có điều kiện nào thì báo
+        if (tuNgay == null && denNgay == null && trangThai.isEmpty()) {
             JOptionPane.showMessageDialog(
                     this,
-                    "Không có hóa đơn nào với trạng thái: " + trangThai,
+                    "Vui lòng chọn thời gian hoặc trạng thái để lọc!",
                     "Thông báo",
-                    JOptionPane.INFORMATION_MESSAGE
+                    JOptionPane.WARNING_MESSAGE
             );
             return;
         }
 
+        Timestamp tsTu = (tuNgay != null) ? toStartOfDay(tuNgay) : null;
+        Timestamp tsDen = (denNgay != null) ? toEndOfDay(denNgay) : null;
+
+        if (tsTu != null && tsDen != null && tsTu.after(tsDen)) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Thời gian bắt đầu không được lớn hơn thời gian kết thúc!",
+                    "Thông báo",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
+        tableModel.setRowCount(0);
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm dd-MM-yyyy");
+
+        boolean found = false;
+        List<Object[]> ds = hd_dao.getAllHoaDon();
+
         for (Object[] row : ds) {
             Timestamp vao = (Timestamp) row[1];
-            Timestamp ra = (Timestamp) row[2];
+            String dbTrangThai = row[12] == null ? "" : row[12].toString().trim().toLowerCase();
 
-            tableModel.addRow(new Object[]{
-            	    row[0],
-            	    vao != null ? sdf.format(vao) : "",
-            	    ra != null ? sdf.format(ra) : "",
-            	    row[3],   // khách hàng
-            	    row[4],   // nhân viên
-            	    row[5],   // sdt
-            	    row[6],   // khuyến mãi
-            	    row[7],   // bàn
-            	    formatMoneyValue(row[8]),   // tổng tiền
-            	    row[10],  // phương thức TT
-            	    row[11],  // hình thức PV
-            	    row[12],  // trạng thái
-            	    row[13]   // lý do hủy
-            	});
+            boolean match = true;
+
+            // Lọc theo thời gian vào
+            if (tsTu != null) {
+                if (vao == null || vao.before(tsTu)) {
+                    match = false;
+                }
+            }
+
+            if (tsDen != null) {
+                if (vao == null || vao.after(tsDen)) {
+                    match = false;
+                }
+            }
+
+            // Lọc thêm theo trạng thái nếu có chọn
+            if (!trangThai.isEmpty()) {
+                if (!dbTrangThai.equalsIgnoreCase(trangThai)) {
+                    match = false;
+                }
+            }
+
+            if (match) {
+                Timestamp ra = (Timestamp) row[2];
+
+                tableModel.addRow(new Object[]{
+                        row[0],
+                        vao != null ? sdf.format(vao) : "",
+                        ra != null ? sdf.format(ra) : "",
+                        row[3],
+                        row[4],
+                        row[5],
+                        row[6],
+                        row[7],
+                        formatMoneyValue(row[8]),
+                        row[10],
+                        row[11],
+                        row[12],
+                        row[13]
+                });
+
+                found = true;
+            }
+        }
+
+        if (!found) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Không có hóa đơn phù hợp với điều kiện lọc!",
+                    "Thông báo",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
         }
     }
+    
+    
+    private Timestamp toStartOfDay(Date date) {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        cal.set(java.util.Calendar.MINUTE, 0);
+        cal.set(java.util.Calendar.SECOND, 0);
+        cal.set(java.util.Calendar.MILLISECOND, 0);
+        return new Timestamp(cal.getTimeInMillis());
+    }
+
+    private Timestamp toEndOfDay(Date date) {
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 23);
+        cal.set(java.util.Calendar.MINUTE, 59);
+        cal.set(java.util.Calendar.SECOND, 59);
+        cal.set(java.util.Calendar.MILLISECOND, 999);
+        return new Timestamp(cal.getTimeInMillis());
+    }
+    
     private String getComboValue(JComboBox<String> cb) {
         Object value = cb.getSelectedItem();
         if (value == null) return "";
@@ -842,62 +983,79 @@ public class HoaDon_GUI extends JFrame {
 //    }
     
     private void disableFormFields() {
-
+    	 
+        // ===== KHÓA các trường KHÔNG được phép sửa =====
         txtTenKhach.setEditable(false);
         txtMaHoaDon.setEditable(false);
         txtBan.setEditable(false);
         txtTongTien.setEditable(false);
         txtSDT.setEditable(false);
-        txtKhuyenMai.setEditable(false);
-
-        // ===== DATE =====
-        dtThoiGianVao.setEnabled(true);
+        txtKhuyenMai.setEnabled(false);
+     
+        dtThoiGianVao.setEnabled(false);
         dtThoiGianVao.setFocusable(false);
-
-        dtThoiGianRa.setEnabled(true);
+     
+        dtThoiGianRa.setEnabled(false);
         dtThoiGianRa.setFocusable(false);
-        cbNhanVien.setEnabled(true);
+     
+        cbNhanVien.setEnabled(false);
         cbNhanVien.setFocusable(false);
-
-        cboPhuongThucThanhToan.setEnabled(true);
-        cboPhuongThucThanhToan.setFocusable(false);
-
-        cboHinhThucPhucVu.setEnabled(true);
+     
+        cboHinhThucPhucVu.setEnabled(false);
         cboHinhThucPhucVu.setFocusable(false);
-
+     
+        // ===== CÓ THỂ CẬP NHẬT CÁC TRƯỜNG NÀY =====
+        cboPhuongThucThanhToan.setEnabled(true);
+        cboPhuongThucThanhToan.setFocusable(true);
+     
         cbTrangThai.setEnabled(true);
+     
+        updateLyDoHuyStatus();
+     
 
-        boolean isHuy = "Hủy".equalsIgnoreCase(String.valueOf(cbTrangThai.getSelectedItem()))
-                || "Đã hủy".equalsIgnoreCase(String.valueOf(cbTrangThai.getSelectedItem()));
-
-        txtLyDoHuy.setEditable(isHuy);
-
-        txtTenKhach.setForeground(Color.BLACK);
-        txtMaHoaDon.setForeground(Color.BLACK);
-        txtBan.setForeground(Color.BLACK);
-        txtTongTien.setForeground(Color.BLACK);
-        txtSDT.setForeground(Color.BLACK);
-        txtKhuyenMai.setForeground(Color.BLACK);
-        txtLyDoHuy.setForeground(Color.BLACK);
     }
 
+//    private void enableFormFields() {
+//        txtTenKhach.setEnabled(true);
+//        txtMaHoaDon.setEnabled(false);
+//        txtBan.setEnabled(true);
+//        txtTongTien.setEnabled(true);
+//        txtSDT.setEnabled(true);
+//
+//        cbNhanVien.setEnabled(true);
+//        txtKhuyenMai.setEnabled(true);
+//
+//        dtThoiGianVao.setEnabled(true);
+//        dtThoiGianRa.setEnabled(true);
+//        cboPhuongThucThanhToan.setEnabled(true);
+//        cboHinhThucPhucVu.setEnabled(true);
+//
+//
+//        cbTrangThai.setEnabled(true);
+//        xuLyTrangThai();
+//    }
     private void enableFormFields() {
-        txtTenKhach.setEnabled(true);
-        txtMaHoaDon.setEnabled(false);
-        txtBan.setEnabled(true);
-        txtTongTien.setEnabled(true);
-        txtSDT.setEnabled(true);
+
+        txtTenKhach.setEditable(true);
+        txtMaHoaDon.setEditable(false); // mã hóa đơn vẫn khóa
+
+        txtBan.setEditable(true);
+        txtTongTien.setEditable(true);
+        txtSDT.setEditable(true);
+
+        txtKhuyenMai.setEditable(true);
 
         cbNhanVien.setEnabled(true);
         txtKhuyenMai.setEnabled(true);
 
         dtThoiGianVao.setEnabled(true);
         dtThoiGianRa.setEnabled(true);
+
         cboPhuongThucThanhToan.setEnabled(true);
         cboHinhThucPhucVu.setEnabled(true);
 
-
         cbTrangThai.setEnabled(true);
+
         xuLyTrangThai();
     }
 
@@ -1086,7 +1244,9 @@ public class HoaDon_GUI extends JFrame {
         editor.setFont(new Font("SansSerif", Font.PLAIN, 15));
         editor.setOpaque(false);
         editor.setBorder(BorderFactory.createEmptyBorder(4, 12, 4, 8));
-        editor.setEnabled(false);
+        editor.setEditable(false);
+        editor.setForeground(Color.BLACK);
+        editor.setDisabledTextColor(Color.BLACK);
 
         JButton btn = (JButton) dc.getCalendarButton();
         btn.setOpaque(false);

@@ -761,7 +761,7 @@ public class Ban_GUI extends JPanel {
             }
             int soCho = macDinhChoNgoiTheoLoai(itemLoai.getValue());
             String trangThai = chuanHoaTrangThai(Objects.toString(cboTrangThai.getSelectedItem(), STATUS_TRONG));
-            String ghiChu = nullIfBlank(txtAreaGhiChu.getText());
+            String ghiChu = catGhiChuBan(nullIfBlank(txtAreaGhiChu.getText()));
             Ban banMoi = new Ban(maMoi, kv, new LoaiBan(itemLoai.getValue(), itemLoai.getLabel()), tenMoi, ghiChu, soCho, trangThai);
             if (banDAO.themBan(banMoi)) {
                 thongBao("Đã thêm bàn thành công.\nMã bàn: " + maMoi + "\nTên bàn: " + tenMoi + "\nSố chỗ: " + soCho);
@@ -831,7 +831,7 @@ public class Ban_GUI extends JPanel {
             ban.setMaLoaiBan(new LoaiBan(itemLoai.getValue(), itemLoai.getLabel()));
             ban.setSoChoNgoi(soCho);
             ban.setTrangThai(trangThaiMoi);
-            ban.setGhiChu(nullIfBlank(txtAreaGhiChu.getText()));
+            ban.setGhiChu(catGhiChuBan(nullIfBlank(txtAreaGhiChu.getText())));
             if (banDAO.capNhatBan(ban)) {
                 thongBao("Đã cập nhật bàn " + ban.getMaBan() + ".\nTên bàn: " + layTenBanHienThi(ban) + "\nSố chỗ mới: " + soCho);
                 taiLaiVaChonBan(ban.getMaBan());
@@ -1006,7 +1006,7 @@ public class Ban_GUI extends JPanel {
             insertBan.setString(2, khuVucMoi.getMaKhuVuc());
             insertBan.setString(3, maLoaiBan);
             insertBan.setString(4, tenBanMoi);
-            insertBan.setString(5, ghiChuMoi);
+            insertBan.setString(5, catGhiChuBan(ghiChuMoi));
             insertBan.setInt(6, banCu.getSoChoNgoi());
             insertBan.setString(7, trangThaiLuu);
             insertBan.executeUpdate();
@@ -1286,19 +1286,38 @@ public class Ban_GUI extends JPanel {
     }
 
     private String taoGhiChuChuyenKhuVuc(Ban banCu, KhuVuc khuVucMoi, String maBanMoi, String tenBanMoi, String lyDo) {
+        String thoiGian = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
         String ghiChuCu = safe(banCu.getGhiChu(), "").trim();
+        String lyDoGon = catChuoi(safe(lyDo, "").replace("\n", " ").trim(), 70);
+
         StringBuilder sb = new StringBuilder();
-        if (!ghiChuCu.isEmpty()) sb.append(ghiChuCu).append("\n");
+        // Ghi chú của bảng Ban trong SQL chỉ dài NVARCHAR(255), nên ưu tiên lưu lần chuyển mới nhất.
         sb.append("[Chuyển khu vực] ")
-                .append("Mã cũ: ").append(banCu.getMaBan())
-                .append(" - Tên cũ: ").append(layTenBanHienThi(banCu))
-                .append(". Từ ").append(layTenKhuVuc(banCu))
-                .append(" sang ").append(safe(khuVucMoi.getTenKhuVuc(), khuVucMoi.getMaKhuVuc()))
-                .append(". Mã mới: ").append(maBanMoi)
-                .append(". Tên mới: ").append(tenBanMoi)
-                .append(". Thời gian: ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
-                .append(". Lý do: ").append(lyDo);
-        return sb.toString();
+                .append(thoiGian)
+                .append(" | ").append(banCu.getMaBan())
+                .append(" - ").append(layTenBanHienThi(banCu))
+                .append(" -> ").append(maBanMoi)
+                .append(" - ").append(tenBanMoi)
+                .append(" | ").append(layTenKhuVuc(banCu))
+                .append(" -> ").append(safe(khuVucMoi.getTenKhuVuc(), khuVucMoi.getMaKhuVuc()))
+                .append(" | Lý do: ").append(lyDoGon);
+
+        if (!ghiChuCu.isEmpty()) {
+            sb.append("\nGhi chú cũ: ").append(catChuoi(ghiChuCu.replace("\n", " "), 80));
+        }
+        return catGhiChuBan(sb.toString());
+    }
+
+    private String catGhiChuBan(String value) {
+        return catChuoi(value, 255);
+    }
+
+    private String catChuoi(String value, int maxLength) {
+        if (value == null) return null;
+        String text = value.trim();
+        if (text.length() <= maxLength) return text;
+        if (maxLength <= 3) return text.substring(0, maxLength);
+        return text.substring(0, maxLength - 3) + "...";
     }
 
     private int macDinhChoNgoiTheoLoai(String maLoaiBan) {

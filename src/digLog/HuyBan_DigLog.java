@@ -446,8 +446,14 @@ public class HuyBan_DigLog extends JDialog {
 
         String lyDo = txtLyDo.getText().trim();
 
-        if ("Vui lòng chọn phương thức".equals(phuongThuc)) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn phương thức hoàn tiền!");
+        double tienHoan = parseTien(txtHoanTraCoc.getText());
+
+        // Chỉ bắt chọn phương thức khi có tiền hoàn
+        if (tienHoan > 0 &&
+            "Vui lòng chọn phương thức".equals(phuongThuc)) {
+
+            JOptionPane.showMessageDialog(this,
+                    "Vui lòng chọn phương thức hoàn tiền!");
             return;
         }
 
@@ -468,14 +474,16 @@ public class HuyBan_DigLog extends JDialog {
 
             if (ok) {
                 huyThanhCong = true;
-                JOptionPane.showMessageDialog(this, "Hủy phiếu đặt bàn thành công!");
+                
                 dispose();
             } else {
-                JOptionPane.showMessageDialog(this, "Hủy phiếu đặt bàn thất bại!");
+                JOptionPane.showMessageDialog(this,
+                        "Hủy phiếu đặt bàn thất bại!");
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Có lỗi khi hủy phiếu đặt bàn!");
+            JOptionPane.showMessageDialog(this,
+                    "Có lỗi khi hủy phiếu đặt bàn!");
         }
     }
 

@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.AttributeSet;
 
 import dao.Ban_DAO;
 import dao.ChiTietHoaDon_DAO;
@@ -151,6 +152,47 @@ public class Order_ThanhToan_GUI extends JPanel {
         txtSDT.setOpaque(false);
         txtSDT.setBackground(new Color(0, 0, 0, 0));
         txtSDT.setCaretColor(Color.BLACK);
+        ((javax.swing.text.AbstractDocument) txtSDT.getDocument())
+        .setDocumentFilter(new javax.swing.text.DocumentFilter() {
+
+    @Override
+    public void insertString(FilterBypass fb, int offset,
+                             String string, AttributeSet attr)
+            throws javax.swing.text.BadLocationException {
+
+        if (string == null) return;
+
+        String newText = fb.getDocument().getText(0,
+                fb.getDocument().getLength());
+
+        newText = newText.substring(0, offset)
+                + string
+                + newText.substring(offset);
+
+        if (newText.matches("\\d{0,10}")) {
+            super.insertString(fb, offset, string, attr);
+        }
+    }
+
+    @Override
+    public void replace(FilterBypass fb, int offset, int length,
+                        String text, AttributeSet attrs)
+            throws javax.swing.text.BadLocationException {
+
+        if (text == null) text = "";
+
+        String oldText = fb.getDocument().getText(0,
+                fb.getDocument().getLength());
+
+        String newText = oldText.substring(0, offset)
+                + text
+                + oldText.substring(offset + length);
+
+        if (newText.matches("\\d{0,10}")) {
+            super.replace(fb, offset, length, text, attrs);
+        }
+    }
+});
 
         JButton btnTim = new JButton("+");
         btnTim.setFont(new Font("SansSerif", Font.BOLD, 40));

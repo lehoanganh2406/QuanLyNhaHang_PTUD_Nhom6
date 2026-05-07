@@ -199,7 +199,11 @@ public class KhuyenMai_GUI extends JPanel {
         table.setRowHeight(44);
         table.setFont(new Font("SansSerif", Font.PLAIN, 14));
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.setGridColor(new Color(235, 235, 235));
+        table.setShowGrid(true);
+        table.setShowHorizontalLines(true);
+        table.setShowVerticalLines(true);
+        table.setGridColor(new Color(205, 205, 205));
+        table.setIntercellSpacing(new Dimension(1, 1));
         table.setSelectionBackground(new Color(235, 244, 255));
         table.setSelectionForeground(Color.BLACK);
         table.getSelectionModel().addListSelectionListener(e -> {
@@ -212,8 +216,10 @@ public class KhuyenMai_GUI extends JPanel {
         });
 
         JTableHeader header = table.getTableHeader();
+        header.setReorderingAllowed(false); // Không cho kéo đổi vị trí cột khi chạy GUI
         header.setFont(new Font("SansSerif", Font.BOLD, 14));
         header.setBackground(Color.WHITE);
+        header.setBorder(new LineBorder(new Color(205, 205, 205), 1));
         header.setPreferredSize(new Dimension(0, 42));
         ((DefaultTableCellRenderer) header.getDefaultRenderer()).setHorizontalAlignment(JLabel.CENTER);
 

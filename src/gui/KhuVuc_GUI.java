@@ -7,10 +7,14 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -59,6 +63,7 @@ public class KhuVuc_GUI extends JPanel {
 
     private static final String STATUS_HOAT_DONG = "Hoạt động";
     private static final String STATUS_NGUNG_HOAT_DONG = "Ngưng hoạt động";
+    private static final String PLACEHOLDER_SEARCH = "Mã / tên / ký hiệu / trạng thái...";
 
     private final TaiKhoan taiKhoanDangNhap;
     private final KhuVuc_DAO khuVucDAO = new KhuVuc_DAO();
@@ -125,12 +130,12 @@ public class KhuVuc_GUI extends JPanel {
         JPanel filterRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         filterRow.setOpaque(false);
 
-        txtSearch = new JTextField(28);
-        txtSearch.setToolTipText("Tìm theo mã khu vực, tên khu vực, ký hiệu hoặc trạng thái");
-        txtSearch.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        txtSearch.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(220, 220, 220), 1, true),
-                new EmptyBorder(8, 10, 8, 10)));
+        JLabel lblSearch = new JLabel("Tìm khu vực:");
+        lblSearch.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblSearch.setForeground(new Color(80, 80, 80));
+        filterRow.add(lblSearch);
+
+        txtSearch = createPlaceholderTextField(PLACEHOLDER_SEARCH, 28);
         txtSearch.getDocument().addDocumentListener(new DocumentListener() {
             @Override public void insertUpdate(DocumentEvent e) { renderData(); }
             @Override public void removeUpdate(DocumentEvent e) { renderData(); }
@@ -182,7 +187,11 @@ public class KhuVuc_GUI extends JPanel {
         table.setRowHeight(42);
         table.setFont(new Font("SansSerif", Font.PLAIN, 14));
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.setGridColor(new Color(235, 235, 235));
+        table.setShowGrid(true);
+        table.setShowHorizontalLines(true);
+        table.setShowVerticalLines(true);
+        table.setGridColor(new Color(205, 205, 205));
+        table.setIntercellSpacing(new Dimension(1, 1));
         table.setSelectionBackground(new Color(235, 244, 255));
         table.setSelectionForeground(Color.BLACK);
         table.getSelectionModel().addListSelectionListener(e -> capNhatChiTietKhuVuc());
@@ -195,8 +204,10 @@ public class KhuVuc_GUI extends JPanel {
         });
 
         JTableHeader header = table.getTableHeader();
+        header.setReorderingAllowed(false); // Không cho kéo đổi vị trí cột khi chạy GUI
         header.setFont(new Font("SansSerif", Font.BOLD, 14));
         header.setBackground(Color.WHITE);
+        header.setBorder(new LineBorder(new Color(205, 205, 205), 1));
         header.setPreferredSize(new Dimension(0, 42));
         ((DefaultTableCellRenderer) header.getDefaultRenderer()).setHorizontalAlignment(JLabel.CENTER);
 
@@ -316,6 +327,38 @@ public class KhuVuc_GUI extends JPanel {
         return label;
     }
 
+    private JTextField createPlaceholderTextField(String placeholder, int columns) {
+        JTextField tf = new JTextField(columns) {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (getText().isEmpty()) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g2.setColor(new Color(150, 150, 150));
+                    g2.setFont(getFont().deriveFont(Font.ITALIC));
+                    Insets insets = getInsets();
+                    FontMetrics fm = g2.getFontMetrics();
+                    int y = (getHeight() - fm.getHeight()) / 2 + fm.getAscent();
+                    g2.drawString(placeholder, insets.left, y);
+                    g2.dispose();
+                }
+            }
+        };
+        tf.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        tf.setForeground(new Color(45, 45, 45));
+        tf.setCaretColor(new Color(40, 100, 180));
+        tf.setToolTipText(placeholder);
+        tf.setBackground(Color.WHITE);
+        tf.setPreferredSize(new Dimension(Math.max(260, columns * 12), 38));
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(210, 210, 210), 1, true),
+                new EmptyBorder(8, 12, 8, 12)));
+        return tf;
+    }
+
     private JButton createActionButton(String text, Color bg, Color fg) {
         JButton button = new JButton(text);
         button.setFont(new Font("SansSerif", Font.BOLD, 13));
@@ -370,7 +413,9 @@ public class KhuVuc_GUI extends JPanel {
     }
 
     private boolean phuHopTimKiem(KhuVuc kv) {
-        String keyword = normalize(txtSearch == null ? "" : txtSearch.getText());
+        String raw = txtSearch == null ? "" : txtSearch.getText();
+        if (raw != null && raw.trim().equals(PLACEHOLDER_SEARCH)) raw = "";
+        String keyword = normalize(raw);
         if (keyword.isEmpty()) return true;
         return normalize(kv.getMaKhuVuc()).contains(keyword)
                 || normalize(kv.getTenKhuVuc()).contains(keyword)

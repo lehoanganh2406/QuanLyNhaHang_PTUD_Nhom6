@@ -720,12 +720,12 @@ public class Ban_GUI extends JPanel {
         addFormRow(panel, 0, "Khu vực", cboKhuVuc);
         addFormRow(panel, 1, "Loại bàn", cboLoaiBan);
         addFormRow(panel, 2, "Trạng thái", cboTrangThai);
-        addFormRow(panel, 3, "Ghi chú", new JScrollPane(txtAreaGhiChu));
+        addFormRow(panel, 3, "Ghi chú", createDialogScrollPane(txtAreaGhiChu));
         addFormRow(panel, 4, "Mã bàn", lblPreviewMa);
         addFormRow(panel, 5, "Tên bàn", lblPreviewTen);
         addFormRow(panel, 6, "Số chỗ", lblPreviewSoCho);
         JPanel wrapper = createDialogWrapper("Thêm bàn mới",
-                "Mã bàn và tên bàn được sinh theo ký hiệu khu vực đang chọn.", panel, 720, 460);
+                "Mã bàn và tên bàn được sinh theo ký hiệu khu vực đang chọn.", panel, 720, 620);
 
         while (true) {
             int option = JOptionPane.showConfirmDialog(this, wrapper, "Thêm bàn mới", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -811,7 +811,7 @@ public class Ban_GUI extends JPanel {
         addFormRow(panel, 3, "Loại bàn", cboLoaiBan);
         addFormRow(panel, 4, "Số chỗ", lblSoCho);
         addFormRow(panel, 5, "Trạng thái lưu", cboTrangThai);
-        addFormRow(panel, 6, "Ghi chú", new JScrollPane(txtAreaGhiChu));
+        addFormRow(panel, 6, "Ghi chú", createDialogScrollPane(txtAreaGhiChu));
 
         while (true) {
             int option = JOptionPane.showConfirmDialog(this, panel, "Sửa thông tin bàn", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -911,10 +911,10 @@ public class Ban_GUI extends JPanel {
         addFormRow(formPanel, 2, "Khu vực đích", cboKhuVucDich);
         addFormRow(formPanel, 3, "Mã bàn mới", lblMaBanMoi);
         addFormRow(formPanel, 4, "Tên bàn mới", lblTenBanMoi);
-        addFormRow(formPanel, 5, "Lý do chuyển", new JScrollPane(txtLyDo));
+        addFormRow(formPanel, 5, "Lý do chuyển", createDialogScrollPane(txtLyDo));
         JPanel wrapper = createDialogWrapper("Chuyển khu vực bàn",
                 "Khi chuyển khu vực, hệ thống đổi cả mã bàn và tên bàn theo ký hiệu khu vực mới, đồng thời cập nhật hóa đơn/phiếu đặt liên quan.",
-                formPanel, 760, 430);
+                formPanel, 760, 600);
 
         while (true) {
             int option = JOptionPane.showConfirmDialog(this, wrapper, "Chuyển khu vực bàn", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -1357,8 +1357,9 @@ public class Ban_GUI extends JPanel {
     private JPanel createFormPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(false);
-        panel.setPreferredSize(new Dimension(620, 340));
-        panel.setMinimumSize(new Dimension(620, 300));
+        // Tăng chiều cao form để các ô ghi chú dạng nhiều dòng không bị ép mỏng trong dialog.
+        panel.setPreferredSize(new Dimension(620, 500));
+        panel.setMinimumSize(new Dimension(620, 470));
         return panel;
     }
 
@@ -1380,20 +1381,44 @@ public class Ban_GUI extends JPanel {
         gbcComp.fill = GridBagConstraints.HORIZONTAL;
         gbcComp.insets = new Insets(8, 0, 8, 0);
         if (comp instanceof JComponent) ((JComponent) comp).setFont(new Font("SansSerif", Font.PLAIN, 13));
-        if (comp instanceof JTextField) comp.setPreferredSize(new Dimension(390, 30));
-        else if (comp instanceof JComboBox) comp.setPreferredSize(new Dimension(390, 30));
-        else if (comp instanceof JScrollPane) comp.setPreferredSize(new Dimension(390, 90));
-        else if (comp instanceof JLabel) comp.setPreferredSize(new Dimension(390, 30));
+        if (comp instanceof JTextField) {
+            comp.setPreferredSize(new Dimension(390, 30));
+        } else if (comp instanceof JComboBox) {
+            comp.setPreferredSize(new Dimension(390, 30));
+        } else if (comp instanceof JScrollPane) {
+            // Riêng ô ghi chú cần cao hơn và được fill theo cả 2 chiều để không bị ép thành 1 đường mỏng.
+            gbcComp.fill = GridBagConstraints.BOTH;
+            gbcComp.weighty = 1;
+            comp.setPreferredSize(new Dimension(430, 130));
+            comp.setMinimumSize(new Dimension(430, 120));
+        } else if (comp instanceof JLabel) {
+            comp.setPreferredSize(new Dimension(390, 30));
+        }
         panel.add(comp, gbcComp);
     }
 
     private JTextArea createDialogTextArea() {
-        JTextArea area = new JTextArea(5, 25);
+        JTextArea area = new JTextArea(5, 30);
         area.setLineWrap(true);
         area.setWrapStyleWord(true);
         area.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        area.setBorder(new EmptyBorder(6, 6, 6, 6));
+        area.setBorder(new EmptyBorder(8, 8, 8, 8));
         return area;
+    }
+
+    private JScrollPane createDialogScrollPane(JTextArea area) {
+        area.setRows(5);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        JScrollPane scrollPane = new JScrollPane(area);
+        // Luôn hiện thanh cuộn dọc để người dùng thấy rõ có thể kéo xuống khi ghi chú dài.
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setPreferredSize(new Dimension(430, 130));
+        scrollPane.setMinimumSize(new Dimension(430, 120));
+        scrollPane.setBorder(new LineBorder(new Color(210, 210, 210), 1, true));
+        scrollPane.getVerticalScrollBar().setUnitIncrement(12);
+        return scrollPane;
     }
 
     private JLabel createPreviewLabel() {

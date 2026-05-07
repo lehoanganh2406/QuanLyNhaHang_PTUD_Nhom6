@@ -398,6 +398,9 @@ public class KhachHang_GUI extends JPanel {
         setActualText(txtMaKH, kh.getMaKH());
         setActualText(txtTenKH, kh.getTenKH());
         setActualText(txtDiemTichLuy, String.valueOf(kh.getDiemTichLuy()));
+        txtDiemTichLuy.setEditable(false);
+        txtDiemTichLuy.setFocusable(false);
+        txtDiemTichLuy.setBackground(new Color(245, 245, 245));        
         setActualText(txtSDT, kh.getSdt());
 
         LoaiKhachHang loaiTheoDiem = getLoaiKhachHangTheoDiem(kh.getDiemTichLuy());

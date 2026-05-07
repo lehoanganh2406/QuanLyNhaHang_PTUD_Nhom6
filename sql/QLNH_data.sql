@@ -543,11 +543,11 @@ GO
 ==========================================================*/
 INSERT INTO KhachHang (maKH, tenKH, sdt, maLoaiKH, diemTichLuy)
 VALUES
-('KH00001', N'Nguyễn Văn Nam', '0911111111', 'LKH01', 5),
-('KH00002', N'Trần Thị Mai', '0911111112', 'LKH02', 56),
-('KH00003', N'Lê Quốc Bảo', '0911111113', 'LKH01', 12),
-('KH00004', N'Phạm Minh Thư', '0911111114', 'LKH03', 120),
-('KH00005', N'Đặng Gia Hân', '0911111115', 'LKH01', 3);
+('KH00001', N'Nguyễn Văn Nam', '0911111111', 'LKH01', 0),
+('KH00002', N'Trần Thị Mai', '0911111112', 'LKH02', 0),
+('KH00003', N'Lê Quốc Bảo', '0911111113', 'LKH01', 0),
+('KH00004', N'Phạm Minh Thư', '0911111114', 'LKH03', 0),
+('KH00005', N'Đặng Gia Hân', '0911111115', 'LKH01', 0);
 GO
 
 ALTER SEQUENCE seq_KhachHang RESTART WITH 6;

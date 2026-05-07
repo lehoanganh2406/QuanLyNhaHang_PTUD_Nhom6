@@ -19,6 +19,7 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.Window;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
@@ -843,12 +844,20 @@ public class TraCuu_GUI extends JPanel {
                 if (row == -1) return;
 
                 String maBan = tblBan.getValueAt(row, 0).toString();
-                String trangThai = tblBan.getValueAt(row, 4).toString(); // cột trạng thái
+                String tenBan = tblBan.getValueAt(row, 1).toString();
+                String trangThai = tblBan.getValueAt(row, 4).toString();
 
-                // chỉ xử lý khi là bàn đặt
-                if (!trangThai.equalsIgnoreCase("Đã đặt")) return;
+                if ("Đã đặt".equalsIgnoreCase(trangThai)
+                        || "Bàn đặt".equalsIgnoreCase(trangThai)) {
+                    moPhieuDatBanTheoBan(maBan);
+                    return;
+                }
 
-                moPhieuDatBanTheoBan(maBan);
+                if ("Đang phục vụ".equalsIgnoreCase(trangThai)
+                        || "Bàn đang phục vụ".equalsIgnoreCase(trangThai)) {
+                    moOrderMonTheoBanDangPhucVu(maBan, tenBan);
+                    return;
+                }
             }
         });
         scroll.setBorder(null);
@@ -2763,6 +2772,22 @@ public class TraCuu_GUI extends JPanel {
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+    private void moOrderMonTheoBanDangPhucVu(String maBan, String tenBan) {
+        Window w = SwingUtilities.getWindowAncestor(this);
+
+        if (w instanceof TrangChu_GUI) {
+            ((TrangChu_GUI) w).showCustomPage(
+                    "Order_Mon_GUI",
+                    new Order_Mon_GUI(
+                            taiKhoanDangNhap,
+                            maBan,
+                            tenBan,
+                            null,
+                            true
+                    )
+            );
         }
     }
 }

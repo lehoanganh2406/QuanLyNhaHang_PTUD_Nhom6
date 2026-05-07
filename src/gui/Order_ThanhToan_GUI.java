@@ -515,6 +515,9 @@ public class Order_ThanhToan_GUI extends JPanel {
 
         dsCT = chiTietDAO.getChiTietTheoMaHD(maHD);
         renderMon();
+
+        tuChonKhuyenMai = false;
+        khuyenMaiDangDung = null;
         tinhTongTien();
     }
     
@@ -783,7 +786,7 @@ public class Order_ThanhToan_GUI extends JPanel {
                 diemCongThem = (int) (tongChiTieuTinhDiem / 100000);
 
                 int diemMoi = khachHang.getDiemTichLuy() + diemCongThem;
-                khachHangDAO.capNhatDiemTichLuy(khachHang.getMaKH(), diemMoi);
+                khachHangDAO.capNhatDiemVaLoaiKhachHang(khachHang.getMaKH(), diemMoi);
             }
 
 
@@ -975,14 +978,17 @@ public class Order_ThanhToan_GUI extends JPanel {
     private List<KMOption> layDanhSachKhuyenMaiTatCa() {
         List<KMOption> list = new ArrayList<>();
 
-        String loaiKH = "";
-        int diem = 0;
+        String maLoaiKH = "";
+        String tenLoaiKH = "";
 
-        if (khachHang != null) {
-            diem = khachHang.getDiemTichLuy();
-            if (khachHang.getMaLoaiKH() != null && khachHang.getMaLoaiKH().getTenLoaiKH() != null) {
-                loaiKH = khachHang.getMaLoaiKH().getTenLoaiKH();
-            }
+        if (khachHang != null && khachHang.getMaLoaiKH() != null) {
+            maLoaiKH = khachHang.getMaLoaiKH().getMaLoaiKH() == null 
+                    ? "" 
+                    : khachHang.getMaLoaiKH().getMaLoaiKH().trim();
+
+            tenLoaiKH = khachHang.getMaLoaiKH().getTenLoaiKH() == null 
+                    ? "" 
+                    : khachHang.getMaLoaiKH().getTenLoaiKH().trim();
         }
 
         for (KhuyenMai km : khuyenMaiDAO.getAllKhuyenMai()) {
@@ -1002,10 +1008,17 @@ public class Order_ThanhToan_GUI extends JPanel {
                 lyDo = "Hóa đơn chưa đủ " + formatTien(dieuKien);
             }
 
-            String doiTuong = km.getDoiTuongApDung() == null ? "" : km.getDoiTuongApDung();
+            String doiTuong = km.getDoiTuongApDung() == null 
+                    ? "" 
+                    : km.getDoiTuongApDung().trim();
 
-            boolean laTatCaKH = doiTuong.equalsIgnoreCase("Tất cả KH");
-            boolean dungLoaiKH = khachHang != null && doiTuong.equalsIgnoreCase(loaiKH);
+            boolean laTatCaKH = doiTuong.equalsIgnoreCase("Tất cả KH")
+                    || doiTuong.equalsIgnoreCase("Tất cả khách hàng")
+                    || doiTuong.equalsIgnoreCase("Tất cả");
+
+            boolean dungLoaiKH = khachHang != null
+                    && (doiTuong.equalsIgnoreCase(maLoaiKH)
+                    || doiTuong.equalsIgnoreCase(tenLoaiKH));
 
             boolean dungDoiTuong = laTatCaKH || dungLoaiKH;
 
@@ -1163,9 +1176,15 @@ public class Order_ThanhToan_GUI extends JPanel {
 
                 lblKhuyenMai.setText(opt.ten + " - giảm " + formatTien(opt.tienGiam));
 
-                tongCong = tongTien + tienVAT - tienGiam;
+                tongCong = tongTien + tienVAT - tienGiam - tienCoc;
+
+                if (tongCong < 0) {
+                    tongCong = 0;
+                }
+
                 lblTongCong.setText(formatTien(tongCong));
                 tinhTienThua();
+                capNhatTienKhachTraTheoPhuongThuc();
 
                 dlg.dispose();
             }

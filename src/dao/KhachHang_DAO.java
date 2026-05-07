@@ -83,37 +83,45 @@ public class KhachHang_DAO {
 	}
 
 	public KhachHang getKhachHangTheoSDT(String sdtTim) {
-		KhachHang kh = null;
-		Connection con = ConnectDB.getInstance().getConnection();
+	    KhachHang kh = null;
+	    Connection con = ConnectDB.getInstance().getConnection();
 
-		String sql = "SELECT kh.maKH, kh.tenKH, kh.sdt, kh.diemTichLuy, "
-				+ "lkh.maLoaiKH, lkh.tenLoaiKH "
-				+ "FROM KhachHang kh "
-				+ "JOIN LoaiKhachHang lkh ON kh.maLoaiKH = lkh.maLoaiKH "
-				+ "WHERE kh.sdt = ?";
+	    String sql = "SELECT maKH, tenKH, sdt, diemTichLuy "
+	            + "FROM KhachHang "
+	            + "WHERE sdt = ?";
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, sdtTim);
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        stmt.setString(1, sdtTim.trim());
 
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next()) {
-					String maKH = rs.getString("maKH");
-					String tenKH = rs.getString("tenKH");
-					String sdt = rs.getString("sdt");
-					int diemTichLuy = rs.getInt("diemTichLuy");
+	        try (ResultSet rs = stmt.executeQuery()) {
+	            if (rs.next()) {
+	                String maKH = rs.getString("maKH");
+	                String tenKH = rs.getString("tenKH");
+	                String sdt = rs.getString("sdt");
+	                int diemTichLuy = rs.getInt("diemTichLuy");
 
-					String maLoaiKH = rs.getString("maLoaiKH");
-					String tenLoaiKH = rs.getString("tenLoaiKH");
+	                String maLoaiKH = "LKH01";
+	                String tenLoaiKH = "Thường";
 
-					LoaiKhachHang loaiKH = new LoaiKhachHang(maLoaiKH, tenLoaiKH);
-					kh = new KhachHang(maKH, tenKH, sdt, loaiKH, diemTichLuy);
-				}
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+	                if (diemTichLuy >= 100) {
+	                    maLoaiKH = "LKH02";
+	                    tenLoaiKH = "Kim cương";
+	                } else if (diemTichLuy >= 50) {
+	                    maLoaiKH = "LKH03";
+	                    tenLoaiKH = "Vàng";
+	                }
 
-		return kh;
+	                capNhatDiemVaLoaiKhachHang(maKH, diemTichLuy);
+
+	                LoaiKhachHang loaiKH = new LoaiKhachHang(maLoaiKH, tenLoaiKH);
+	                kh = new KhachHang(maKH, tenKH, sdt, loaiKH, diemTichLuy);
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+
+	    return kh;
 	}
 
 	public ArrayList<KhachHang> timKhachHangTheoTen(String tenTim) {
@@ -308,5 +316,30 @@ public class KhachHang_DAO {
 		}
 
 		return dsKH;
+	}
+	public boolean capNhatDiemVaLoaiKhachHang(String maKH, int diemMoi) {
+	    Connection con = ConnectDB.getInstance().getConnection();
+
+	    String maLoaiKH = "LKH01"; // Thường
+
+	    if (diemMoi >= 100) {
+	        maLoaiKH = "LKH02"; // Kim cương
+	    } else if (diemMoi >= 50) {
+	        maLoaiKH = "LKH03"; // Vàng
+	    }
+
+	    String sql = "UPDATE KhachHang SET diemTichLuy = ?, maLoaiKH = ? WHERE maKH = ?";
+
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        stmt.setInt(1, diemMoi);
+	        stmt.setString(2, maLoaiKH);
+	        stmt.setString(3, maKH);
+
+	        return stmt.executeUpdate() > 0;
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+
+	    return false;
 	}
 }

@@ -55,6 +55,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumn;
 
 import com.toedter.calendar.JDateChooser;
 
@@ -314,6 +315,8 @@ public class TongKetBanHang_GUI extends JPanel {
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         JTableHeader th = table.getTableHeader();
+        th.setReorderingAllowed(false); // Khóa không cho kéo đổi vị trí cột
+        th.setResizingAllowed(false);   // Khóa không cho kéo thay đổi độ rộng cột
         th.setFont(new Font("SansSerif", Font.BOLD, 15));
         th.setBackground(new Color(235, 240, 250));
         th.setForeground(new Color(50, 50, 50));
@@ -326,9 +329,14 @@ public class TongKetBanHang_GUI extends JPanel {
             table.getColumnModel().getColumn(i).setCellRenderer(centerRender);
         }
 
-        int[] widths = { 50, 105, 170, 80, 45, 100 };
+        // Chỉ khóa thao tác kéo cột, KHÔNG setMaxWidth để JTable tự dàn đều hết chiều ngang.
+        // Nếu setMaxWidth = PreferredWidth thì bảng sẽ bị co lại và dư một mảng trống màu xanh ở bên phải.
+        int[] widths = { 90, 180, 300, 140, 90, 220 };
         for (int i = 0; i < widths.length; i++) {
-            table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+            TableColumn column = table.getColumnModel().getColumn(i);
+            column.setPreferredWidth(widths[i]);
+            column.setMinWidth(40);
+            column.setResizable(false);
         }
 
         JScrollPane tblScroll = new JScrollPane(table);
@@ -359,21 +367,30 @@ public class TongKetBanHang_GUI extends JPanel {
         tableWrap.add(tblScroll, BorderLayout.CENTER);
         tableWrap.add(footer, BorderLayout.SOUTH);
 
-        leftCol.add(tableWrap, BorderLayout.CENTER);
+        // Giữ bảng nằm gọn ở phía trên. Nếu để tableWrap trực tiếp ở CENTER,
+        // khi tăng chiều cao biểu đồ bên phải thì bảng bên trái sẽ bị kéo cao theo.
+        JPanel tableWrapHolder = new JPanel(new BorderLayout());
+        tableWrapHolder.setOpaque(false);
+        tableWrapHolder.add(tableWrap, BorderLayout.NORTH);
+
+        leftCol.add(tableWrapHolder, BorderLayout.CENTER);
         mid.add(leftCol, BorderLayout.CENTER);
 
         JPanel rightCol = new JPanel(new GridLayout(2, 1, 0, 24));
         rightCol.setOpaque(false);
-        rightCol.setPreferredSize(new Dimension(500, 0));
-        rightCol.setMinimumSize(new Dimension(470, 0));
+        // Tăng chiều rộng cột biểu đồ để biểu đồ dịch sang trái một chút,
+        // đồng thời làm bảng bên trái hẹp lại vừa phải.
+        rightCol.setPreferredSize(new Dimension(620, 440));
+        rightCol.setMinimumSize(new Dimension(580, 400));
 
         chartTopMon = new MockBarTopMon();
         chartDoanhThu = new MockLineDoanhThu();
 
         JPanel chart1 = createChartWrapper("BIỂU ĐỒ TOP MÓN BÁN CHẠY", chartTopMon);
         JPanel chart2 = createChartWrapper("DOANH THU THEO NGÀY", chartDoanhThu);
-        chart1.setPreferredSize(new Dimension(500, 280));
-        chart2.setPreferredSize(new Dimension(500, 280));
+        // Cho mỗi biểu đồ cao hơn để nhìn thoáng và kéo dài xuống dưới hơn.
+        chart1.setPreferredSize(new Dimension(620, 208));
+        chart2.setPreferredSize(new Dimension(620, 208));
 
         rightCol.add(chart1);
         rightCol.add(chart2);

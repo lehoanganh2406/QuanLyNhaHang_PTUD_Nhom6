@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Hướng dẫn Quản lý Khuyến mãi</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <link href="css/gui.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div aria-hidden="true" class="bg"></div>
+
+    <div class="app">
+      <header class="navbar">
+        <!-- Logo -->
+        <img src="img/logo.png" alt="Logo" class="brand-logo" />
+        <div class="brand">NHÀ HÀNG HY VỌNG</div>
+
+        <!-- Menu giữa -->
+        <div class="nav-left">
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Hệ thống <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="tai-khoan.html">Quản lý tài khoản</a>
+              <a href="quan-ly-ca.html">Quản lý ca</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Danh mục <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="thuc-don.html">Thực đơn</a>
+              <a href="khu-vuc.html">Khu vực</a>
+              <a href="nhan-vien.html">Nhân viên</a>
+              <a href="khach-hang.html">Khách hàng</a>
+              <a href="khuyen-mai.html">Khuyến mãi</a>
+              <a href="ban.html">Bàn</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Xử lý <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="order.html">Order</a>
+              <a href="dat-ban.html">Đặt bàn</a>
+              <a href="hoa-don.html">Hóa đơn</a>
+            </div>
+          </div>
+
+          <div class="menu-group">
+            <a class="menu-button" href="tra-cuu.html">Tra cứu</a>
+          </div>
+
+          <div class="menu-group current">
+            <a class="menu-button" href="thong-ke.html">Thống kê</a>
+          </div>
+        </div>
+
+        <div class="nav-right">
+          <a class="home-link" href="index.html">Trang chủ</a>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <h4>Quy trình Khuyến mãi</h4>
+          <p class="version">V1.2.0</p>
+
+          <button class="active" data-scroll="step-1">
+            <span class="material-symbols-outlined">add_circle</span>
+            Thêm
+          </button>
+
+          <button data-scroll="step-2">
+            <span class="material-symbols-outlined">edit</span>
+            Cập nhật
+          </button>
+
+          <button data-scroll="step-3">
+            <span class="material-symbols-outlined">search</span>
+            Chi tiết & Tra cứu
+          </button>
+
+          <button data-scroll="step-4">
+            <span class="material-symbols-outlined">block</span>
+            Xóa / Ngưng
+          </button>
+        </aside>
+
+        <section class="content">
+          <div class="card" id="guide-khuyenmai">
+            <div class="title">Hướng dẫn Quy trình Khuyến mãi</div>
+
+            <div class="subtitle">
+              Tài liệu hướng dẫn dành cho quản lý và nhân viên về cách sử dụng
+              chức năng quản lý khuyến mãi trong hệ thống.
+            </div>
+
+            <!-- STEP 1 -->
+            <div class="step-container">
+              <div class="step" id="step-1">
+                <div class="circle">1</div>
+
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      add_circle
+                    </span>
+
+                    Thêm khuyến mãi
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chức năng thêm khuyến mãi cho phép tạo các chương trình
+                      khuyến mãi mới trong hệ thống.</i
+                    >
+                  </p>
+
+                  <ul>
+                    <li>Mã khuyến mãi được tự động phát sinh.</li>
+
+                    <li>
+                      Nhập đầy đủ:
+                      <b>
+                        tên khuyến mãi, loại khuyến mãi, giá trị, điều kiện hóa
+                        đơn, thời gian áp dụng và trạng thái.
+                      </b>
+                    </li>
+
+                    <li>Thời gian kết thúc phải lớn hơn thời gian bắt đầu.</li>
+
+                    <li>Nhấn <b>Lưu / OK</b> để hoàn tất thêm khuyến mãi.</li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <div><img src="img/them-km.png" alt="" srcset="" /></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 2 -->
+            <div class="step-container">
+              <div class="step" id="step-2">
+                <div class="circle">2</div>
+
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      edit
+                    </span>
+
+                    Cập nhật khuyến mãi
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chức năng này cho phép chỉnh sửa thông tin của khuyến mãi
+                      đã tồn tại trong hệ thống.</i
+                    >
+                  </p>
+
+                  <ul>
+                    <li>
+                      Có thể cập nhật:
+                      <b>
+                        tên, giá trị, thời gian áp dụng, trạng thái và ghi chú.
+                      </b>
+                    </li>
+
+                    <li>Mã khuyến mãi không được phép chỉnh sửa.</li>
+
+                    <li>
+                      Hệ thống sẽ kiểm tra tính hợp lệ trước khi lưu dữ liệu.
+                    </li>
+
+                    <li>Nhấn <b>Lưu / OK</b> để hoàn tất cập nhật.</li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <div><img src="img/sua-km.png" alt="" /></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 3 -->
+            <div class="step-container">
+              <div class="step" id="step-3">
+                <div class="circle">3</div>
+
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      search
+                    </span>
+
+                    Tra cứu và xem chi tiết
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chức năng này giúp tìm kiếm nhanh và xem đầy đủ thông tin
+                      khuyến mãi trong hệ thống.</i
+                    >
+                  </p>
+
+                  <ul>
+                    <li>
+                      Có thể tra cứu theo:
+                      <b>mã khuyến mãi hoặc tên khuyến mãi.</b>
+                    </li>
+
+                    <li>
+                      Hỗ trợ lọc theo trạng thái:
+                      <b>
+                        Đang áp dụng, Chưa áp dụng, Hết hạn hoặc Ngưng áp dụng.
+                      </b>
+                    </li>
+
+                    <li>
+                      Khi chọn một dòng trong bảng, khung chi tiết sẽ hiển thị
+                      đầy đủ thông tin của khuyến mãi đó.
+                    </li>
+
+                    <li>Có thể kết hợp tìm kiếm và lọc trạng thái cùng lúc.</li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <div>
+                      <img src="img/loc-khuyenmai.png" alt="" srcset="" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 4 -->
+            <div class="step-container">
+              <div class="step" id="step-4">
+                <div class="circle">4</div>
+
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      block
+                    </span>
+
+                    Xóa / Ngưng áp dụng
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chức năng này dùng để xử lý các khuyến mãi không còn sử
+                      dụng.</i
+                    >
+                  </p>
+
+                  <ul>
+                    <li>
+                      Chọn 1 khuyến mãi cần xóa hoặc ngưng áp dụng trong danh
+                      sách.
+                    </li>
+
+                    <li>
+                      Hệ thống sẽ hiển thị hộp thoại xác nhận trước khi thực
+                      hiện.
+                    </li>
+
+                    <li>
+                      Các khuyến mãi đã ngưng vẫn được lưu để phục vụ thống kê.
+                    </li>
+
+                    <li>Nhấn <b>Yes</b> để xác nhận thao tác.</li>
+                    <p>
+                      a. Sẽ <b>Xóa</b> khi điều kiện không có hóa đơn nào áp
+                      dụng khuyến mãi.
+                      <br />
+                      b. Sẽ <b>Ngừng áp dụng</b> khi đã có hóa đơn sử dụng
+                      khuyến mãi này để lưu lại trong CSDL
+                    </p>
+                  </ul>
+
+                  <div class="panel-image" style="display: flex; gap: 10px">
+                    <img
+                      src="img/xoa-km.png"
+                      alt="Phiếu tạm tính"
+                      style="width: 50% !important"
+                    />
+                    <img
+                      src="img/ngung.png"
+                      alt="Hóa đơn thanh toán"
+                      style="width: 50% !important"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const menuGroups = document.querySelectorAll("[data-menu]");
+
+      function closeAllMenus(except = null) {
+        menuGroups.forEach((g) => {
+          if (g !== except) g.classList.remove("open");
+        });
+      }
+
+      menuGroups.forEach((group) => {
+        const btn = group.querySelector("[data-toggle]");
+        if (!btn) return;
+
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isOpen = group.classList.contains("open");
+          closeAllMenus();
+          if (!isOpen) group.classList.add("open");
+        });
+      });
+
+      document.addEventListener("click", () => closeAllMenus());
+
+      document
+        .querySelectorAll(".sidebar button[data-scroll]")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".sidebar button")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const target = document.getElementById(btn.dataset.scroll);
+            if (!target) return;
+
+            const offset = 80;
+            const top =
+              target.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top, behavior: "smooth" });
+            window.history.replaceState(null, null, " ");
+          });
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Hướng dẫn Quản lý Khách hàng</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <link href="css/gui.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div aria-hidden="true" class="bg"></div>
+
+    <div class="app">
+      <header class="navbar">
+        <img src="img/logo.png" alt="Logo" class="brand-logo" />
+        <div class="brand">NHÀ HÀNG HY VỌNG</div>
+
+        <div class="nav-left">
+          <div class="menu-group" data-menu>
+            <button class="menu-button" data-toggle type="button">
+              Hệ thống <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="tai-khoan.html">Quản lý tài khoản</a>
+              <a href="quan-ly-ca.html">Quản lý ca</a>
+              <a href="dang-nhap.html">Đăng nhập</a>
+            </div>
+          </div>
+
+          <div class="menu-group current" data-menu>
+            <button class="menu-button" data-toggle type="button">
+              Danh mục <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="thuc-don.html">Thực đơn</a>
+              <a href="khu-vuc.html">Khu vực</a>
+              <a href="nhan-vien.html">Nhân viên</a>
+              <a href="khach-hang.html">Khách hàng</a>
+              <a href="khuyen-mai.html">Khuyến mãi</a>
+              <a href="ban.html">Bàn</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu>
+            <button class="menu-button" data-toggle type="button">
+              Xử lý <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="order.html">Order</a>
+              <a href="dat-ban.html">Đặt bàn</a>
+              <a href="hoa-don.html">Hóa đơn</a>
+            </div>
+          </div>
+
+          <div class="menu-group">
+            <a class="menu-button" href="tra-cuu.html">Tra cứu</a>
+          </div>
+
+          <div class="menu-group">
+            <a class="menu-button" href="thong-ke.html">Thống kê</a>
+          </div>
+        </div>
+
+        <div class="nav-right">
+          <a class="home-link" href="index.html">Trang chủ</a>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <h4>Quản lý khách hàng</h4>
+          <p class="version">V1.2.0</p>
+
+          <button class="active" data-scroll="step-1">
+            <span class="material-symbols-outlined">add_circle</span>
+            Thêm khách hàng
+          </button>
+
+          <button data-scroll="step-2">
+            <span class="material-symbols-outlined">edit</span>
+            Sửa khách hàng
+          </button>
+
+          <button data-scroll="step-3">
+            <span class="material-symbols-outlined">delete</span>
+            Xóa khách hàng
+          </button>
+        </aside>
+
+        <section class="content">
+          <div class="card" id="guide-khachhang">
+            <div class="title">Hướng dẫn Quản lý khách hàng</div>
+            <div class="subtitle">
+              Tài liệu hướng dẫn dành cho nhân viên và quản lý cách thêm mới,
+              chỉnh sửa và xóa khách hàng trong hệ thống.
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-1">
+                <div class="circle">1</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      add_circle
+                    </span>
+                    Thêm khách hàng
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chức năng này dùng để tạo mới một khách hàng trong hệ
+                      thống. Người dùng nhập thông tin cần thiết rồi lưu lại để
+                      sử dụng cho các lần tra cứu hoặc đặt bàn sau này.</i
+                    >
+                  </p>
+
+                  <ul>
+                    <li>Nhấn nút <b>Thêm khách hàng</b>.</li>
+                    <li>Nhập <b>tên và SDT</b> của khách hàng.</li>
+                    <li>Nhấn <b>Thêm</b> để hoàn tất thêm khách hàng.</li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img src="img/them-khachhang.png" alt="Thêm khách hàng" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-2">
+                <div class="circle">2</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      edit
+                    </span>
+                    Sửa khách hàng
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chức năng này cho phép cập nhật lại thông tin khách hàng
+                      khi có thay đổi như họ tên, số điện thoại, loại khách hàng
+                      hoặc ghi chú.</i
+                    >
+                  </p>
+
+                  <ul>
+                    <li>Chọn khách hàng cần sửa trong danh sách.</li>
+
+                    <li>Chỉnh sửa <b>tên và SDT</b>.</li>
+                    <li>Nhấn nút <b>Cập nhật</b>.</li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img src="img/capnhat-kh.png" alt="Sửa khách hàng" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-3">
+                <div class="circle">3</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      delete
+                    </span>
+                    Xóa khách hàng
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chức năng này dùng để xóa khách hàng không còn sử dụng
+                      trong hệ thống.</i
+                    >
+                  </p>
+
+                  <p>
+                    Trước khi xóa, hệ thống sẽ <b>yêu cầu xác nhận</b> để tránh
+                    thao tác nhầm. Sau khi xác nhận, khách hàng sẽ được ẩn khỏi
+                    danh sách quản lý trên giao diện .
+                  </p>
+
+                  <div class="panel-image">
+                    <img src="img/xoa-kh.png" alt="Xóa khách hàng" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const menuGroups = document.querySelectorAll("[data-menu]");
+
+      function closeAllMenus(except = null) {
+        menuGroups.forEach((g) => {
+          if (g !== except) g.classList.remove("open");
+        });
+      }
+
+      menuGroups.forEach((group) => {
+        const btn = group.querySelector("[data-toggle]");
+        if (!btn) return;
+
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isOpen = group.classList.contains("open");
+          closeAllMenus();
+          if (!isOpen) group.classList.add("open");
+        });
+      });
+
+      document.addEventListener("click", () => closeAllMenus());
+
+      document
+        .querySelectorAll(".sidebar button[data-scroll]")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".sidebar button")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const target = document.getElementById(btn.dataset.scroll);
+            if (!target) return;
+
+            const offset = 80;
+            const top =
+              target.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top, behavior: "smooth" });
+            window.history.replaceState(null, null, " ");
+          });
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Hướng dẫn Quản lý tài khoản</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <link href="css/gui.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div aria-hidden="true" class="bg"></div>
+
+    <div class="app">
+      <header class="navbar">
+        <!-- Logo -->
+        <img src="img/logo.png" alt="Logo" class="brand-logo" />
+        <div class="brand">NHÀ HÀNG HY VỌNG</div>
+
+        <!-- Menu giữa -->
+        <div class="nav-left">
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Hệ thống <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="tai-khoan.html">Quản lý tài khoản</a>
+              <a href="quan-ly-ca.html">Quản lý ca</a>
+              <a href="dang-nhap.html">Đăng nhập</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Danh mục <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="thuc-don.html">Thực đơn</a>
+              <a href="khu-vuc.html">Khu vực</a>
+              <a href="nhan-vien.html">Nhân viên</a>
+              <a href="khach-hang.html">Khách hàng</a>
+              <a href="khuyen-mai.html">Khuyến mãi</a>
+              <a href="ban.html">Bàn</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Xử lý <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="order.html">Order</a>
+              <a href="dat-ban.html">Đặt bàn</a>
+              <a href="hoa-don.html">Hóa đơn</a>
+            </div>
+          </div>
+
+          <div class="menu-group">
+            <a class="menu-button" href="tra-cuu.html">Tra cứu</a>
+          </div>
+
+          <div class="menu-group current">
+            <a class="menu-button" href="thong-ke.html">Thống kê</a>
+          </div>
+        </div>
+
+        <div class="nav-right">
+          <a class="home-link" href="index.html">Trang chủ</a>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <h4>Help Center</h4>
+          <p class="version">V1.2.0</p>
+          <button class="active" data-scroll="step-1">
+            <span class="material-symbols-outlined">person_add</span> Thêm
+          </button>
+          <button data-scroll="step-2">
+            <span class="material-symbols-outlined">edit</span> Cập nhật
+          </button>
+          <button data-scroll="step-3">
+            <span class="material-symbols-outlined">search</span> Tra cứu
+          </button>
+          <button data-scroll="step-4">
+            <span class="material-symbols-outlined">delete</span> Xóa
+          </button>
+          <button data-scroll="step-5">
+            <span class="material-symbols-outlined">lock_reset</span> Đổi mật
+            khẩu
+          </button>
+        </aside>
+
+        <section class="content">
+          <div class="card" id="guide-taikhoan">
+            <div class="title">Hướng dẫn Quản lý tài khoản</div>
+            <div class="subtitle">
+              Tài liệu hướng dẫn chi tiết dành cho quản lý và nhân viên cách
+              thêm tài khoản, cập nhật thông tin, tra cứu, xóa và đổi mật khẩu.
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-1">
+                <div class="circle">1</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >person_add</span
+                    >
+                    Thêm tài khoản
+                  </h3>
+                  <p>
+                    <i
+                      >Khi chọn nhân viên từ combobox, hệ thống tự động lấy tên
+                      đăng nhập theo mã nhân viên vì nhân viên đã tồn tại trước
+                      tài khoản.</i
+                    >
+                  </p>
+                  <ul>
+                    <li>
+                      Chọn <b>tên nhân viên</b> trước, hệ thống sẽ tự động điền
+                      <b>tên đăng nhập = mã nhân viên</b>.(Nếu nhân viên đã có
+                      tài khoản, hệ thống báo trùng tên đăng nhập và không cho
+                      thêm mới.)
+                    </li>
+                    <li>
+                      Nhập mật khẩu; trường mật khẩu được hiển thị dạng mã hóa /
+                      ẩn để người khác không biết nội dung.
+                    </li>
+                    <li>Nhấn <b>Thêm</b> để lưu.</li>
+                  </ul>
+                  <div class="panel-image">
+                    <div>
+                      <img src="img/them-taikhoan.png" alt="" srcset="" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-2">
+                <div class="circle">2</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      edit
+                    </span>
+                    Cập nhật tài khoản
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chọn một nhân viên trong bảng để nạp dữ liệu lên form và
+                      thực hiện chỉnh sửa.</i
+                    >
+                  </p>
+
+                  <!-- PHẦN A -->
+                  <h4 style="margin-top: 22px; color: #7b4b2a">
+                    a. Cập nhật thông tin tài khoản
+                  </h4>
+
+                  <ul>
+                    <li>Chọn tài khoản cần sửa trong bảng danh sách.</li>
+                    <li>
+                      Cho phép cập nhật thông tin như vai trò , trạng thái và
+                      nhận viên
+                    </li>
+                    <li>Nhấn <b>Cập nhật</b> để lưu thay đổi.</li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img
+                      src="img/capnhat-taikhoan.png"
+                      alt="Cập nhật tài khoản"
+                      style="width: 100%; border-radius: 16px"
+                    />
+                  </div>
+
+                  <!-- PHẦN B -->
+                  <h4 style="margin-top: 30px; color: #7b4b2a">
+                    b. Cập nhật trạng thái tài khoản
+                  </h4>
+
+                  <ul>
+                    <li>
+                      Cho phép chuyển trạng thái từ <b>Đang hoạt động</b> sang
+                      <b>Khóa</b>.
+                    </li>
+                    <li>
+                      Khi chuyển sang trạng thái <b>Khóa</b>, tài khoản sẽ bị
+                      khóa và không thể đăng nhập vào hệ thống nữa.
+                    </li>
+                    <li>
+                      Nhấn <b>Cập nhật</b> để lưu thay đổi. Dòng dữ liệu của tài
+                      khoản khóa sẽ hiển thị
+                      <span class="status-red">màu đỏ</span>.
+                    </li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img
+                      src="img/capnhat-trangthai-taikhoan.png"
+                      alt="Cập nhật trạng thái tài khoản"
+                      style="width: 100%; border-radius: 16px"
+                    />
+                  </div>
+                </div>
+                <!-- <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >edit</span
+                    >
+                    Cập nhật tài khoản
+                  </h3>
+                  <p>
+                    Khi chọn một tài khoản trong bảng, hệ thống sẽ đổ dữ liệu
+                    lên form để chỉnh sửa các thông tin cho phù hợp.
+                  </p>
+                  <ul>
+                    <li>Có thể cập nhật <b>ảnh nhân viên</b>.</li>
+                    <li>
+                      Cho phép thay đổi <b>vai trò</b> và <b>trạng thái</b>.
+                    </li>
+                    <li>
+                      Khi chuyển từ
+                      <span class="status-green">Hoạt động</span> sang
+                      <span class="status-red">Khóa</span>, dòng dữ liệu có thể
+                      hiển thị màu đỏ để dễ phân biệt.
+                    </li>
+                    <li>Nhấn <b>Cập nhật</b> để lưu thay đổi.</li>
+                  </ul>
+                </div> -->
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-3">
+                <div class="circle">3</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >search</span
+                    >
+                    Tra cứu tài khoản
+                  </h3>
+                  <p>
+                    Dùng các ô nhập nhanh để lọc dữ liệu tài khoản theo điều
+                    kiện cần tìm.
+                  </p>
+                  <ul>
+                    <li>
+                      Tra cứu theo <b>vai trò</b>, <b>trạng thái</b> và
+                      <b>tên nhân viên</b>.
+                    </li>
+                    <li>
+                      Nhập đúng thông tin rồi bấm <b>Tra cứu</b> để lọc danh
+                      sách.
+                    </li>
+                    <li>
+                      Có thể kết hợp nhiều điều kiện để tìm nhanh tài khoản cần
+                      xem.
+                    </li>
+                  </ul>
+                  <div class="panel-image">
+                    <div>
+                      <img
+                        src="img/tracuu-taikhoan.png"
+                        alt="Tra cứu tài khoản"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-4">
+                <div class="circle">4</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >delete</span
+                    >
+                    Xóa tài khoản
+                  </h3>
+                  <p>
+                    Chức năng xóa luôn có bước xác nhận để tránh thao tác nhầm.
+                  </p>
+                  <ul>
+                    <li>Chọn tài khoản cần xóa trong bảng.</li>
+                    <li>
+                      Nhấn <b>Xóa</b>, hệ thống sẽ hiện thông báo hỏi có muốn
+                      xóa hay không.
+                    </li>
+                    <li>
+                      Chỉ khi xác nhận đồng ý thì tài khoản mới bị xóa khỏi danh
+                      sách.
+                    </li>
+                  </ul>
+                  <div class="panel-image">
+                    <div>
+                      <img src="img/xoa-taikhoan.png" alt="Xóa tài khoản" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-5">
+                <div class="circle">5</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >lock_reset</span
+                    >
+                    Đổi mật khẩu
+                  </h3>
+                  <p>
+                    Khi nhấn <b>Đổi mật khẩu</b>, hệ thống mở hộp thoại riêng để
+                    nhập mật khẩu mới cho tài khoản đang chọn.
+                  </p>
+                  <ul>
+                    <li>Kiểm tra đúng <b>mã tài khoản</b> trước khi đổi.</li>
+                    <li>
+                      Nhập <b>mật khẩu mới</b> và <b>nhập lại mật khẩu mới</b>.
+                    </li>
+                    <li>
+                      Khi lưu thành công, mật khẩu sẽ được cập nhật nhưng không
+                      hiển thị ra ngoài.
+                    </li>
+                    <li>
+                      Đây là thao tác dành cho nhân viên hoặc quản lý được phân
+                      quyền.
+                    </li>
+                  </ul>
+                  <div class="panel-image">
+                    <div>Chèn ảnh hộp thoại đổi mật khẩu tại đây</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="note">
+              Gợi ý: nút <b>Làm mới</b> không cần mô tả trong phần hướng dẫn này
+              vì đó là thao tác tự làm rõ trên giao diện; các nút còn lại đã
+              được chia thành từng bước ở thanh Help Center bên trái.
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const menuGroups = document.querySelectorAll("[data-menu]");
+
+      function closeAllMenus(except = null) {
+        menuGroups.forEach((g) => {
+          if (g !== except) g.classList.remove("open");
+        });
+      }
+
+      menuGroups.forEach((group) => {
+        const btn = group.querySelector("[data-toggle]");
+        if (!btn) return;
+
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isOpen = group.classList.contains("open");
+          closeAllMenus();
+          if (!isOpen) group.classList.add("open");
+        });
+      });
+
+      document.addEventListener("click", () => closeAllMenus());
+
+      document
+        .querySelectorAll(".sidebar button[data-scroll]")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".sidebar button")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const target = document.getElementById(btn.dataset.scroll);
+            if (!target) return;
+
+            const offset = 80;
+            const top =
+              target.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top, behavior: "smooth" });
+            window.history.replaceState(null, null, " ");
+          });
+        });
+    </script>
+  </body>
+</html>

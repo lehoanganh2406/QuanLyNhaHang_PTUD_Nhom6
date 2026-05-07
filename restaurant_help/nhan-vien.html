@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Hướng dẫn Quản lý nhân viên</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <link href="css/gui.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div aria-hidden="true" class="bg"></div>
+
+    <div class="app">
+      <header class="navbar">
+        <!-- Logo -->
+        <img src="img/logo.png" alt="Logo" class="brand-logo" />
+        <div class="brand">NHÀ HÀNG HY VỌNG</div>
+
+        <!-- Menu giữa -->
+        <div class="nav-left">
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Hệ thống <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="tai-khoan.html">Quản lý tài khoản</a>
+              <a href="quan-ly-ca.html">Quản lý ca</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Danh mục <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="thuc-don.html">Thực đơn</a>
+              <a href="khu-vuc.html">Khu vực</a>
+              <a href="nhan-vien.html">Nhân viên</a>
+              <a href="khach-hang.html">Khách hàng</a>
+              <a href="khuyen-mai.html">Khuyến mãi</a>
+              <a href="ban.html">Bàn</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Xử lý <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="order.html">Order</a>
+              <a href="dat-ban.html">Đặt bàn</a>
+              <a href="hoa-don.html">Hóa đơn</a>
+            </div>
+          </div>
+
+          <div class="menu-group">
+            <a class="menu-button" href="tra-cuu.html">Tra cứu</a>
+          </div>
+
+          <div class="menu-group current">
+            <a class="menu-button" href="thong-ke.html">Thống kê</a>
+          </div>
+        </div>
+
+        <div class="nav-right">
+          <a class="home-link" href="index.html">Trang chủ</a>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <h4>Help Center</h4>
+          <p class="version">V1.2.0</p>
+
+          <button class="active" data-scroll="step-1">
+            <span class="material-symbols-outlined">person_add</span> Thêm
+          </button>
+          <button data-scroll="step-2">
+            <span class="material-symbols-outlined">edit</span> Cập nhật
+          </button>
+          <button data-scroll="step-3">
+            <span class="material-symbols-outlined">search</span> Tra cứu
+          </button>
+        </aside>
+
+        <section class="content">
+          <div class="card" id="guide-nhanvien">
+            <div class="title">Hướng dẫn Quản lý nhân viên</div>
+            <div class="subtitle">
+              Tài liệu hướng dẫn chi tiết dành cho quản lý và nhân viên cách
+              thêm nhân viên, cập nhật thông tin và tra cứu danh sách nhân viên
+              trong hệ thống.
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-1">
+                <div class="circle">1</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >person_add</span
+                    >
+                    Thêm nhân viên
+                  </h3>
+                  <p>
+                    <i
+                      >Khi thêm mới, hệ thống tự phát sinh mã nhân viên theo thứ
+                      tự. Các mã liên quan khác cũng được sinh tự động nếu có
+                      quy ước trong hệ thống.</i
+                    >
+                  </p>
+                  <ul>
+                    <li>
+                      Nhập đầy đủ thông tin bắt buộc vào ô nhập liệu . Không bao
+                      gồm ô mã Nhân viên và Lý do Nghỉ
+                    </li>
+                    <li>
+                      Ảnh nhân viên có thể để trống, không bắt buộc phải tải
+                      lên.
+                    </li>
+                    <li>
+                      Nhấn <b>Thêm</b> để lưu nhân viên mới vào danh sách.
+                    </li>
+                  </ul>
+                  <div class="panel-image">
+                    <div>
+                      <img src="img/them-nhanvien.png" alt="" srcset="" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-2">
+                <div class="circle">2</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      edit
+                    </span>
+                    Cập nhật nhân viên
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chọn một nhân viên trong bảng để nạp dữ liệu lên form và
+                      thực hiện chỉnh sửa.</i
+                    >
+                  </p>
+
+                  <!-- PHẦN A -->
+                  <h4 style="margin-top: 22px; color: #7b4b2a">
+                    a. Cập nhật thông tin nhân viên
+                  </h4>
+
+                  <ul>
+                    <li>Chọn nhân viên cần sửa trong bảng danh sách.</li>
+                    <li>Dữ liệu sẽ tự động hiển thị lên form.</li>
+                    <li>
+                      Có thể cập nhật họ tên, email, chức vụ, số điện thoại...
+                    </li>
+                    <li>Cho phép thay đổi ảnh nhân viên.</li>
+                    <li>Nhấn <b>Cập nhật</b> để lưu thay đổi.</li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img
+                      src="img/capnhat-nhavien.png"
+                      alt="Cập nhật nhân viên"
+                      style="width: 100%; border-radius: 16px"
+                    />
+                  </div>
+
+                  <!-- PHẦN B -->
+                  <h4 style="margin-top: 30px; color: #7b4b2a">
+                    b. Cập nhật trạng thái nhân viên
+                  </h4>
+
+                  <ul>
+                    <li>
+                      Cho phép chuyển trạng thái từ <b>Đang làm</b> sang
+                      <b>Nghỉ việc</b>.
+                    </li>
+                    <li>
+                      Bắt buộc nhập <b>Lý do nghỉ</b> khi chọn trạng thái nghỉ
+                      việc.
+                    </li>
+                    <li>
+                      Nhân viên nghỉ việc vẫn được giữ lại trong hệ thống để tra
+                      cứu lịch sử.
+                    </li>
+                    <li>
+                      Dòng dữ liệu của nhân viên nghỉ việc sẽ hiển thị
+                      <span class="status-red">màu đỏ</span>.
+                    </li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img
+                      src="img/capnhat-trangthai-nhanvien.png"
+                      alt="Cập nhật trạng thái nhân viên"
+                      style="width: 100%; border-radius: 16px"
+                    />
+                  </div>
+                </div>
+                <!-- <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >edit</span
+                    >
+                    Cập nhật nhân viên
+                  </h3>
+                  <p>
+                    Chọn một nhân viên trong bảng để nạp dữ liệu lên form, sau
+                    đó chỉnh sửa lại toàn bộ thông tin cần thiết.
+                  </p>
+                  <ul>
+                    <li>Có thể cập nhật tất cả các trường thông tin.</li>
+                    <li>
+                      Cho phép thay đổi ảnh, chức vụ, email, số điện thoại.
+                    </li>
+                    <li>
+                      Khi chuyển trạng thái từ <b>Đang làm</b> sang
+                      <b>Nghỉ việc</b>, bắt buộc nhập <b>lý do nghỉ</b>.
+                    </li>
+                    <li>
+                      Nhân viên nghỉ việc vẫn được giữ lại trong bảng và sẽ hiển
+                      thị <span class="status-red">màu đỏ</span> để dễ phân
+                      biệt.
+                    </li>
+                    <li>Nhấn <b>Cập nhật</b> để lưu thay đổi.</li>
+                  </ul>
+                </div> -->
+              </div>
+
+              <!-- <div class="panel-image">
+                <div>Chèn ảnh giao diện cập nhật nhân viên tại đây</div>
+              </div> -->
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-3">
+                <div class="circle">3</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >search</span
+                    >
+                    Tra cứu nhân viên
+                  </h3>
+                  <p>
+                    <i
+                      >Dùng các ô nhập và combobox trên form để lọc nhanh danh
+                      sách nhân viên.</i
+                    >
+                  </p>
+                  <ul>
+                    <li>
+                      Nhập thông tin cần tra cứu vào ô tương ứng.Không bao gồm ô
+                      <b>Mã nhân viên</b>
+                    </li>
+                    <!-- <li>Tra cứu theo <b>trạng thái</b>.</li>
+                    <li>Tra cứu theo <b>tên nhân viên</b>.</li> -->
+                    <li>Nhấn <b>Tra cứu</b> để lọc kết quả.</li>
+                  </ul>
+                  <div class="panel-image">
+                    <div><img src="img/tracuu-nhanvien.png" alt="" /></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const menuGroups = document.querySelectorAll("[data-menu]");
+
+      function closeAllMenus(except = null) {
+        menuGroups.forEach((g) => {
+          if (g !== except) g.classList.remove("open");
+        });
+      }
+
+      menuGroups.forEach((group) => {
+        const btn = group.querySelector("[data-toggle]");
+        if (!btn) return;
+
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isOpen = group.classList.contains("open");
+          closeAllMenus();
+          if (!isOpen) group.classList.add("open");
+        });
+      });
+
+      document.addEventListener("click", () => closeAllMenus());
+
+      document
+        .querySelectorAll(".sidebar button[data-scroll]")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".sidebar button")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const target = document.getElementById(btn.dataset.scroll);
+            if (!target) return;
+
+            const offset = 80;
+            const top =
+              target.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top, behavior: "smooth" });
+            window.history.replaceState(null, null, " ");
+          });
+        });
+    </script>
+  </body>
+</html>

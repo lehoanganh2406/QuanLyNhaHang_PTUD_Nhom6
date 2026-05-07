@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Hướng dẫn Quản lý Thực đơn</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <link href="css/gui.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div aria-hidden="true" class="bg"></div>
+
+    <div class="app">
+      <header class="navbar">
+        <!-- Logo -->
+        <img src="img/logo.png" alt="Logo" class="brand-logo" />
+        <div class="brand">NHÀ HÀNG HY VỌNG</div>
+
+        <!-- Menu giữa -->
+        <div class="nav-left">
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Hệ thống <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="tai-khoan.html">Quản lý tài khoản</a>
+              <a href="quan-ly-ca.html">Quản lý ca</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Danh mục <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="thuc-don.html">Thực đơn</a>
+              <a href="khu-vuc.html">Khu vực</a>
+              <a href="nhan-vien.html">Nhân viên</a>
+              <a href="khach-hang.html">Khách hàng</a>
+              <a href="khuyen-mai.html">Khuyến mãi</a>
+              <a href="ban.html">Bàn</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Xử lý <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="order.html">Order</a>
+              <a href="dat-ban.html">Đặt bàn</a>
+              <a href="hoa-don.html">Hóa đơn</a>
+            </div>
+          </div>
+
+          <div class="menu-group">
+            <a class="menu-button" href="tra-cuu.html">Tra cứu</a>
+          </div>
+
+          <div class="menu-group current">
+            <a class="menu-button" href="thong-ke.html">Thống kê</a>
+          </div>
+        </div>
+
+        <div class="nav-right">
+          <a class="home-link" href="index.html">Trang chủ</a>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <h4>Help Center</h4>
+          <p class="version">V1.2.0</p>
+          <button class="active" data-scroll="step-1">
+            <span class="material-symbols-outlined">add_circle</span> Thêm
+          </button>
+          <button data-scroll="step-2">
+            <span class="material-symbols-outlined">edit</span> Cập nhật
+          </button>
+          <button data-scroll="step-3">
+            <span class="material-symbols-outlined">zoom_in</span> Chi tiết
+          </button>
+          <button data-scroll="step-4">
+            <span class="material-symbols-outlined">category</span> Loại món
+          </button>
+          <button data-scroll="step-5">
+            <span class="material-symbols-outlined">search</span> Tìm kiếm
+          </button>
+        </aside>
+
+        <section class="content">
+          <div class="card" id="guide-thucdon">
+            <div class="title">Hướng dẫn Thực đơn</div>
+            <div class="subtitle">
+              Tài liệu hướng dẫn chi tiết dành cho quản lý và nhân viên cách
+              thêm món, cập nhật món, xem chi tiết, quản lý loại món và tìm kiếm
+              theo tên hoặc giá.
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-1">
+                <div class="circle">1</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      add_circle
+                    </span>
+                    Thêm món ăn
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chức năng này dùng để thêm món mới vào thực đơn của nhà
+                      hàng. Hệ thống sẽ tự động phát sinh mã món nên người dùng
+                      không cần nhập thủ công.</i
+                    >
+                  </p>
+
+                  <!-- PHẦN 1 -->
+
+                  <ol style="padding-left: 22px; margin: 0">
+                    <li>Nhấn nút <b>+ Thêm</b> trên giao diện thực đơn.</li>
+                  </ol>
+
+                  <div class="panel-image">
+                    <img
+                      src="img/them-monan-1.png"
+                      alt="Mở chức năng thêm món"
+                      style="width: 100%; border-radius: 10px"
+                    />
+                  </div>
+
+                  <ol start="2" style="padding-left: 22px; margin: 0">
+                    <li>
+                      Bắt buộc nhập:
+                      <b>Tên món</b>, <b>Giá gốc</b>, <b>Giá bán</b>,
+                      <b>Loại món</b>,
+                      <b>Trạng thái</b>
+                      và <b>Mô tả</b>và quan trọng là <b>Ảnh món ăn</b>.
+                    </li>
+                    <li>
+                      Sau khi nhập xong thông tin, nhấn <b>Lưu</b> để hoàn tất
+                      thêm món.
+                    </li>
+                  </ol>
+
+                  <div class="panel-image">
+                    <img
+                      src="img/them-monan-23.png"
+                      alt="Nhập thông tin món ăn"
+                      style="
+                        width: 58%;
+                        max-width: 700px;
+                        border-radius: 14px;
+                        display: block;
+                        margin: 20px auto;
+                        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+                      "
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-2">
+                <div class="circle">2</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >edit</span
+                    >
+                    Cập nhật món ăn
+                  </h3>
+
+                  <p>
+                    <i>
+                      Chọn một card món ăn rồi nhấn cập nhật để chỉnh sửa toàn
+                      bộ thông tin của món đó.
+                    </i>
+                  </p>
+
+                  <ol style="padding-left: 22px; margin: 0">
+                    <li style="margin-bottom: 14px">
+                      Nhấn chọn một card món ăn rồi nhấn <b>Cập nhật</b> để mở
+                      giao diện cập nhật món.
+                    </li>
+                  </ol>
+
+                  <div class="panel-image" style="margin: 12px 0 20px">
+                    <img
+                      src="img/capnhat-monan.png"
+                      alt="Chọn card món ăn và nhấn cập nhật"
+                      style="width: 100%; border-radius: 10px; display: block"
+                    />
+                  </div>
+
+                  <ol start="2" style="padding-left: 22px; margin: 0">
+                    <li style="margin-bottom: 14px">
+                      Cập nhật ở nhiều trường khác nhau.
+                    </li>
+                  </ol>
+
+                  <div class="panel-image" style="margin: 12px 0 0">
+                    <img
+                      src="img/capnhat-monan-2.png"
+                      alt="Cập nhật ở nhiều trường khác nhau"
+                      style="
+                        width: 58%;
+                        max-width: 700px;
+                        border-radius: 14px;
+                        display: block;
+                        margin: 20px auto;
+                        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+                      "
+                    />
+                  </div>
+                  <ol start="3" style="padding-left: 22px; margin: 0">
+                    <li>
+                      <span class="text-danger"><b>Chú ý:</b></span
+                      >Nếu cập nhật trạng thái thành "Ngừng bán", món ăn sẽ trên
+                      giao diện sẽ hiện
+                      <span class="badge bg-danger">màu đỏ.</span>
+                    </li>
+                  </ol>
+
+                  <div class="panel-image" style="margin: 12px 0 0">
+                    <img
+                      src="img/capnha-monan-tt.png"
+                      alt="Cập nhật ở nhiều trường khác nhau"
+                      style="width: 100%; border-radius: 10px"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-3">
+                <div class="circle">3</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      zoom_in
+                    </span>
+                    Xem chi tiết món
+                  </h3>
+
+                  <p>
+                    <i>
+                      Chọn một card món rồi nhấn chi tiết để mở giao diện xem
+                      thông tin đầy đủ của món ăn.
+                    </i>
+                  </p>
+
+                  <ul>
+                    <li>Chỉ xem thông tin, không cho sửa dữ liệu.</li>
+                    <li>Giao diện chi tiết giống form xem một món.</li>
+                    <li>Có thể đóng cửa sổ chi tiết sau khi kiểm tra xong.</li>
+                  </ul>
+
+                  <div class="panel-image" style="margin-top: 18px">
+                    <img
+                      src="img/xemchitiet-monan.png"
+                      alt="Xem chi tiết món"
+                      style="width: 100%; border-radius: 10px; display: block"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-4">
+                <div class="circle">4</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      category
+                    </span>
+                    Quản lý loại món
+                  </h3>
+
+                  <p>
+                    <i
+                      >Danh sách tab loại món cho phép thêm loại mới, cập nhật
+                      tên loại và xóa riêng từng loại món ăn.</i
+                    >
+                  </p>
+
+                  <h4 style="margin-top: 22px; color: #7b4b2a">
+                    a. Thêm loại món mới
+                  </h4>
+
+                  <ul>
+                    <li>Nhấn dấu <b>+</b> cạnh combobox <b>Loại món</b>.</li>
+                    <li>Nhập tên loại món mới cần thêm.</li>
+                    <li>
+                      Sau khi thêm thành công, loại món mới sẽ xuất hiện trên
+                      thanh tab loại món.
+                    </li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img
+                      src="img/them-loaimon.png"
+                      alt="Thêm loại món"
+                      style="
+                        width: 58%;
+                        max-width: 700px;
+                        border-radius: 14px;
+                        display: block;
+                        margin: 20px auto;
+                        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+                      "
+                    />
+                  </div>
+
+                  <h4 style="margin-top: 32px; color: #7b4b2a">
+                    b. Cập nhật loại món
+                  </h4>
+
+                  <ul>
+                    <li>Chọn tab loại món cần cập nhật.</li>
+                    <li>
+                      Nhấn nút <b>✏️</b> để mở chức năng đổi tên loại món.
+                    </li>
+                    <li>Nhập tên loại món mới rồi nhấn <b>OK</b>.</li>
+                    <li>
+                      Sau khi cập nhật thành công, tên tab loại món sẽ được thay
+                      đổi ngay trên giao diện.
+                    </li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img
+                      src="img/capnhat-loaimon.png"
+                      alt="Cập nhật loại món"
+                      style="width: 100%; border-radius: 10px"
+                    />
+                  </div>
+
+                  <h4 style="margin-top: 32px; color: #7b4b2a">
+                    c. Xóa loại món
+                  </h4>
+
+                  <ul>
+                    <li>Chọn tab loại món muốn xóa.</li>
+                    <li>Nhấn nút <b>🗑️</b> trên thanh tab loại món.</li>
+                    <li>Hệ thống sẽ hiển thị hộp thoại xác nhận xóa.</li>
+                    <li>Nhấn <b>Yes</b> để xác nhận xóa loại món.</li>
+                    <li>
+                      Sau khi xóa thành công, tab loại món sẽ biến mất khỏi giao
+                      diện thực đơn.
+                    </li>
+                    <li style="color: #c0392b; font-weight: 700">
+                      Chú ý: chỉ xóa khi trạng thái của tất cả các món ăn trong
+                      loại món đó đều là "Ngừng bán".
+                    </li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img
+                      src="img/xoa-loaimon.png"
+                      alt="Xóa loại món"
+                      style="width: 100%; border-radius: 10px"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-5">
+                <div class="circle">5</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      search
+                    </span>
+                    Tìm kiếm và lọc giá
+                  </h3>
+
+                  <p>
+                    <i
+                      >Có thể tra cứu nhanh món ăn bằng ô tìm tên món hoặc lọc
+                      theo khoảng giá.</i
+                    >
+                  </p>
+
+                  <ul>
+                    <li>Tìm kiếm theo tên món.</li>
+                    <li>Lọc theo giá từ và giá đến.</li>
+                    <li>
+                      Quy tắc: giá sau <b>không được nhỏ hơn</b> giá trước.
+                    </li>
+                    <li>
+                      Kết quả sẽ được lọc ngay trên danh sách card món ăn.
+                    </li>
+                  </ul>
+
+                  <div class="panel-image" style="margin-top: 18px">
+                    <img
+                      src="img/tracuu-monan.png"
+                      alt="Tìm kiếm và lọc giá"
+                      style="width: 100%; border-radius: 10px"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const menuGroups = document.querySelectorAll("[data-menu]");
+
+      function closeAllMenus(except = null) {
+        menuGroups.forEach((g) => {
+          if (g !== except) g.classList.remove("open");
+        });
+      }
+
+      menuGroups.forEach((group) => {
+        const btn = group.querySelector("[data-toggle]");
+        if (!btn) return;
+
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isOpen = group.classList.contains("open");
+          closeAllMenus();
+          if (!isOpen) group.classList.add("open");
+        });
+      });
+
+      document.addEventListener("click", () => closeAllMenus());
+
+      document
+        .querySelectorAll(".sidebar button[data-scroll]")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".sidebar button")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const target = document.getElementById(btn.dataset.scroll);
+            if (!target) return;
+
+            const offset = 80;
+            const top =
+              target.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top, behavior: "smooth" });
+            window.history.replaceState(null, null, " ");
+          });
+        });
+    </script>
+  </body>
+</html>

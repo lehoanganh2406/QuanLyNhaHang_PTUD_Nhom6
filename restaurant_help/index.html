@@ -1,0 +1,352 @@
+<!doctype html>
+<html class="dark" lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-container": "#5b4307",
+              secondary: "#e6c27c",
+              "on-surface-variant": "#d5c3b6",
+              "on-background": "#f3dfd2",
+              "on-secondary": "#402d00",
+              "on-primary-fixed-variant": "#683d0f",
+              "secondary-fixed": "#ffdea2",
+              "on-surface": "#f3dfd2",
+              "on-primary-container": "#ffddc2",
+              "on-secondary-container": "#d3b06c",
+              outline: "#9e8e82",
+              tertiary: "#e3c09f",
+              "inverse-surface": "#f3dfd2",
+              error: "#ffb4ab",
+              "primary-fixed-dim": "#f9ba82",
+              "outline-variant": "#51443a",
+              "on-error": "#690005",
+              "on-tertiary": "#412c14",
+              "on-secondary-fixed": "#261900",
+              "on-primary": "#4c2700",
+              background: "#1b110a",
+              "on-primary-fixed": "#2e1500",
+              "on-tertiary-fixed-variant": "#5a4228",
+              "surface-container-low": "#241912",
+              "primary-container": "#8b5a2b",
+              "inverse-primary": "#835425",
+              "surface-container-high": "#332820",
+              "primary-fixed": "#ffdcc1",
+              "tertiary-fixed-dim": "#e3c09f",
+              "surface-variant": "#3f322a",
+              "secondary-fixed-dim": "#e6c27c",
+              "on-tertiary-container": "#ffddbd",
+              "surface-container-lowest": "#150c06",
+              "error-container": "#93000a",
+              "surface-tint": "#f9ba82",
+              "surface-dim": "#1b110a",
+              primary: "#f9ba82",
+              "on-tertiary-fixed": "#2a1803",
+              "tertiary-fixed": "#ffdcbb",
+              "on-secondary-fixed-variant": "#5b4307",
+              "on-error-container": "#ffdad6",
+              "tertiary-container": "#7b6044",
+              "surface-bright": "#43372e",
+              "inverse-on-surface": "#3a2e26",
+              "surface-container-highest": "#3f322a",
+              surface: "#1b110a",
+              "surface-container": "#281d16",
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+            spacing: {
+              "step-indicator-size": "36px",
+              "sidebar-width": "280px",
+              "card-padding": "24px",
+              "sidebar-radius": "22px",
+              "section-gap": "32px",
+            },
+            fontFamily: {
+              "nav-item": ["Segoe UI"],
+              "body-lg": ["Segoe UI"],
+              "label-step": ["Segoe UI"],
+              h1: ["Segoe UI"],
+              h2: ["Segoe UI"],
+              "body-md": ["Segoe UI"],
+            },
+            fontSize: {
+              "nav-item": ["15px", { lineHeight: "1.2", fontWeight: "500" }],
+              "body-lg": ["18px", { lineHeight: "1.6", fontWeight: "400" }],
+              "label-step": ["14px", { lineHeight: "1", fontWeight: "700" }],
+              h1: ["32px", { lineHeight: "1.2", fontWeight: "700" }],
+              h2: ["24px", { lineHeight: "1.3", fontWeight: "600" }],
+              "body-md": ["16px", { lineHeight: "1.5", fontWeight: "400" }],
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="stylesheet" href="css/index.css" />
+  </head>
+  <body class="min-h-screen flex flex-col font-body-md text-on-surface">
+    <!-- TopNavBar -->
+    <header class="navbar">
+      <img src="img/logo.png" alt="Logo" class="brand-logo" />
+      <div class="brand">NHÀ HÀNG HY VỌNG</div>
+
+      <div class="nav-left">
+        <div class="menu-group" data-menu="">
+          <button class="menu-button" data-toggle="" type="button">
+            Hệ thống <span class="caret">▼</span>
+          </button>
+          <div class="dropdown">
+            <a href="tai-khoan.html">Quản lý tài khoản</a>
+            <a href="quan-ly-ca.html">Quản lý ca</a>
+            <a href="dang-nhap.html">Đăng nhập</a>
+          </div>
+        </div>
+
+        <div class="menu-group" data-menu="">
+          <button class="menu-button" data-toggle="" type="button">
+            Danh mục <span class="caret">▼</span>
+          </button>
+          <div class="dropdown">
+            <a href="thuc-don.html">Thực đơn</a>
+            <a href="khu-vuc.html">Khu vực</a>
+            <a href="nhan-vien.html">Nhân viên</a>
+            <a href="khach-hang.html">Khách hàng</a>
+            <a href="khuyen-mai.html">Khuyến mãi</a>
+            <a href="ban.html">Bàn</a>
+          </div>
+        </div>
+
+        <div class="menu-group" data-menu="">
+          <button class="menu-button" data-toggle="" type="button">
+            Xử lý <span class="caret">▼</span>
+          </button>
+          <div class="dropdown">
+            <a href="order.html">Order</a>
+            <a href="dat-ban.html">Đặt bàn</a>
+            <a href="hoa-don.html">Hóa đơn</a>
+          </div>
+        </div>
+
+        <div class="menu-group">
+          <a class="menu-button" href="tra-cuu.html">Tra cứu</a>
+        </div>
+
+        <div class="menu-group current">
+          <a class="menu-button" href="thong-ke.html">Thống kê</a>
+        </div>
+      </div>
+
+      <div class="nav-right">
+        <a class="home-link" href="index.html">Trang chủ</a>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <div class="pt-20 pb-10 px-4 md:px-10">
+      <main class="max-w-[1280px] mx-auto">
+        <div
+          class="glass-panel rounded-[28px] shadow-2xl shadow-black/20 border border-amber-200/30 p-6 md:p-10"
+        >
+          <!-- Welcome Section -->
+          <section class="max-w-5xl mx-auto py-4 md:py-8 text-center">
+            <div class="flex items-center justify-center gap-4 mb-4">
+              <div class="h-[1px] w-12 bg-primary-container"></div>
+              <span
+                class="text-primary-container font-bold tracking-widest uppercase text-xs"
+                >Since 1924</span
+              >
+              <div class="h-[1px] w-12 bg-primary-container"></div>
+            </div>
+
+            <h1
+              class="hero-title text-4xl md:text-5xl font-bold mb-5 text-amber-950 max-w-5xl mx-auto px-4"
+            >
+              Chào mừng đến với Nhà Hàng Hy Vọng - Nơi Nghệ Thuật Hiếu Khách Gặp
+              Gỡ Di Sản Ẩm Thực
+            </h1>
+
+            <p
+              class="hero-copy font-body-lg text-body-lg text-stone-700 leading-relaxed max-w-4xl mx-auto px-4"
+            >
+              Tại Hy Vọng, chúng tôi tin rằng sự hiếu khách không chỉ là một
+              dịch vụ mà là một nghệ thuật vượt thời gian. Hành trình của chúng
+              tôi là sự kết hợp tinh tế giữa di sản truyền thống và sự tiện nghi
+              hiện đại.
+            </p>
+
+            <div
+              class="bg-amber-100/50 rounded-2xl p-6 border-l-4 border-primary-container mt-8 text-left max-w-3xl mx-auto"
+            >
+              <h2 class="text-amber-900 font-bold text-2xl mb-3">
+                Sứ mệnh "Timeless Hospitality"
+              </h2>
+              <p class="text-stone-800 font-medium italic leading-relaxed">
+                "Chúng tôi tận tâm tạo ra những trải nghiệm ẩm thực đẳng cấp,
+                nơi mỗi vị khách đều cảm nhận được hơi ấm của gia đình trong
+                không gian sang trọng của di sản."
+              </p>
+            </div>
+          </section>
+
+          <!-- Hero Image -->
+          <div
+            class="relative w-full h-[360px] md:h-[420px] rounded-[24px] overflow-hidden shadow-2xl"
+          >
+            <img
+              alt="Heritage Hearth Interior"
+              class="w-full h-full object-cover"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuARYpdMA-2XDk1WWQ12kExmbzKHLk6cuA8VllNibuADDSGetTP3YFcAiR0AdY0Pj2Bp59N-ZlLpw71qfYpQQjUnHAETweMivwXltO7mf5Y9b84MKIWhS_au3QlrdzMRlAODsNKzYXsEiy4O56EnYYmUjGDkdiqm6MlgQdnJ7BC8Zuvh9ezq-wji2UJxqTnX-xXj7NRZ2w0VKsY75E_xL4kmCiTvaGMNTcxvq4GmyK_qdgOR4jbiOF1j19LMC52ACWk9BxPRcJwvTdU"
+            />
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-8 md:p-12"
+            >
+              <div class="text-white max-w-2xl text-left">
+                <h3
+                  class="hero-overlay-title text-2xl md:text-3xl font-bold mb-2"
+                >
+                  Hệ thống Quản lý Hiện đại
+                </h3>
+                <p class="hero-overlay-copy opacity-90">
+                  Nền tảng quản lý mạnh mẽ giúp đội ngũ nhân viên làm chủ mọi
+                  quy trình vận hành nhà hàng một cách chuyên nghiệp và hiệu quả
+                  nhất.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Start Cards -->
+          <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <div
+              class="p-6 rounded-[22px] bg-white border border-stone-200 shadow-sm hover:shadow-md transition-shadow flex flex-col items-start gap-4"
+            >
+              <div
+                class="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-primary-container"
+              >
+                <span class="material-symbols-outlined text-3xl"
+                  >auto_stories</span
+                >
+              </div>
+              <div class="w-full">
+                <h4 class="font-bold text-amber-900 mb-1">
+                  Thống kê & Báo cáo
+                </h4>
+                <p class="text-sm text-stone-500 mb-4">
+                  Hệ thống thống kê chi tiết giúp quản lý nắm bắt hiệu suất kinh
+                  doanh và xu hướng khách hàng.
+                </p>
+                <a class="link-card w-full" href="thong-ke.html"
+                  >Nhấn vào đây</a
+                >
+              </div>
+            </div>
+
+            <div
+              class="p-6 rounded-[22px] bg-white border border-stone-200 shadow-sm hover:shadow-md transition-shadow flex flex-col items-start gap-4"
+            >
+              <div
+                class="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-primary-container"
+              >
+                <span class="material-symbols-outlined text-3xl"
+                  >restaurant_menu</span
+                >
+              </div>
+              <div class="w-full">
+                <h4 class="font-bold text-amber-900 mb-1">Quản lý thực đơn</h4>
+                <p class="text-sm text-stone-500 mb-4">
+                  Quy trình quản lý và cập nhật món ăn theo thời gian thực.
+                </p>
+                <a class="link-card w-full" href="thuc-don.html"
+                  >Nhấn vào đây</a
+                >
+              </div>
+            </div>
+
+            <div
+              class="p-6 rounded-[22px] bg-white border border-stone-200 shadow-sm hover:shadow-md transition-shadow flex flex-col items-start gap-4"
+            >
+              <div
+                class="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-primary-container"
+              >
+                <span class="material-symbols-outlined text-3xl">payments</span>
+              </div>
+              <div class="w-full">
+                <h4 class="font-bold text-amber-900 mb-1">
+                  Đặt bàn & thanh toán
+                </h4>
+                <p class="text-sm text-stone-500 mb-4">
+                  Hệ thống đặt bàn nhanh chống và quy trình thanh toán nhanh
+                  chóng, tiện lợi.
+                </p>
+                <a class="link-card w-full" href="dat-ban.html">Nhấn vào đây</a>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- Footer -->
+    <footer
+      class="bg-stone-950/90 dark:bg-black text-amber-200/60 font-nav-item text-xs uppercase tracking-widest w-full mt-8 py-6 border-t border-amber-900/30 flex flex-col md:flex-row justify-between items-center px-6 md:px-12 opacity-80 hover:opacity-100 transition-opacity"
+    >
+      <div class="mb-4 md:mb-0">
+        © 2026 Hy Vọng Restaurant Management. Phục vụ với sự tận tâm.
+      </div>
+      <div class="flex gap-8">
+        <a
+          class="hover:text-amber-200 hover:underline underline-offset-4 transition-colors"
+          href="#"
+          >Điều khoản</a
+        >
+        <a
+          class="hover:text-amber-200 hover:underline underline-offset-4 transition-colors"
+          href="#"
+          >Bảo mật</a
+        >
+        <a
+          class="hover:text-amber-200 hover:underline underline-offset-4 transition-colors"
+          href="#"
+          >Trợ giúp</a
+        >
+      </div>
+    </footer>
+
+    <script>
+      const menuGroups = document.querySelectorAll("[data-menu]");
+
+      function closeAllMenus(except = null) {
+        menuGroups.forEach((g) => {
+          if (g !== except) g.classList.remove("open");
+        });
+      }
+
+      menuGroups.forEach((group) => {
+        const btn = group.querySelector("[data-toggle]");
+        if (!btn) return;
+
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isOpen = group.classList.contains("open");
+          closeAllMenus();
+          if (!isOpen) group.classList.add("open");
+        });
+      });
+
+      document.addEventListener("click", () => closeAllMenus());
+    </script>
+  </body>
+</html>

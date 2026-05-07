@@ -1,0 +1,224 @@
+.navbar {
+  height: 64px;
+  background: linear-gradient(90deg, rgb(111, 78, 55), #4e2a11);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px 0 16px;
+  position: fixed;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.26);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff7e6;
+
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.brand-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.nav-left,
+.nav-right {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.nav-left {
+  flex: 1;
+  justify-content: center;
+}
+
+.menu-group {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.menu-button {
+  border: 0;
+  background: transparent;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #f7d28f;
+  cursor: pointer;
+  padding: 0 22px;
+  white-space: nowrap;
+  text-decoration: none;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.menu-group:last-child .menu-button {
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.menu-button:hover,
+.menu-group.open .menu-button,
+.menu-group.current .menu-button {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffecc6;
+}
+
+.caret {
+  font-size: 12px;
+  transform: translateY(1px);
+}
+
+.dropdown {
+  position: absolute;
+  top: 64px;
+  left: 0;
+  min-width: 210px;
+  background: #4e2a11;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.22);
+  display: none;
+  padding: 0;
+  z-index: 30;
+}
+
+.menu-group.open .dropdown {
+  display: block;
+}
+
+.dropdown a {
+  display: block;
+  color: #f7e6c7;
+  text-decoration: none;
+  padding: 11px 16px;
+  font-weight: 700;
+  font-size: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.dropdown a:last-child {
+  border-bottom: 0;
+}
+
+.dropdown a:hover {
+  background: #6a3a18;
+}
+
+.nav-right {
+  color: #f7d28f;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 0 12px;
+  height: 100%;
+  white-space: nowrap;
+}
+
+.home-link {
+  color: #f7d28f;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  height: 64px;
+  transition: 0.2s ease;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.home-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffecc6;
+}
+
+body {
+  background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBkfAr6AR1V6fLDvAozBu5yS2KwYkWEtPixAC_sTzaV-O5RibPrri9sksigFOJR8FdpffBK84q6Bjm6G3uBzuxEii7agqsmMx_twpkDPXWtdRn7IfIfny2LLjnVqON60RfbxxlR0_rBJ_pwEAZ0GGh2mcsjuwoBAj13Dv9jBEhrDblh-2u9WaAVK1OPHO2fMEUztQS7GUZs3en20GmrZ7cX1ZBfDxd_sHuzHYnx1t30sJeJpIEZkVSKTsW85UPRr79wgt3YZ9Ddz3w);
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}
+
+.glass-panel {
+  background: rgba(255, 249, 242, 0.94);
+  backdrop-filter: blur(8px);
+}
+
+.link-card {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 9999px;
+  background: #8b5a2b;
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.link-card:hover {
+  background: #a46a31;
+  transform: translateY(-1px);
+}
+
+.link-card:active {
+  transform: translateY(0);
+}
+
+.footer-note {
+  background: rgba(248, 239, 230, 0.9);
+  border-top: 1px solid rgba(139, 90, 43, 0.15);
+}
+
+.hero-title {
+  line-height: 1.18;
+  letter-spacing: 0;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.hero-copy {
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+
+.hero-overlay-title {
+  line-height: 1.15;
+  letter-spacing: 0;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.hero-overlay-copy {
+  line-height: 1.6;
+  letter-spacing: 0;
+}

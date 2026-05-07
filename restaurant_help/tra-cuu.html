@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hướng dẫn - Tra cứu</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <link href="css/gui.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <div aria-hidden="true" class="bg"></div>
+
+    <div class="app">
+      <header class="navbar">
+        <!-- Logo -->
+        <img src="img/logo.png" alt="Logo" class="brand-logo" />
+        <div class="brand">NHÀ HÀNG HY VỌNG</div>
+
+        <!-- Menu giữa -->
+        <div class="nav-left">
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Hệ thống <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="tai-khoan.html">Quản lý tài khoản</a>
+              <a href="quan-ly-ca.html">Quản lý ca</a>
+              <a href="dang-nhap.html">Đăng nhập</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Danh mục <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="thuc-don.html">Thực đơn</a>
+              <a href="khu-vuc.html">Khu vực</a>
+              <a href="nhan-vien.html">Nhân viên</a>
+              <a href="khach-hang.html">Khách hàng</a>
+              <a href="khuyen-mai.html">Khuyến mãi</a>
+              <a href="ban.html">Bàn</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Xử lý <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="order.html">Order</a>
+              <a href="dat-ban.html">Đặt bàn</a>
+              <a href="hoa-don.html">Hóa đơn</a>
+            </div>
+          </div>
+
+          <div class="menu-group">
+            <a class="menu-button" href="tra-cuu.html">Tra cứu</a>
+          </div>
+
+          <div class="menu-group current">
+            <a class="menu-button" href="thong-ke.html">Thống kê</a>
+          </div>
+        </div>
+
+        <div class="nav-right">
+          <a class="home-link" href="index.html">Trang chủ</a>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <h4>TRA CỨU</h4>
+          <p class="version">V1.2.0</p>
+          <button class="active" data-scroll="step-1">
+            <span class="material-symbols-outlined">search</span> Tìm món ăn
+          </button>
+          <button data-scroll="step-2">
+            <span class="material-symbols-outlined">table_restaurant</span> Tìm
+            bàn
+          </button>
+          <button data-scroll="step-3">
+            <span class="material-symbols-outlined">person_search</span> Tìm
+            khách hàng
+          </button>
+          <button data-scroll="step-4">
+            <span class="material-symbols-outlined">local_offer</span> Tìm
+            khuyến mãi
+          </button>
+        </aside>
+
+        <section class="content">
+          <div class="card">
+            <div class="title">Hướng dẫn tra cứu</div>
+            <div class="subtitle">
+              Hệ thống hỗ trợ tra cứu nhanh thông tin món ăn, bàn, khách hàng và
+              khuyến mãi.
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-1">
+                <div class="circle">1</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >search</span
+                    >
+                    Tìm kiếm món ăn
+                  </h3>
+                  <p>Tìm nhanh món ăn theo tên, mã món, loại món hoặc giá.</p>
+                  <ul>
+                    <li>Nhập tên hoặc mã món.</li>
+                    <li>Lọc theo loại món.</li>
+                    <li>Lọc theo giá.</li>
+                  </ul>
+                  <div class="panel-image">
+                    <img alt="Tìm món ăn" src="img/tim-monan.png" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-2">
+                <div class="circle">2</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >table_restaurant</span
+                    >
+                    Tìm kiếm bàn
+                  </h3>
+                  <p>
+                    Tra cứu nhanh tình trạng và thông tin bàn trong nhà hàng.
+                  </p>
+                  <ul>
+                    <li>Nhập mã bàn.</li>
+                    <li>Lọc trạng thái bàn.</li>
+                    <li>Xem bàn đang trống hay đã có khách.</li>
+                  </ul>
+                  <div class="panel-image">
+                    <img alt="Tìm bàn" src="img/tim-ban.png" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-3">
+                <div class="circle">3</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >person_search</span
+                    >
+                    Tìm kiếm khách hàng
+                  </h3>
+                  <p>Theo dõi thông tin khách hàng và lịch sử giao dịch.</p>
+                  <ul>
+                    <li>Nhập số điện thoại hoặc tên khách hàng.</li>
+                    <li>Xem lịch sử giao dịch.</li>
+                    <li>Kiểm tra thông tin liên hệ.</li>
+                  </ul>
+                  <div class="panel-image">
+                    <img alt="Tìm khách hàng" src="img/tim-khachhang.png" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-4">
+                <div class="circle">4</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >local_offer</span
+                    >
+                    Tìm kiếm khuyến mãi
+                  </h3>
+                  <p>Tra cứu nhanh các chương trình khuyến mãi đang áp dụng.</p>
+                  <ul>
+                    <li>Lọc theo thời gian.</li>
+                    <li>Xem trạng thái áp dụng.</li>
+                    <li>Theo dõi khuyến mãi đang hoạt động.</li>
+                  </ul>
+                  <div class="panel-image">
+                    <img alt="Tìm khuyến mãi" src="img/tim-khuyenmai.png" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const menuGroups = document.querySelectorAll("[data-menu]");
+
+      function closeAllMenus(except = null) {
+        menuGroups.forEach((g) => {
+          if (g !== except) g.classList.remove("open");
+        });
+      }
+
+      menuGroups.forEach((group) => {
+        const btn = group.querySelector("[data-toggle]");
+        if (!btn) return;
+
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isOpen = group.classList.contains("open");
+          closeAllMenus();
+          if (!isOpen) group.classList.add("open");
+        });
+      });
+
+      document.addEventListener("click", () => closeAllMenus());
+
+      document
+        .querySelectorAll(".sidebar button[data-scroll]")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".sidebar button")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const target = document.getElementById(btn.dataset.scroll);
+            if (!target) return;
+
+            const offset = 80;
+            const top =
+              target.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top, behavior: "smooth" });
+            window.history.replaceState(null, null, " ");
+          });
+        });
+    </script>
+  </body>
+</html>

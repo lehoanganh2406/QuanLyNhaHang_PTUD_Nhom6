@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Hướng dẫn Quản lý Hóa đơn</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <link href="css/gui.css" rel="stylesheet" />
+    <!-- <style>
+      .panel-image,
+      .screenshot-wrapper {
+        height: auto !important;
+        overflow: visible !important;
+        margin-top: 10px;
+      }
+
+      .panel-image img,
+      .screenshot-wrapper img {
+        display: block;
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+      }
+    </style> -->
+  </head>
+  <body>
+    <div aria-hidden="true" class="bg"></div>
+
+    <div class="app">
+      <header class="navbar">
+        <img src="img/logo.png" alt="Logo" class="brand-logo" />
+        <div class="brand">NHÀ HÀNG HY VỌNG</div>
+
+        <div class="nav-left">
+          <div class="menu-group" data-menu>
+            <button class="menu-button" data-toggle type="button">
+              Hệ thống <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="tai-khoan.html">Quản lý tài khoản</a>
+              <a href="quan-ly-ca.html">Quản lý ca</a>
+              <a href="dang-nhap.html">Đăng nhập</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu>
+            <button class="menu-button" data-toggle type="button">
+              Danh mục <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="thuc-don.html">Thực đơn</a>
+              <a href="khu-vuc.html">Khu vực</a>
+              <a href="nhan-vien.html">Nhân viên</a>
+              <a href="khach-hang.html">Khách hàng</a>
+              <a href="khuyen-mai.html">Khuyến mãi</a>
+              <a href="ban.html">Bàn</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu>
+            <button class="menu-button" data-toggle type="button">
+              Xử lý <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="order.html">Order</a>
+              <a href="dat-ban.html">Đặt bàn</a>
+              <a href="hoa-don.html">Hóa đơn</a>
+            </div>
+          </div>
+
+          <div class="menu-group">
+            <a class="menu-button" href="tra-cuu.html">Tra cứu</a>
+          </div>
+
+          <div class="menu-group current">
+            <a class="menu-button" href="thong-ke.html">Thống kê</a>
+          </div>
+        </div>
+
+        <div class="nav-right">
+          <a class="home-link" href="index.html">Trang chủ</a>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <h4>Quản lý hóa đơn</h4>
+          <p class="version">V1.2.0</p>
+
+          <button class="active" data-scroll="step-1">
+            <span class="material-symbols-outlined">receipt_long</span>
+            Chi tiết HD
+          </button>
+
+          <button data-scroll="step-2">
+            <span class="material-symbols-outlined">edit</span>
+            Cập nhật hóa đơn
+          </button>
+
+          <button data-scroll="step-3">
+            <span class="material-symbols-outlined">filter_alt</span>
+            Lọc HD
+          </button>
+
+          <button data-scroll="step-4">
+            <span class="material-symbols-outlined">search</span>
+            Tra cứu hóa đơn
+          </button>
+        </aside>
+
+        <section class="content">
+          <div class="card" id="guide-hoadon">
+            <div class="title">Hướng dẫn Quản lý hóa đơn</div>
+            <div class="subtitle">
+              Tài liệu hướng dẫn dành cho nhân viên và quản lý cách xem chi
+              tiết, cập nhật, lọc và tra cứu hóa đơn trong hệ thống.
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-1">
+                <div class="circle">1</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      receipt_long
+                    </span>
+                    Chi tiết hóa đơn
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chức năng này giúp xem đầy đủ thông tin của một hóa đơn
+                      đã tạo trong hệ thống.</i
+                    >
+                  </p>
+
+                  <ul>
+                    <li>Chọn một hóa đơn trong danh sách.</li>
+                    <li>Nhấn <b>Chi tiết Hóa Đơn</b> để mở cửa sổ chi tiết.</li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img src="img/chitiet-hoadon.png" alt="Chi tiết hóa đơn" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-2">
+                <div class="circle">2</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      edit
+                    </span>
+                    Cập nhật hóa đơn
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chức năng này cho phép cập nhật các thông tin liên quan
+                      đến hóa đơn khi cần chỉnh sửa.</i
+                    >
+                  </p>
+
+                  <ul>
+                    <li>Chọn hóa đơn cần cập nhật trong danh sách.</li>
+                    <li>
+                      Điều chỉnh thông tin khách hàng, hoặc phướng thức TT hoặc
+                      trạng thái.
+                    </li>
+                    <li>Nhấn <b>Cập nhật</b> để lưu thay đổi.</li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img src="img/capnhat-hd.png" alt="Cập nhật hóa đơn" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-3">
+                <div class="circle">3</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      filter_alt
+                    </span>
+                    Lọc hóa đơn
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chức năng này hỗ trợ lọc hóa đơn theo thời gian, trạng
+                      thái hoặc các tiêu chí liên quan.</i
+                    >
+                  </p>
+
+                  <ul>
+                    <li>
+                      Lọc theo khoảng thời gian hoặc theo trạng thái thanh toán.
+                    </li>
+                    <li>Nhấn <b>Lọc</b> để áp dụng các tiêu chí đã chọn.</li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img src="img/loc-hoadon.png" alt="Lọc hóa đơn" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-4">
+                <div class="circle">4</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      search
+                    </span>
+                    Tra cứu hóa đơn
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chức năng này giúp tìm nhanh hóa đơn theo mã, khách hàng,
+                      bàn hoặc số điện thoại.</i
+                    >
+                  </p>
+
+                  <ul>
+                    <li>Nhập từ khóa vào 1 trường nhập liệu bất kỳ.</li>
+                    <li>Nhấn <b>Tra cứu</b> để tìm kiếm.</li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img src="img/tracuu-hd.png" alt="Tra cứu hóa đơn" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const menuGroups = document.querySelectorAll("[data-menu]");
+
+      function closeAllMenus(except = null) {
+        menuGroups.forEach((g) => {
+          if (g !== except) g.classList.remove("open");
+        });
+      }
+
+      menuGroups.forEach((group) => {
+        const btn = group.querySelector("[data-toggle]");
+        if (!btn) return;
+
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isOpen = group.classList.contains("open");
+          closeAllMenus();
+          if (!isOpen) group.classList.add("open");
+        });
+      });
+
+      document.addEventListener("click", () => closeAllMenus());
+
+      document
+        .querySelectorAll(".sidebar button[data-scroll]")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".sidebar button")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const target = document.getElementById(btn.dataset.scroll);
+            if (!target) return;
+
+            const offset = 80;
+            const top =
+              target.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top, behavior: "smooth" });
+            window.history.replaceState(null, null, " ");
+          });
+        });
+    </script>
+  </body>
+</html>

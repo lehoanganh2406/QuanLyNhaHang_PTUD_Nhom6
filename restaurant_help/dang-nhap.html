@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Hướng dẫn Đăng nhập</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <link href="css/gui.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <div aria-hidden="true" class="bg"></div>
+
+    <div class="app">
+      <header class="navbar">
+        <img src="img/logo.png" alt="Logo" class="brand-logo" />
+        <div class="brand">NHÀ HÀNG HY VỌNG</div>
+
+        <div class="nav-left">
+          <div class="menu-group current" data-menu>
+            <button class="menu-button" data-toggle type="button">
+              Hệ thống <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="tai-khoan.html">Quản lý tài khoản</a>
+              <a href="quan-ly-ca.html">Quản lý ca</a>
+              <a href="dang-nhap.html">Đăng nhập</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu>
+            <button class="menu-button" data-toggle type="button">
+              Danh mục <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="thuc-don.html">Thực đơn</a>
+              <a href="khu-vuc.html">Khu vực</a>
+              <a href="nhan-vien.html">Nhân viên</a>
+              <a href="khach-hang.html">Khách hàng</a>
+              <a href="khuyen-mai.html">Khuyến mãi</a>
+              <a href="ban.html">Bàn</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu>
+            <button class="menu-button" data-toggle type="button">
+              Xử lý <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="order.html">Order</a>
+              <a href="dat-ban.html">Đặt bàn</a>
+              <a href="hoa-don.html">Hóa đơn</a>
+            </div>
+          </div>
+
+          <div class="menu-group">
+            <a class="menu-button" href="tra-cuu.html">Tra cứu</a>
+          </div>
+
+          <div class="menu-group">
+            <a class="menu-button" href="thong-ke.html">Thống kê</a>
+          </div>
+        </div>
+
+        <div class="nav-right">
+          <a class="home-link" href="index.html">Trang chủ</a>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <h4>Hỗ trợ đăng nhập</h4>
+          <p class="version">V1.2.0</p>
+
+          <button class="active" data-scroll="step-1">
+            <span class="material-symbols-outlined">lock_reset</span>
+            Quên mật khẩu
+          </button>
+
+          <button data-scroll="step-2">
+            <span class="material-symbols-outlined">key</span>
+            Đổi mật khẩu
+          </button>
+        </aside>
+
+        <section class="content">
+          <div class="card" id="guide-dangnhap">
+            <div class="title">Hướng dẫn Đăng nhập</div>
+            <div class="subtitle">
+              Tài liệu hướng dẫn dành cho nhân viên và quản lý về cách xử lý
+              quên mật khẩu và đổi mật khẩu trong hệ thống.
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-1">
+                <div class="circle">1</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      lock_reset
+                    </span>
+                    Quên mật khẩu
+                  </h3>
+
+                  <p>
+                    <i
+                      >Khi không nhớ mật khẩu đăng nhập, người dùng có thể sử
+                      dụng chức năng quên mật khẩu ngay trên giao diện đăng nhập
+                      để khôi phục lại tài khoản.</i
+                    >
+                  </p>
+
+                  <ul>
+                    <li>
+                      Nhấn vào nút <b>Quên mật khẩu</b> trên màn hình đăng nhập.
+                    </li>
+                    <li>Nhập số điện thoại cần khôi phục.</li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <div><img src="img/quen-mk.png" alt="" /></div>
+                  </div>
+                  <ol start="3">
+                    <li>
+                      Hệ thống sẽ gửi mã xác thực về email của số điện thoại đã
+                      nhập nếu tồn tại tài khoản liên kết.
+                    </li>
+                  </ol>
+                  <div class="panel-image">
+                    <div><img src="img/gui-email.jpg" alt="" /></div>
+                  </div>
+                  <ol start="4">
+                    <li>
+                      Mã được gửi sẽ có dạng 6 chữ số vào email trên điện thoại
+                    </li>
+                  </ol>
+                  <div class="panel-image">
+                    <div>
+                      <img
+                        src="img/email.jpg"
+                        alt=""
+                        style="
+                          width: 58%;
+                          max-width: 700px;
+                          border-radius: 14px;
+                          display: block;
+                          margin: 20px auto;
+                          box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+                        "
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-2">
+                <div class="circle">2</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                    >
+                      key
+                    </span>
+                    Đổi mật khẩu
+                  </h3>
+
+                  <p>
+                    <i
+                      >Chức năng này dùng để đổi mật khẩu khi người dùng đã đăng
+                      nhập thành công vào hệ thống.</i
+                    >
+                  </p>
+
+                  <ul>
+                    <li>
+                      Sau khi đã có mã xác thực 6 số . nhập mã vào ô tương ứng.
+                    </li>
+                    <li>Nhập mật khẩu <b>Mới</b>.</li>
+                    <li>Nhập mật khẩu mới để xác nhận lại lần nữa.</li>
+                    <li>Nhấn <b>Lưu</b> để cập nhật .</li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <div><img src="img/doi-mk.jpg" alt="" /></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const menuGroups = document.querySelectorAll("[data-menu]");
+
+      function closeAllMenus(except = null) {
+        menuGroups.forEach((g) => {
+          if (g !== except) g.classList.remove("open");
+        });
+      }
+
+      menuGroups.forEach((group) => {
+        const btn = group.querySelector("[data-toggle]");
+        if (!btn) return;
+
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isOpen = group.classList.contains("open");
+          closeAllMenus();
+          if (!isOpen) group.classList.add("open");
+        });
+      });
+
+      document.addEventListener("click", () => closeAllMenus());
+
+      document
+        .querySelectorAll(".sidebar button[data-scroll]")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".sidebar button")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const target = document.getElementById(btn.dataset.scroll);
+            if (!target) return;
+
+            const offset = 80;
+            const top =
+              target.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top, behavior: "smooth" });
+            window.history.replaceState(null, null, " ");
+          });
+        });
+    </script>
+  </body>
+</html>

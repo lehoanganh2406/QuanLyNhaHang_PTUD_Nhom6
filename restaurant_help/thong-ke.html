@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Hướng dẫn Thống kê</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <link href="css/gui.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <div aria-hidden="true" class="bg"></div>
+
+    <div class="app">
+      <header class="navbar">
+        <img src="img/logo.png" alt="Logo" class="brand-logo" />
+        <div class="brand">NHÀ HÀNG HY VỌNG</div>
+
+        <div class="nav-left">
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Hệ thống <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="tai-khoan.html">Quản lý tài khoản</a>
+              <a href="quan-ly-ca.html">Quản lý ca</a>
+              <a href="dang-nhap.html">Đăng nhập</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Danh mục <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="thuc-don.html">Thực đơn</a>
+              <a href="khu-vuc.html">Khu vực</a>
+              <a href="nhan-vien.html">Nhân viên</a>
+              <a href="khach-hang.html">Khách hàng</a>
+              <a href="khuyen-mai.html">Khuyến mãi</a>
+              <a href="ban.html">Bàn</a>
+            </div>
+          </div>
+
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Xử lý <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="order.html">Order</a>
+              <a href="dat-ban.html">Đặt bàn</a>
+              <a href="hoa-don.html">Hóa đơn</a>
+            </div>
+          </div>
+
+          <div class="menu-group">
+            <a class="menu-button" href="tra-cuu.html">Tra cứu</a>
+          </div>
+
+          <div class="menu-group current">
+            <a class="menu-button" href="thong-ke.html">Thống kê</a>
+          </div>
+        </div>
+
+        <div class="nav-right">
+          <a class="home-link" href="index.html">Trang chủ</a>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <h4>Help Center</h4>
+          <p class="version">V1.2.0</p>
+          <button class="active" data-scroll="step-1">
+            <span class="material-symbols-outlined">schedule</span> Thống kê
+            theo ca
+          </button>
+          <button data-scroll="step-2">
+            <span class="material-symbols-outlined">analytics</span> Phân tích
+            bán hàng
+          </button>
+          <button data-scroll="step-3">
+            <span class="material-symbols-outlined">receipt_long</span> Tổng kết
+            bán hàng
+          </button>
+        </aside>
+
+        <section class="content">
+          <div class="card" id="guide-baocao">
+            <div class="title">Hướng dẫn Thống kê</div>
+            <div class="subtitle">
+              Tài liệu hướng dẫn chi tiết dành cho quản lý và chủ quán cách theo
+              dõi thống kê theo ca, phân tích bán hàng và xem tổng kết doanh
+              thu.
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-1">
+                <div class="circle">1</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >schedule</span
+                    >
+                    Thống kê theo ca
+                  </h3>
+                  <p>
+                    <i
+                      >Kiểm tra doanh thu chi tiết trong ca làm việc, theo dõi
+                      biểu đồ doanh thu theo giờ và xác nhận tổng kết ca.</i
+                    >
+                  </p>
+                  <ul>
+                    <li>
+                      Mở màn hình Thống kê theo ca để xem thông tin mở ca (Tạo
+                      lúc, Tiền đầu ca).
+                    </li>
+                    <li>Theo dõi biểu đồ Doanh thu trong ca theo giờ.</li>
+                    <li>
+                      Thực hiện <b>Xác nhận tổng kết ca</b> cuối mỗi buổi làm ,
+                      hệ thống sẽ tính toán và hiển thị
+                      <b>Số đầu ca, Tiền mặt, Chuyển khoản và Tổng thu.</b>
+                    </li>
+                  </ul>
+                  <div class="panel-image">
+                    <img alt="Thống kê theo ca" src="img/tong-ket-ca.png" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-2">
+                <div class="circle">2</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >analytics</span
+                    >
+                    Phân tích bán hàng
+                  </h3>
+                  <p>
+                    <i
+                      >Bảng phân tích chi tiết doanh thu, chi phí nguyên liệu và
+                      lợi nhuận.</i
+                    >
+                  </p>
+                  <ul>
+                    <li>
+                      Xem tóm tắt tổng Doanh thu, Chi phí nguyên liệu và Lợi
+                      nhuận gộp ở đầu trang.
+                    </li>
+                    <li>
+                      Theo dõi biểu đồ Doanh thu - Chi phí - Lợi nhuận để có cái
+                      nhìn tổng quan.và bảng tóm tắt lời lỗ để đưa ra quyết định
+                      kinh doanh.
+                    </li>
+                    <li>
+                      Kiểm tra Bảng phân tích món ăn chi tiết: bao gồm
+                      <b>SL bán, Giá vốn, Doanh thu, Chi phí, và Lợi nhuận</b>
+                      cho từng món ăn.
+                    </li>
+                  </ul>
+                  <div class="panel-image">
+                    <img
+                      alt="Phân tích bán hàng"
+                      src="img/phan-tich-ban-hang.png"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step" id="step-3">
+                <div class="circle">3</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >receipt_long</span
+                    >
+                    Tổng kết bán hàng
+                  </h3>
+                  <p>
+                    <i
+                      >Xem tóm tắt hoạt động kinh doanh trong khoảng thời gian
+                      đã chọn và xuất báo cáo chi tiết.</i
+                    >
+                  </p>
+                  <ul>
+                    <li>
+                      Xem nhanh các chỉ số: Số món đã bán, Tổng số lượng, Tổng
+                      doanh thu, và Món bán chạy nhất.
+                    </li>
+                    <li>
+                      Kiểm tra Danh sách chi tiết các món đã bán với số lượng,
+                      đơn giá và tổng cộng.
+                    </li>
+                    <li>
+                      Xem biểu đồ cột thể hiện Top Món Bán Chạy ở góc phải.
+                    </li>
+                    <li>
+                      Sử dụng chức năng <b>Xuất báo cáo</b> để tải dữ liệu về
+                      máy.
+                    </li>
+                  </ul>
+                  <div class="panel-image">
+                    <img
+                      alt="Tổng kết bán hàng"
+                      src="img/tong-ket-ban-hang.png"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const menuGroups = document.querySelectorAll("[data-menu]");
+
+      function closeAllMenus(except = null) {
+        menuGroups.forEach((g) => {
+          if (g !== except) g.classList.remove("open");
+        });
+      }
+
+      menuGroups.forEach((group) => {
+        const btn = group.querySelector("[data-toggle]");
+        if (!btn) return;
+
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isOpen = group.classList.contains("open");
+          closeAllMenus();
+          if (!isOpen) group.classList.add("open");
+        });
+      });
+
+      document.addEventListener("click", () => closeAllMenus());
+
+      document
+        .querySelectorAll(".sidebar button[data-scroll]")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".sidebar button")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const target = document.getElementById(btn.dataset.scroll);
+            if (!target) return;
+
+            const offset = 80;
+            const top =
+              target.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top, behavior: "smooth" });
+            window.history.replaceState(null, null, " ");
+          });
+        });
+    </script>
+  </body>
+</html>

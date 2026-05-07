@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Hướng dẫn Quy trình Order</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link href="css/gui.css" rel="stylesheet" />
+    <!-- <style>
+      /* Bản vá lỗi hiển thị ảnh để không bị che khuất */
+      .panel-image, .screenshot-wrapper {
+        height: auto !important; 
+        max-height: none !important;
+        overflow: visible !important;
+        display: block !important;
+        margin: 20px 0;
+      }
+      .panel-image img, .screenshot-wrapper img {
+        width: 100% !important;
+        height: auto !important;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      }
+      .step-container { margin-bottom: 40px; }
+      h3 .material-symbols-outlined { vertical-align: middle; margin-right: 8px; }
+    </style> -->
+  </head>
+  <body>
+    <div aria-hidden="true" class="bg"></div>
+
+    <div class="app">
+      <header class="navbar">
+        <img src="img/logo.png" alt="Logo" class="brand-logo" />
+        <div class="brand">NHÀ HÀNG HY VỌNG</div>
+        <div class="nav-left">
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Hệ thống <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="tai-khoan.html">Quản lý tài khoản</a>
+              <a href="quan-ly-ca.html">Quản lý ca</a>
+            </div>
+          </div>
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Danh mục <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="thuc-don.html">Thực đơn</a>
+              <a href="khu-vuc.html">Khu vực</a>
+              <a href="nhan-vien.html">Nhân viên</a>
+              <a href="khach-hang.html">Khách hàng</a>
+              <a href="ban.html">Bàn</a>
+            </div>
+          </div>
+          <div class="menu-group" data-menu="">
+            <button class="menu-button" data-toggle="" type="button">
+              Xử lý <span class="caret">▼</span>
+            </button>
+            <div class="dropdown">
+              <a href="order.html">Order</a>
+              <a href="dat-ban.html">Đặt bàn</a>
+              <a href="hoa-don.html">Hóa đơn</a>
+            </div>
+          </div>
+          <div class="menu-group current">
+            <a class="menu-button" href="tra-cuu.html">Tra cứu</a>
+          </div>
+          <div class="menu-group">
+            <a class="menu-button" href="thong-ke.html">Thống kê</a>
+          </div>
+        </div>
+        <div class="nav-right">
+          <a class="home-link" href="index.html">Trang chủ</a>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="sidebar">
+          <h4>Quy trình Order</h4>
+          <p class="version">V1.2.0</p>
+          <button class="active" data-scroll="step-1">
+            <span class="material-symbols-outlined">restaurant</span>Gọi món
+          </button>
+          <button data-scroll="step-2">
+            <span class="material-symbols-outlined">call_split</span>Tách bàn
+          </button>
+          <button data-scroll="step-3">
+            <span class="material-symbols-outlined">swap_horiz</span>Chuyển bàn
+          </button>
+          <button data-scroll="step-4">
+            <span class="material-symbols-outlined">payments</span>Thanh toán
+          </button>
+          <button data-scroll="step-5">
+            <span class="material-symbols-outlined">description</span>Chi tiết
+            hóa đơn
+          </button>
+        </aside>
+
+        <section class="content">
+          <div class="card" id="guide-order">
+            <div class="title">Hướng dẫn Nghiệp vụ Order</div>
+            <div class="subtitle">
+              Tài liệu hướng dẫn nhân viên thực hiện các thao tác phục vụ tại
+              bàn từ gọi món đến thanh toán.
+            </div>
+
+            <!-- BƯỚC 1: GỌI MÓN -->
+            <div class="step-container" id="step-1">
+              <div class="step">
+                <div class="circle">1</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >restaurant</span
+                    >Chọn bàn và Gọi món
+                  </h3>
+                  <p>
+                    <i
+                      >Quy trình bắt đầu bằng việc xác định vị trí ngồi cho
+                      khách hàng:</i
+                    >
+                  </p>
+                  <ul>
+                    <li>
+                      Chọn một <strong>bàn trống (màu xanh dương)</strong> bất
+                      kỳ phù hợp với số lượng người đi cùng khách.
+                    </li>
+                    <div class="panel-image">
+                      <img
+                        src="img/chon-ban.jpg"
+                        alt="Màn hình sơ đồ bàn"
+                        style="height: 90%"
+                      />
+                    </div>
+                    <li>
+                      Tại màn hình Order, nhấn vào hình ảnh các món ăn để đưa
+                      vào hóa đơn tạm tính ở cột bên phải.
+                    </li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img src="img/goi-mon.jpg" alt="Giao diện gọi món" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BƯỚC 2: TÁCH BÀN -->
+            <div class="step-container" id="step-2">
+              <div class="step">
+                <div class="circle">2</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >call_split</span
+                    >Thao tác Tách bàn
+                  </h3>
+                  <p>
+                    <i
+                      >Dùng khi một nhóm khách muốn tách ra ngồi các bàn riêng
+                      hoặc thanh toán riêng món ăn:</i
+                    >
+                  </p>
+                  <ol>
+                    <li>
+                      Nhấn nút <strong>"Tách bàn"</strong> ngay tại màn hình
+                      Order.
+                    </li>
+                    <li>
+                      Chọn món ăn, số lượng cần tách và chọn bàn đích muốn
+                      chuyển sang, sau đó xác nhận.
+                    </li>
+                  </ol>
+                  <div class="panel-image">
+                    <img src="img/tach-ban.png" alt="Popup tách bàn" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BƯỚC 3: CHUYỂN BÀN -->
+            <div class="step-container" id="step-3">
+              <div class="step">
+                <div class="circle">3</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >swap_horiz</span
+                    >Thao tác Chuyển bàn
+                  </h3>
+                  <p>
+                    <i>Thực hiện khi khách có nhu cầu đổi vị trí ngồi:</i>
+                  </p>
+                  <ol>
+                    <li>
+                      Nhấn nút <strong>"Chuyển bàn"</strong> trên giao diện xử
+                      lý.
+                    </li>
+                    <li>
+                      Chọn bàn trống muốn chuyển sang từ danh sách thả xuống và
+                      nhấn <strong>Đồng ý</strong>.
+                    </li>
+                  </ol>
+                  <div class="panel-image">
+                    <img src="img/chuyen-ban.png" alt="Popup chuyển bàn" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BƯỚC 4: THANH TOÁN -->
+            <div class="step-container" id="step-4">
+              <div class="step">
+                <div class="circle">4</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >payments</span
+                    >Quy trình Thanh toán
+                  </h3>
+                  <p>
+                    <i
+                      >Sau khi khách hoàn tất dùng bữa, tiến hành thực hiện các
+                      bước:</i
+                    >
+                  </p>
+
+                  <!-- Sử dụng ul để không bị nhảy số 1, 2, 3 -->
+                  <ul style="list-style-type: disc">
+                    <li>
+                      <strong>Nhập SĐT khách hàng:</strong> Hệ thống tự truy
+                      xuất tên khách cũ hoặc tạo Khách mới (điểm tích lũy = 0).
+                    </li>
+                    <li style="list-style-type: none; margin-top: 10px">
+                      <strong>a. Nếu tính tiền mặt:</strong> Nhập số tiền khách
+                      trả, hệ thống tự động tính tiền thừa.
+                    </li>
+                    <li style="list-style-type: none">
+                      <strong>b. Nếu chuyển khoản:</strong> Khách chọn chuyển
+                      khoản, màn hình sẽ hiển thị <strong>QR Code</strong> ngân
+                      hàng.
+                    </li>
+                  </ul>
+
+                  <div class="panel-image">
+                    <img
+                      src="img/thanh-toan-chuyenkhoan.jpg"
+                      alt="Màn hình thanh toán"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BƯỚC 5: CHI TIẾT HÓA ĐƠN -->
+            <div class="step-container" id="step-5">
+              <div class="step">
+                <div class="circle">5</div>
+                <div>
+                  <h3>
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-variation-settings: &quot;FILL&quot; 1"
+                      >description</span
+                    >Xuất Hóa đơn / Phiếu tạm tính
+                  </h3>
+                  <ul>
+                    <li>
+                      Nhấn <strong>"Tạm tính"</strong>: Hiển thị phiếu tạm tính
+                      để nhân viên kiểm tra danh sách món.
+                    </li>
+                    <li>
+                      Nhấn <strong>"Thanh toán"</strong>: Xác nhận thu tiền và
+                      hiển thị hóa đơn chính thức.
+                    </li>
+                  </ul>
+                  <div class="panel-image" style="display: flex; gap: 10px">
+                    <img
+                      src="img/tam-tinh.jpg"
+                      alt="Phiếu tạm tính"
+                      style="width: 50% !important"
+                    />
+                    <img
+                      src="img/hoa-don.jpg"
+                      alt="Hóa đơn thanh toán"
+                      style="width: 50% !important"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      // Xử lý đóng/mở Menu dropdown trên navbar
+      const menuGroups = document.querySelectorAll("[data-menu]");
+      function closeAllMenus(except = null) {
+        menuGroups.forEach((g) => {
+          if (g !== except) g.classList.remove("open");
+        });
+      }
+      menuGroups.forEach((group) => {
+        const btn = group.querySelector("[data-toggle]");
+        if (!btn) return;
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isOpen = group.classList.contains("open");
+          closeAllMenus();
+          if (!isOpen) group.classList.add("open");
+        });
+      });
+      document.addEventListener("click", () => closeAllMenus());
+
+      // Xử lý cuộn trang mượt mà từ sidebar
+      document
+        .querySelectorAll(".sidebar button[data-scroll]")
+        .forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document
+              .querySelectorAll(".sidebar button")
+              .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            const target = document.getElementById(btn.dataset.scroll);
+            if (!target) return;
+            const offset = 80;
+            const top =
+              target.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top, behavior: "smooth" });
+            window.history.replaceState(null, null, " ");
+          });
+        });
+    </script>
+  </body>
+</html>

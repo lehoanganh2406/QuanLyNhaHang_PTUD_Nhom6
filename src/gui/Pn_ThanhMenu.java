@@ -410,7 +410,7 @@ public class Pn_ThanhMenu extends JPanel {
         if ("__HOTRO__".equals(targetClassName)) {
             try {
                 Desktop.getDesktop().browse(
-                    new java.net.URI("https://ngoctien2000.github.io/restaurant-help/")
+                    new java.net.URI("https://quanlynhahang-ptud-nhom6.netlify.app/")
                 );
             } catch (Exception e) {
                 e.printStackTrace();

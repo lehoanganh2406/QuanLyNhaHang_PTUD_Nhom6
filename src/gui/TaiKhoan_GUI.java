@@ -170,6 +170,7 @@ public class TaiKhoan_GUI extends JFrame {
         txtMaDangNhap.setDisabledTextColor(new Color(70, 70, 70));
 
         cbVaiTro = createRoundedComboBox(new String[]{"Quản lý", "Lễ tân"});
+        cbVaiTro.setEnabled(false);
         addRow(pnlFields, gbc, 0, "Mã tài khoản", txtMaDangNhap, "Vai trò", cbVaiTro);
 
         txtTenDangNhap = createTextField();
@@ -182,16 +183,40 @@ public class TaiKhoan_GUI extends JFrame {
         cbNhanVien.addItem("--Chọn nhân viên---");
 
 
-        dsNV = nv_dao.getTenNhanVien();
+        dsNV = nv_dao.getNhanVienDayDu();
         for (NhanVien nv : dsNV) cbNhanVien.addItem(nv.getHoTen());
 
+//        cbNhanVien.addActionListener(e -> {
+//            int index = cbNhanVien.getSelectedIndex();
+//            if (index > 0) {
+//                NhanVien nv = dsNV.get(index - 1);
+//                txtTenDangNhap.setText(nv.getMaNV());
+//                loadAnhNhanVien(nv.getAnhNhanVien());
+//            }
+//        });
         cbNhanVien.addActionListener(e -> {
             int index = cbNhanVien.getSelectedIndex();
-            if (index > 0) {
-                NhanVien nv = dsNV.get(index - 1);
-                txtTenDangNhap.setText(nv.getMaNV());
-                loadAnhNhanVien(nv.getAnhNhanVien());
+
+            if (index <= 0) {
+                txtTenDangNhap.setText("");
+                cbVaiTro.setSelectedIndex(0);
+                lblAnh.setIcon(null);
+                lblAnh.setText("Chưa có ảnh");
+                return;
             }
+
+            NhanVien nv = dsNV.get(index - 1);
+
+            txtTenDangNhap.setText(nv.getMaNV());
+
+            String chucVu = nv.getChucVu();
+            if (chucVu != null && chucVu.trim().equalsIgnoreCase("Quản lý")) {
+                cbVaiTro.setSelectedItem("Quản lý");
+            } else {
+                cbVaiTro.setSelectedItem("Lễ tân");
+            }
+
+            loadAnhNhanVien(nv.getAnhNhanVien());
         });
 
         addRow(pnlFields, gbc, 1, "Tên đăng nhập", txtTenDangNhap, "Nhân viên", cbNhanVien);
@@ -599,7 +624,7 @@ public class TaiKhoan_GUI extends JFrame {
         txtMatKhau.setEnabled(true);
         cbNhanVien.setEnabled(true);
         cbVaiTro.setSelectedIndex(0);
-        cbVaiTro.setEnabled(true);
+        cbVaiTro.setEnabled(false);
         cbNhanVien.setSelectedIndex(0);
         cbTrangThai.setSelectedIndex(0);
         lblAnh.setIcon(null);
@@ -784,7 +809,7 @@ public class TaiKhoan_GUI extends JFrame {
         cbNhanVien.setEnabled(true);
         cbNhanVien.setFocusable(false);
 
-        cbVaiTro.setEnabled(true);
+        cbVaiTro.setEnabled(false);
         cbVaiTro.setFocusable(false);
 
         cbTrangThai.setEnabled(true);
@@ -847,9 +872,35 @@ public class TaiKhoan_GUI extends JFrame {
         return String.format("TK%02d", max + 1);
     }
 
+//    private void loadAnhNhanVien(String fileName) {
+//        if (fileName != null && !fileName.isEmpty()) {
+//            String path = System.getProperty("user.dir") + "/img/" + fileName;
+//
+//            ImageIcon icon = new ImageIcon(path);
+//
+//            if (icon.getIconWidth() > 0) {
+//                Image img = icon.getImage().getScaledInstance(sc(150), sc(170), Image.SCALE_SMOOTH);
+//                lblAnh.setIcon(new ImageIcon(img));
+//                lblAnh.setText("");
+//            } else {
+//                lblAnh.setIcon(null);
+//                lblAnh.setText("Không tìm thấy ảnh");
+//            }
+//
+//
+//        } else {
+//            lblAnh.setIcon(null);
+//            lblAnh.setText("Chưa có ảnh");
+//        }
+//    }
     private void loadAnhNhanVien(String fileName) {
         if (fileName != null && !fileName.isEmpty()) {
-            String path = System.getProperty("user.dir") + "/img/" + fileName;
+
+            String path = fileName;
+
+            if (!fileName.contains(":") && !fileName.startsWith("img/") && !fileName.startsWith("img\\")) {
+                path = System.getProperty("user.dir") + "/img/" + fileName;
+            }
 
             ImageIcon icon = new ImageIcon(path);
 
@@ -861,8 +912,6 @@ public class TaiKhoan_GUI extends JFrame {
                 lblAnh.setIcon(null);
                 lblAnh.setText("Không tìm thấy ảnh");
             }
-
-
         } else {
             lblAnh.setIcon(null);
             lblAnh.setText("Chưa có ảnh");

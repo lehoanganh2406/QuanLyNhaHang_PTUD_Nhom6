@@ -763,8 +763,3 @@ SELECT * FROM PhieuDatMon;
 SELECT * FROM HoaDon;
 SELECT * FROM ChiTietHoaDon;
 GO
-
-
-
-
-

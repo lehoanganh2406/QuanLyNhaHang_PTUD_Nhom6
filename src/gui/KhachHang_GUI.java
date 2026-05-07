@@ -159,7 +159,7 @@ public class KhachHang_GUI extends JPanel {
 
         txtMaKH.setToolTipText("Mã khách hàng được hệ thống tự sinh và không được chỉnh sửa.");
         txtTenKH.setToolTipText("Tên khách hàng phải có ít nhất 2 từ và sẽ được tự động viết hoa chữ cái đầu.");
-        txtDiemTichLuy.setToolTipText("Khi thêm mới mặc định là 0.\nKhi cập nhật có thể chỉnh sửa.");
+        txtDiemTichLuy.setToolTipText("Điểm tích lũy không sửa tại đây.\nĐiểm được cộng tự động dựa trên chi tiêu của khách hàng.");
         txtSDT.setToolTipText("Số điện thoại phải gồm 10 số và bắt đầu bằng số 0.\nVí dụ: 0912345678");
 
         cbLoaiKH = new JComboBox<>();
@@ -332,8 +332,6 @@ public class KhachHang_GUI extends JPanel {
         btnCapNhat.addActionListener(e -> capNhatKhachHang());
         btnLamMoi.addActionListener(e -> lamMoi());
         btnTraCuu.addActionListener(e -> traCuu());
-
-        ganSuKienTuDongCapNhatLoaiTheoDiem();
     }
 
     private void ganSuKienTuDongCapNhatLoaiTheoDiem() {
@@ -507,7 +505,6 @@ public class KhachHang_GUI extends JPanel {
 
         String maKH = getValue(row, 0);
         String tenKH = getInputText(txtTenKH);
-        String diemText = getInputText(txtDiemTichLuy);
         String sdt = getInputText(txtSDT);
 
         if (tenKH.isEmpty()) {
@@ -524,18 +521,6 @@ public class KhachHang_GUI extends JPanel {
 
         tenKH = chuanHoaHoTen(tenKH);
 
-        if (diemText.isEmpty()) {
-            baoLoiNhapLieu(txtDiemTichLuy, "Điểm tích lũy không được để trống khi cập nhật.");
-            return;
-        }
-
-        if (!kiemTraDiemTichLuy(diemText)) {
-            baoLoiNhapLieu(txtDiemTichLuy, "Điểm tích lũy phải là số nguyên không âm.");
-            return;
-        }
-
-        int diem = Integer.parseInt(diemText);
-
         if (!kiemTraSoDienThoai(sdt)) {
             baoLoiNhapLieu(txtSDT,
                     "Số điện thoại không hợp lệ.\n"
@@ -549,32 +534,37 @@ public class KhachHang_GUI extends JPanel {
             return;
         }
 
-        // Không lấy loại khách hàng từ combobox nữa.
-        // Loại khách hàng tự động phụ thuộc vào điểm tích lũy:
-        // < 20: Thường, >= 20: Vàng, >= 100: Kim cương.
-        LoaiKhachHang loaiKH = getLoaiKhachHangTheoDiem(diem);
-
-        if (loaiKH == null) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Không tìm thấy loại khách hàng phù hợp trong SQL.\n"
-                            + "Cần có 3 loại: Thường, Vàng, Kim cương.",
-                    "Lỗi loại khách hàng",
-                    JOptionPane.ERROR_MESSAGE
-            );
+        KhachHang khCu = khachHangDAO.getKhachHangTheoMa(maKH);
+        if (khCu == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Không tìm thấy khách hàng cần cập nhật trong SQL.",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        chonLoaiKhachHang(loaiKH.getMaLoaiKH());
+        // Chỉ cho sửa tên và số điện thoại.
+        // Điểm tích lũy không sửa ở giao diện này, vì điểm được cộng dựa trên chi tiêu/hóa đơn.
+        int diemHienTai = khCu.getDiemTichLuy();
+        LoaiKhachHang loaiKH = getLoaiKhachHangTheoDiem(diemHienTai);
 
-        KhachHang kh = new KhachHang(maKH, tenKH, sdt, loaiKH, diem);
+        if (loaiKH == null) {
+            loaiKH = khCu.getMaLoaiKH();
+        }
+
+        if (loaiKH == null) {
+            loaiKH = getLoaiKhachHangThuong();
+        }
+
+        chonLoaiKhachHang(loaiKH == null ? null : loaiKH.getMaLoaiKH());
+
+        KhachHang kh = new KhachHang(maKH, tenKH, sdt, loaiKH, diemHienTai);
 
         if (khachHangDAO.capNhatKhachHang(kh)) {
-            JOptionPane.showMessageDialog(
-                    this,
+            JOptionPane.showMessageDialog(this,
                     "Cập nhật khách hàng thành công!\n"
-                            + "Loại khách hàng hiện tại: " + loaiKH.getTenLoaiKH()
-            );
+                            + "Chỉ thay đổi tên và số điện thoại.\n"
+                            + "Điểm tích lũy được giữ nguyên: " + diemHienTai);
             daThongBaoKhach6Thang = false;
             loadKhachHangTuSQL();
             thongBaoKhach6ThangNeuCan();
@@ -684,11 +674,12 @@ public class KhachHang_GUI extends JPanel {
         txtSDT.setFocusable(true);
         txtSDT.setBackground(Color.WHITE);
 
-        txtDiemTichLuy.setEditable(true);
-        txtDiemTichLuy.setFocusable(true);
-        txtDiemTichLuy.setBackground(Color.WHITE);
+        txtDiemTichLuy.setEditable(false);
+        txtDiemTichLuy.setFocusable(false);
+        txtDiemTichLuy.setBackground(new Color(245, 245, 245));
 
-        // Không cho sửa loại khách hàng thủ công.
+        // Không cho sửa điểm tích lũy và loại khách hàng thủ công.
+        // Điểm tích lũy được cộng dựa trên chi tiêu/hóa đơn.
         // Loại khách hàng chỉ phụ thuộc vào điểm tích lũy.
         cbLoaiKH.setEnabled(false);
         cbLoaiKH.setBackground(new Color(245, 245, 245));
@@ -1123,7 +1114,7 @@ public class KhachHang_GUI extends JPanel {
 
         txtMaKH.setToolTipText("Mã khách hàng được hệ thống tự sinh và không được chỉnh sửa.");
         txtTenKH.setToolTipText("Tên khách hàng phải có ít nhất 2 từ và sẽ được tự động viết hoa chữ cái đầu.");
-        txtDiemTichLuy.setToolTipText("Khi thêm mới mặc định là 0.\nKhi cập nhật có thể chỉnh sửa.");
+        txtDiemTichLuy.setToolTipText("Điểm tích lũy không sửa tại đây.\nĐiểm được cộng tự động dựa trên chi tiêu của khách hàng.");
         txtSDT.setToolTipText("Số điện thoại phải gồm 10 số và bắt đầu bằng số 0.\nVí dụ: 0912345678");
     }
 

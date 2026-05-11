@@ -41,11 +41,10 @@ import javax.swing.border.LineBorder;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 
 import dao.PhieuDatBan_DAO;
-import dao.PhieuDatMon_DAO;
-import entity.PhieuDatMon;
+import dao.ChiTietDatMon_DAO;
+import entity.ChiTietDatMon;
 
 public class HuyBan_DigLog extends JDialog {
-    private static final long serialVersionUID = 1L;
 
     private JTextField txtMaPhieu;
     private JTextField txtTienCoc;
@@ -363,8 +362,11 @@ public class HuyBan_DigLog extends JDialog {
 
             boolean coDatMonDB = coDatMonTruyenVao;
             try {
-                PhieuDatMon_DAO pdmDao = new PhieuDatMon_DAO();
-                ArrayList<PhieuDatMon> dsMon = pdmDao.getDanhSachTheoMaPhieu(maPhieuDatBan);
+                ChiTietDatMon_DAO pdmDao = new ChiTietDatMon_DAO();
+                ArrayList<ChiTietDatMon> dsMon =
+                        pdmDao.getDanhSachTheoMaPhieuDatBan(
+                                maPhieuDatBan
+                        );
                 coDatMonDB = dsMon != null && !dsMon.isEmpty();
             } catch (Exception e) {
                 coDatMonDB = coDatMonTruyenVao;

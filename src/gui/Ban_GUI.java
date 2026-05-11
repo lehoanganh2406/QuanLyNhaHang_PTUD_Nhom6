@@ -65,7 +65,7 @@ import entity.LoaiBan;
 import entity.TaiKhoan;
 
 public class Ban_GUI extends JPanel {
-    private static final long serialVersionUID = 1L;
+
 
     private static final String FILTER_ALL = "ALL";
     private static final String STATUS_TRONG = "Bàn trống";

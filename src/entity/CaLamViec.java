@@ -3,7 +3,6 @@ package entity;
 import java.time.LocalDateTime;
 
 public class CaLamViec {
-	private static final long serialVersionUID = 1L;
 	private String maCa;
 	private String tenCa;
 	private LocalDateTime thoiGianMoCa;

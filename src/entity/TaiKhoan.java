@@ -1,7 +1,6 @@
 package entity;
 
 public class TaiKhoan {
-	private static final long serialVersionUID = 1L;
 
 	private String maTaiKhoan;
 	private String tenDangNhap;

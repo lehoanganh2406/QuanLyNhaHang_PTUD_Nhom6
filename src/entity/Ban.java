@@ -1,7 +1,7 @@
 package entity;
 
 public class Ban {
-	private static final long serialVersionUID = 1L;
+	
 	private String maBan;
 	private KhuVuc maKhuVuc;
 	private LoaiBan maLoaiBan;
@@ -61,6 +61,9 @@ public class Ban {
 		this.ghiChu = ghiChu;
 		this.soChoNgoi = soChoNgoi;
 		this.trangThai = trangThai;
+	}
+	public Ban(String maBan) {
+	    this.maBan = maBan;
 	}
 	@Override
 	public String toString() {

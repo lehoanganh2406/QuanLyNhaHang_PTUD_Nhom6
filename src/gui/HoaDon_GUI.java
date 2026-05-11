@@ -23,7 +23,6 @@ import javax.swing.plaf.basic.BasicComboBoxUI;
 
 public class HoaDon_GUI extends JFrame {
 
-    private static final long serialVersionUID = 1L;
 
     private static final Color CLR_HEADER_BG  = new Color(74, 55, 40);
     private static final Color CLR_HEADER_FG  = Color.WHITE;
@@ -1487,7 +1486,23 @@ public class HoaDon_GUI extends JFrame {
                 dsCT
         ));
 
-        dlg.setSize(650, 760);
+        Dimension screen=
+                Toolkit.getDefaultToolkit()
+                        .getScreenSize();
+
+        int w=
+                Math.min(
+                        850,
+                        screen.width-120
+                );
+
+        int h=
+                Math.min(
+                        900,
+                        screen.height-80
+                );
+
+        dlg.setSize(w,h);
         dlg.setLocationRelativeTo(this);
         dlg.setVisible(true);
     }

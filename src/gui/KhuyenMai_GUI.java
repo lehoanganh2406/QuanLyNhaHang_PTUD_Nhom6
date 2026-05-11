@@ -66,7 +66,7 @@ import entity.TaiKhoan;
  * Khi thêm khuyến mãi: không cho chọn thời gian bắt đầu nhỏ hơn thời gian hiện tại.
  */
 public class KhuyenMai_GUI extends JPanel {
-    private static final long serialVersionUID = 1L;
+
 
     private static final Color BG = new Color(245, 245, 245);
     private static final Color CARD = Color.WHITE;

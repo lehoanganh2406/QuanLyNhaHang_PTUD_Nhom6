@@ -1,7 +1,6 @@
 package entity;
 
 public class KhachHang {
-	private static final long serialVersionUID = 1L;
 	private String maKH;
 	private String tenKH;
 	private String sdt;

@@ -56,15 +56,14 @@ import com.toedter.calendar.JDateChooser;
 import connectDB.ConnectDB;
 import dao.Ban_DAO;
 import dao.PhieuDatBan_DAO;
-import dao.PhieuDatMon_DAO;
+import dao.ChiTietDatMon_DAO;
 import digLog.HuyBan_DigLog;
 import digLog.PhieuDatBan_DigLog;
 import entity.Ban;
-import entity.PhieuDatMon;
+import entity.ChiTietDatMon;
 import entity.TaiKhoan;
 
 public class DatBan_GUI extends JPanel {
-    private static final long serialVersionUID = 1L;
     
 
     private TaiKhoan taiKhoanDangNhap;
@@ -162,7 +161,11 @@ public class DatBan_GUI extends JPanel {
             initDateChooser();
             initEvents();
             initResponsiveEvents();
-            refreshView();
+            SwingUtilities.invokeLater(() -> {
+
+                refreshView();
+
+            });
         }
 
         private void initResponsiveEvents() {
@@ -204,8 +207,11 @@ public class DatBan_GUI extends JPanel {
 
         private boolean coDatMonTheoPhieu(String maPhieu) {
             try {
-                PhieuDatMon_DAO dao = new PhieuDatMon_DAO();
-                ArrayList<PhieuDatMon> ds = dao.getDanhSachTheoMaPhieu(maPhieu);
+                ChiTietDatMon_DAO dao = new ChiTietDatMon_DAO();
+                ArrayList<ChiTietDatMon> ds =
+                        dao.getDanhSachTheoMaPhieuDatMon(
+                                maPhieu
+                        );
                 return ds != null && !ds.isEmpty();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -437,14 +443,31 @@ public class DatBan_GUI extends JPanel {
             java.util.List<BookingDisplayItem> ds = getFilteredBookingsByDate(ngay);
 
             for (BookingDisplayItem item : ds) {
-                String tenBanDB = tableNameMap.getOrDefault(item.maBan, item.maBan);
+
+                String[] dsBan =
+                        item.maBan.split(",");
 
                 Calendar cal = Calendar.getInstance();
                 cal.setTime(item.thoiGianDen);
-                int bookingHour = cal.get(Calendar.HOUR_OF_DAY);
 
-                String key = tenBanDB.toLowerCase() + "_" + bookingHour;
-                map.put(key, item);
+                int bookingHour =
+                        cal.get(Calendar.HOUR_OF_DAY);
+
+                for(String maBan : dsBan){
+
+                    String tenBanDB =
+                            tableNameMap.getOrDefault(
+                                    maBan.trim(),
+                                    maBan.trim()
+                            );
+
+                    String key =
+                            tenBanDB.toLowerCase()
+                            + "_"
+                            + bookingHour;
+
+                    map.put(key, item);
+                }
             }
             return map;
         }
@@ -459,19 +482,49 @@ public class DatBan_GUI extends JPanel {
                 java.util.List<BookingDisplayItem> ds = getFilteredBookingsByDate(day.getTime());
 
                 for (BookingDisplayItem item : ds) {
-                    String tenBanDB = tableNameMap.getOrDefault(item.maBan, item.maBan);
+
+                    String[] dsBan =
+                            item.maBan.split(",");
 
                     Calendar cal = Calendar.getInstance();
                     cal.setTime(item.thoiGianDen);
-                    int bookingHour = cal.get(Calendar.HOUR_OF_DAY);
+
+                    int bookingHour =
+                            cal.get(Calendar.HOUR_OF_DAY);
 
                     for (int h = 0; h < hours.size(); h++) {
-                        int startHour = hours.get(h);
-                        int endHourExclusive = (h == hours.size() - 1) ? 24 : hours.get(h + 1);
 
-                        if (bookingHour >= startHour && bookingHour < endHourExclusive) {
-                            String key = d + "_" + tenBanDB.toLowerCase() + "_" + startHour;
-                            map.put(key, item);
+                        int startHour =
+                                hours.get(h);
+
+                        int endHourExclusive =
+                                (h == hours.size() - 1)
+                                ? 24
+                                : hours.get(h + 1);
+
+                        if (
+                                bookingHour >= startHour
+                                &&
+                                bookingHour < endHourExclusive
+                        ) {
+
+                            for(String maBan : dsBan){
+
+                                String tenBanDB =
+                                        tableNameMap.getOrDefault(
+                                                maBan.trim(),
+                                                maBan.trim()
+                                        );
+
+                                String key =
+                                        d + "_"
+                                        + tenBanDB.toLowerCase()
+                                        + "_"
+                                        + startHour;
+
+                                map.put(key, item);
+                            }
+
                             break;
                         }
                     }
@@ -1362,7 +1415,10 @@ public class DatBan_GUI extends JPanel {
                     BookingDisplayItem item = filtered.get(i);
                     int row = i + 1;
 
-                    String tenBan = tableNameMap.getOrDefault(item.maBan, item.maBan);
+                    String tenBan =
+                            layDanhSachTenBan(
+                                    item.maBan
+                            );
 
                     gbc.gridy = row;
                     gbc.gridx = 0;
@@ -1511,7 +1567,7 @@ public class DatBan_GUI extends JPanel {
         private String buildToolTip(BookingDisplayItem item) {
             return "<html>"
                     + "Mã phiếu: " + safe(item.maPhieu)
-                    + "<br>Bàn: " + safe(tableNameMap.getOrDefault(item.maBan, item.maBan))
+                    + "<br>Bàn: " + layDanhSachTenBan(item.maBan)
                     + "<br>Khách: " + safe(item.tenKhach)
                     + "<br>SĐT: " + safe(item.sdt)
                     + "<br>Số lượng: " + item.soLuongNguoi
@@ -1519,6 +1575,33 @@ public class DatBan_GUI extends JPanel {
                     + "<br>Trạng thái: " + safe(item.trangThai)
                     + "<br>Ghi chú: " + safe(item.ghiChu)
                     + "</html>";
+        }
+        private String layDanhSachTenBan(
+                String dsMaBan
+        ){
+
+            if(dsMaBan == null || dsMaBan.trim().isEmpty()){
+
+                return "";
+            }
+
+            ArrayList<String> dsTen =
+                    new ArrayList<>();
+
+            String[] arr =
+                    dsMaBan.split(",");
+
+            for(String ma : arr){
+
+                dsTen.add(
+                        tableNameMap.getOrDefault(
+                                ma.trim(),
+                                ma.trim()
+                        )
+                );
+            }
+
+            return String.join(", ", dsTen);
         }
 
         private String safe(String value) {
@@ -1642,7 +1725,7 @@ public class DatBan_GUI extends JPanel {
             if (cardPanel != null && cardPanel.isShowing()) {
                 width = cardPanel.getWidth();
             }
-
+            
             if (width <= 0 && currentMainScrollPane != null) {
                 JViewport vp = currentMainScrollPane.getViewport();
                 if (vp != null) {
@@ -1656,6 +1739,15 @@ public class DatBan_GUI extends JPanel {
 
             if (width <= 0) {
                 width = DatBanMainPanel.this.getWidth() - 24;
+            }
+            if(width <= 0){
+
+                width =
+                        Toolkit
+                                .getDefaultToolkit()
+                                .getScreenSize()
+                                .width
+                                - 320;
             }
 
             return Math.max(900, width);

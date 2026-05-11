@@ -1,7 +1,7 @@
 package entity;
 
 public class LoaiKhachHang {
-	private static final long serialVersionUID = 1L;
+	
 	private String maLoaiKH;
 	private String tenLoaiKH;
 	public String getMaLoaiKH() {

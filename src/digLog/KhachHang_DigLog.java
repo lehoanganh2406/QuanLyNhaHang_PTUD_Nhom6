@@ -9,7 +9,7 @@ import entity.KhachHang;
 import entity.LoaiKhachHang;
 
 public class KhachHang_DigLog extends JDialog {
-    private static final long serialVersionUID = 1L;
+
 
     private JTextField txtTenKH;
     private JTextField txtSDT;

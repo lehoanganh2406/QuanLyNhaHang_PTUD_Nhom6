@@ -82,7 +82,7 @@ import dao.KhuyenMai_DAO;
 import entity.KhuyenMai;
 
 public class TraCuu_GUI extends JPanel {
-    private static final long serialVersionUID = 1L;
+
 
     private TaiKhoan taiKhoanDangNhap;
 

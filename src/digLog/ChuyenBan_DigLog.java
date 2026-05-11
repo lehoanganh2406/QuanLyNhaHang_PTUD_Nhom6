@@ -1,151 +1,484 @@
 package digLog;
 
-import java.awt.*;
-import java.util.ArrayList;
+import dao.Ban_DAO;
+import dao.KhuVuc_DAO;
+import entity.Ban;
+import entity.KhuVuc;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-
-import dao.Ban_DAO;
+import java.awt.*;
+import java.util.ArrayList;
 
 public class ChuyenBan_DigLog extends JDialog {
-    private static final long serialVersionUID = 1L;
 
-    private final Ban_DAO banDAO = new Ban_DAO();
+    private final Ban_DAO banDAO=new Ban_DAO();
+    private final KhuVuc_DAO khuVucDAO=new KhuVuc_DAO();
 
     private String maBanHienTai;
     private String tenBanHienTai;
     private String maBanMoi;
 
-    private JComboBox<BanComboItem> cboBanTrong;
+    private JTabbedPane tabbedPane;
 
-    public ChuyenBan_DigLog(Window owner, String maBanHienTai, String tenBanHienTai) {
-        super(owner, "Chuyển bàn", ModalityType.APPLICATION_MODAL);
-        this.maBanHienTai = maBanHienTai;
-        this.tenBanHienTai = tenBanHienTai;
+    private final Color MAU_TRONG=new Color(188,220,244);
+    private final Color MAU_PHUC_VU=new Color(122,201,113);
+    private final Color MAU_DAT=new Color(239,83,80);
+    private final Color MAU_CHON=new Color(255,170,80);
+
+    public ChuyenBan_DigLog(
+            Window owner,
+            String maBanHienTai,
+            String tenBanHienTai
+    ){
+
+        super(
+                owner,
+                "Chuyển bàn",
+                ModalityType.APPLICATION_MODAL
+        );
+
+        this.maBanHienTai=maBanHienTai;
+        this.tenBanHienTai=tenBanHienTai;
 
         initUI();
-        loadBanTrong();
 
-        setSize(430, 260);
+        loadTabs();
+
+        setSize(1150,720);
+
         setLocationRelativeTo(owner);
     }
 
-    private void initUI() {
-        JPanel root = new JPanel(new BorderLayout());
-        root.setBackground(Color.WHITE);
-        root.setBorder(new EmptyBorder(18, 22, 18, 22));
-        setContentPane(root);
+    // ================= UI =================
 
-        JLabel lblTitle = new JLabel("CHUYỂN BÀN", SwingConstants.CENTER);
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 24));
-        root.add(lblTitle, BorderLayout.NORTH);
+    private void initUI(){
 
-        JPanel form = new JPanel(new GridBagLayout());
-        form.setOpaque(false);
-        form.setBorder(new EmptyBorder(22, 0, 18, 0));
+        JPanel root=new JPanel(
+                new BorderLayout(15,15)
+        );
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 0, 8, 0);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        root.setBorder(
+                new EmptyBorder(15,15,15,15)
+        );
 
-        JLabel lblBanHienTai = new JLabel("Bàn hiện tại:");
-        lblBanHienTai.setFont(new Font("SansSerif", Font.BOLD, 15));
+        root.setBackground(
+                new Color(245,247,250)
+        );
 
-        JTextField txtBanHienTai = new JTextField(tenBanHienTai + " (" + maBanHienTai + ")");
-        txtBanHienTai.setEditable(false);
-        txtBanHienTai.setBackground(new Color(245, 245, 245));
+        // ===== TOP =====
 
-        JLabel lblBanMoi = new JLabel("Chuyển sang:");
-        lblBanMoi.setFont(new Font("SansSerif", Font.BOLD, 15));
+        JPanel top=new JPanel(
+                new BorderLayout()
+        );
 
-        cboBanTrong = new JComboBox<>();
+        top.setOpaque(false);
 
-        gbc.gridx = 0; gbc.gridy = 0;
-        form.add(lblBanHienTai, gbc);
+        JLabel lblTitle=new JLabel(
+                "CHUYỂN BÀN",
+                SwingConstants.CENTER
+        );
 
-        gbc.gridx = 1;
-        form.add(txtBanHienTai, gbc);
+        lblTitle.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        30
+                )
+        );
 
-        gbc.gridx = 0; gbc.gridy = 1;
-        form.add(lblBanMoi, gbc);
+        JLabel lblBan=new JLabel(
+                "Bàn hiện tại: "
+                +tenBanHienTai
+                +" ("
+                +maBanHienTai
+                +")"
+        );
 
-        gbc.gridx = 1;
-        form.add(cboBanTrong, gbc);
+        lblBan.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        18
+                )
+        );
 
-        root.add(form, BorderLayout.CENTER);
+        top.add(lblTitle,BorderLayout.CENTER);
+        top.add(lblBan,BorderLayout.WEST);
 
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        actions.setOpaque(false);
+        root.add(top,BorderLayout.NORTH);
 
-        JButton btnHuy = new JButton("Hủy");
-        JButton btnDongY = new JButton("Đồng ý");
+        // ===== CENTER =====
 
-        btnDongY.setBackground(new Color(188, 222, 242));
-        btnDongY.setOpaque(true);
-        btnDongY.setContentAreaFilled(false);
-        btnDongY.setFocusPainted(false);
+        tabbedPane=new JTabbedPane();
 
-        btnHuy.setFocusPainted(false);
+        tabbedPane.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        16
+                )
+        );
 
-        btnHuy.addActionListener(e -> dispose());
+        root.add(tabbedPane,BorderLayout.CENTER);
 
-        btnDongY.addActionListener(e -> {
-            BanComboItem item = (BanComboItem) cboBanTrong.getSelectedItem();
+        // ===== BOTTOM =====
 
-            if (item == null || item.maBan == null || item.maBan.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Chọn bàn cần chuyển!");
+        JPanel bottom=new JPanel(
+                new FlowLayout(
+                        FlowLayout.RIGHT,
+                        15,
+                        0
+                )
+        );
+
+        bottom.setOpaque(false);
+
+        JButton btnHuy=new JButton("Hủy");
+        JButton btnDongY=new JButton("Chuyển bàn");
+
+        styleButton(
+                btnDongY,
+                new Color(255,170,80)
+        );
+
+        styleButton(
+                btnHuy,
+                new Color(220,220,220)
+        );
+
+        btnHuy.addActionListener(e->dispose());
+
+        btnDongY.addActionListener(e->{
+
+            if(
+                    maBanMoi==null
+                    ||
+                    maBanMoi.trim().isEmpty()
+            ){
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Vui lòng chọn bàn cần chuyển!"
+                );
+
                 return;
             }
 
-            maBanMoi = item.maBan;
             dispose();
         });
 
-        actions.add(btnHuy);
-        actions.add(btnDongY);
-        root.add(actions, BorderLayout.SOUTH);
+        bottom.add(btnHuy);
+        bottom.add(btnDongY);
+
+        root.add(bottom,BorderLayout.SOUTH);
+
+        setContentPane(root);
     }
 
-    private void loadBanTrong() {
-        cboBanTrong.removeAllItems();
-        cboBanTrong.addItem(new BanComboItem("", "-- Chọn bàn trống --"));
+    // ================= LOAD TAB =================
 
-        ArrayList<String[]> ds = banDAO.getTatCaBanKemTrangThaiMacDinh();
+    private void loadTabs(){
 
-        if (ds == null) return;
+        tabbedPane.removeAll();
 
-        for (String[] row : ds) {
-            if (row == null || row.length < 3) continue;
+        tabbedPane.addTab(
+                "Tất cả",
+                taoScrollPane(
+                        banDAO.getAllBan()
+                )
+        );
 
-            String maBan = row[0];
-            String tenBan = row[1];
-            String trangThai = row[2];
+        ArrayList<KhuVuc> dsKV=
+                khuVucDAO.getAllKhuVuc();
 
-            if (maBanHienTai.equalsIgnoreCase(maBan)) continue;
+        for(KhuVuc kv:dsKV){
 
-            if ("Bàn trống".equalsIgnoreCase(trangThai) || "Trống".equalsIgnoreCase(trangThai)) {
-                cboBanTrong.addItem(new BanComboItem(maBan, tenBan));
-            }
+            ArrayList<Ban> dsBan=
+                    banDAO.getBanTheoKhuVuc(
+                            kv.getMaKhuVuc()
+                    );
+
+            tabbedPane.addTab(
+                    kv.getTenKhuVuc(),
+                    taoScrollPane(dsBan)
+            );
         }
     }
 
-    public String getMaBanMoi() {
-        return maBanMoi;
+    // ================= PANEL =================
+
+    private JScrollPane taoScrollPane(
+            ArrayList<Ban> dsBan
+    ){
+
+        JPanel wrapper=new JPanel(
+                new BorderLayout()
+        );
+
+        wrapper.setBackground(
+                new Color(245,247,250)
+        );
+
+        JPanel grid=new JPanel(
+                new GridLayout(
+                        0,
+                        5,
+                        20,
+                        20
+                )
+        );
+
+        grid.setBorder(
+                new EmptyBorder(
+                        20,
+                        20,
+                        20,
+                        20
+                )
+        );
+
+        grid.setBackground(
+                new Color(245,247,250)
+        );
+
+        for(Ban ban:dsBan){
+
+            if(
+                    ban.getMaBan()
+                    .equalsIgnoreCase(maBanHienTai)
+            ){
+                continue;
+            }
+
+            grid.add(
+                    new BanCard(ban)
+            );
+        }
+
+        wrapper.add(grid,BorderLayout.NORTH);
+
+        JScrollPane sp=
+                new JScrollPane(wrapper);
+
+        sp.setBorder(null);
+
+        sp.getVerticalScrollBar()
+                .setUnitIncrement(14);
+
+        return sp;
     }
 
-    private static class BanComboItem {
-        String maBan;
-        String tenBan;
+    // ================= CARD =================
 
-        BanComboItem(String maBan, String tenBan) {
-            this.maBan = maBan;
-            this.tenBan = tenBan;
+    class BanCard extends JPanel {
+
+        private final Ban ban;
+
+        public BanCard(Ban ban){
+
+            this.ban=ban;
+
+            setOpaque(false);
+
+            setCursor(
+                    new Cursor(
+                            Cursor.HAND_CURSOR
+                    )
+            );
+
+            setPreferredSize(
+                    new Dimension(190,130)
+            );
+
+            setLayout(
+                    new BoxLayout(
+                            this,
+                            BoxLayout.Y_AXIS
+                    )
+            );
+
+            JLabel lblTen=new JLabel(
+                    ban.getTenBan(),
+                    SwingConstants.CENTER
+            );
+
+            lblTen.setFont(
+                    new Font(
+                            "Arial",
+                            Font.BOLD,
+                            28
+                    )
+            );
+
+            lblTen.setAlignmentX(CENTER_ALIGNMENT);
+
+            JLabel lblSC=new JLabel(
+                    "Sức chứa: "
+                    +ban.getSoChoNgoi()
+            );
+
+            lblSC.setFont(
+                    new Font(
+                            "Arial",
+                            Font.PLAIN,
+                            15
+                    )
+            );
+
+            lblSC.setAlignmentX(CENTER_ALIGNMENT);
+
+            JLabel lblTT=new JLabel(
+                    ban.getTrangThai()
+            );
+
+            lblTT.setFont(
+                    new Font(
+                            "Arial",
+                            Font.BOLD,
+                            16
+                    )
+            );
+
+            lblTT.setAlignmentX(CENTER_ALIGNMENT);
+
+            add(Box.createVerticalStrut(14));
+            add(lblTen);
+            add(Box.createVerticalStrut(10));
+            add(lblSC);
+            add(Box.createVerticalStrut(10));
+            add(lblTT);
+
+            addMouseListener(
+                    new java.awt.event.MouseAdapter(){
+
+                        @Override
+                        public void mouseClicked(
+                                java.awt.event.MouseEvent e
+                        ){
+
+                            maBanMoi=
+                                    ban.getMaBan();
+
+                            repaint();
+                            tabbedPane.repaint();
+                        }
+                    }
+            );
         }
 
         @Override
-        public String toString() {
-            if (maBan == null || maBan.isEmpty()) return tenBan;
-            return tenBan + " - " + maBan;
+        protected void paintComponent(Graphics g){
+
+            Graphics2D g2=
+                    (Graphics2D) g.create();
+
+            g2.setRenderingHint(
+                    RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON
+            );
+
+            Color bg;
+
+            if(
+                    ban.getMaBan()
+                    .equals(maBanMoi)
+            ){
+
+                bg=MAU_CHON;
+
+            }else{
+
+                bg=layMauTrangThai(
+                        ban.getTrangThai()
+                );
+            }
+
+            g2.setColor(bg);
+
+            g2.fillRoundRect(
+                    0,
+                    0,
+                    getWidth()-1,
+                    getHeight()-1,
+                    30,
+                    30
+            );
+
+            g2.setColor(
+                    new Color(210,210,210)
+            );
+
+            g2.drawRoundRect(
+                    0,
+                    0,
+                    getWidth()-1,
+                    getHeight()-1,
+                    30,
+                    30
+            );
+
+            g2.dispose();
+
+            super.paintComponent(g);
         }
+    }
+
+    // ================= STYLE =================
+
+    private void styleButton(
+            JButton btn,
+            Color color
+    ){
+
+        btn.setBackground(color);
+        btn.setForeground(Color.BLACK);
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setContentAreaFilled(true);
+        btn.setOpaque(true);
+        btn.setCursor(
+                new Cursor(Cursor.HAND_CURSOR)
+        );
+        btn.setPreferredSize(
+                new Dimension(160,45));
+        btn.setFont(new Font("Arial",Font.BOLD,17));
+    }
+
+    private Color layMauTrangThai(
+            String trangThai
+    ){
+
+        if(trangThai==null){
+            return MAU_TRONG;
+        }
+
+        String tt=
+                trangThai
+                .trim()
+                .toLowerCase();
+
+        if(
+                tt.contains("đang phục vụ")
+        ){
+
+            return MAU_PHUC_VU;
+        }
+
+        if(
+                tt.contains("đang chờ")
+        ){
+
+            return MAU_DAT;
+        }
+
+        return MAU_TRONG;
+    }
+
+    // ================= GET =================
+
+    public String getMaBanMoi(){
+
+        return maBanMoi;
     }
 }

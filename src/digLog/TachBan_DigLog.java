@@ -1,344 +1,1189 @@
 package digLog;
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-
 import dao.Ban_DAO;
 import dao.ChiTietHoaDon_DAO;
+import dao.HoaDon_Ban_DAO;
 import dao.HoaDon_DAO;
+
 import entity.Ban;
 import entity.ChiTietHoaDon;
 import entity.HoaDon;
 import entity.TaiKhoan;
 
-public class TachBan_DigLog extends JDialog {
-    private static final long serialVersionUID = 1L;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
-    private Ban_DAO banDAO = new Ban_DAO();
-    private HoaDon_DAO hoaDonDAO = new HoaDon_DAO();
-    private ChiTietHoaDon_DAO chiTietDAO = new ChiTietHoaDon_DAO();
+import java.awt.*;
+import java.util.*;
+import java.util.List;
+
+public class TachBan_DigLog extends JDialog {
+
+    // =====================================================
+    // DAO
+    // =====================================================
+
+    private final Ban_DAO banDAO =
+            new Ban_DAO();
+
+    private final HoaDon_DAO hoaDonDAO =
+            new HoaDon_DAO();
+
+    private final ChiTietHoaDon_DAO chiTietDAO =
+            new ChiTietHoaDon_DAO();
+
+    private final HoaDon_Ban_DAO hoaDonBanDAO =
+            new HoaDon_Ban_DAO();
+
+    // =====================================================
+    // DATA
+    // =====================================================
 
     private TaiKhoan taiKhoanDangNhap;
+
     private String maBanHienTai;
+
     private String maHDHienTai;
 
-    private JComboBox<BanItem> cboBan;
-    private JPanel pnMon;
-    private JButton btnXacNhan;
-    private JButton btnHuy;
+    private List<ChiTietHoaDon> dsChiTiet =
+            new ArrayList<>();
 
-    private List<ChiTietHoaDon> dsChiTiet = new ArrayList<>();
-    private Map<String, JSpinner> mapSpinner = new LinkedHashMap<>();
+    private final Set<String> dsBanChon =
+            new LinkedHashSet<>();
+
+    // maMon -> (maBan -> spinner)
+    private final Map<
+            String,
+            Map<String, JSpinner>
+            > mapSpinnerBan =
+            new LinkedHashMap<>();
 
     private boolean tachThanhCong = false;
-    private String maBanMoi;
 
-    public TachBan_DigLog(Window owner, TaiKhoan tk, String maBanHienTai, String maHDHienTai) {
-        super(owner, "Tách bàn", ModalityType.APPLICATION_MODAL);
+    // =====================================================
+    // UI
+    // =====================================================
+
+    private JPanel pnlBan;
+
+    private JPanel pnlMon;
+
+    private JLabel lblTongSucChua;
+
+    private JCheckBox chkTachHoaDon;
+
+    private JButton btnXacNhan;
+
+    private JButton btnHuy;
+
+    // =====================================================
+    // COLOR
+    // =====================================================
+
+    private final Color MAU_TRONG =
+            new Color(0,123,255);
+
+    private final Color MAU_PHUC_VU =
+            new Color(40,167,69);
+
+    private final Color MAU_DAT =
+            new Color(220,53,69);
+
+    private final Color MAU_CHON =
+            new Color(255,140,0);
+
+    // =====================================================
+    // CONSTRUCTOR
+    // =====================================================
+
+    public TachBan_DigLog(
+            Window owner,
+            TaiKhoan tk,
+            String maBanHienTai,
+            String maHDHienTai
+    ) {
+
+        super(owner);
+
         this.taiKhoanDangNhap = tk;
+
         this.maBanHienTai = maBanHienTai;
+
         this.maHDHienTai = maHDHienTai;
 
-        initComponents();
-        loadBanTrong();
-        loadMonDangCo();
-        initEvents();
+        setModal(true);
 
-        setSize(620, 560);
+        setTitle("Tách bàn");
+
+        setSize(1550,850);
+
         setLocationRelativeTo(owner);
-        setResizable(false);
+
+        initUI();
+
+        loadBan();
+
+        loadMon();
+
+        updateTongSucChua();
     }
 
-    private void initComponents() {
-        JPanel root = new JPanel(new BorderLayout(12, 12));
-        root.setBackground(new Color(245, 247, 250));
-        root.setBorder(new EmptyBorder(18, 22, 18, 22));
+    // =====================================================
+    // UI
+    // =====================================================
+
+    private void initUI() {
+
+        JPanel root =
+                new JPanel(new BorderLayout(15,15));
+
+        root.setBorder(
+                new EmptyBorder(15,15,15,15)
+        );
+
+        root.setBackground(
+                new Color(245,247,250)
+        );
+
         setContentPane(root);
 
-        JLabel lblTitle = new JLabel("TÁCH BÀN", SwingConstants.CENTER);
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 24));
-        lblTitle.setForeground(new Color(60, 100, 140));
-        root.add(lblTitle, BorderLayout.NORTH);
+        // =================================================
+        // TOP
+        // =================================================
 
-        JPanel pnTop = new JPanel(new BorderLayout(10, 8));
-        pnTop.setOpaque(false);
+        JPanel top =
+                new JPanel(new BorderLayout());
 
-        JLabel lblBan = new JLabel("Chọn bàn muốn tách sang:");
-        lblBan.setFont(new Font("SansSerif", Font.BOLD, 16));
+        top.setOpaque(false);
 
-        cboBan = new JComboBox<>();
-        cboBan.setFont(new Font("SansSerif", Font.PLAIN, 16));
-        cboBan.setPreferredSize(new Dimension(330, 38));
+        JLabel lblTitle =
+                new JLabel(
+                        "TÁCH BÀN",
+                        SwingConstants.CENTER
+                );
 
-        pnTop.add(lblBan, BorderLayout.WEST);
-        pnTop.add(cboBan, BorderLayout.CENTER);
+        lblTitle.setFont(
+                new Font("Arial", Font.BOLD, 32)
+        );
 
-        root.add(pnTop, BorderLayout.BEFORE_FIRST_LINE);
+        top.add(lblTitle, BorderLayout.CENTER);
 
-        pnMon = new JPanel();
-        pnMon.setLayout(new BoxLayout(pnMon, BoxLayout.Y_AXIS));
-        pnMon.setBackground(Color.WHITE);
+        lblTongSucChua =
+                new JLabel(
+                        "Tổng sức chứa: 0"
+                );
 
-        JScrollPane scroll = new JScrollPane(pnMon);
-        scroll.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180)));
-        scroll.getViewport().setBackground(Color.WHITE);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        lblTongSucChua.setFont(
+                new Font("Arial", Font.BOLD, 18)
+        );
 
-        root.add(scroll, BorderLayout.CENTER);
+        top.add(lblTongSucChua, BorderLayout.EAST);
 
-        JPanel pnBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
-        pnBottom.setOpaque(false);
+        root.add(top, BorderLayout.NORTH);
 
-        btnHuy = new JButton("Hủy");
-        btnHuy.setFont(new Font("SansSerif", Font.PLAIN, 16));
-        btnHuy.setPreferredSize(new Dimension(105, 38));
+        // =================================================
+        // CENTER
+        // =================================================
 
-        btnXacNhan = new JButton("Xác nhận tách");
-        btnXacNhan.setFont(new Font("SansSerif", Font.BOLD, 16));
-        btnXacNhan.setPreferredSize(new Dimension(155, 38));
+        JSplitPane split =
+                new JSplitPane(
+                        JSplitPane.HORIZONTAL_SPLIT
+                );
 
-        pnBottom.add(btnHuy);
-        pnBottom.add(btnXacNhan);
-        root.add(pnBottom, BorderLayout.SOUTH);
+        split.setDividerLocation(700);
+
+        split.setResizeWeight(0.45);
+
+        root.add(split, BorderLayout.CENTER);
+
+        // =================================================
+        // LEFT
+        // =================================================
+
+        JPanel left =
+                new JPanel(new BorderLayout(10,10));
+
+        left.setOpaque(false);
+
+        JLabel lblBan =
+                new JLabel("Chọn bàn");
+
+        lblBan.setFont(
+                new Font("Arial", Font.BOLD, 20)
+        );
+
+        left.add(lblBan, BorderLayout.NORTH);
+
+        pnlBan =
+                new JPanel(
+                        new GridLayout(
+                                0,
+                                3,
+                                18,
+                                18
+                        )
+                );
+
+        pnlBan.setBackground(
+                new Color(245,247,250)
+        );
+
+        JScrollPane spBan =
+                new JScrollPane(pnlBan);
+
+        spBan.setBorder(null);
+
+        left.add(spBan, BorderLayout.CENTER);
+
+        split.setLeftComponent(left);
+
+        // =================================================
+        // RIGHT
+        // =================================================
+
+        JPanel right =
+                new JPanel(new BorderLayout(10,10));
+
+        right.setOpaque(false);
+
+        JPanel topMon =
+                new JPanel(new BorderLayout());
+
+        topMon.setOpaque(false);
+
+        JLabel lblMon =
+                new JLabel("Chia món theo bàn");
+
+        lblMon.setFont(
+                new Font("Arial", Font.BOLD, 20)
+        );
+
+        topMon.add(lblMon, BorderLayout.WEST);
+
+        chkTachHoaDon =
+                new JCheckBox("Tách hóa đơn");
+
+        chkTachHoaDon.setOpaque(false);
+
+        chkTachHoaDon.setFont(
+                new Font("Arial", Font.BOLD, 16)
+        );
+
+        topMon.add(chkTachHoaDon, BorderLayout.EAST);
+
+        right.add(topMon, BorderLayout.NORTH);
+
+        pnlMon =
+                new JPanel();
+
+        pnlMon.setLayout(
+                new BoxLayout(
+                        pnlMon,
+                        BoxLayout.Y_AXIS
+                )
+        );
+
+        pnlMon.setBackground(Color.WHITE);
+
+        JScrollPane spMon =
+                new JScrollPane(pnlMon);
+
+        spMon.setBorder(null);
+
+        right.add(spMon, BorderLayout.CENTER);
+
+        split.setRightComponent(right);
+
+        // =================================================
+        // BOTTOM
+        // =================================================
+
+        JPanel bottom =
+                new JPanel(
+                        new FlowLayout(
+                                FlowLayout.RIGHT,
+                                12,
+                                0
+                        )
+                );
+
+        bottom.setOpaque(false);
+
+        btnHuy =
+                new JButton("Hủy");
+
+        btnXacNhan =
+                new JButton("Tách bàn");
+
+        styleButton(btnHuy, false);
+
+        styleButton(btnXacNhan, true);
+
+        bottom.add(btnHuy);
+
+        bottom.add(btnXacNhan);
+
+        root.add(bottom, BorderLayout.SOUTH);
+
+        // =================================================
+        // EVENT
+        // =================================================
+
+        btnHuy.addActionListener(
+                e -> dispose()
+        );
+
+        btnXacNhan.addActionListener(
+                e -> xuLyTachBan()
+        );
     }
 
-    private void loadBanTrong() {
-        cboBan.removeAllItems();
+    // =====================================================
+    // STYLE BUTTON
+    // =====================================================
 
-        ArrayList<Ban> dsBan = banDAO.getAllBan();
+    private void styleButton(
+            JButton btn,
+            boolean primary
+    ) {
 
-        for (Ban b : dsBan) {
-            if (b == null) continue;
-            if (b.getMaBan() == null) continue;
-            if (b.getMaBan().equalsIgnoreCase(maBanHienTai)) continue;
+        btn.setPreferredSize(
+                new Dimension(170,50)
+        );
 
-            String trangThai = b.getTrangThai() == null ? "" : b.getTrangThai().trim();
+        btn.setFocusPainted(false);
 
-            if (trangThai.equalsIgnoreCase("Bàn trống")
-                    || trangThai.equalsIgnoreCase("Trống")
-                    || trangThai.isEmpty()) {
-                cboBan.addItem(new BanItem(b.getMaBan(), b.getTenBan()));
-            }
-        }
-    }
+        btn.setFont(
+                new Font("Arial", Font.BOLD, 16)
+        );
 
-    private void loadMonDangCo() {
-        pnMon.removeAll();
-        mapSpinner.clear();
+        btn.setCursor(
+                new Cursor(Cursor.HAND_CURSOR)
+        );
 
-        dsChiTiet = chiTietDAO.getChiTietTheoMaHD(maHDHienTai);
+        btn.setBorderPainted(false);
 
-        if (dsChiTiet == null || dsChiTiet.isEmpty()) {
-            JLabel lblEmpty = new JLabel("Không có món nào để tách.", SwingConstants.CENTER);
-            lblEmpty.setFont(new Font("SansSerif", Font.ITALIC, 16));
-            lblEmpty.setBorder(new EmptyBorder(25, 10, 25, 10));
-            pnMon.add(lblEmpty);
-            return;
-        }
+        btn.setContentAreaFilled(true);
 
-        JPanel header = new JPanel(new GridLayout(1, 4));
-        header.setBackground(new Color(206, 227, 242));
-        header.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        btn.setOpaque(true);
 
-        header.add(createHeader("Mã món"));
-        header.add(createHeader("Số lượng hiện có"));
-        header.add(createHeader("Đơn giá"));
-        header.add(createHeader("SL tách"));
+        btn.setForeground(Color.BLACK);
 
-        pnMon.add(header);
+        if (primary) {
 
-        for (ChiTietHoaDon ct : dsChiTiet) {
-            if (ct == null || ct.getMaMon() == null) continue;
-
-            String maMon = ct.getMaMon().getMaMon();
-            int soLuong = ct.getSoLuong();
-
-            JPanel row = new JPanel(new GridLayout(1, 4));
-            row.setBackground(Color.WHITE);
-            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
-            row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 220, 220)));
-
-            JLabel lblMa = createCell(maMon);
-            JLabel lblSL = createCell(String.valueOf(soLuong));
-            JLabel lblGia = createCell(String.format("%,.0f", ct.getDonGia()));
-
-            JSpinner spinner = new JSpinner(new SpinnerNumberModel(0, 0, soLuong, 1));
-            spinner.setFont(new Font("SansSerif", Font.PLAIN, 15));
-
-            JPanel spinWrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 6));
-            spinWrap.setOpaque(false);
-            spinWrap.add(spinner);
-
-            row.add(lblMa);
-            row.add(lblSL);
-            row.add(lblGia);
-            row.add(spinWrap);
-
-            mapSpinner.put(maMon, spinner);
-            pnMon.add(row);
-        }
-
-        pnMon.revalidate();
-        pnMon.repaint();
-    }
-
-    private JLabel createHeader(String text) {
-        JLabel lbl = new JLabel(text, SwingConstants.CENTER);
-        lbl.setFont(new Font("SansSerif", Font.BOLD, 15));
-        lbl.setForeground(Color.BLACK);
-        return lbl;
-    }
-
-    private JLabel createCell(String text) {
-        JLabel lbl = new JLabel(text, SwingConstants.CENTER);
-        lbl.setFont(new Font("SansSerif", Font.PLAIN, 15));
-        return lbl;
-    }
-
-    private void initEvents() {
-        btnHuy.addActionListener(e -> dispose());
-        btnXacNhan.addActionListener(e -> xuLyTachBan());
-    }
-
-    private void xuLyTachBan() {
-        BanItem banItem = (BanItem) cboBan.getSelectedItem();
-
-        if (banItem == null) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn bàn muốn tách sang.");
-            return;
-        }
-
-        boolean coMonTach = false;
-        for (JSpinner sp : mapSpinner.values()) {
-            int sl = (Integer) sp.getValue();
-            if (sl > 0) {
-                coMonTach = true;
-                break;
-            }
-        }
-
-        if (!coMonTach) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn số lượng món cần tách.");
-            return;
-        }
-
-        maBanMoi = banItem.maBan;
-
-        HoaDon hdBanMoi = hoaDonDAO.timHoaDonChuaThanhToanTheoBan(maBanMoi);
-        String maHDMoi;
-
-        if (hdBanMoi != null) {
-            maHDMoi = hdBanMoi.getMaHD();
-        } else {
-            maHDMoi = hoaDonDAO.taoMaHoaDonMoi();
-
-            if (maHDMoi == null || maHDMoi.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Không tạo được mã hóa đơn mới.");
-                return;
-            }
-
-            String maNV = null;
-            if (taiKhoanDangNhap != null && taiKhoanDangNhap.getMaNV() != null) {
-                maNV = taiKhoanDangNhap.getMaNV().getMaNV();
-            }
-
-            boolean taoHD = hoaDonDAO.themHoaDonMoi(
-                    maHDMoi,
-                    maBanMoi,
-                    maNV,
-                    null,
-                    null,
-                    "Tại bàn",
-                    "Chưa thanh toán"
+            btn.setBackground(
+                    new Color(255,140,0)
             );
 
-            if (!taoHD) {
-                JOptionPane.showMessageDialog(this, "Tạo hóa đơn bàn mới thất bại.");
-                return;
-            }
+        } else {
+
+            btn.setBackground(
+            		new Color(220,220,220)
+            );
         }
+    }
 
-        for (ChiTietHoaDon ct : dsChiTiet) {
-            if (ct == null || ct.getMaMon() == null) continue;
+    // =====================================================
+    // LOAD BÀN
+    // =====================================================
 
-            String maMon = ct.getMaMon().getMaMon();
-            JSpinner sp = mapSpinner.get(maMon);
-            if (sp == null) continue;
+    private void loadBan() {
 
-            int soLuongTach = (Integer) sp.getValue();
-            int soLuongHienCo = ct.getSoLuong();
+        pnlBan.removeAll();
 
-            if (soLuongTach <= 0) {
+        ArrayList<Ban> dsBan =
+                banDAO.getAllBan();
+
+        for (Ban ban : dsBan) {
+
+            if (
+                    ban.getMaBan()
+                            .equals(maBanHienTai)
+            ) {
                 continue;
             }
 
-            if (soLuongTach > soLuongHienCo) {
-                JOptionPane.showMessageDialog(this,
-                        "Số lượng tách của món " + maMon + " không được lớn hơn số lượng hiện có.");
-                sp.setValue(soLuongHienCo);
-                return;
-            }
+            pnlBan.add(
+                    new BanCard(ban)
+            );
+        }
 
-            boolean ok = chiTietDAO.tachMonSangHoaDonKhac(
-                    maHDHienTai,
-                    maHDMoi,
-                    maMon,
-                    soLuongTach
+        pnlBan.revalidate();
+
+        pnlBan.repaint();
+    }
+
+    // =====================================================
+    // CARD BÀN
+    // =====================================================
+
+    class BanCard extends JPanel {
+
+        private final Ban ban;
+
+        public BanCard(Ban ban) {
+
+            this.ban = ban;
+
+            setOpaque(false);
+
+            setCursor(
+                    new Cursor(Cursor.HAND_CURSOR)
             );
 
-            if (!ok) {
-                JOptionPane.showMessageDialog(this, "Tách món thất bại: " + maMon);
+            setPreferredSize(
+                    new Dimension(180,130)
+            );
+
+            setBorder(
+                    BorderFactory.createEmptyBorder(
+                            10,
+                            10,
+                            10,
+                            10
+                    )
+            );
+
+            setLayout(
+                    new BoxLayout(
+                            this,
+                            BoxLayout.Y_AXIS
+                    )
+            );
+
+            JLabel lblTen =
+                    new JLabel(
+                            ban.getTenBan(),
+                            SwingConstants.CENTER
+                    );
+
+            lblTen.setFont(
+                    new Font(
+                            "Arial",
+                            Font.BOLD,
+                            28
+                    )
+            );
+
+            lblTen.setForeground(Color.WHITE);
+
+            lblTen.setAlignmentX(CENTER_ALIGNMENT);
+
+            JLabel lblSC =
+                    new JLabel(
+                            "Sức chứa: "
+                            + ban.getSoChoNgoi()
+                    );
+
+            lblSC.setForeground(Color.WHITE);
+
+            lblSC.setAlignmentX(CENTER_ALIGNMENT);
+
+            JLabel lblTT =
+                    new JLabel(
+                            ban.getTrangThai() == null
+                                    ? "Bàn trống"
+                                    : ban.getTrangThai()
+                    );
+
+            lblTT.setForeground(Color.WHITE);
+
+            lblTT.setAlignmentX(CENTER_ALIGNMENT);
+
+            add(Box.createVerticalStrut(12));
+
+            add(lblTen);
+
+            add(Box.createVerticalStrut(10));
+
+            add(lblSC);
+
+            add(Box.createVerticalStrut(10));
+
+            add(lblTT);
+
+            addMouseListener(
+                    new java.awt.event.MouseAdapter() {
+
+                        @Override
+                        public void mouseClicked(
+                                java.awt.event.MouseEvent e
+                        ) {
+
+                            toggleSelect();
+                        }
+                    }
+            );
+        }
+
+        private void toggleSelect() {
+
+            String tt =
+                    ban.getTrangThai();
+
+            if (
+                    tt != null
+                    &&
+                    (
+                            tt.toLowerCase().contains("đặt")
+                            ||
+                            tt.toLowerCase().contains("đang chờ")
+                    )
+            ) {
+
+                JOptionPane.showMessageDialog(
+                        TachBan_DigLog.this,
+                        "Không thể chọn bàn đã đặt."
+                );
+
                 return;
             }
-        }
 
-        hoaDonDAO.capNhatTongTien(maHDHienTai);
-        hoaDonDAO.capNhatTongTien(maHDMoi);
+            String maBan =
+                    ban.getMaBan();
 
-        banDAO.capNhatTrangThaiBan(maBanMoi, "Đang phục vụ");
+            if (
+                    dsBanChon.contains(maBan)
+            ) {
 
-        if (kiemTraHoaDonConMon(maHDHienTai)) {
-            banDAO.capNhatTrangThaiBan(maBanHienTai, "Đang phục vụ");
-        } else {
-            banDAO.capNhatTrangThaiBan(maBanHienTai, "Bàn trống");
-        }
+                dsBanChon.remove(maBan);
 
-        tachThanhCong = true;
-        JOptionPane.showMessageDialog(this, "Tách bàn thành công!");
-        dispose();
-    }
+            } else {
 
-    private boolean kiemTraHoaDonConMon(String maHD) {
-        List<ChiTietHoaDon> ds = chiTietDAO.getChiTietTheoMaHD(maHD);
-        return ds != null && !ds.isEmpty();
-    }
+                dsBanChon.add(maBan);
+            }
 
-    public boolean isTachThanhCong() {
-        return tachThanhCong;
-    }
+            updateTongSucChua();
 
-    public String getMaBanMoi() {
-        return maBanMoi;
-    }
+            loadMon();
 
-    static class BanItem {
-        String maBan;
-        String tenBan;
-
-        BanItem(String maBan, String tenBan) {
-            this.maBan = maBan;
-            this.tenBan = tenBan;
+            repaint();
         }
 
         @Override
-        public String toString() {
-            return tenBan + " - " + maBan;
+        protected void paintComponent(Graphics g) {
+
+            Graphics2D g2 =
+                    (Graphics2D) g.create();
+
+            g2.setRenderingHint(
+                    RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON
+            );
+
+            Color bg;
+
+            if (
+                    dsBanChon.contains(
+                            ban.getMaBan()
+                    )
+            ) {
+
+                bg = MAU_CHON;
+
+            } else {
+
+                bg = layMau(
+                        ban.getTrangThai()
+                );
+            }
+
+            // SHADOW
+
+            g2.setColor(
+                    new Color(0,0,0,25)
+            );
+
+            g2.fillRoundRect(
+                    4,
+                    4,
+                    getWidth()-8,
+                    getHeight()-8,
+                    35,
+                    35
+            );
+
+            // BACKGROUND
+
+            g2.setColor(bg);
+
+            g2.fillRoundRect(
+                    0,
+                    0,
+                    getWidth()-8,
+                    getHeight()-8,
+                    35,
+                    35
+            );
+
+            // BORDER
+
+            g2.setColor(
+                    new Color(255,255,255,120)
+            );
+
+            g2.drawRoundRect(
+                    0,
+                    0,
+                    getWidth()-8,
+                    getHeight()-8,
+                    35,
+                    35
+            );
+
+            g2.dispose();
+
+            super.paintComponent(g);
         }
+    }
+
+    // =====================================================
+    // MÀU
+    // =====================================================
+
+    private Color layMau(String tt) {
+
+        if (tt == null)
+            return MAU_TRONG;
+
+        tt = tt.trim().toLowerCase();
+
+        if (
+                tt.contains("đặt")
+                ||
+                tt.contains("đang chờ")
+        ) {
+
+            return MAU_DAT;
+        }
+
+        if (
+                tt.contains("phục vụ")
+        ) {
+
+            return MAU_PHUC_VU;
+        }
+
+        return MAU_TRONG;
+    }
+
+    // =====================================================
+    // LOAD MÓN
+    // =====================================================
+
+    private void loadMon() {
+
+        pnlMon.removeAll();
+
+        mapSpinnerBan.clear();
+
+        dsChiTiet =
+                chiTietDAO.getChiTietTheoMaHDVaBan(
+                        maHDHienTai,
+                        maBanHienTai
+                );
+
+        if (dsBanChon.isEmpty()) {
+
+            pnlMon.revalidate();
+
+            pnlMon.repaint();
+
+            return;
+        }
+
+        // =================================================
+        // HEADER
+        // =================================================
+
+        JPanel header =
+                new JPanel(
+                        new GridLayout(
+                                1,
+                                2 + dsBanChon.size(),
+                                10,
+                                10
+                        )
+                );
+
+        header.setMaximumSize(
+                new Dimension(
+                        Integer.MAX_VALUE,
+                        42
+                )
+        );
+
+        header.add(
+                taoHeader("Tên món")
+        );
+
+        header.add(
+                taoHeader("Tổng")
+        );
+
+        for (String maBan : dsBanChon) {
+
+            header.add(
+                    taoHeader(maBan)
+            );
+        }
+
+        pnlMon.add(header);
+
+        pnlMon.add(Box.createVerticalStrut(10));
+
+        // =================================================
+        // DATA
+        // =================================================
+
+        for (ChiTietHoaDon ct : dsChiTiet) {
+
+            JPanel row =
+                    new JPanel(
+                            new GridLayout(
+                                    1,
+                                    2 + dsBanChon.size(),
+                                    10,
+                                    10
+                            )
+                    );
+
+            row.setMaximumSize(
+                    new Dimension(
+                            Integer.MAX_VALUE,
+                            52
+                    )
+            );
+
+            String tenMon =
+                    ct.getMaMon().getTenMon();
+
+            if (
+                    tenMon == null
+                    ||
+                    tenMon.trim().isEmpty()
+            ) {
+
+                tenMon =
+                        ct.getMaMon().getMaMon();
+            }
+
+            JLabel lblTen =
+                    new JLabel(tenMon);
+
+            JLabel lblTong =
+                    new JLabel(
+                            String.valueOf(
+                                    ct.getSoLuong()
+                            ),
+                            SwingConstants.CENTER
+                    );
+
+            row.add(lblTen);
+
+            row.add(lblTong);
+
+            Map<String, JSpinner> mapBan =
+                    new LinkedHashMap<>();
+
+            for (String maBan : dsBanChon) {
+
+                JSpinner sp =
+                        new JSpinner(
+                                new SpinnerNumberModel(
+                                        0,
+                                        0,
+                                        ct.getSoLuong(),
+                                        1
+                                )
+                        );
+
+                mapBan.put(maBan, sp);
+
+                row.add(sp);
+            }
+
+            mapSpinnerBan.put(
+                    ct.getMaMon().getMaMon(),
+                    mapBan
+            );
+
+            pnlMon.add(row);
+
+            pnlMon.add(Box.createVerticalStrut(6));
+        }
+
+        pnlMon.revalidate();
+
+        pnlMon.repaint();
+    }
+
+    // =====================================================
+    // HEADER
+    // =====================================================
+
+    private JLabel taoHeader(String text) {
+
+        JLabel lbl =
+                new JLabel(
+                        text,
+                        SwingConstants.CENTER
+                );
+
+        lbl.setOpaque(true);
+
+        lbl.setBackground(
+                new Color(220,230,240)
+        );
+
+        lbl.setFont(
+                new Font("Arial", Font.BOLD, 15)
+        );
+
+        return lbl;
+    }
+
+    // =====================================================
+    // TỔNG SC
+    // =====================================================
+
+    private void updateTongSucChua() {
+
+        int tong = 0;
+
+        for (Ban b : banDAO.getAllBan()) {
+
+            if (
+                    b.getMaBan()
+                            .equals(maBanHienTai)
+            ) {
+
+                tong += b.getSoChoNgoi();
+            }
+
+            if (
+                    dsBanChon.contains(
+                            b.getMaBan()
+                    )
+            ) {
+
+                tong += b.getSoChoNgoi();
+            }
+        }
+
+        lblTongSucChua.setText(
+                "Tổng sức chứa: "
+                + tong
+        );
+    }
+
+ // =====================================================
+ // XỬ LÝ TÁCH BÀN
+ // =====================================================
+
+ private void xuLyTachBan() {
+
+     if (dsBanChon.isEmpty()) {
+
+         JOptionPane.showMessageDialog(
+                 this,
+                 "Chọn bàn cần tách."
+         );
+
+         return;
+     }
+
+     boolean tachHD =
+             chkTachHoaDon.isSelected();
+
+     try {
+
+         // =================================================
+         // KHÔNG TÁCH HÓA ĐƠN
+         // =================================================
+
+         if (!tachHD) {
+
+             for (ChiTietHoaDon ct : dsChiTiet) {
+
+                 String maMon =
+                         ct.getMaMon().getMaMon();
+
+                 Map<String, JSpinner> mapBan =
+                         mapSpinnerBan.get(maMon);
+
+                 if (mapBan == null)
+                     continue;
+
+                 int tongSLTach = 0;
+
+                 for (String maBanMoi : mapBan.keySet()) {
+
+                     int slTach =
+                             (Integer)
+                                     mapBan
+                                             .get(maBanMoi)
+                                             .getValue();
+
+                     tongSLTach += slTach;
+                 }
+
+                 // =========================================
+                 // CHECK QUÁ SL
+                 // =========================================
+
+                 if (tongSLTach > ct.getSoLuong()) {
+
+                     JOptionPane.showMessageDialog(
+                             this,
+                             "Món "
+                             + ct.getMaMon().getTenMon()
+                             + " vượt quá số lượng."
+                     );
+
+                     return;
+                 }
+
+                 // =========================================
+                 // TÁCH THEO BÀN
+                 // =========================================
+
+                 for (String maBanMoi : mapBan.keySet()) {
+
+                     int slTach =
+                             (Integer)
+                                     mapBan
+                                             .get(maBanMoi)
+                                             .getValue();
+
+                     if (slTach <= 0)
+                         continue;
+
+                     // =====================================
+                     // THÊM BÀN VÀO HÓA ĐƠN
+                     // =====================================
+
+                     boolean daTonTai =
+                             hoaDonBanDAO
+                                     .kiemTraBanThuocHoaDon(
+                                             maHDHienTai,
+                                             maBanMoi
+                                     );
+
+                     if (!daTonTai) {
+
+                         hoaDonBanDAO
+                                 .themBanVaoHoaDon(
+                                         maHDHienTai,
+                                         maBanMoi
+                                 );
+                     }
+
+                     // =====================================
+                     // CHUYỂN MÓN SANG BÀN MỚI
+                     // =====================================
+
+                     boolean ok =
+                             chiTietDAO.capNhatBanChoMon(
+                                     maHDHienTai,
+                                     maMon,
+                                     maBanHienTai,
+                                     maBanMoi,
+                                     slTach
+                             );
+
+                     if (!ok) {
+
+                         JOptionPane.showMessageDialog(
+                                 this,
+                                 "Lỗi tách món: "
+                                 + ct.getMaMon().getTenMon()
+                         );
+
+                         return;
+                     }
+
+                     // =====================================
+                     // UPDATE BÀN
+                     // =====================================
+
+                     banDAO.capNhatTrangThaiBan(
+                             maBanMoi,
+                             "Đang phục vụ"
+                     );
+                 }
+             }
+
+             hoaDonDAO.capNhatTongTien(
+                     maHDHienTai
+             );
+
+             JOptionPane.showMessageDialog(
+                     this,
+                     "Tách bàn thành công!\n"
+                     + "Các bàn dùng chung hóa đơn."
+             );
+
+             tachThanhCong = true;
+
+             dispose();
+
+             return;
+         }
+
+         // =================================================
+         // TÁCH HÓA ĐƠN
+         // =================================================
+
+         for (ChiTietHoaDon ct : dsChiTiet) {
+
+             String maMon =
+                     ct.getMaMon().getMaMon();
+
+             Map<String, JSpinner> mapBan =
+                     mapSpinnerBan.get(maMon);
+
+             if (mapBan == null)
+                 continue;
+
+             int tongSLTach = 0;
+
+             for (String maBanMoi : mapBan.keySet()) {
+
+                 int slTach =
+                         (Integer)
+                                 mapBan
+                                         .get(maBanMoi)
+                                         .getValue();
+
+                 tongSLTach += slTach;
+             }
+
+             if (tongSLTach > ct.getSoLuong()) {
+
+                 JOptionPane.showMessageDialog(
+                         this,
+                         "Món "
+                         + ct.getMaMon().getTenMon()
+                         + " vượt quá số lượng."
+                 );
+
+                 return;
+             }
+
+             // =============================================
+             // TÁCH HÓA ĐƠN
+             // =============================================
+
+             for (String maBanMoi : mapBan.keySet()) {
+
+                 int slTach =
+                         (Integer)
+                                 mapBan
+                                         .get(maBanMoi)
+                                         .getValue();
+
+                 if (slTach <= 0)
+                     continue;
+
+                 String maHDMoi;
+
+                 HoaDon hdMoi =
+                         hoaDonDAO
+                                 .timHoaDonChuaThanhToanTheoBan(
+                                         maBanMoi
+                                 );
+
+                 if (hdMoi != null) {
+
+                     maHDMoi =
+                             hdMoi.getMaHD();
+
+                 } else {
+
+                     maHDMoi =
+                             hoaDonDAO
+                                     .taoMaHoaDonMoi();
+
+                     String maNV =
+                             taiKhoanDangNhap
+                                     .getMaNV()
+                                     .getMaNV();
+
+                     List<String> dsBanMoi =
+                    	        new ArrayList<>();
+
+                    	dsBanMoi.add(maBanMoi);
+
+                    	hoaDonDAO.themHoaDonMoi(
+                    	        maHDMoi,
+                    	        dsBanMoi,
+                    	        maNV,
+                    	        null,
+                    	        null,
+                    	        "Tại bàn",
+                    	        "Chưa thanh toán"
+                    	);
+                 }
+
+                 boolean ok =
+                         chiTietDAO
+                                 .tachMonSangHoaDonKhac(
+                                         maHDHienTai,
+                                         maHDMoi,
+                                         maMon,
+                                         slTach,
+                                         maBanHienTai,
+                                         maBanMoi
+                                 );
+
+                 if (!ok) {
+
+                     JOptionPane.showMessageDialog(
+                             this,
+                             "Tách thất bại: "
+                             + ct.getMaMon().getTenMon()
+                     );
+
+                     return;
+                 }
+
+                 banDAO.capNhatTrangThaiBan(
+                         maBanMoi,
+                         "Đang phục vụ"
+                 );
+
+                 hoaDonDAO.capNhatTongTien(
+                         maHDMoi
+                 );
+             }
+         }
+
+         hoaDonDAO.capNhatTongTien(
+                 maHDHienTai
+         );
+
+         JOptionPane.showMessageDialog(
+                 this,
+                 "Tách hóa đơn thành công!"
+         );
+
+         tachThanhCong = true;
+
+         dispose();
+
+     } catch (Exception e) {
+
+         e.printStackTrace();
+
+         JOptionPane.showMessageDialog(
+                 this,
+                 "Lỗi khi tách bàn."
+         );
+     }
+ }
+
+    public boolean isTachThanhCong() {
+        return tachThanhCong;
     }
 }

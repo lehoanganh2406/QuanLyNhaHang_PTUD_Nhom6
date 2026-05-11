@@ -212,235 +212,467 @@ public class Ban_DAO {
 
 		return false;
 	}
-	public ArrayList<String[]> getTatCaBanKemTrangThaiMacDinh() {
-	    ArrayList<String[]> ds = new ArrayList<>();
-	    Connection con = ConnectDB.getConnection();
+	public ArrayList<String[]> getTatCaBanKemTrangThaiMacDinh(){
 
-	    String sql = "SELECT maBan, tenBan, soChoNgoi, trangThai FROM Ban ORDER BY tenBan";
+	    ArrayList<String[]> ds=
+	            new ArrayList<>();
 
-	    try (PreparedStatement stmt = con.prepareStatement(sql);
-	         ResultSet rs = stmt.executeQuery()) {
+	    Connection con=
+	            ConnectDB.getConnection();
 
-	        while (rs.next()) {
-	            String trangThai = rs.getString("trangThai");
-	            if (trangThai == null || trangThai.trim().isEmpty()) {
-	                trangThai = "Bàn trống";
+	    String sql="""
+
+	        SELECT
+	            b.maBan,
+	            b.tenBan,
+	            b.soChoNgoi,
+	            ISNULL(b.trangThai,N'Bàn trống')
+	                AS trangThai,
+	            kv.tenKhuVuc
+	        FROM Ban b
+	        LEFT JOIN KhuVuc kv
+	            ON b.maKhuVuc=kv.maKhuVuc
+	        ORDER BY b.tenBan
+
+	    """;
+
+	    try(
+	            PreparedStatement stmt=
+	                    con.prepareStatement(sql);
+
+	            ResultSet rs=
+	                    stmt.executeQuery()
+	    ){
+
+	        while(rs.next()){
+
+	            String trangThai=
+	                    rs.getString("trangThai");
+
+	            if(
+	                    trangThai==null
+	                    ||
+	                    trangThai.trim().isEmpty()
+	            ){
+
+	                trangThai="Bàn trống";
 	            }
 
-	            ds.add(new String[] {
+	            ds.add(new String[]{
+
 	                    rs.getString("maBan"),
+
 	                    rs.getString("tenBan"),
-	                    String.valueOf(rs.getInt("soChoNgoi")),
-	                    trangThai
+
+	                    String.valueOf(
+	                            rs.getInt("soChoNgoi")
+	                    ),
+
+	                    trangThai,
+
+	                    rs.getString("tenKhuVuc")
 	            });
 	        }
-	    } catch (Exception e) {
+
+	    }catch(Exception e){
+
 	        e.printStackTrace();
 	    }
 
 	    return ds;
 	}
 
-	public ArrayList<String[]> getDanhSachBanTheoThoiGian(Timestamp thoiGianChon) {
-	    ArrayList<String[]> ds = new ArrayList<>();
-	    Connection con = ConnectDB.getConnection();
+	public ArrayList<String[]> getDanhSachBanTheoThoiGian(
+	        Timestamp thoiGianChon
+	){
+
+	    ArrayList<String[]> ds =
+	            new ArrayList<>();
+
+	    Connection con =
+	            ConnectDB.getConnection();
 
 	    String sql = """
-	        SELECT 
-    b.maBan,
-    b.tenBan,
-    b.soChoNgoi,
-    CASE
-        WHEN b.trangThai IN (N'Đang phục vụ', N'Bàn đang phục vụ')
-            THEN N'Đang phục vụ'
 
-        WHEN EXISTS (
-            SELECT 1
-            FROM HoaDon hd
-            WHERE hd.maBan = b.maBan
-              AND hd.thoiGianVao <= ?
-              AND hd.thoiGianRa IS NULL
-              AND (hd.trangThai IS NULL OR hd.trangThai <> N'Đã hủy')
-        ) THEN N'Đang phục vụ'
+	        SELECT
+	            b.maBan,
+	            b.tenBan,
+	            b.soChoNgoi,
+	            kv.tenKhuVuc,
 
-        WHEN EXISTS (
-            SELECT 1
-            FROM PhieuDatBan pdb
-            WHERE pdb.maBan = b.maBan
-              AND pdb.trangThai = N'Đã nhận bàn'
-              AND pdb.thoiGianDen < DATEADD(HOUR, 2, ?)
-              AND DATEADD(HOUR, 2, pdb.thoiGianDen) > ?
-        ) THEN N'Đang phục vụ'
+	            CASE
 
-        WHEN EXISTS (
-            SELECT 1
-            FROM PhieuDatBan pdb
-            WHERE pdb.maBan = b.maBan
-              AND pdb.trangThai IN (N'Đang chờ', N'Đã đặt')
-              AND pdb.thoiGianDen < DATEADD(HOUR, 2, ?)
-              AND DATEADD(HOUR, 2, pdb.thoiGianDen) > ?
-        ) THEN N'Đã đặt'
+	                WHEN EXISTS(
 
-        ELSE N'Bàn trống'
-    END AS trangThaiHienTai
-FROM Ban b
-ORDER BY b.tenBan
+	                    SELECT 1
+	                    FROM HoaDon hd
+	                    JOIN HoaDon_Ban hdb
+	                        ON hd.maHD = hdb.maHD
+	                    WHERE hdb.maBan = b.maBan
+	                    AND CAST(hd.thoiGianVao AS DATE)
+	                        = CAST(? AS DATE)
+	                    AND hd.thoiGianRa IS NULL
+	                    AND (
+	                        hd.trangThai IS NULL
+	                        OR hd.trangThai <> N'Đã hủy'
+	                    )
+
+	                )
+	                    THEN N'Đang phục vụ'
+
+	                WHEN EXISTS(
+
+	                    SELECT 1
+	                    FROM PhieuDatBan pdb
+	                    JOIN PhieuDatBan_Ban pdbb
+	                        ON pdb.maPhieuDatBan =
+	                           pdbb.maPhieuDatBan
+	                    WHERE pdbb.maBan = b.maBan
+	                    AND pdb.trangThai = N'Đã nhận bàn'
+	                    AND pdb.thoiGianDen
+	                        < DATEADD(HOUR,2,?)
+	                    AND DATEADD(HOUR,2,pdb.thoiGianDen)
+	                        > ?
+
+	                )
+	                    THEN N'Đang phục vụ'
+
+	                WHEN EXISTS(
+
+	                    SELECT 1
+	                    FROM PhieuDatBan pdb
+	                    JOIN PhieuDatBan_Ban pdbb
+	                        ON pdb.maPhieuDatBan =
+	                           pdbb.maPhieuDatBan
+	                    WHERE pdbb.maBan = b.maBan
+	                    AND pdb.trangThai IN
+	                    (
+	                        N'Đang chờ',
+	                        N'Đã đặt'
+	                    )
+	                    AND pdb.thoiGianDen
+	                        < DATEADD(HOUR,2,?)
+	                    AND DATEADD(HOUR,2,pdb.thoiGianDen)
+	                        > ?
+
+	                )
+	                    THEN N'Đã đặt'
+
+	                ELSE N'Bàn trống'
+
+	            END AS trangThaiHienTai
+
+	        FROM Ban b
+
+	        LEFT JOIN KhuVuc kv
+	            ON b.maKhuVuc = kv.maKhuVuc
+
+	        ORDER BY b.tenBan
+
 	    """;
 
-	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	    try(
+	            PreparedStatement stmt =
+	                    con.prepareStatement(sql)
+	    ){
+
 	        stmt.setTimestamp(1, thoiGianChon);
 	        stmt.setTimestamp(2, thoiGianChon);
 	        stmt.setTimestamp(3, thoiGianChon);
 	        stmt.setTimestamp(4, thoiGianChon);
 	        stmt.setTimestamp(5, thoiGianChon);
 
-	        try (ResultSet rs = stmt.executeQuery()) {
-	            while (rs.next()) {
-	            	ds.add(new String[]{
-	            		    rs.getString("maBan"),
-	            		    rs.getString("tenBan"),
-	            		    String.valueOf(rs.getInt("soChoNgoi")), // THÊM
-	            		    rs.getString("trangThaiHienTai")
-	            		});
-	            }
-	        }
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    }
+	        try(
+	                ResultSet rs =
+	                        stmt.executeQuery()
+	        ){
 
-	    return ds;
-	}
-	public ArrayList<String[]> getDanhSachBanTheoNgay(java.sql.Date ngayChon) {
-	    ArrayList<String[]> ds = new ArrayList<>();
-	    Connection con = ConnectDB.getConnection();
+	            while(rs.next()){
 
-	    String sql = """
-	    	    SELECT 
-	    	        b.maBan,
-	    	        b.tenBan,
-	    	        kv.tenKhuVuc,
-	    	        b.soChoNgoi,
-	    	        CASE
-	    	            WHEN b.trangThai IN (N'Đang phục vụ', N'Bàn đang phục vụ', N'Đã nhận bàn')
-	    	                THEN N'Đang phục vụ'
+	                ds.add(new String[]{
 
-	    	            WHEN EXISTS (
-	    	                SELECT 1
-	    	                FROM HoaDon hd
-	    	                WHERE hd.maBan = b.maBan
-	    	                  AND CAST(hd.thoiGianVao AS DATE) = ?
-	    	                  AND (hd.trangThai IS NULL OR hd.trangThai <> N'Đã hủy')
-	    	                  AND hd.thoiGianRa IS NULL
-	    	            ) THEN N'Đang phục vụ'
+	                        rs.getString("maBan"),
 
-	    	            WHEN EXISTS (
-	    	                SELECT 1
-	    	                FROM PhieuDatBan pdb
-	    	                WHERE pdb.maBan = b.maBan
-	    	                  AND CAST(pdb.thoiGianDen AS DATE) = ?
-	    	                  AND pdb.trangThai = N'Đã nhận bàn'
-	    	            ) THEN N'Đang phục vụ'
+	                        rs.getString("tenBan"),
 
-	    	            WHEN EXISTS (
-	    	                SELECT 1
-	    	                FROM PhieuDatBan pdb
-	    	                WHERE pdb.maBan = b.maBan
-	    	                  AND CAST(pdb.thoiGianDen AS DATE) = ?
-	    	                  AND pdb.trangThai IN (N'Đang chờ', N'Đã đặt')
-	    	            ) THEN N'Đã đặt'
+	                        String.valueOf(
+	                                rs.getInt("soChoNgoi")
+	                        ),
 
-	    	            ELSE N'Trống'
-	    	        END AS trangThaiHienTai
-	    	    FROM Ban b
-	    	    JOIN KhuVuc kv ON b.maKhuVuc = kv.maKhuVuc
-	    	    ORDER BY b.maBan
-	    	""";
-	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
-	    	stmt.setDate(1, ngayChon);
-	    	stmt.setDate(2, ngayChon);
-	    	stmt.setDate(3, ngayChon);
+	                        rs.getString("trangThaiHienTai"),
 
-	        try (ResultSet rs = stmt.executeQuery()) {
-	            while (rs.next()) {
-	                ds.add(new String[] {
-	                    rs.getString("maBan"),
-	                    rs.getString("tenBan"),
-	                    rs.getString("tenKhuVuc"),
-	                    String.valueOf(rs.getInt("soChoNgoi")),
-	                    rs.getString("trangThaiHienTai")
+	                        rs.getString("tenKhuVuc")
 	                });
 	            }
 	        }
-	    } catch (Exception e) {
+
+	    }catch(Exception e){
+
 	        e.printStackTrace();
 	    }
 
 	    return ds;
 	}
-	public ArrayList<String[]> getDanhSachBanTheoNgayVaTuKhoa(java.sql.Date ngayChon, String tuKhoa) {
-	    ArrayList<String[]> ds = new ArrayList<>();
-	    Connection con = ConnectDB.getConnection();
+	public ArrayList<String[]> getDanhSachBanTheoNgay(
+	        java.sql.Date ngayChon
+	){
+
+	    ArrayList<String[]> ds =
+	            new ArrayList<>();
+
+	    Connection con =
+	            ConnectDB.getConnection();
 
 	    String sql = """
-	        SELECT 
+
+	        SELECT
 	            b.maBan,
 	            b.tenBan,
 	            kv.tenKhuVuc,
+	            b.soChoNgoi,
+
 	            CASE
-	                WHEN b.trangThai IN (N'Đang phục vụ', N'Bàn đang phục vụ')
+
+	                WHEN b.trangThai IN
+	                (
+	                    N'Đang phục vụ',
+	                    N'Bàn đang phục vụ',
+	                    N'Đã nhận bàn'
+	                )
 	                    THEN N'Đang phục vụ'
 
 	                WHEN EXISTS (
+
 	                    SELECT 1
 	                    FROM HoaDon hd
-	                    WHERE hd.maBan = b.maBan
-	                      AND CAST(hd.thoiGianVao AS DATE) = ?
-	                      AND hd.thoiGianRa IS NULL
-	                      AND (hd.trangThai IS NULL OR hd.trangThai <> N'Đã hủy')
-	                ) THEN N'Đang phục vụ'
+	                    JOIN HoaDon_Ban hdb
+	                        ON hd.maHD = hdb.maHD
+	                    WHERE hdb.maBan = b.maBan
+	                    AND CAST(hd.thoiGianVao AS DATE) = ?
+	                    AND (
+	                        hd.trangThai IS NULL
+	                        OR hd.trangThai <> N'Đã hủy'
+	                    )
+	                    AND hd.thoiGianRa IS NULL
+
+	                )
+	                    THEN N'Đang phục vụ'
 
 	                WHEN EXISTS (
+
 	                    SELECT 1
 	                    FROM PhieuDatBan pdb
-	                    WHERE pdb.maBan = b.maBan
-	                      AND CAST(pdb.thoiGianDen AS DATE) = ?
-	                      AND pdb.trangThai = N'Đã nhận bàn'
-	                ) THEN N'Đang phục vụ'
+	                    JOIN PhieuDatBan_Ban pdbb
+	                        ON pdb.maPhieuDatBan =
+	                           pdbb.maPhieuDatBan
+	                    WHERE pdbb.maBan = b.maBan
+	                    AND CAST(pdb.thoiGianDen AS DATE)=?
+	                    AND pdb.trangThai = N'Đã nhận bàn'
+
+	                )
+	                    THEN N'Đang phục vụ'
 
 	                WHEN EXISTS (
+
 	                    SELECT 1
 	                    FROM PhieuDatBan pdb
-	                    WHERE pdb.maBan = b.maBan
-	                      AND CAST(pdb.thoiGianDen AS DATE) = ?
-	                      AND pdb.trangThai IN (N'Đang chờ', N'Đã đặt')
-	                ) THEN N'Đã đặt'
+	                    JOIN PhieuDatBan_Ban pdbb
+	                        ON pdb.maPhieuDatBan =
+	                           pdbb.maPhieuDatBan
+	                    WHERE pdbb.maBan = b.maBan
+	                    AND CAST(pdb.thoiGianDen AS DATE)=?
+	                    AND pdb.trangThai IN
+	                    (
+	                        N'Đang chờ',
+	                        N'Đã đặt'
+	                    )
+
+	                )
+	                    THEN N'Đã đặt'
 
 	                ELSE N'Trống'
+
 	            END AS trangThaiHienTai
+
 	        FROM Ban b
-	        JOIN KhuVuc kv ON b.maKhuVuc = kv.maKhuVuc
-	        WHERE b.maBan LIKE ? OR b.tenBan LIKE ?
+
+	        JOIN KhuVuc kv
+	            ON b.maKhuVuc = kv.maKhuVuc
+
 	        ORDER BY b.maBan
+
 	    """;
 
-	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	    try(
+	            PreparedStatement stmt =
+	                    con.prepareStatement(sql)
+	    ){
+
+	        stmt.setDate(1, ngayChon);
+	        stmt.setDate(2, ngayChon);
+	        stmt.setDate(3, ngayChon);
+
+	        try(
+	                ResultSet rs =
+	                        stmt.executeQuery()
+	        ){
+
+	            while(rs.next()){
+
+	                ds.add(new String[]{
+
+	                        rs.getString("maBan"),
+
+	                        rs.getString("tenBan"),
+
+	                        rs.getString("tenKhuVuc"),
+
+	                        String.valueOf(
+	                                rs.getInt("soChoNgoi")
+	                        ),
+
+	                        rs.getString("trangThaiHienTai")
+	                });
+	            }
+	        }
+
+	    }catch(Exception e){
+
+	        e.printStackTrace();
+	    }
+
+	    return ds;
+	}
+	public ArrayList<String[]> getDanhSachBanTheoNgayVaTuKhoa(
+	        java.sql.Date ngayChon,
+	        String tuKhoa
+	){
+
+	    ArrayList<String[]> ds =
+	            new ArrayList<>();
+
+	    Connection con =
+	            ConnectDB.getConnection();
+
+	    String sql = """
+
+	        SELECT
+	            b.maBan,
+	            b.tenBan,
+	            kv.tenKhuVuc,
+
+	            CASE
+
+	                WHEN b.trangThai IN
+	                (
+	                    N'Đang phục vụ',
+	                    N'Bàn đang phục vụ'
+	                )
+	                    THEN N'Đang phục vụ'
+
+	                WHEN EXISTS (
+
+	                    SELECT 1
+	                    FROM HoaDon hd
+	                    JOIN HoaDon_Ban hdb
+	                        ON hd.maHD = hdb.maHD
+	                    WHERE hdb.maBan = b.maBan
+	                    AND CAST(hd.thoiGianVao AS DATE)=?
+	                    AND hd.thoiGianRa IS NULL
+	                    AND (
+	                        hd.trangThai IS NULL
+	                        OR hd.trangThai <> N'Đã hủy'
+	                    )
+
+	                )
+	                    THEN N'Đang phục vụ'
+
+	                WHEN EXISTS (
+
+	                    SELECT 1
+	                    FROM PhieuDatBan pdb
+	                    JOIN PhieuDatBan_Ban pdbb
+	                        ON pdb.maPhieuDatBan =
+	                           pdbb.maPhieuDatBan
+	                    WHERE pdbb.maBan = b.maBan
+	                    AND CAST(pdb.thoiGianDen AS DATE)=?
+	                    AND pdb.trangThai = N'Đã nhận bàn'
+
+	                )
+	                    THEN N'Đang phục vụ'
+
+	                WHEN EXISTS (
+
+	                    SELECT 1
+	                    FROM PhieuDatBan pdb
+	                    JOIN PhieuDatBan_Ban pdbb
+	                        ON pdb.maPhieuDatBan =
+	                           pdbb.maPhieuDatBan
+	                    WHERE pdbb.maBan = b.maBan
+	                    AND CAST(pdb.thoiGianDen AS DATE)=?
+	                    AND pdb.trangThai IN
+	                    (
+	                        N'Đang chờ',
+	                        N'Đã đặt'
+	                    )
+
+	                )
+	                    THEN N'Đã đặt'
+
+	                ELSE N'Trống'
+
+	            END AS trangThaiHienTai
+
+	        FROM Ban b
+
+	        JOIN KhuVuc kv
+	            ON b.maKhuVuc = kv.maKhuVuc
+
+	        WHERE
+	            b.maBan LIKE ?
+	            OR b.tenBan LIKE ?
+
+	        ORDER BY b.maBan
+
+	    """;
+
+	    try(
+	            PreparedStatement stmt =
+	                    con.prepareStatement(sql)
+	    ){
+
 	        stmt.setDate(1, ngayChon);
 	        stmt.setDate(2, ngayChon);
 	        stmt.setDate(3, ngayChon);
 	        stmt.setString(4, "%" + tuKhoa + "%");
 	        stmt.setString(5, "%" + tuKhoa + "%");
 
-	        try (ResultSet rs = stmt.executeQuery()) {
-	            while (rs.next()) {
-	                ds.add(new String[]{
-	                        rs.getString("maBan"),
-	                        rs.getString("tenBan"),
-	                        rs.getString("tenKhuVuc"),
-	                        rs.getString("trangThaiHienTai")
-	                });
+	        try(
+	                ResultSet rs =
+	                        stmt.executeQuery()
+	        ){
+
+	            while(rs.next()){
+
+	            	ds.add(new String[]{
+
+	            	        rs.getString("maBan"),
+
+	            	        rs.getString("tenBan"),
+
+	            	        rs.getString("tenKhuVuc"),
+
+	            	        String.valueOf(
+	            	                rs.getInt("soChoNgoi")
+	            	        ),
+
+	            	        rs.getString("trangThaiHienTai")
+	            	});
 	            }
 	        }
-	    } catch (Exception e) {
+
+	    }catch(Exception e){
+
 	        e.printStackTrace();
 	    }
 

@@ -488,9 +488,23 @@ public class Order_Ban_GUI extends JPanel {
                         String trangThaiBan = banRow[4];
 
                         if (maBan.equalsIgnoreCase(maBanRow)) {
-                            if (!"Bàn đang phục vụ".equalsIgnoreCase(chuanHoaTrangThai(trangThaiBan))) {
-                                banRow[4] = "Bàn đặt";
-                            }
+                        	
+
+                        	String tt =
+                        	        chuanHoaTrangThai(trangThaiBan);
+
+                        	if (
+                        	        "Bàn trống".equalsIgnoreCase(tt)
+                        	        &&
+                        	        (
+                        	            "Đang chờ".equalsIgnoreCase(trangThaiPhieu)
+                        	            ||
+                        	            "Đã đặt".equalsIgnoreCase(trangThaiPhieu)
+                        	        )
+                        	) {
+
+                        	    banRow[4] = "Bàn đặt";
+                        	}
                             break;
                         }
                     }
@@ -569,7 +583,25 @@ public class Order_Ban_GUI extends JPanel {
                 String trangThaiPhieu = phieu[8];
                 String thoiGianDenStr = phieu[5];
 
-                if (maBanPhieu == null || !maBanPhieu.equalsIgnoreCase(maBan)) continue;
+                if (maBanPhieu == null) continue;
+
+                boolean tonTaiBan = false;
+
+                String[] dsBan =
+                        maBanPhieu.split(",");
+
+                for(String b : dsBan){
+
+                    if(maBan.equalsIgnoreCase(b.trim())){
+
+                        tonTaiBan = true;
+                        break;
+                    }
+                }
+
+                if(!tonTaiBan){
+                    continue;
+                }
 
                 if (!"Đang chờ".equalsIgnoreCase(trangThaiPhieu)
                         && !"Đã đặt".equalsIgnoreCase(trangThaiPhieu)) {
@@ -1069,7 +1101,25 @@ public class Order_Ban_GUI extends JPanel {
                 String maBanPhieu = phieu[1];
                 String trangThaiPhieu = phieu[8];
 
-                if (maBanPhieu == null || !maBanPhieu.equalsIgnoreCase(maBan)) continue;
+                if (maBanPhieu == null) continue;
+
+                boolean tonTaiBan = false;
+
+                String[] dsBan =
+                        maBanPhieu.split(",");
+
+                for(String b : dsBan){
+
+                    if(maBan.equalsIgnoreCase(b.trim())){
+
+                        tonTaiBan = true;
+                        break;
+                    }
+                }
+
+                if(!tonTaiBan){
+                    continue;
+                }
 
                 if ("Đã nhận bàn".equalsIgnoreCase(trangThaiPhieu)) {
                     return phieu;

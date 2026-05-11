@@ -25,7 +25,6 @@ import dao.CaLamViec_DAO;
 import entity.TaiKhoan;
 
 public class TienMoCa_DigLog extends JDialog {
-    private static final long serialVersionUID = 1L;
 
     private JLabel lblNgayGioValue;
     private JLabel lblCaLamValue;

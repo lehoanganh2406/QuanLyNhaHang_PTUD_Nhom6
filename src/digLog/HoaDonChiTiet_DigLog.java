@@ -17,7 +17,7 @@ import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 
 public class HoaDonChiTiet_DigLog extends JPanel {
-    private static final long serialVersionUID = 1L;
+
 
     private final DecimalFormat df = new DecimalFormat("#,##0");
     private JPanel billPanel;
@@ -100,7 +100,14 @@ public class HoaDonChiTiet_DigLog extends JPanel {
         billPanel.add(info("Phương thức", phuongThuc));
         billPanel.add(info("Khách trả", formatTien(tienKhachTra)));
         billPanel.add(info("Tiền thừa", formatTien(tienThua)));
-        billPanel.add(info("Điểm tích lũy được cộng", "+" + diemCongThem));
+        billPanel.add(info(
+                "Điểm tích lũy được cộng",
+                tenKH == null
+                || tenKH.trim().isEmpty()
+                || tenKH.equalsIgnoreCase("Khách lẻ")
+                        ? "0"
+                        : "+" + diemCongThem
+        ));
 
         JButton btnIn = new JButton("In hóa đơn / Xuất PDF");
         JButton btnDong = new JButton("Đóng");
@@ -133,7 +140,18 @@ public class HoaDonChiTiet_DigLog extends JPanel {
         bottom.add(btnIn);
         bottom.add(btnDong);
 
-        add(new JScrollPane(billPanel), BorderLayout.CENTER);
+        JScrollPane scroll=
+                new JScrollPane(billPanel);
+
+        scroll.setBorder(null);
+
+        scroll.getVerticalScrollBar()
+                .setUnitIncrement(16);
+
+        scroll.getViewport()
+                .setBackground(Color.WHITE);
+
+        add(scroll,BorderLayout.CENTER);
         add(bottom, BorderLayout.SOUTH);
     }
 
@@ -153,34 +171,171 @@ public class HoaDonChiTiet_DigLog extends JPanel {
         return p;
     }
 
-    private JPanel headerRow() {
-        JPanel p = new JPanel(new GridLayout(1, 4));
-        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
-        p.setBackground(new Color(230, 230, 230));
+    private JPanel headerRow(){
 
-        p.add(cell("Món", true));
-        p.add(cell("SL", true));
-        p.add(cell("Đơn giá", true));
-        p.add(cell("Thành tiền", true));
+        JPanel p=new JPanel(
+                new GridBagLayout()
+        );
+
+        p.setMaximumSize(
+                new Dimension(
+                        Integer.MAX_VALUE,
+                        42
+                )
+        );
+
+        p.setBackground(
+                new Color(230,230,230)
+        );
+
+        GridBagConstraints gbc=
+                new GridBagConstraints();
+
+        gbc.fill=GridBagConstraints.BOTH;
+
+        gbc.gridy=0;
+
+        gbc.weighty=1;
+
+        gbc.insets=new Insets(0,0,0,0);
+
+        gbc.gridx=0;
+        gbc.weightx=4;
+        p.add(cell("Món",true,SwingConstants.LEFT),gbc);
+
+        gbc.gridx=1;
+        gbc.weightx=1;
+        p.add(cell("SL",true,SwingConstants.CENTER),gbc);
+
+        gbc.gridx=2;
+        gbc.weightx=2;
+        p.add(cell("Đơn giá",true,SwingConstants.RIGHT),gbc);
+
+        gbc.gridx=3;
+        gbc.weightx=2;
+        p.add(cell("Thành tiền",true,SwingConstants.RIGHT),gbc);
+
         return p;
     }
 
-    private JPanel itemRow(String tenMon, int sl, double donGia, double thanhTien) {
-        JPanel p = new JPanel(new GridLayout(1, 4));
-        p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+    private JPanel itemRow(
+            String tenMon,
+            int sl,
+            double donGia,
+            double thanhTien
+    ){
+
+        JPanel p=new JPanel(
+                new GridBagLayout()
+        );
+
         p.setBackground(Color.WHITE);
 
-        p.add(cell(tenMon, false));
-        p.add(cell(String.valueOf(sl), false));
-        p.add(cell(formatTien(donGia), false));
-        p.add(cell(formatTien(thanhTien), false));
+        p.setBorder(
+                BorderFactory.createMatteBorder(
+                        0,
+                        0,
+                        1,
+                        0,
+                        new Color(235,235,235)
+                )
+        );
+
+        GridBagConstraints gbc=
+                new GridBagConstraints();
+
+        gbc.fill=GridBagConstraints.BOTH;
+
+        gbc.insets=new Insets(6,4,6,4);
+
+        gbc.gridy=0;
+
+        gbc.weighty=1;
+
+        gbc.gridx=0;
+        gbc.weightx=4;
+
+        p.add(
+                cell(
+                        tenMon,
+                        false,
+                        SwingConstants.LEFT
+                ),
+                gbc
+        );
+
+        gbc.gridx=1;
+        gbc.weightx=1;
+
+        p.add(
+                cell(
+                        String.valueOf(sl),
+                        false,
+                        SwingConstants.CENTER
+                ),
+                gbc
+        );
+
+        gbc.gridx=2;
+        gbc.weightx=2;
+
+        p.add(
+                cell(
+                        formatTien(donGia),
+                        false,
+                        SwingConstants.RIGHT
+                ),
+                gbc
+        );
+
+        gbc.gridx=3;
+        gbc.weightx=2;
+
+        p.add(
+                cell(
+                        formatTien(thanhTien),
+                        false,
+                        SwingConstants.RIGHT
+                ),
+                gbc
+        );
+
         return p;
     }
 
-    private JLabel cell(String text, boolean bold) {
-        JLabel lbl = new JLabel(text, SwingConstants.CENTER);
-        lbl.setFont(new Font("SansSerif", bold ? Font.BOLD : Font.PLAIN, 13));
-        lbl.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+    private JLabel cell(
+            String text,
+            boolean bold,
+            int align
+    ){
+
+        JLabel lbl=new JLabel(text);
+
+        lbl.setHorizontalAlignment(align);
+
+        lbl.setVerticalAlignment(
+                SwingConstants.CENTER
+        );
+
+        lbl.setFont(
+                new Font(
+                        "SansSerif",
+                        bold
+                                ? Font.BOLD
+                                : Font.PLAIN,
+                        14
+                )
+        );
+
+        lbl.setBorder(
+                BorderFactory.createEmptyBorder(
+                        6,
+                        8,
+                        6,
+                        8
+                )
+        );
+
         return lbl;
     }
 

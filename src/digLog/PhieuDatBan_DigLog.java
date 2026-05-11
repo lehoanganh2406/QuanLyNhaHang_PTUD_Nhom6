@@ -31,11 +31,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Locale;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -45,6 +47,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -65,17 +68,24 @@ import dao.ChiTietHoaDon_DAO;
 import dao.HoaDon_DAO;
 import dao.MonAn_DAO;
 import dao.PhieuDatBan_DAO;
+import dao.PhieuDatMon_Ban_DAO;
 import dao.PhieuDatMon_DAO;
+import dao.ChiTietDatMon_DAO;
+import entity.Ban;
 import entity.ChiTietHoaDon;
 import entity.HoaDon;
 import entity.MonAn;
+import entity.PhieuDatBan;
 import entity.PhieuDatMon;
+import entity.ChiTietDatMon;
 import entity.TaiKhoan;
 import gui.Order_Mon_GUI;
 import gui.TrangChu_GUI;
 import dao.KhachHang_DAO;
 import entity.KhachHang;
 import entity.LoaiKhachHang;
+import dao.KhuVuc_DAO;
+import entity.KhuVuc;
 
 public class PhieuDatBan_DigLog extends JDialog {
 
@@ -87,6 +97,7 @@ public class PhieuDatBan_DigLog extends JDialog {
     private JTextField txtBan;
     private JTextField txtTienCoc;
     private JTextArea txtGhiChu;
+    private JCheckBox chkOrderRieng;
 
     private JButton btnCalendar;
     private JButton btnSearchBan;
@@ -99,10 +110,13 @@ public class PhieuDatBan_DigLog extends JDialog {
     private JLabel lblMonDatTruoc;
     private JTable tblMonDatTruoc;
     private DefaultTableModel modelMonDatTruoc;
+    private JPanel pnlBanOrderRieng;
+
 
     private JPopupMenu popupBan;
-    private JTable tblBan;
-    private DefaultTableModel modelBan;
+    private JPanel pnlDsBanPopup;
+    private ArrayList<String> dsBanDaChon=
+            new ArrayList<>();
     private JScrollPane scrMonDatTruoc;
     private TaiKhoan taiKhoanDangNhap;
     private JComboBox<String> cboPTThanhToanCoc;
@@ -115,31 +129,38 @@ public class PhieuDatBan_DigLog extends JDialog {
     private String trangThaiHienTai = "";
     private boolean cheDoChiTiet = false;
 
-    private ArrayList<PhieuDatMon> dsMonDatTam = new ArrayList<>();
+    private ArrayList<ChiTietDatMon> dsMonDatTam = new ArrayList<>();
 
     private final Color BG_MAIN = new Color(239, 239, 239);
     private final Color BORDER = new Color(170, 170, 170);
     private final Color DISABLED_BG = new Color(222, 222, 222);
     private final Color PLACEHOLDER = new Color(145, 145, 145);
     
-    private static final Dimension SIZE_KHONG_MON_THEM = new Dimension(700, 680);
-    private static final Dimension SIZE_CO_MON_THEM = new Dimension(700, 840);
+    private static final Dimension SIZE_KHONG_MON_THEM = new Dimension(720, 760);
+    private static final Dimension SIZE_CO_MON_THEM = new Dimension(760, 950);
 
-    private static final Dimension SIZE_KHONG_MON_CHI_TIET = new Dimension(700, 660);
-    private static final Dimension SIZE_CO_MON_CHI_TIET = new Dimension(700, 840);
+    private static final Dimension SIZE_KHONG_MON_CHI_TIET = new Dimension(720, 760);
+    private static final Dimension SIZE_CO_MON_CHI_TIET = new Dimension(760, 950);
 
     private static final String PH_KHACH = "Nhập tên khách hàng";
     private static final String PH_SDT = "Nhập số điện thoại";
     private static final String PH_GIO = "Chọn ngày giờ";
     private static final String PH_BAN = "Tìm kiếm bàn...";
     private final KhachHang_DAO khachHangDAO = new KhachHang_DAO();
+    private JTabbedPane tabKhuVuc;
+    private JLabel lblTongSucChua;
+    private String maBanDangOrder = "";
+    private JButton btnThemMonTheoBan;
+    private HashMap<String, ArrayList<ChiTietDatMon>> dsMonTheoBan = new HashMap<>();
+	private JPanel pnlThemMon;
+
 
  
     public PhieuDatBan_DigLog(Frame owner) {
         super(owner, "Phiếu đặt bàn", true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(700, 760));
-        setSize(700, 820);
+        setMinimumSize(new Dimension(700, 800));
+        setSize(740, 820);
         setLocationRelativeTo(owner);
 
         initUI();
@@ -206,6 +227,7 @@ public class PhieuDatBan_DigLog extends JDialog {
         formWrap.add(scrollPane, BorderLayout.CENTER);
 
         contentPane.add(formWrap, BorderLayout.CENTER);
+        
 
         Font lblFont = new Font("Arial", Font.PLAIN, 16);
         Font inputFont = new Font("Arial", Font.PLAIN, 15);
@@ -308,7 +330,74 @@ public class PhieuDatBan_DigLog extends JDialog {
         lblMonDatTruoc = createLabel("Món đặt trước ✍", lblFont);
         lblMonDatTruoc.setCursor(new Cursor(Cursor.HAND_CURSOR));
         lblMonDatTruoc.setForeground(new Color(30, 30, 30));
-        formPanel.add(lblMonDatTruoc, gbc);
+        
+        chkOrderRieng =
+                new JCheckBox(
+                        "Order riêng theo bàn"
+                );
+
+        chkOrderRieng.setFont(
+                new Font(
+                        "Arial",
+                        Font.PLAIN,
+                        14
+                )
+        );
+
+        chkOrderRieng.setBackground(BG_MAIN);
+        JPanel pnMonDatTop =
+                new JPanel(
+                        new FlowLayout(
+                                FlowLayout.LEFT,
+                                10,
+                                0
+                        )
+                );
+
+        pnMonDatTop.setOpaque(false);
+
+        pnMonDatTop.add(lblMonDatTruoc);
+
+        JPanel pnlRightTop =
+                new JPanel(
+                        new FlowLayout(
+                                FlowLayout.LEFT,
+                                5,
+                                0
+                        )
+                );
+
+        pnlRightTop.setOpaque(false);
+
+        pnlBanOrderRieng = new JPanel();
+
+        pnlBanOrderRieng.setLayout(
+                new BoxLayout(
+                        pnlBanOrderRieng,
+                        BoxLayout.Y_AXIS
+                )
+        );
+
+        pnlBanOrderRieng.setOpaque(false);
+
+        pnlBanOrderRieng.setVisible(false);
+
+        pnlRightTop.add(chkOrderRieng);
+        pnMonDatTop.add(pnlRightTop);
+
+        formPanel.add(
+                pnMonDatTop,
+                gbc
+        );
+        gbc.gridx = 1;
+        gbc.gridy = row++;
+        gbc.weightx = 0.66;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        formPanel.add(
+                pnlBanOrderRieng,
+                gbc
+        );
 
         gbc.gridx = 1;
         gbc.gridy = row++;
@@ -359,9 +448,37 @@ public class PhieuDatBan_DigLog extends JDialog {
         scrMonDatTruoc.setVisible(false);
 
         formPanel.add(scrMonDatTruoc, gbc);
+        btnThemMonTheoBan =
+                new JButton("Thêm món");
 
-        JPanel pnlButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 6));
-        pnlButtons.setBackground(BG_MAIN);
+        btnThemMonTheoBan.setVisible(false);
+
+        btnThemMonTheoBan.addActionListener(e -> {
+
+            moDialogThemMonTheoBan();
+        });
+
+        pnlThemMon =
+                new JPanel(
+                        new FlowLayout(
+                                FlowLayout.RIGHT
+                        )
+                );
+
+        pnlThemMon.setOpaque(false);
+
+        pnlThemMon.add(btnThemMonTheoBan);
+
+        gbc.gridx = 1;
+        gbc.gridy = row++;
+        gbc.weightx = 0.66;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        formPanel.add(
+                pnlThemMon,
+                gbc
+        );
+
 
         btnHuy = new ColoredButton("Hủy", new Color(232, 83, 83));
         btnHuy.setFont(new Font("Arial", Font.PLAIN, 16));
@@ -383,40 +500,50 @@ public class PhieuDatBan_DigLog extends JDialog {
         btnDatBan.setFont(new Font("Arial", Font.PLAIN, 16));
         btnDatBan.setPreferredSize(new Dimension(110, 40));
 
-        pnlButtons.add(btnHuy);
-        pnlButtons.add(btnThoat);
-        pnlButtons.add(btnNhanBan);
-        pnlButtons.add(btnLuu);
-        pnlButtons.add(btnDatBan);
+        
+        JPanel footerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
 
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1;
-        gbc.weighty = 1;
-        gbc.anchor = GridBagConstraints.SOUTHEAST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(12, 8, 6, 8);
+        footerPanel.setBackground(BG_MAIN);
 
-        JPanel pnlBottomWrap = new JPanel(new BorderLayout());
-        pnlBottomWrap.setOpaque(false);
-        pnlBottomWrap.add(pnlButtons, BorderLayout.EAST);
-        formPanel.add(pnlBottomWrap, gbc);
+        footerPanel.setBorder(
+            BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1,0,0,0,new Color(210,210,210)),
+                new EmptyBorder(8, 10, 10, 18)
+            )
+        );
+
+        footerPanel.add(btnHuy);
+        footerPanel.add(btnThoat);
+        footerPanel.add(btnNhanBan);
+        footerPanel.add(btnLuu);
+        footerPanel.add(btnDatBan);
+
+        contentPane.add(footerPanel, BorderLayout.SOUTH);
 
         initPopupBan();
         chanNhapKhacChoSoDienThoai();
     }
+    
     private void capNhatKichThuocTheoMonDatTruoc(boolean coMon) {
+
         Dimension size;
 
         if (cheDoChiTiet) {
-            size = coMon ? SIZE_CO_MON_CHI_TIET : SIZE_KHONG_MON_CHI_TIET;
+            size = coMon
+                    ? SIZE_CO_MON_CHI_TIET
+                    : SIZE_KHONG_MON_CHI_TIET;
         } else {
-            size = coMon ? SIZE_CO_MON_THEM : SIZE_KHONG_MON_THEM;
+            size = coMon
+                    ? SIZE_CO_MON_THEM
+                    : SIZE_KHONG_MON_THEM;
         }
 
+        setPreferredSize(size);
         setSize(size);
-        setMinimumSize(new Dimension(680, 640));
+
+        revalidate();
+        repaint();
+
         setLocationRelativeTo(getOwner());
     }
 
@@ -454,6 +581,7 @@ public class PhieuDatBan_DigLog extends JDialog {
     }
 
     private void loadMonDatTruocLenBang() {
+    	
         if (modelMonDatTruoc == null || scrMonDatTruoc == null) return;
 
         modelMonDatTruoc.setRowCount(0);
@@ -464,18 +592,21 @@ public class PhieuDatBan_DigLog extends JDialog {
             scrMonDatTruoc.setMinimumSize(new Dimension(300, 0));
 
             capNhatKichThuocTheoMonDatTruoc(false);
+            btnThemMonTheoBan.setVisible(
+                    chkOrderRieng.isSelected()
+            );
 
             revalidate();
             repaint();
             return;
         }
 
-        for (PhieuDatMon pdm : dsMonDatTam) {
+        for (ChiTietDatMon pdm : dsMonDatTam) {
             String tenMon = "";
-            if (pdm.getMaMon() != null) {
-                tenMon = pdm.getMaMon().getTenMon();
+            if (pdm.getMon() != null) {
+                tenMon = pdm.getMon().getTenMon();
                 if (tenMon == null || tenMon.trim().isEmpty()) {
-                    tenMon = pdm.getMaMon().getMaMon();
+                    tenMon = pdm.getMon().getMaMon();
                 }
             }
 
@@ -487,6 +618,14 @@ public class PhieuDatBan_DigLog extends JDialog {
 
         boolean coMon = modelMonDatTruoc.getRowCount() > 0;
         scrMonDatTruoc.setVisible(coMon);
+
+        btnThemMonTheoBan.setVisible(
+                chkOrderRieng.isSelected()
+        );
+
+        pnlThemMon.setVisible(
+                chkOrderRieng.isSelected()
+        );
 
         if (coMon) {
             int soDong = modelMonDatTruoc.getRowCount();
@@ -506,22 +645,66 @@ public class PhieuDatBan_DigLog extends JDialog {
         }
 
         capNhatKichThuocTheoMonDatTruoc(coMon);
+//        pack();
 
         revalidate();
         repaint();
     }
 
     private void capNhatTienCocTheoMonDatTruoc() {
+
         double tongTienMon = 0;
 
-        if (dsMonDatTam != null) {
-            for (PhieuDatMon pdm : dsMonDatTam) {
-                tongTienMon += pdm.getSoLuong() * pdm.getDonGia();
+        // ORDER CHUNG
+        if(!chkOrderRieng.isSelected()){
+
+            if(dsMonDatTam != null){
+
+                for(ChiTietDatMon pdm : dsMonDatTam){
+
+                    tongTienMon +=
+                            pdm.getSoLuong()
+                            * pdm.getDonGia();
+                }
+            }
+
+        }else{
+
+            // ORDER RIÊNG THEO BÀN
+            for(ArrayList<ChiTietDatMon> ds :
+                    dsMonTheoBan.values()){
+
+                for(ChiTietDatMon pdm : ds){
+
+                    tongTienMon +=
+                            pdm.getSoLuong()
+                            * pdm.getDonGia();
+                }
             }
         }
 
-        double tienCoc = Math.max(200000, tongTienMon);
-        txtTienCoc.setText(formatTienVND(tienCoc));
+        double tienCoc;
+
+        // KHÔNG ĐẶT MÓN
+        double tienCocToiThieu =
+                dsBanDaChon.size() * 200000;
+
+        if(tongTienMon <= 0){
+
+            tienCoc = tienCocToiThieu;
+
+        }else{
+
+            tienCoc =
+                    Math.max(
+                            tongTienMon,
+                            tienCocToiThieu
+                    );
+        }
+
+        txtTienCoc.setText(
+                formatTienVND(tienCoc)
+        );
     }
 
     private String formatTienVND(double soTien) {
@@ -566,7 +749,7 @@ public class PhieuDatBan_DigLog extends JDialog {
 
             if (dsMonDatTam != null && !dsMonDatTam.isEmpty()) return true;
 
-            PhieuDatMon_DAO dao = new PhieuDatMon_DAO();
+            ChiTietDatMon_DAO dao = new ChiTietDatMon_DAO();
             return dao.coDatMonTheoPhieu(maPhieuHienTai);
         } catch (Exception e) {
             e.printStackTrace();
@@ -661,6 +844,124 @@ public class PhieuDatBan_DigLog extends JDialog {
         spnSoLuongKhach.addChangeListener(e -> {
             if (thoiGianDaChon != null) {
                 loadDanhSachBanTheoGioChon();
+            }
+        });
+        chkOrderRieng.addActionListener(e -> {
+        	lblMonDatTruoc.setEnabled(
+        	        !chkOrderRieng.isSelected()
+        	);
+
+            pnlBanOrderRieng.setVisible(
+                    chkOrderRieng.isSelected()
+            );
+
+            if(chkOrderRieng.isSelected()){
+
+                taoNutBanOrder();
+
+                // ĐÃ TỪNG CHIA RIÊNG TRƯỚC ĐÓ
+                if(!dsMonTheoBan.isEmpty()){
+
+                    // load lại bàn đang order
+                    if(maBanDangOrder == null || maBanDangOrder.isEmpty()){
+
+                        maBanDangOrder = dsBanDaChon.get(0);
+                    }
+
+                    moOrderTheoBan(maBanDangOrder);
+
+                    return;
+                }
+
+                // CHƯA TỪNG CHIA -> mới hỏi
+                if(dsMonDatTam != null && !dsMonDatTam.isEmpty()){
+
+                    int chon =
+                            JOptionPane.showConfirmDialog(
+                                    PhieuDatBan_DigLog.this,
+                                    "Đã có món order chung.\n\n"
+                                    + "Bạn có muốn chuyển sang order riêng theo bàn không?",
+                                    "Order riêng theo bàn",
+                                    JOptionPane.YES_NO_OPTION
+                            );
+
+                    // ĐỒNG Ý -> chia món
+                    if(chon == JOptionPane.YES_OPTION){
+
+                        moDialogChiaMonTheoBan();
+
+                    }else{
+
+                        // KHÔNG -> xóa món order chung
+                        dsMonDatTam.clear();
+
+                        dsMonTheoBan.clear();
+
+                        modelMonDatTruoc.setRowCount(0);
+
+                        loadMonDatTruocLenBang();
+
+                        capNhatTienCocTheoMonDatTruoc();
+                    }
+                }
+            }else{
+
+                pnlBanOrderRieng.removeAll();
+
+                pnlBanOrderRieng.revalidate();
+
+                pnlBanOrderRieng.repaint();
+
+                HashMap<String, ChiTietDatMon> mapMon =
+                        new HashMap<>();
+
+                for(ArrayList<ChiTietDatMon> ds :
+                        dsMonTheoBan.values()){
+
+                    for(ChiTietDatMon ct : ds){
+
+                        String maMon =
+                                ct.getMon().getMaMon();
+
+                        if(mapMon.containsKey(maMon)){
+
+                            ChiTietDatMon cu =
+                                    mapMon.get(maMon);
+
+                            cu.setSoLuong(
+                                    cu.getSoLuong()
+                                    + ct.getSoLuong()
+                            );
+
+                        }else{
+
+                            ChiTietDatMon moi =
+                                    new ChiTietDatMon();
+
+                            moi.setMon(ct.getMon());
+
+                            moi.setSoLuong(ct.getSoLuong());
+
+                            moi.setDonGia(ct.getDonGia());
+
+                            moi.setGhiChu(ct.getGhiChu());
+
+                            mapMon.put(maMon, moi);
+                        }
+                    }
+                }
+
+                dsMonDatTam.clear();
+
+                dsMonDatTam.addAll(
+                        mapMon.values()
+                );
+
+                loadMonDatTruocLenBang();
+
+                capNhatTienCocTheoMonDatTruoc();
+
+                btnThemMonTheoBan.setVisible(false);
             }
         });
 
@@ -772,7 +1073,13 @@ public class PhieuDatBan_DigLog extends JDialog {
                 if (!daHuy && dialog.isHuyThanhCong()) {
                     Ban_DAO banDAO = new Ban_DAO();
                     if (maBanDuocChon != null && !maBanDuocChon.trim().isEmpty()) {
-                        banDAO.capNhatTrangThaiBan(maBanDuocChon, "Trống");
+                    	for(String maBan : dsBanDaChon){
+
+                    	    banDAO.capNhatTrangThaiBan(
+                    	            maBan,
+                    	            "Trống"
+                    	    );
+                    	}
                     }
 
                     trangThaiHienTai = "Đã hủy";
@@ -798,7 +1105,13 @@ public class PhieuDatBan_DigLog extends JDialog {
 
                 // 2. Cập nhật trạng thái bàn
                 Ban_DAO banDAO = new Ban_DAO();
-                banDAO.capNhatTrangThaiBan(maBanDuocChon, "Đang phục vụ");
+                for(String maBan : dsBanDaChon){
+
+                    banDAO.capNhatTrangThaiBan(
+                            maBan,
+                            "Đang phục vụ"
+                    );
+                }
 
                 // 3. Tạo hóa đơn ngay
                 HoaDon_DAO hoaDonDAO = new HoaDon_DAO();
@@ -810,8 +1123,8 @@ public class PhieuDatBan_DigLog extends JDialog {
                 }
 
                 boolean taoHD = hoaDonDAO.themHoaDonMoi(
-                        maHD,
-                        maBanDuocChon,
+                	    maHD,
+                	    dsBanDaChon,
                         maNV,
                         maPhieuHienTai,
                         null,
@@ -825,42 +1138,113 @@ public class PhieuDatBan_DigLog extends JDialog {
                 }
 
                 // 4. Lấy món đặt trước
-                PhieuDatMon_DAO phieuDatMonDAO = new PhieuDatMon_DAO();
-                ArrayList<PhieuDatMon> dsMon = phieuDatMonDAO.getDanhSachTheoMaPhieu(maPhieuHienTai);
+                ChiTietHoaDon_DAO ctDAO =
+                        new ChiTietHoaDon_DAO();
 
-                ChiTietHoaDon_DAO ctDAO = new ChiTietHoaDon_DAO();
+                // =====================================
+                // ORDER RIÊNG
+                // =====================================
 
-                for (PhieuDatMon pdm : dsMon) {
-                    ChiTietHoaDon ct = new ChiTietHoaDon(
-                            new HoaDon(maHD),
-                            new MonAn(pdm.getMaMon().getMaMon()),
-                            pdm.getSoLuong(),
-                            pdm.getDonGia(),
-                            pdm.getGhiChu() == null ? "" : pdm.getGhiChu(),
-                            "Đang phục vụ",
-                            null,
-                            0,
-                            null
-                    );
+                if(chkOrderRieng.isSelected()){
 
-                    ctDAO.themChiTietHoaDon(ct);
+                    for(String maBan : dsMonTheoBan.keySet()){
+
+                        ArrayList<ChiTietDatMon> dsMon =
+                                dsMonTheoBan.get(maBan);
+
+                        if(dsMon == null){
+                            continue;
+                        }
+
+                        for(ChiTietDatMon pdm : dsMon){
+
+                            ChiTietHoaDon ct =
+                                    new ChiTietHoaDon(
+                                            new HoaDon(maHD),
+                                            new Ban(maBan),
+                                            new MonAn(
+                                                    pdm.getMon().getMaMon()
+                                            ),
+                                            pdm.getSoLuong(),
+                                            pdm.getDonGia(),
+                                            pdm.getGhiChu() == null
+                                                    ? ""
+                                                    : pdm.getGhiChu(),
+                                            "Đã gửi bếp",
+                                            null,
+                                            0,
+                                            null,
+                                            java.time.LocalDateTime.now()
+                                    );
+
+                            boolean ok =
+                                    ctDAO.themChiTietHoaDon(ct);
+
+                            if(!ok){
+
+                                JOptionPane.showMessageDialog(
+                                        this,
+                                        "Lưu món thất bại!"
+                                );
+                            }
+                        }
+                    }
+
+                }else{
+
+                    // =====================================
+                    // ORDER CHUNG
+                    // =====================================
+
+                    ChiTietDatMon_DAO phieuDatMonDAO =
+                            new ChiTietDatMon_DAO();
+
+                    ArrayList<ChiTietDatMon> dsMon =
+                            phieuDatMonDAO
+                            .getDanhSachTheoMaPhieuDatBan(
+                                    maPhieuHienTai
+                            );
+
+                    for (ChiTietDatMon pdm : dsMon) {
+
+                        String maBanInsert =
+                                dsBanDaChon.get(0);
+
+                        ChiTietHoaDon ct =
+                                new ChiTietHoaDon(
+                                        new HoaDon(maHD),
+                                        new Ban(maBanInsert),
+                                        new MonAn(
+                                                pdm.getMon().getMaMon()
+                                        ),
+                                        pdm.getSoLuong(),
+                                        pdm.getDonGia(),
+                                        pdm.getGhiChu() == null
+                                                ? ""
+                                                : pdm.getGhiChu(),
+                                        "Đã gửi bếp",
+                                        null,
+                                        0,
+                                        null,
+                                        java.time.LocalDateTime.now()
+                                );
+
+                        boolean ok =
+                                ctDAO.themChiTietHoaDon(ct);
+
+                        if(!ok){
+
+                            JOptionPane.showMessageDialog(
+                                    this,
+                                    "Lưu món thất bại!"
+                            );
+                        }
+                    }
                 }
 
                 dispose();
 
-                Window w = getOwner();
-                if (w instanceof TrangChu_GUI) {
-                    ((TrangChu_GUI) w).showCustomPage(
-                            "Order_Mon_GUI",
-                            new Order_Mon_GUI(
-                                    taiKhoanDangNhap,
-                                    maBanDuocChon,
-                                    txtBan.getText().trim(),
-                                    maPhieuHienTai,
-                                    true
-                            )
-                    );
-                }
+                
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -873,8 +1257,61 @@ public class PhieuDatBan_DigLog extends JDialog {
             capNhatPhieuDatBan();
         });
     }
+    private void moDialogChiaMonTheoBan(){
+
+        if(dsBanDaChon.isEmpty()){
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Chưa có bàn nào!"
+            );
+
+            return;
+        }
+
+        String maBanMacDinh =
+                dsBanDaChon.get(0);
+
+        // CHỈ TẠO LẦN ĐẦU
+        if(!dsMonTheoBan.containsKey(maBanMacDinh)){
+
+            dsMonTheoBan.put(
+                    maBanMacDinh,
+                    new ArrayList<>(dsMonDatTam)
+            );
+        }
+
+        maBanDangOrder = maBanMacDinh;
+
+        capNhatMauNutBan();
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Đã chuyển món chung sang "
+                + maBanMacDinh
+                + ".\n\n"
+                + "Bạn có thể chọn từng bàn để chỉnh món riêng."
+        );
+
+        moOrderTheoBan(maBanMacDinh);
+    }
 
     private void moDatMonTruoc() {
+    	if(
+    	        phieuDaNhanBan()
+    	        || phieuDaHuy()
+    	        || phieuHoanThanh()
+    	        || phieuQuaGio()
+    	){
+
+    	    return;
+    	}
+    	if(chkOrderRieng.isSelected()){
+
+    	    showPopupBan();
+
+    	    return;
+    	}
         try {
             DatMon_DigLog dlg = new DatMon_DigLog((Frame) getOwner(), dsMonDatTam);
             dlg.setLocationRelativeTo(this);
@@ -929,7 +1366,7 @@ public class PhieuDatBan_DigLog extends JDialog {
             String phuongThucCoc = cboPTThanhToanCoc.getSelectedItem().toString();
 
             String maPhieuMoi = dao.themPhieuDatBan(
-                    maBanDuocChon,
+            	    dsBanDaChon,
                     txtKhachHang.getText().trim(),
                     txtSoDienThoai.getText().trim(),
                     (Integer) spnSoLuongKhach.getValue(),
@@ -944,11 +1381,190 @@ public class PhieuDatBan_DigLog extends JDialog {
                 maPhieuHienTai = maPhieuMoi;
                 txtMaPhieu.setText(maPhieuMoi);
 
-                PhieuDatMon_DAO pdmDAO = new PhieuDatMon_DAO();
-                boolean luuMonOK = pdmDAO.luuDanhSachMonChoPhieu(maPhieuMoi, dsMonDatTam);
+                boolean luuMonOK = true;
+
+                PhieuDatMon_DAO pdmDAO =
+                        new PhieuDatMon_DAO();
+
+                PhieuDatMon_Ban_DAO pdmBanDAO =
+                        new PhieuDatMon_Ban_DAO();
+
+                ChiTietDatMon_DAO ctMonDAO =
+                        new ChiTietDatMon_DAO();
+
+                /* =========================
+                   ORDER RIÊNG
+                ========================= */
+                if(chkOrderRieng.isSelected()){
+
+                    int stt = 1;
+
+                    for(String maBan : dsMonTheoBan.keySet()){
+
+                        ArrayList<ChiTietDatMon> dsMon =
+                                dsMonTheoBan.get(maBan);
+
+                        if(dsMon == null || dsMon.isEmpty()){
+
+                            continue;
+                        }
+
+                        // TẠO PDM
+                        PhieuDatMon pdm =
+                                new PhieuDatMon();
+
+                        pdm.setMaPhieuDatMon(
+                                "PDMR"
+                                + System.currentTimeMillis()
+                                + stt
+                        );
+
+                        PhieuDatBan pdb =
+                                new PhieuDatBan();
+
+                        pdb.setMaPhieuDatBan(maPhieuMoi);
+
+                        pdm.setPhieuDatBan(pdb);
+
+                        pdm.setHinhThucDatMon(
+                                "Đặt riêng"
+                        );
+
+                        pdm.setGhiChu("");
+
+                        pdm.setThoiGianTao(
+                                java.time.LocalDateTime.now()
+                        );
+
+                        boolean taoPDM =
+                                pdmDAO.themPhieuDatMon(pdm);
+
+                        if(!taoPDM){
+
+                            luuMonOK = false;
+                            break;
+                        }
+
+                        // MAP BÀN
+                        boolean mapBan =
+                                pdmBanDAO.themBanVaoPhieu(
+                                        pdm.getMaPhieuDatMon(),
+                                        maBan
+                                );
+
+                        if(!mapBan){
+
+                            luuMonOK = false;
+                            break;
+                        }
+
+                        // GÁN PDM CHO MÓN
+                        for(ChiTietDatMon ct : dsMon){
+
+                            ct.setPhieuDatMon(pdm);
+                        }
+
+                        // LƯU CT MÓN
+                        boolean luuCT =
+                                ctMonDAO.luuDanhSachMonTheoPhieu(
+                                        pdm.getMaPhieuDatMon(),
+                                        dsMon
+                                );
+
+                        if(!luuCT){
+
+                            luuMonOK = false;
+                            break;
+                        }
+
+                        stt++;
+                    }
+
+                }
+
+                /* =========================
+                   ORDER CHUNG
+                ========================= */
+                else{
+
+                    if(
+                            dsMonDatTam != null
+                            &&
+                            !dsMonDatTam.isEmpty()
+                    ){
+
+                        PhieuDatMon pdm =
+                                new PhieuDatMon();
+
+                        pdm.setMaPhieuDatMon(
+                                "PDMC"
+                                + System.currentTimeMillis()
+                        );
+
+                        PhieuDatBan pdb =
+                                new PhieuDatBan();
+
+                        pdb.setMaPhieuDatBan(maPhieuMoi);
+
+                        pdm.setPhieuDatBan(pdb);
+
+                        pdm.setHinhThucDatMon(
+                                "Đặt chung"
+                        );
+
+                        pdm.setGhiChu("");
+
+                        pdm.setThoiGianTao(
+                                java.time.LocalDateTime.now()
+                        );
+
+                        boolean taoPDM =
+                                pdmDAO.themPhieuDatMon(pdm);
+
+                        if(taoPDM){
+
+                            // MAP NHIỀU BÀN
+                            pdmBanDAO.themNhieuBanVaoPhieu(
+                                    pdm.getMaPhieuDatMon(),
+                                    dsBanDaChon
+                            );
+
+                            // GÁN PDM CHO MÓN
+                            for(ChiTietDatMon ct : dsMonDatTam){
+
+                                ct.setPhieuDatMon(pdm);
+                            }
+
+                            luuMonOK =
+                                    ctMonDAO.luuDanhSachMonTheoPhieu(
+                                            pdm.getMaPhieuDatMon(),
+                                            dsMonDatTam
+                                    );
+
+                        }else{
+
+                            luuMonOK = false;
+                        }
+                    }
+                }
 
                 Ban_DAO banDAO = new Ban_DAO();
-                boolean capNhatBanOK = banDAO.capNhatTrangThaiBan(maBanDuocChon, "Đang chờ");
+
+                boolean capNhatBanOK = true;
+
+                for(String maBan : dsBanDaChon){
+
+                    boolean ok =
+                            banDAO.capNhatTrangThaiBan(
+                                    maBan,
+                                    "Đang chờ"
+                            );
+
+                    if(!ok){
+
+                        capNhatBanOK = false;
+                    }
+                }
 
                 if (luuMonOK && capNhatBanOK) {
                     
@@ -1032,8 +1648,8 @@ public class PhieuDatBan_DigLog extends JDialog {
             ps.close();
 
             if (n > 0) {
-                PhieuDatMon_DAO pdmDAO = new PhieuDatMon_DAO();
-                pdmDAO.luuDanhSachMonChoPhieu(maPhieuHienTai, dsMonDatTam);
+                ChiTietDatMon_DAO pdmDAO = new ChiTietDatMon_DAO();
+                pdmDAO.luuDanhSachMonTheoPhieu(maPhieuHienTai, dsMonDatTam);
 
                 Ban_DAO banDAO = new Ban_DAO();
                 banDAO.capNhatTrangThaiBan(maBanDuocChon, "Đang chờ");
@@ -1086,51 +1702,152 @@ public class PhieuDatBan_DigLog extends JDialog {
                 trangThaiHienTai = "";
             }
 
-            PhieuDatMon_DAO pdmDAO = new PhieuDatMon_DAO();
-            ArrayList<PhieuDatMon> dsDB = pdmDAO.getDanhSachTheoMaPhieu(maPhieu);
+            PhieuDatMon_DAO pdmDAO =
+                    new PhieuDatMon_DAO();
+
+            ChiTietDatMon_DAO ctDAO =
+                    new ChiTietDatMon_DAO();
+
+            PhieuDatMon_Ban_DAO mapDAO =
+                    new PhieuDatMon_Ban_DAO();
+
+            ArrayList<PhieuDatMon> dsPDM =
+                    pdmDAO.getDanhSachTheoPhieu(
+                            maPhieu
+                    );
+
             dsMonDatTam.clear();
 
-            if (dsDB != null && !dsDB.isEmpty()) {
-                MonAn_DAO monDAO = new MonAn_DAO();
-                for (PhieuDatMon pdm : dsDB) {
-                    try {
-                        MonAn mon = monDAO.getMonAnTheoMa(pdm.getMaMon().getMaMon());
-                        if (mon != null) {
-                            pdm.setMaMon(mon);
+            dsMonTheoBan.clear();
+
+            boolean laOrderRieng = false;
+
+            MonAn_DAO monDAO =
+                    new MonAn_DAO();
+
+            for(PhieuDatMon pdm : dsPDM){
+
+                ArrayList<ChiTietDatMon> dsMon =
+                        ctDAO.getDanhSachTheoMaPhieuDatMon(
+                                pdm.getMaPhieuDatMon()
+                        );
+
+                // load tên món
+                for(ChiTietDatMon ct : dsMon){
+
+                    try{
+
+                        MonAn mon =
+                                monDAO.getMonAnTheoMa(
+                                        ct.getMon().getMaMon()
+                                );
+
+                        if(mon != null){
+
+                            ct.setMon(mon);
                         }
-                    } catch (Exception ex) {
+
+                    }catch(Exception ex){
+
                         ex.printStackTrace();
                     }
-                    dsMonDatTam.add(pdm);
+                }
+
+                // ORDER RIÊNG
+                if(
+                        "Đặt riêng".equalsIgnoreCase(
+                                pdm.getHinhThucDatMon()
+                        )
+                ){
+
+                    laOrderRieng = true;
+
+                    ArrayList<String> dsBan =
+                            mapDAO.getDanhSachMaBanTheoPhieu(
+                                    pdm.getMaPhieuDatMon()
+                            );
+
+                    if(
+                            dsBan != null
+                            &&
+                            !dsBan.isEmpty()
+                    ){
+
+                        dsMonTheoBan.put(
+                                dsBan.get(0),
+                                dsMon
+                        );
+                    }
+
+                }
+
+                // ORDER CHUNG
+                else{
+
+                    dsMonDatTam.addAll(dsMon);
                 }
             }
 
             loadDanhSachBanTheoGioChon();
-            boolean daGanTenBan = false;
+            
+            dsBanDaChon.clear();
 
-            for (String[] ban : dsBanTheoGio) {
-                if (ban[0].equalsIgnoreCase(maBanDuocChon)) {
-                    txtBan.setText(ban[1]);
-                    txtBan.setForeground(Color.BLACK);
-                    daGanTenBan = true;
-                    break;
-                }
-            }
+            String[] arrBan = maBanDuocChon.split(",");
+            ArrayList<String> dsTenBan = new ArrayList<>();
 
-            if (!daGanTenBan) {
-                try {
-                    Ban_DAO banDAO = new Ban_DAO();
-                    ArrayList<String[]> tatCaBan = banDAO.getTatCaBanKemTrangThaiMacDinh();
-                    for (String[] ban : tatCaBan) {
-                        if (ban[0].equalsIgnoreCase(maBanDuocChon)) {
-                            txtBan.setText(ban[1]);
-                            txtBan.setForeground(Color.BLACK);
+            try {
+                Ban_DAO banDAO = new Ban_DAO();
+                ArrayList<String[]> tatCaBan = banDAO.getTatCaBanKemTrangThaiMacDinh();
+
+                for(String maBan : arrBan){
+                    String ma = maBan.trim();
+                    dsBanDaChon.add(ma);
+
+                    for(String[] ban : tatCaBan){
+                        if(ban[0].equalsIgnoreCase(ma)){
+                            dsTenBan.add(ban[1]);
                             break;
                         }
                     }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
                 }
+
+                txtBan.setText(String.join(", ", dsTenBan));
+                txtBan.setForeground(Color.BLACK);
+                if(laOrderRieng){
+
+                    chkOrderRieng.setSelected(true);
+
+                    pnlBanOrderRieng.setVisible(true);
+
+                    btnThemMonTheoBan.setVisible(true);
+
+                    pnlThemMon.setVisible(true);
+
+                    taoNutBanOrder();
+
+                    if(!dsBanDaChon.isEmpty()){
+
+                        maBanDangOrder =
+                                dsBanDaChon.get(0);
+
+                        moOrderTheoBan(maBanDangOrder);
+                    }
+
+                }else{
+
+                    chkOrderRieng.setSelected(false);
+
+                    pnlBanOrderRieng.setVisible(false);
+
+                    btnThemMonTheoBan.setVisible(false);
+
+                    pnlThemMon.setVisible(false);
+
+                    loadMonDatTruocLenBang();
+                }
+
+            }catch(Exception ex){
+                ex.printStackTrace();
             }
 
             loadMonDatTruocLenBang();
@@ -1217,7 +1934,21 @@ public class PhieuDatBan_DigLog extends JDialog {
         btnCalendar.setEnabled(editable);
         btnSearchBan.setEnabled(editable);
 
-        lblMonDatTruoc.setEnabled(editable);
+        boolean chiDuocXem =
+                phieuDaNhanBan()
+                || phieuDaHuy()
+                || phieuHoanThanh()
+                || phieuQuaGio();
+
+        lblMonDatTruoc.setEnabled(true);
+
+        chkOrderRieng.setEnabled(!chiDuocXem);
+
+        btnThemMonTheoBan.setEnabled(!chiDuocXem);
+
+        txtBan.setEnabled(!chiDuocXem);
+
+        btnSearchBan.setEnabled(!chiDuocXem);
 
         styleSmallButton(btnCalendar, editable);
         styleSmallButton(btnSearchBan, editable);
@@ -1459,114 +2190,1077 @@ public class PhieuDatBan_DigLog extends JDialog {
         dlg.setVisible(true);
     }
 
-    private void initPopupBan() {
-        popupBan = new JPopupMenu();
-        popupBan.setLayout(new BorderLayout());
+    private void initPopupBan(){
 
-        modelBan = new DefaultTableModel(new Object[]{"Tên bàn", "Số chỗ", "Trạng thái"}, 0) {
+        popupBan=new JPopupMenu();
+
+        popupBan.setBorder(
+                BorderFactory.createEmptyBorder()
+        );
+
+        JPanel root=
+                new JPanel(
+                        new BorderLayout(0,10)
+                );
+
+        root.setBackground(Color.WHITE);
+
+        root.setBorder(
+                new EmptyBorder(12,12,12,12)
+        );
+
+        // ================= TOP =================
+
+        JPanel top=
+                new JPanel(
+                        new BorderLayout(0,8)
+                );
+
+        top.setOpaque(false);
+
+        tabKhuVuc=
+                new JTabbedPane();
+
+        tabKhuVuc.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        13
+                )
+        );
+
+        tabKhuVuc.setFocusable(false);
+
+        tabKhuVuc.addTab(
+                "Tất cả",
+                new JPanel()
+        );
+
+        try{
+
+            KhuVuc_DAO kvDAO=
+                    new KhuVuc_DAO();
+
+            ArrayList<KhuVuc> dsKV=
+                    kvDAO.getAllKhuVuc();
+
+            for(KhuVuc kv:dsKV){
+
+                tabKhuVuc.addTab(
+                        kv.getTenKhuVuc(),
+                        new JPanel()
+                );
+            }
+
+        }catch(Exception e){
+
+            e.printStackTrace();
+        }
+
+        tabKhuVuc.addChangeListener(e->{
+
+            loadDanhSachBanTheoGioChon();
+        });
+
+        lblTongSucChua=
+                new JLabel(
+                        "Đã chọn: 0 bàn | 0 chỗ"
+                );
+
+        lblTongSucChua.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        13
+                )
+        );
+
+        lblTongSucChua.setForeground(
+                new Color(60,60,60)
+        );
+
+        top.add(tabKhuVuc,BorderLayout.CENTER);
+        top.add(lblTongSucChua,BorderLayout.SOUTH);
+
+        // ================= GRID BÀN =================
+
+        pnlDsBanPopup=
+                new JPanel(
+                        new java.awt.GridLayout(
+                                0,
+                                5,
+                                10,
+                                10
+                        )
+                );
+
+        pnlDsBanPopup.setBackground(Color.WHITE);
+
+        pnlDsBanPopup.setBorder(
+                new EmptyBorder(4,4,4,4)
+        );
+
+        JScrollPane scroll=
+                new JScrollPane(
+                        pnlDsBanPopup
+                );
+
+        scroll.setBorder(null);
+
+        scroll.getViewport()
+                .setBackground(Color.WHITE);
+
+        scroll.setPreferredSize(
+                new Dimension(650,320)
+        );
+
+        scroll.setHorizontalScrollBarPolicy(
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+        );
+
+        scroll.getVerticalScrollBar()
+                .setUnitIncrement(16);
+
+        root.add(top,BorderLayout.NORTH);
+        root.add(scroll,BorderLayout.CENTER);
+
+        popupBan.add(root);
+    }
+
+    private void loadDanhSachBanTheoGioChon(){
+
+        dsBanTheoGio.clear();
+
+        pnlDsBanPopup.removeAll();
+
+        try{
+
+            Ban_DAO dao=
+                    new Ban_DAO();
+
+            if(thoiGianDaChon==null){
+
+                dsBanTheoGio=
+                        dao.getTatCaBanKemTrangThaiMacDinh();
+
+            }else{
+
+                dsBanTheoGio=
+                        dao.getDanhSachBanTheoThoiGian(
+                                thoiGianDaChon
+                        );
+            }
+
+            String khuVucDangChon=
+                    tabKhuVuc.getTitleAt(
+                            tabKhuVuc.getSelectedIndex()
+                    );
+
+            int soKhach=
+                    (int) spnSoLuongKhach.getValue();
+
+            for(String[] ban:dsBanTheoGio){
+
+                String maBan=ban[0];
+
+                String tenBan=ban[1];
+
+                int soCho=
+                        Integer.parseInt(ban[2]);
+
+                String trangThai=ban[3];
+
+                String khuVucBan="";
+
+                if(ban.length>=5){
+
+                    khuVucBan=ban[4];
+                }
+
+                if(
+                        !khuVucDangChon.equals("Tất cả")
+                        &&
+                        !khuVucDangChon.equalsIgnoreCase(khuVucBan)
+                ){
+                    continue;
+                }
+
+
+                pnlDsBanPopup.add(
+
+                        taoItemBanPopup(
+                                maBan,
+                                tenBan,
+                                soCho,
+                                trangThai
+                        )
+                );
+            }
+
+            pnlDsBanPopup.revalidate();
+            pnlDsBanPopup.repaint();
+
+        }catch(Exception e){
+
+            e.printStackTrace();
+        }
+    }
+
+    private void locBan(String keyword){
+
+        pnlDsBanPopup.removeAll();
+
+        int soKhach=
+                (int) spnSoLuongKhach.getValue();
+
+        for(String[] ban:dsBanTheoGio){
+
+            String maBan=ban[0];
+            String tenBan=ban[1];
+            int soCho=Integer.parseInt(ban[2]);
+            String trangThai=ban[3];
+
+            boolean hopLe=
+                    keyword.isEmpty()
+                    ||
+                    tenBan.toLowerCase()
+                            .contains(
+                                    keyword.toLowerCase()
+                            );
+
+            if(hopLe){
+
+                pnlDsBanPopup.add(
+                        taoItemBanPopup(
+                                maBan,
+                                tenBan,
+                                soCho,
+                                trangThai
+                        )
+                );
+            }
+        }
+
+        pnlDsBanPopup.revalidate();
+        pnlDsBanPopup.repaint();
+    }
+
+    private void showPopupBan(){
+
+        loadDanhSachBanTheoGioChon();
+
+        pnlDsBanPopup.revalidate();
+        pnlDsBanPopup.repaint();
+
+        popupBan.show(
+                txtBan,
+                0,
+                txtBan.getHeight()
+        );
+    }
+    private void taoNutBanOrder(){
+
+        pnlBanOrderRieng.removeAll();
+
+        JPanel row = new JPanel(
+                new FlowLayout(
+                        FlowLayout.LEFT,
+                        8,
+                        5
+                )
+        );
+
+        row.setOpaque(false);
+
+        int count = 0;
+
+        for(String maBan : dsBanDaChon){
+
+            JButton btn = taoButtonBan(maBan);
+
+            btn.addActionListener(e -> {
+
+                moOrderTheoBan(maBan);
+            });
+
+            row.add(btn);
+
+            count++;
+
+            // đủ 4 nút -> xuống hàng
+            if(count % 3 == 0){
+
+                pnlBanOrderRieng.add(row);
+
+                row = new JPanel(
+                        new FlowLayout(
+                                FlowLayout.LEFT,
+                                8,
+                                5
+                        )
+                );
+
+                row.setOpaque(false);
+            }
+        }
+
+        // add hàng cuối
+        if(row.getComponentCount() > 0){
+
+            pnlBanOrderRieng.add(row);
+        }
+
+        pnlBanOrderRieng.revalidate();
+
+        pnlBanOrderRieng.repaint();
+
+        capNhatMauNutBan();
+    }
+    private JButton taoButtonBan(String text){
+
+        JButton btn = new JButton(text);
+
+        btn.setFocusPainted(false);
+
+        btn.setOpaque(true);
+
+        btn.setContentAreaFilled(true);
+
+        btn.setBackground(Color.WHITE);
+
+        btn.setForeground(new Color(60,60,60));
+        btn.setCursor(
+                new Cursor(Cursor.HAND_CURSOR)
+        );
+
+        btn.setBorder(
+                BorderFactory.createCompoundBorder(
+                        new LineBorder(
+                                new Color(220,220,220),
+                                1,
+                                true
+                        ),
+                        new EmptyBorder(4,12,4,12)
+                )
+        );
+
+        btn.setPreferredSize(
+                new Dimension(90,32)
+        );
+
+        btn.setMargin(
+                new Insets(2,8,2,8)
+        );
+
+        return btn;
+    }
+    
+    
+    private void moOrderTheoBan(
+            String maBan
+    ){
+    	maBanDangOrder = maBan;
+        try{
+
+            ArrayList<ChiTietDatMon> dsTheoBan =
+                    dsMonTheoBan.get(maBan);
+
+            if(dsTheoBan == null){
+
+                dsTheoBan = new ArrayList<>();
+
+                dsMonTheoBan.put(
+                        maBan,
+                        dsTheoBan
+                );
+            }
+
+            dsMonDatTam.clear();
+            dsMonDatTam.addAll(dsTheoBan);
+
+            loadMonDatTruocLenBang();
+
+            btnThemMonTheoBan.setVisible(true);
+
+            pnlThemMon.setVisible(true);
+
+            pnlThemMon.revalidate();
+            pnlThemMon.repaint();
+
+            capNhatMauNutBan();
+
+            revalidate();
+            repaint();
+
+        }catch(Exception ex){
+
+            ex.printStackTrace();
+        }
+    }
+    private void moDialogThemMonTheoBan(){
+    	if(
+    	        phieuDaNhanBan()
+    	        || phieuDaHuy()
+    	        || phieuHoanThanh()
+    	        || phieuQuaGio()
+    	){
+
+    	    return;
+    	}
+        try{
+
+            if(
+                    maBanDangOrder == null
+                    ||
+                    maBanDangOrder.isEmpty()
+            ){
+                return;
+            }
+
+            ArrayList<ChiTietDatMon> dsTheoBan =
+                    dsMonTheoBan.get(
+                            maBanDangOrder
+                    );
+
+            if(dsTheoBan == null){
+
+                dsTheoBan =
+                        new ArrayList<>();
+            }
+
+            DatMon_DigLog dlg =
+                    new DatMon_DigLog(
+                            (Frame)getOwner(),
+                            dsTheoBan
+                    );
+
+            dlg.setLocationRelativeTo(this);
+
+            dlg.setVisible(true);
+
+            ArrayList<ChiTietDatMon> dsMoi =
+                    dlg.getDanhSachMonTam();
+
+            if(dsMoi != null){
+
+                dsMonTheoBan.put(
+                        maBanDangOrder,
+                        dsMoi
+                );
+
+                dsMonDatTam.clear();
+
+                dsMonDatTam.addAll(dsMoi);
+
+                loadMonDatTruocLenBang();
+
+                capNhatTienCocTheoMonDatTruoc();
+            }
+
+        }catch(Exception ex){
+
+            ex.printStackTrace();
+        }
+    }
+    private void capNhatMauNutBan(){
+
+        for(Component rowComp :
+                pnlBanOrderRieng.getComponents()){
+
+            if(rowComp instanceof JPanel){
+
+                JPanel row =
+                        (JPanel) rowComp;
+
+                for(Component c :
+                        row.getComponents()){
+
+                    if(c instanceof JButton){
+
+                        JButton btn =
+                                (JButton)c;
+
+                        btn.setOpaque(true);
+
+                        btn.setContentAreaFilled(true);
+
+                        if(
+                                btn.getText()
+                                        .equalsIgnoreCase(
+                                                maBanDangOrder
+                                        )
+                        ){
+
+                            btn.setBackground(
+                                    new Color(25,135,84)
+                            );
+
+                            btn.setForeground(
+                                    Color.WHITE
+                            );
+
+                        }else{
+
+                            btn.setBackground(
+                                    Color.WHITE
+                            );
+
+                            btn.setForeground(
+                                    Color.BLACK
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        pnlBanOrderRieng.repaint();
+    }
+    
+    private JPanel taoItemBanPopup(
+            String maBan,
+            String tenBan,
+            int soCho,
+            String trangThai
+    ){
+
+        boolean dangChon=
+                dsBanDaChon.contains(maBan);
+
+        Color bg;
+        Color border;
+        Color text;
+
+        if(dangChon){
+
+            bg=new Color(255,193,7);
+            border=new Color(255,152,0);
+            text=Color.WHITE;
+
+        }else if(
+                trangThai.equalsIgnoreCase("Đang phục vụ")
+        ){
+
+            bg=new Color(46,204,113);
+            border=new Color(39,174,96);
+            text=Color.WHITE;
+
+        }else if(
+                trangThai.equalsIgnoreCase("Đang chờ")
+                ||
+                trangThai.equalsIgnoreCase("Đã đặt")
+        ){
+
+            bg=new Color(231,76,60);
+            border=new Color(192,57,43);
+            text=Color.WHITE;
+
+        }else{
+
+            bg=new Color(245,247,250);
+            border=new Color(220,220,220);
+            text=new Color(40,40,40);
+        }
+
+        JPanel p=new JPanel(){
+
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
+            protected void paintComponent(Graphics g){
+
+                Graphics2D g2=
+                        (Graphics2D) g.create();
+
+                g2.setRenderingHint(
+                        RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON
+                );
+
+                g2.setColor(bg);
+
+                g2.fillRoundRect(
+                        0,
+                        0,
+                        getWidth(),
+                        getHeight(),
+                        22,
+                        22
+                );
+
+                g2.setColor(border);
+
+                g2.drawRoundRect(
+                        1,
+                        1,
+                        getWidth()-3,
+                        getHeight()-3,
+                        22,
+                        22
+                );
+
+                g2.dispose();
+
+                super.paintComponent(g);
             }
         };
 
-        tblBan = new JTable(modelBan);
-        tblBan.setRowHeight(24);
-        tblBan.setFont(new Font("Arial", Font.PLAIN, 13));
-        tblBan.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
-        tblBan.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        p.setOpaque(false);
 
-        JScrollPane scroll = new JScrollPane(tblBan);
-        scroll.setPreferredSize(new Dimension(300, 160));
-        popupBan.add(scroll, BorderLayout.CENTER);
+        p.setLayout(
+                new BorderLayout(0,3)
+        );
 
-        tblBan.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (!txtBan.isEditable() || !txtBan.isEnabled()) return;
+        p.setPreferredSize(
+                new Dimension(110,78)
+        );
 
-                int row = tblBan.getSelectedRow();
-                if (row >= 0) {
-                    txtBan.setForeground(Color.BLACK);
-                    txtBan.setText(String.valueOf(modelBan.getValueAt(row, 0)));
+        boolean khoaChon =
+                trangThai.equalsIgnoreCase("Đang phục vụ")
+                ||
+                trangThai.equalsIgnoreCase("Đang chờ")
+                ||
+                trangThai.equalsIgnoreCase("Đã đặt");
 
-                    String tenBanDangChon = String.valueOf(modelBan.getValueAt(row, 0));
-                    maBanDuocChon = "";
+        p.setCursor(
+                new Cursor(
+                        khoaChon
+                        ? Cursor.DEFAULT_CURSOR
+                        : Cursor.HAND_CURSOR
+                )
+        );
 
-                    for (String[] ban : dsBanTheoGio) {
-                        if (ban[1].equalsIgnoreCase(tenBanDangChon)) {
-                            maBanDuocChon = ban[0];
-                            break;
-                        }
-                    }
+        p.setBorder(
+                new EmptyBorder(6,6,6,6)
+        );
 
-                    popupBan.setVisible(false);
+        JLabel lblTen=
+                new JLabel(
+                        tenBan,
+                        SwingConstants.CENTER
+                );
+
+        lblTen.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        16
+                )
+        );
+
+        lblTen.setForeground(text);
+
+        JLabel lblTrangThai=
+                new JLabel(
+                        trangThai,
+                        SwingConstants.CENTER
+                );
+
+        lblTrangThai.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        11
+                )
+        );
+
+        lblTrangThai.setForeground(text);
+
+        JLabel lblSoCho=
+                new JLabel(
+                        "👥 "+soCho+" chỗ",
+                        SwingConstants.CENTER
+                );
+
+        lblSoCho.setFont(
+                new Font(
+                        "Arial",
+                        Font.PLAIN,
+                        11
+                )
+        );
+
+        lblSoCho.setForeground(text);
+
+        p.add(lblTen,BorderLayout.NORTH);
+        p.add(lblTrangThai,BorderLayout.CENTER);
+        p.add(lblSoCho,BorderLayout.SOUTH);
+
+        p.addMouseListener(new MouseAdapter() {
+        	@Override
+        	public void mouseClicked(MouseEvent e){
+
+        	    if(
+        	            trangThai.equalsIgnoreCase("Đang phục vụ")
+        	            ||
+        	            trangThai.equalsIgnoreCase("Đang chờ")
+        	            ||
+        	            trangThai.equalsIgnoreCase("Đã đặt")
+        	    ){
+        	        return;
+        	    }
+
+        	    // ================= ORDER RIÊNG =================
+
+        	    if(chkOrderRieng.isSelected()){
+
+        	        // BÀN ĐÃ CHỌN
+        	    	if(dsBanDaChon.contains(maBan)){
+
+        	    	    ArrayList<ChiTietDatMon> dsMon =
+        	    	            dsMonTheoBan.get(maBan);
+
+        	    	    boolean coMon =
+        	    	            dsMon != null
+        	    	            && !dsMon.isEmpty();
+
+        	    	    // ================= CHƯA CÓ MÓN =================
+
+        	    	    if(!coMon){
+
+        	    	        dsBanDaChon.remove(maBan);
+
+        	    	        dsMonTheoBan.remove(maBan);
+
+        	    	        if(!dsBanDaChon.isEmpty()){
+
+        	    	            maBanDangOrder =
+        	    	                    dsBanDaChon.get(0);
+
+        	    	            moOrderTheoBan(maBanDangOrder);
+
+        	    	        }else{
+
+        	    	            maBanDangOrder = "";
+
+        	    	            dsMonDatTam.clear();
+
+        	    	            loadMonDatTruocLenBang();
+        	    	        }
+
+        	    	        taoNutBanOrder();
+
+        	    	        capNhatTextBanDaChon();
+
+        	    	        capNhatTongSucChua();
+
+        	    	        capNhatTienCocTheoMonDatTruoc();
+
+        	    	        loadDanhSachBanTheoGioChon();
+
+        	    	        return;
+        	    	    }
+
+        	    	    // ================= ĐÃ CÓ MÓN =================
+
+        	    	    String[] options = {
+        	    	            "Bỏ bàn",
+        	    	            "Hủy"
+        	    	    };
+
+        	    	    int chon =
+        	    	            JOptionPane.showOptionDialog(
+        	    	                    PhieuDatBan_DigLog.this,
+        	    	                    "Bàn này đã có món.",
+        	    	                    tenBan,
+        	    	                    JOptionPane.DEFAULT_OPTION,
+        	    	                    JOptionPane.WARNING_MESSAGE,
+        	    	                    null,
+        	    	                    options,
+        	    	                    options[1]
+        	    	            );
+
+        	    	    // HỦY -> mở chỉnh món
+        	    	    if(chon != 0){
+
+        	    	        moOrderTheoBan(maBan);
+
+        	    	        return;
+        	    	    }
+
+        	    	    // ================= HỎI CHUYỂN MÓN =================
+
+        	    	    JCheckBox chkChuyenMon =
+        	    	            new JCheckBox(
+        	    	                    "Chuyển món đã đặt sang bàn khác"
+        	    	            );
+
+        	    	    chkChuyenMon.setFont(
+        	    	            new Font("Arial", Font.PLAIN, 14)
+        	    	    );
+
+        	    	    chkChuyenMon.setOpaque(false);
+
+        	    	    Object[] message = {
+        	    	            "Bạn đang bỏ bàn " + tenBan,
+        	    	            "",
+        	    	            chkChuyenMon
+        	    	    };
+
+        	    	    int hoi =
+        	    	            JOptionPane.showConfirmDialog(
+        	    	                    PhieuDatBan_DigLog.this,
+        	    	                    message,
+        	    	                    "Bỏ bàn",
+        	    	                    JOptionPane.OK_CANCEL_OPTION,
+        	    	                    JOptionPane.WARNING_MESSAGE
+        	    	            );
+
+        	    	    if(hoi != JOptionPane.OK_OPTION){
+
+        	    	        return;
+        	    	    }
+
+        	    	    // ================= CHUYỂN MÓN =================
+
+        	    	    if(chkChuyenMon.isSelected()){
+
+        	    	        ArrayList<String> dsBanKhac =
+        	    	                new ArrayList<>();
+
+        	    	        for(String b : dsBanDaChon){
+
+        	    	            if(!b.equals(maBan)){
+
+        	    	                dsBanKhac.add(b);
+        	    	            }
+        	    	        }
+
+        	    	        if(dsBanKhac.isEmpty()){
+
+        	    	            JOptionPane.showMessageDialog(
+        	    	                    PhieuDatBan_DigLog.this,
+        	    	                    "Không còn bàn nào để chuyển món!"
+        	    	            );
+
+        	    	            return;
+        	    	        }
+
+        	    	        String banNhan =
+        	    	                (String) JOptionPane.showInputDialog(
+        	    	                        PhieuDatBan_DigLog.this,
+        	    	                        "Chọn bàn nhận món:",
+        	    	                        "Chuyển món",
+        	    	                        JOptionPane.PLAIN_MESSAGE,
+        	    	                        null,
+        	    	                        dsBanKhac.toArray(),
+        	    	                        dsBanKhac.get(0)
+        	    	                );
+
+        	    	        if(banNhan != null){
+
+        	    	            ArrayList<ChiTietDatMon> dsNhan =
+        	    	                    dsMonTheoBan.get(banNhan);
+
+        	    	            if(dsNhan == null){
+
+        	    	                dsNhan = new ArrayList<>();
+        	    	            }
+
+        	    	            dsNhan.addAll(dsMon);
+
+        	    	            dsMonTheoBan.put(
+        	    	                    banNhan,
+        	    	                    dsNhan
+        	    	            );
+        	    	        }
+        	    	    }
+
+        	    	    // ================= XÓA BÀN =================
+
+        	    	    dsBanDaChon.remove(maBan);
+
+        	    	    dsMonTheoBan.remove(maBan);
+
+        	    	    if(!dsBanDaChon.isEmpty()){
+
+        	    	        maBanDangOrder =
+        	    	                dsBanDaChon.get(0);
+
+        	    	        moOrderTheoBan(maBanDangOrder);
+
+        	    	    }else{
+
+        	    	        maBanDangOrder = "";
+
+        	    	        dsMonDatTam.clear();
+
+        	    	        loadMonDatTruocLenBang();
+        	    	    }
+
+        	    	    taoNutBanOrder();
+
+        	    	    capNhatTextBanDaChon();
+
+        	    	    capNhatTongSucChua();
+
+        	    	    capNhatTienCocTheoMonDatTruoc();
+
+        	    	    loadDanhSachBanTheoGioChon();
+
+        	    	    return;
+        	    	}
+
+        	        // THÊM BÀN MỚI
+        	        dsBanDaChon.add(maBan);
+
+        	        dsMonTheoBan.put(
+        	                maBan,
+        	                new ArrayList<>()
+        	        );
+
+        	        maBanDangOrder = maBan;
+
+        	        moOrderTheoBan(maBan);
+
+        	        taoNutBanOrder();
+
+        	        capNhatTextBanDaChon();
+
+        	        capNhatTongSucChua();
+
+        	        loadDanhSachBanTheoGioChon();
+
+        	        return;
+        	    }
+
+        	    // ================= ORDER CHUNG =================
+
+        	    if(dsBanDaChon.contains(maBan)){
+
+        	        dsBanDaChon.remove(maBan);
+
+        	    }else{
+
+        	        dsBanDaChon.add(maBan);
+        	    }
+
+        	    capNhatTextBanDaChon();
+
+        	    capNhatTienCocTheoMonDatTruoc();
+
+        	    capNhatTongSucChua();
+
+        	    loadDanhSachBanTheoGioChon();
+        	}
+        });
+
+        return p;
+    }
+    private void capNhatTongSucChua(){
+
+        int tongCho = 0;
+
+        for(String ma : dsBanDaChon){
+
+            for(String[] b : dsBanTheoGio){
+
+                if(b[0].equalsIgnoreCase(ma)){
+
+                    tongCho += Integer.parseInt(b[2]);
+                    break;
                 }
             }
-        });
-    }
+        }
 
-    private void loadDanhSachBanTheoGioChon() {
-        if (modelBan == null) return;
+        int soKhach =
+                (int) spnSoLuongKhach.getValue();
 
-        modelBan.setRowCount(0);
-        dsBanTheoGio.clear();
+        int chenhlech =
+                tongCho - soKhach;
 
-        try {
-            Ban_DAO dao = new Ban_DAO();
+        String thongBao;
 
-            if (thoiGianDaChon == null) {
-                dsBanTheoGio = dao.getTatCaBanKemTrangThaiMacDinh();
-            } else {
-                dsBanTheoGio = dao.getDanhSachBanTheoThoiGian(thoiGianDaChon);
-            }
+        if(chenhlech < 0){
 
-            for (String[] ban : dsBanTheoGio) {
-            	int soKhach = (int) spnSoLuongKhach.getValue();
-            	int soCho = Integer.parseInt(ban[2]);
+            thongBao =
+                    " | Thiếu "
+                    + Math.abs(chenhlech)
+                    + " chỗ";
 
-            	if (soCho >= soKhach) {
-            	    modelBan.addRow(new Object[]{
-            	        ban[1],   // tên bàn
-            	        ban[2],   // số chỗ
-            	        ban[3]    // trạng thái
-            	    });
-            	}
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Không tải được danh sách bàn!",
-                    "Lỗi",
-                    JOptionPane.ERROR_MESSAGE
+        }else{
+
+            thongBao =
+                    " | Dư "
+                    + chenhlech
+                    + " chỗ";
+        }
+
+        lblTongSucChua.setText(
+                "Đã chọn: "
+                + dsBanDaChon.size()
+                + " bàn | "
+                + tongCho
+                + "/"
+                + soKhach
+                + " chỗ"
+                + thongBao
+        );
+
+        if(chenhlech < 0){
+
+            lblTongSucChua.setForeground(
+                    new Color(220,53,69)
+            );
+
+        }else{
+
+            lblTongSucChua.setForeground(
+                    new Color(40,167,69)
             );
         }
     }
+    private void capNhatTextBanDaChon(){
 
-    private void locBan(String keyword) {
-        modelBan.setRowCount(0);
+        if(dsBanDaChon.isEmpty()){
 
-        int soKhach = (int) spnSoLuongKhach.getValue();
+            maBanDuocChon="";
 
-        for (String[] ban : dsBanTheoGio) {
-            String tenBan = ban[1];
-            int soCho = Integer.parseInt(ban[2]);
+            txtBan.setText(PH_BAN);
 
-            if ((keyword.isEmpty() || tenBan.toLowerCase().contains(keyword.toLowerCase()))
-                    && soCho >= soKhach) {
+            txtBan.setForeground(PLACEHOLDER);
 
-                modelBan.addRow(new Object[]{
-                        ban[1],
-                        ban[2],
-                        ban[3]
-                });
+            return;
+        }
+
+        ArrayList<String> dsTen=
+                new ArrayList<>();
+
+        for(String ma:dsBanDaChon){
+
+            for(String[] b:dsBanTheoGio){
+
+                if(b[0].equalsIgnoreCase(ma)){
+
+                    dsTen.add(b[1]);
+                    break;
+                }
             }
         }
-    }
 
-    private void showPopupBan() {
-        popupBan.show(txtBan, 0, txtBan.getHeight());
+        txtBan.setForeground(Color.BLACK);
+
+        txtBan.setText(
+                String.join(", ",dsTen)
+        );
+
+        maBanDuocChon=
+                String.join(",",dsBanDaChon);
+     // Chỉ cho order riêng khi có từ 2 bàn
+        boolean choOrderRieng =
+                dsBanDaChon.size() > 1;
+
+        chkOrderRieng.setEnabled(
+                choOrderRieng
+        );
+
+        // Nếu không đủ bàn -> tự bỏ check
+        if(!choOrderRieng){
+
+            chkOrderRieng.setSelected(false);
+
+            pnlBanOrderRieng.setVisible(false);
+
+            btnThemMonTheoBan.setVisible(false);
+        }
     }
 
     private boolean validateForm() {
@@ -1721,7 +3415,13 @@ public class PhieuDatBan_DigLog extends JDialog {
                 dao.capNhatTrangThai(maPhieuHienTai, "Quá giờ");
 
                 Ban_DAO banDAO = new Ban_DAO();
-                banDAO.capNhatTrangThaiBan(maBanDuocChon, "Bàn trống");
+                for(String maBan : dsBanDaChon){
+
+                    banDAO.capNhatTrangThaiBan(
+                            maBan,
+                            "Bàn trống"
+                    );
+                }
 
                 trangThaiHienTai = "Quá giờ";
                 apDungTrangThaiForm(trangThaiHienTai);
@@ -1731,4 +3431,5 @@ public class PhieuDatBan_DigLog extends JDialog {
             e.printStackTrace();
         }
     }
+    
 }

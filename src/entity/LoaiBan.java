@@ -1,7 +1,7 @@
 package entity;
 
 public class LoaiBan {
-	private static final long serialVersionUID = 1L;
+	
 	private String maLoaiBan;
 	private String tenLoaiBan;
 	public String getMaLoaiBan() {

@@ -51,10 +51,10 @@ import dao.LoaiMonAn_DAO;
 import dao.MonAn_DAO;
 import entity.LoaiMonAn;
 import entity.MonAn;
-import entity.PhieuDatMon;
+import entity.ChiTietDatMon;
 
 public class DatMon_DigLog extends JDialog {
-    private static final long serialVersionUID = 1L;
+
 
     private final Color BG_MAIN = new Color(238, 238, 238);
     private final Color BG_TOP = new Color(245, 245, 245);
@@ -108,7 +108,7 @@ public class DatMon_DigLog extends JDialog {
     private final Map<String, OrderItem> gioHang = new LinkedHashMap<>();
 
     private String maLoaiDangChon = "ALL";
-    private ArrayList<PhieuDatMon> dsMonTam = new ArrayList<>();
+    private ArrayList<ChiTietDatMon> dsMonTam = new ArrayList<>();
 
     public DatMon_DigLog(Frame owner) {
         super(owner, "Đặt món", true);
@@ -125,7 +125,7 @@ public class DatMon_DigLog extends JDialog {
         init();
     }
 
-    public DatMon_DigLog(Frame owner, ArrayList<PhieuDatMon> dsMonTam) {
+    public DatMon_DigLog(Frame owner, ArrayList<ChiTietDatMon> dsMonTam) {
         super(owner, "Đặt món", true);
         if (dsMonTam != null) {
             this.dsMonTam = new ArrayList<>(dsMonTam);
@@ -134,7 +134,7 @@ public class DatMon_DigLog extends JDialog {
         napGioHangTuDanhSachTam();
     }
 
-    public DatMon_DigLog(Dialog owner, ArrayList<PhieuDatMon> dsMonTam) {
+    public DatMon_DigLog(Dialog owner, ArrayList<ChiTietDatMon> dsMonTam) {
         super(owner, "Đặt món", true);
         if (dsMonTam != null) {
             this.dsMonTam = new ArrayList<>(dsMonTam);
@@ -143,7 +143,7 @@ public class DatMon_DigLog extends JDialog {
         napGioHangTuDanhSachTam();
     }
 
-    public ArrayList<PhieuDatMon> getDanhSachMonTam() {
+    public ArrayList<ChiTietDatMon> getDanhSachMonTam() {
         return dsMonTam;
     }
 
@@ -168,9 +168,9 @@ public class DatMon_DigLog extends JDialog {
             return;
         }
 
-        for (PhieuDatMon pdm : dsMonTam) {
-            if (pdm.getMaMon() == null) continue;
-            MonAn mon = pdm.getMaMon();
+        for (ChiTietDatMon pdm : dsMonTam) {
+            if (pdm.getMon() == null) continue;
+            MonAn mon = pdm.getMon();
 
             gioHang.put(mon.getMaMon(), new OrderItem(
                     mon,
@@ -186,7 +186,7 @@ public class DatMon_DigLog extends JDialog {
         dsMonTam.clear();
 
         for (OrderItem item : gioHang.values()) {
-            PhieuDatMon pdm = new PhieuDatMon(
+            ChiTietDatMon pdm = new ChiTietDatMon(
                     null,
                     item.mon,
                     item.soLuong,

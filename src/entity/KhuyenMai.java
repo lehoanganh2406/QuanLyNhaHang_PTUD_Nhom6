@@ -3,7 +3,7 @@ package entity;
 import java.time.LocalDateTime;
 
 public class KhuyenMai {
-	private static final long serialVersionUID = 1L;
+	
 	private String maKM;
 	private LoaiKhuyenMai maLoaiKM;
 	private NhanVien maNV;

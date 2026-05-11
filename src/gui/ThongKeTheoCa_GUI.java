@@ -20,7 +20,7 @@ import entity.CaLamViec;
 import entity.TaiKhoan;
 
 public class ThongKeTheoCa_GUI extends JPanel {
-    private static final long serialVersionUID = 1L;
+
 
     private TaiKhoan taiKhoanDangNhap;
     private JLabel lblCa;
@@ -518,10 +518,10 @@ public class ThongKeTheoCa_GUI extends JPanel {
 
             // 1. Doanh thu từ hóa đơn đã thanh toán
             String sql = "SELECT COUNT(*) AS soHD, "
-                    + "ISNULL(SUM(tongTien), 0) AS doanhThu, "
-                    + "ISNULL(SUM(CASE WHEN phuongThucThanhToan = N'Tiền mặt' THEN tongTien ELSE 0 END), 0) AS tienMat, "
-                    + "ISNULL(SUM(CASE WHEN phuongThucThanhToan = N'Chuyển khoản' THEN tongTien ELSE 0 END), 0) AS tienChuyenKhoan, "
-                    + "ISNULL(SUM(CASE WHEN phuongThucThanhToan IN (N'Visa', N'VISA') THEN tongTien ELSE 0 END), 0) AS tienVisa "
+            		+ "ISNULL(SUM(ISNULL(tongTien,0) + ISNULL(thueVAT,0)), 0) AS doanhThu, "
+            		+ "ISNULL(SUM(CASE WHEN phuongThucThanhToan = N'Tiền mặt' THEN ISNULL(tongTien,0)+ISNULL(thueVAT,0) ELSE 0 END), 0) AS tienMat, "
+            		+ "ISNULL(SUM(CASE WHEN phuongThucThanhToan = N'Chuyển khoản' THEN ISNULL(tongTien,0)+ISNULL(thueVAT,0) ELSE 0 END), 0) AS tienChuyenKhoan, "
+            		+ "ISNULL(SUM(CASE WHEN phuongThucThanhToan IN (N'Visa', N'VISA') THEN ISNULL(tongTien,0)+ISNULL(thueVAT,0) ELSE 0 END), 0) AS tienVisa "
                     + "FROM HoaDon "
                     + "WHERE trangThai = N'Đã thanh toán' "
                     + "AND thoiGianRa >= ? AND thoiGianRa <= ?";
@@ -608,7 +608,8 @@ public class ThongKeTheoCa_GUI extends JPanel {
             closeQuietly(stmt);
 
             // 4. Danh sách hóa đơn thanh toán trong ca
-            sql = "SELECT maHD, thoiGianRa, phuongThucThanhToan, tongTien "
+            sql = "SELECT maHD, thoiGianRa, phuongThucThanhToan, "
+                    + "ISNULL(tongTien,0)+ISNULL(thueVAT,0) AS tongTien "
                     + "FROM HoaDon "
                     + "WHERE trangThai = N'Đã thanh toán' "
                     + "AND thoiGianRa >= ? AND thoiGianRa <= ? "

@@ -150,7 +150,6 @@ GO
 
 CREATE TABLE PhieuDatBan (
     maPhieuDatBan VARCHAR(20) NOT NULL PRIMARY KEY,
-    maBan VARCHAR(20) NOT NULL,
     tenKhach NVARCHAR(100) NOT NULL,
     sdt VARCHAR(15) NOT NULL,
     soLuongNguoi INT NOT NULL,
@@ -166,24 +165,42 @@ CREATE TABLE PhieuDatBan (
     lyDoHuy NVARCHAR(255) NULL,
     tienHoanTra DECIMAL(18,2) NULL DEFAULT 0,
 
-    CONSTRAINT FK_PhieuDatBan_Ban FOREIGN KEY (maBan) REFERENCES Ban(maBan),
     CONSTRAINT CK_PhieuDatBan_SoLuongNguoi CHECK (soLuongNguoi > 0),
     CONSTRAINT CK_PhieuDatBan_TienCoc CHECK (tienCoc >= 0),
     CONSTRAINT CK_PhieuDatBan_TienHoanTra CHECK (tienHoanTra >= 0)
 );
 GO
 
-CREATE TABLE PhieuDatMon (
+CREATE TABLE PhieuDatMon(
+    maPhieuDatMon VARCHAR(20) NOT NULL PRIMARY KEY,
     maPhieuDatBan VARCHAR(20) NOT NULL,
+    hinhThucDatMon NVARCHAR(50) NOT NULL,
+    ghiChu NVARCHAR(255) NULL,
+    thoiGianTao DATETIME NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_PDM_PDB FOREIGN KEY(maPhieuDatBan) REFERENCES PhieuDatBan(maPhieuDatBan),
+    CONSTRAINT CK_PDM_HINHTHUC CHECK(hinhThucDatMon IN(N'Đặt chung',N'Đặt riêng'))
+);
+GO
+CREATE TABLE PhieuDatMon_Ban(
+    maPhieuDatMon VARCHAR(20) NOT NULL,
+    maBan VARCHAR(20) NOT NULL,
+    PRIMARY KEY(maPhieuDatMon, maBan),
+    CONSTRAINT FK_PDM_BAN_PDM FOREIGN KEY(maPhieuDatMon)REFERENCES PhieuDatMon(maPhieuDatMon),
+    CONSTRAINT FK_PDM_BAN_BAN FOREIGN KEY(maBan) REFERENCES Ban(maBan)
+);
+GO
+CREATE TABLE ChiTietDatMon(
+    maPhieuDatMon VARCHAR(20) NOT NULL,
     maMon VARCHAR(20) NOT NULL,
     soLuong INT NOT NULL,
     donGia DECIMAL(18,2) NOT NULL,
     ghiChu NVARCHAR(255) NULL,
-    CONSTRAINT PK_PhieuDatMon PRIMARY KEY (maPhieuDatBan, maMon),
-    CONSTRAINT FK_PhieuDatMon_PhieuDatBan FOREIGN KEY (maPhieuDatBan) REFERENCES PhieuDatBan(maPhieuDatBan),
-    CONSTRAINT FK_PhieuDatMon_MonAn FOREIGN KEY (maMon) REFERENCES MonAn(maMon),
-    CONSTRAINT CK_PhieuDatMon_SoLuong CHECK (soLuong > 0),
-    CONSTRAINT CK_PhieuDatMon_DonGia CHECK (donGia >= 0)
+    PRIMARY KEY(maPhieuDatMon, maMon),
+
+    CONSTRAINT FK_CTDM_PDM FOREIGN KEY(maPhieuDatMon) REFERENCES PhieuDatMon(maPhieuDatMon),
+    CONSTRAINT FK_CTDM_MON FOREIGN KEY(maMon) REFERENCES MonAn(maMon),
+    CONSTRAINT CK_CTDM_SL CHECK(soLuong > 0),
+    CONSTRAINT CK_CTDM_GIA CHECK(donGia >= 0)
 );
 GO
 
@@ -194,7 +211,6 @@ CREATE TABLE HoaDon (
     maPhieuDatBan VARCHAR(20) NULL,
     maKH VARCHAR(20) NULL,
     maKM VARCHAR(20) NULL,
-    maBan VARCHAR(20) NOT NULL,
     maNV VARCHAR(20) NOT NULL,
 
     tongTien DECIMAL(18,2) NOT NULL DEFAULT 0,
@@ -210,7 +226,6 @@ CREATE TABLE HoaDon (
     CONSTRAINT FK_HoaDon_PhieuDatBan FOREIGN KEY (maPhieuDatBan) REFERENCES PhieuDatBan(maPhieuDatBan),
     CONSTRAINT FK_HoaDon_KhachHang FOREIGN KEY (maKH) REFERENCES KhachHang(maKH),
     CONSTRAINT FK_HoaDon_KhuyenMai FOREIGN KEY (maKM) REFERENCES KhuyenMai(maKM),
-    CONSTRAINT FK_HoaDon_Ban FOREIGN KEY (maBan) REFERENCES Ban(maBan),
     CONSTRAINT FK_HoaDon_NhanVien FOREIGN KEY (maNV) REFERENCES NhanVien(maNV),
 
     CONSTRAINT CK_HoaDon_TongTien CHECK (tongTien >= 0),
@@ -222,6 +237,7 @@ CREATE TABLE HoaDon (
 
 CREATE TABLE ChiTietHoaDon (
     maHD VARCHAR(20) NOT NULL,
+    maBan VARCHAR(20) NOT NULL,
     maMon VARCHAR(20) NOT NULL,
     soLuong INT NOT NULL,
     donGia DECIMAL(18,2) NOT NULL,
@@ -230,13 +246,31 @@ CREATE TABLE ChiTietHoaDon (
     lyDoHuy NVARCHAR(255) NULL,
     soLuongHuy INT NOT NULL DEFAULT 0,
     thoiGianHuy DATETIME NULL,
+    thoiGianGui DATETIME,
     thanhTien AS (soLuong * donGia),
-    CONSTRAINT PK_ChiTietHoaDon PRIMARY KEY (maHD, maMon),
+    CONSTRAINT PK_ChiTietHoaDon PRIMARY KEY (maHD, maMon, maBan),
     CONSTRAINT FK_ChiTietHoaDon_HoaDon FOREIGN KEY (maHD) REFERENCES HoaDon(maHD),
     CONSTRAINT FK_ChiTietHoaDon_MonAn FOREIGN KEY (maMon) REFERENCES MonAn(maMon),
+    CONSTRAINT FK_ChiTietHoaDon_Ban FOREIGN KEY (maBan) REFERENCES Ban(maBan),
     CONSTRAINT CK_ChiTietHoaDon_SoLuong CHECK (soLuong > 0),
     CONSTRAINT CK_ChiTietHoaDon_DonGia CHECK (donGia >= 0),
     CONSTRAINT CK_ChiTietHoaDon_SoLuongHuy CHECK (soLuongHuy >= 0 AND soLuongHuy <= soLuong)
+);
+GO
+CREATE TABLE HoaDon_Ban (
+    maHD VARCHAR(20) NOT NULL,
+    maBan VARCHAR(20) NOT NULL,
+    PRIMARY KEY(maHD, maBan),
+    CONSTRAINT FK_HDB_HD FOREIGN KEY(maHD) REFERENCES HoaDon(maHD),
+    CONSTRAINT FK_HDB_BAN FOREIGN KEY(maBan) REFERENCES Ban(maBan)
+);
+GO
+CREATE TABLE PhieuDatBan_Ban(
+    maPhieuDatBan VARCHAR(20) NOT NULL,
+    maBan VARCHAR(20) NOT NULL,
+    PRIMARY KEY(maPhieuDatBan, maBan),
+    CONSTRAINT FK_PDB_BAN_PDB FOREIGN KEY(maPhieuDatBan) REFERENCES PhieuDatBan(maPhieuDatBan),
+    CONSTRAINT FK_PDB_BAN_BAN FOREIGN KEY(maBan) REFERENCES Ban(maBan)
 );
 GO
 
@@ -256,6 +290,7 @@ CREATE SEQUENCE seq_HoaDon        AS INT START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE seq_PhieuDatBan   AS INT START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE seq_KhuVuc        AS INT START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE seq_LoaiBan       AS INT START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE seq_PhieuDatMon       AS INT START WITH 1 INCREMENT BY 1;
 GO
 
 /*==========================================================
@@ -339,6 +374,11 @@ DEFAULT ('LB' + RIGHT('00' + CAST(NEXT VALUE FOR seq_LoaiBan AS VARCHAR(10)), 2)
 FOR maLoaiBan;
 GO
 
+ALTER TABLE PhieuDatMon
+ADD CONSTRAINT DF_PDM_MA
+DEFAULT('PDM'+ RIGHT('00000'+ CAST(NEXT VALUE FOR seq_PhieuDatMon AS VARCHAR(10)),5))
+FOR maPhieuDatMon;
+GO
 /*==========================================================
 4. PROC THÊM BÀN TỰ ĐỘNG
 ==========================================================*/
@@ -510,32 +550,9 @@ VALUES
 ('TK04', 'NV004', 'nhanvien', N'Lễ tân', 1, 'NV004');
 GO
 
-INSERT INTO CaLamViec (
-    maCa, tenCa, thoiGianMoCa, thoiGianDongCa,
-    tienMoCa, tienMatCuoiCa, tienChuyenKhoanCuoiCa, tienVisaCuoiCa,
-    tongDoanhThu,
-    maTaiKhoan
-)
-VALUES
-('CL001', N'Ca sáng', '2026-04-07 09:00:00', '2026-04-07 17:00:00',
- 1000000, 2000000, 1500000, 300000,
- 3800000,
- 'TK01'),
-
-('CL002', N'Ca chiều', '2026-04-07 17:00:00', '2026-04-07 23:00:00',
- 1000000, 1800000, 1200000, 250000,
- 3250000,
- 'TK02'),
-
-('CL003', N'Ca sáng', '2026-04-08 09:00:00', '2026-04-08 17:00:00',
- 1000000, 2200000, 1700000, 350000,
- 4250000,
- 'TK03');
-GO
 
 ALTER SEQUENCE seq_NhanVien RESTART WITH 5;
 ALTER SEQUENCE seq_TaiKhoan RESTART WITH 5;
-ALTER SEQUENCE seq_CaLamViec RESTART WITH 4;
 GO
 
 /*==========================================================
@@ -676,71 +693,8 @@ BEGIN
 END
 GO
 
-/*==========================================================
-11. PHIẾU ĐẶT BÀN
-==========================================================*/
-INSERT INTO PhieuDatBan (
-    maPhieuDatBan, maBan, tenKhach, sdt, soLuongNguoi,
-    thoiGianDen, tienCoc, ghiChu, trangThai,
-    phuongThucThanhToanCoc, thoiGianDatPhieu,
-    phuongThucHoanTien, lyDoHuy, tienHoanTra
-)
-VALUES
-('PDB00001', 'A01', N'Nguyễn Văn Nam', '0922000001', 2, '2026-05-05 18:30:00', 200000, N'Đặt bàn thường', N'Đang chờ', N'Tiền mặt', '2026-05-05 10:00:00', NULL, NULL, 0),
-('PDB00002', 'A05', N'Trần Thị Mai', '0922000002', 4, '2026-05-05 19:00:00', 450000, N'Có đặt món trước', N'Đang chờ', N'Chuyển khoản', '2026-05-05 10:05:00', NULL, NULL, 0),
-('PDB00003', 'B10', N'Lê Quốc Bảo', '0922000003', 6, '2026-05-06 18:00:00', 200000, N'Nhóm bạn', N'Đang chờ', N'Tiền mặt', '2026-05-05 10:10:00', NULL, NULL, 0),
-('PDB00004', 'C15', N'Phạm Minh Thư', '0922000004', 8, '2026-05-06 20:00:00', 600000, N'Sinh nhật', N'Đang chờ', N'Chuyển khoản', '2026-05-05 10:15:00', NULL, NULL, 0),
-('PDB00005', 'B03', N'Đặng Gia Hân', '0922000005', 2, '2026-05-07 17:45:00', 200000, N'Đặt trước', N'Đang chờ', N'Tiền mặt', '2026-05-05 10:20:00', NULL, NULL, 0),
-('PDB00006', 'A02', N'Hoàng Minh Anh', '0922000006', 4, '2026-05-07 19:00:00', 300000, N'Test hủy bàn', N'Đã hủy', N'Tiền mặt', '2026-05-05 10:25:00', N'Tiền mặt', N'Khách bận việc đột xuất', 210000);
-GO
 
 
-ALTER SEQUENCE seq_PhieuDatBan RESTART WITH 7;
-GO
-
-/*==========================================================
-12. PHIẾU ĐẶT MÓN
-==========================================================*/
-INSERT INTO PhieuDatMon (maPhieuDatBan, maMon, soLuong, donGia, ghiChu)
-VALUES
-('PDB00002', 'MM003', 2, 120000, N''),
-('PDB00002', 'MM010', 3, 20000, N''),
-('PDB00004', 'MM006', 1, 280000, N'Ít cay'),
-('PDB00004', 'MM009', 1, 50000, N'');
-GO
-
-/*==========================================================
-13. HÓA ĐƠN
-==========================================================*/
-INSERT INTO HoaDon
-(maHD, thoiGianVao, thoiGianRa, maPhieuDatBan, maKH, maKM, maBan, maNV,
- tongTien, tienKhachTra, thueVAT, tienThua, phuongThucThanhToan, hinhThucPhucVu, trangThai, lyDoHuy)
-VALUES
-('HD00001', '2026-04-06 18:00:00', '2026-04-06 19:30:00', NULL, 'KH00001', 'KM001', 'A02', 'NV003',
- 250000, 500000, 35000, 215000, N'Tiền mặt', N'Tại bàn', N'Đã thanh toán', NULL),
-
-('HD00002', '2026-04-06 19:00:00', '2026-04-06 21:00:00', 'PDB00002', 'KH00002', NULL, 'A05', 'NV003',
- 590000, 700000, 49000, 61000, N'Chuyển khoản', N'Tại bàn', N'Đã thanh toán', NULL),
-
-('HD00003', '2026-04-07 12:00:00', '2026-04-07 13:30:00', NULL, 'KH00003', NULL, 'B01', 'NV002',
- 0, 0, 0, 0, NULL, N'Tại bàn', N'Đã thanh toán', NULL);
-GO
-ALTER SEQUENCE seq_HoaDon RESTART WITH 4;
-GO
-
-/*==========================================================
-14. CHI TIẾT HÓA ĐƠN
-==========================================================*/
-INSERT INTO ChiTietHoaDon
-(maHD, maMon, soLuong, donGia, ghiChu, trangThai, lyDoHuy, soLuongHuy, thoiGianHuy)
-VALUES
-('HD00001', 'MM001', 1, 45000, N'', N'Đã gọi', NULL, 0, NULL),
-('HD00001', 'MM004', 1, 165000, N'', N'Đã gọi', NULL, 0, NULL),
-('HD00001', 'MM010', 2, 20000, N'', N'Đã gọi', NULL, 0, NULL),
-('HD00002', 'MM003', 2, 120000, N'', N'Đã gọi', NULL, 0, NULL),
-('HD00002', 'MM006', 1, 280000, N'', N'Đã gọi', NULL, 0, NULL),
-('HD00002', 'MM012', 2, 35000, N'', N'Đã gọi', NULL, 0, NULL);
-GO
 
 
 /*==========================================================
@@ -759,7 +713,7 @@ SELECT * FROM LoaiBan;
 SELECT * FROM KhuVuc;
 SELECT * FROM Ban ORDER BY maBan;
 SELECT * FROM PhieuDatBan;
-SELECT * FROM PhieuDatMon;
 SELECT * FROM HoaDon;
 SELECT * FROM ChiTietHoaDon;
 GO
+

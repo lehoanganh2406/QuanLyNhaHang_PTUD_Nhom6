@@ -42,7 +42,7 @@ import entity.LoaiKhachHang;
 import entity.TaiKhoan;
 
 public class KhachHang_GUI extends JPanel {
-    private static final long serialVersionUID = 1L;
+
 
     private TaiKhoan taiKhoanDangNhap;
 

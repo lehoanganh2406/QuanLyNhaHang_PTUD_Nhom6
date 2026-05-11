@@ -3,7 +3,7 @@ package entity;
 import java.time.LocalDateTime;
 
 public class HoaDon {
-    private static final long serialVersionUID = 1L;
+    
 
     private String maHD;
     private LocalDateTime thoiGianVao;
@@ -11,7 +11,6 @@ public class HoaDon {
     private PhieuDatBan maPhieuDatBan;
     private KhachHang maKH;
     private KhuyenMai maKM;
-    private Ban maBan;
     private NhanVien maNV;
     private double tongTien;
     private double tienKhachTra;
@@ -31,10 +30,11 @@ public class HoaDon {
 
     
 
+	
+
 	public HoaDon(String maHD, LocalDateTime thoiGianVao, LocalDateTime thoiGianRa, PhieuDatBan maPhieuDatBan,
-			KhachHang maKH, KhuyenMai maKM, Ban maBan, NhanVien maNV, double tongTien, double tienKhachTra,
-			double thueVAT, double tienThua, String trangThai, String lyDoHuy, String phuongThucThanhToan,
-			String hinhThucPhucVu) {
+			KhachHang maKH, KhuyenMai maKM, NhanVien maNV, double tongTien, double tienKhachTra, double thueVAT,
+			double tienThua, String trangThai, String lyDoHuy, String phuongThucThanhToan, String hinhThucPhucVu) {
 		super();
 		this.maHD = maHD;
 		this.thoiGianVao = thoiGianVao;
@@ -42,7 +42,6 @@ public class HoaDon {
 		this.maPhieuDatBan = maPhieuDatBan;
 		this.maKH = maKH;
 		this.maKM = maKM;
-		this.maBan = maBan;
 		this.maNV = maNV;
 		this.tongTien = tongTien;
 		this.tienKhachTra = tienKhachTra;
@@ -118,13 +117,6 @@ public class HoaDon {
         this.maKM = maKM;
     }
 
-    public Ban getMaBan() {
-        return maBan;
-    }
-
-    public void setMaBan(Ban maBan) {
-        this.maBan = maBan;
-    }
 
     public NhanVien getMaNV() {
         return maNV;
@@ -182,14 +174,6 @@ public class HoaDon {
         this.lyDoHuy = lyDoHuy;
     }
 
-	@Override
-	public String toString() {
-		return "HoaDon [maHD=" + maHD + ", thoiGianVao=" + thoiGianVao + ", thoiGianRa=" + thoiGianRa
-				+ ", maPhieuDatBan=" + maPhieuDatBan + ", maKH=" + maKH + ", maKM=" + maKM + ", maBan=" + maBan
-				+ ", maNV=" + maNV + ", tongTien=" + tongTien + ", tienKhachTra=" + tienKhachTra + ", thueVAT="
-				+ thueVAT + ", tienThua=" + tienThua + ", trangThai=" + trangThai + ", lyDoHuy=" + lyDoHuy
-				+ ", phuongThucThanhToan=" + phuongThucThanhToan + ", hinhThucPhucVu=" + hinhThucPhucVu + "]";
-	}
 
 	
 

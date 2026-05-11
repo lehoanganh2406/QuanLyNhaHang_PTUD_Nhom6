@@ -17,7 +17,7 @@ import entity.CaLamViec;
 import entity.TaiKhoan;
 
 public class QuanLyCa_GUI extends JPanel {
-    private static final long serialVersionUID = 1L;
+
 
     private final Color BG = new Color(245, 247, 250);
     private final Color CARD = Color.WHITE;

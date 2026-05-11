@@ -27,7 +27,7 @@ import java.sql.Timestamp;
 import connectDB.ConnectDB;
 
 public class DongCa_DigLog extends JDialog {
-    private static final long serialVersionUID = 1L;
+
 
     private JLabel lblMaCa;
     private JLabel lblTenCa;

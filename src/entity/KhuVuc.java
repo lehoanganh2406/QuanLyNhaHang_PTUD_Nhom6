@@ -1,7 +1,7 @@
 package entity;
 
 public class KhuVuc {
-	private static final long serialVersionUID = 1L;
+	
 	private String maKhuVuc;
 	private String tenKhuVuc;
 	private int soLuongBan;

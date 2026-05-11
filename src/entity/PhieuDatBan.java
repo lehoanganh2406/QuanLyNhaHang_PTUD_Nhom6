@@ -3,10 +3,8 @@ package entity;
 import java.time.LocalDateTime;
 
 public class PhieuDatBan {
-	private static final long serialVersionUID = 1L;
 
 	private String maPhieuDatBan;
-	private Ban maBan;
 	private String tenKhach;
 	private String sdt;
 	private int soLuongNguoi;
@@ -45,13 +43,6 @@ public class PhieuDatBan {
 		this.maPhieuDatBan = maPhieuDatBan;
 	}
 
-	public Ban getMaBan() {
-		return maBan;
-	}
-
-	public void setMaBan(Ban maBan) {
-		this.maBan = maBan;
-	}
 
 	public String getTenKhach() {
 		return tenKhach;
@@ -134,13 +125,11 @@ public class PhieuDatBan {
 	}
 
 	
-
-	public PhieuDatBan(String maPhieuDatBan, Ban maBan, String tenKhach, String sdt, int soLuongNguoi,
-			LocalDateTime thoiGianDen, double tienCoc, String ghiChu, String trangThai, String phuongThucThanhToanCoc,
+	public PhieuDatBan(String maPhieuDatBan, String tenKhach, String sdt, int soLuongNguoi, LocalDateTime thoiGianDen,
+			double tienCoc, String ghiChu, String trangThai, String phuongThucThanhToanCoc,
 			LocalDateTime thoiGianDatPhieu, String phuongThucHoanTien, String lyDoHuy, double tienHoanTra) {
 		super();
 		this.maPhieuDatBan = maPhieuDatBan;
-		this.maBan = maBan;
 		this.tenKhach = tenKhach;
 		this.sdt = sdt;
 		this.soLuongNguoi = soLuongNguoi;

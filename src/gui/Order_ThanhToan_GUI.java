@@ -24,9 +24,11 @@ import entity.KhuyenMai;
 import entity.MonAn;
 import entity.TaiKhoan;
 import dao.PhieuDatBan_DAO;
+import entity.Ban;
+import dao.HoaDon_Ban_DAO;
 
 public class Order_ThanhToan_GUI extends JPanel {
-    private static final long serialVersionUID = 1L;
+
 
     private final Color BG_MAIN = new Color(238, 238, 238);
     private final Color BG_TOP = new Color(245, 245, 245);
@@ -59,6 +61,7 @@ public class Order_ThanhToan_GUI extends JPanel {
     private final MonAn_DAO monAnDAO = new MonAn_DAO();
     private final Ban_DAO banDAO = new Ban_DAO();
     private final PhieuDatBan_DAO phieuDatBanDAO = new PhieuDatBan_DAO();
+    private final HoaDon_Ban_DAO hoaDonBanDAO = new HoaDon_Ban_DAO();
 
     private final DecimalFormat df = new DecimalFormat("#,##0");
 
@@ -91,6 +94,7 @@ public class Order_ThanhToan_GUI extends JPanel {
     private double tienVAT = 0;
     private double tongCong = 0;
     private double tienCoc = 0;
+	private JLabel lblBan;
 
     public Order_ThanhToan_GUI(TaiKhoan tk, String maBan, String tenBan) {
         this.taiKhoanDangNhap = tk;
@@ -121,7 +125,10 @@ public class Order_ThanhToan_GUI extends JPanel {
         JLabel lblTitle = new JLabel("Thanh toán");
         lblTitle.setFont(new Font("SansSerif", Font.BOLD, 34));
 
-        JLabel lblBan = new JLabel(tenBan, SwingConstants.CENTER);
+        lblBan = new JLabel(
+                tenBan,
+                SwingConstants.CENTER
+        );
         lblBan.setFont(new Font("SansSerif", Font.BOLD, 34));
 
         top.add(lblTitle, BorderLayout.WEST);
@@ -505,11 +512,26 @@ public class Order_ThanhToan_GUI extends JPanel {
         }
 
         maHD = hd.getMaHD();
+        tenBan = taoTenBanChung();
+        lblBan.setText(tenBan);
         hoaDonDAO.capNhatTongTien(maHD);
 
-        String maPhieu = hd.getMaPhieuDatBan() == null 
-                ? null 
-                : hd.getMaPhieuDatBan().getMaPhieuDatBan();
+        Object[] hdData =
+                hoaDonDAO.getHoaDonByMa(maHD);
+
+        String maPhieu = null;
+
+        if(
+                hdData != null
+                &&
+                hdData.length > 16
+        ){
+
+            maPhieu =
+                    hdData[16] == null
+                    ? null
+                    : hdData[16].toString();
+        }
 
         loadThongTinPhieuDatBan(maPhieu);
 
@@ -572,44 +594,132 @@ public class Order_ThanhToan_GUI extends JPanel {
     }
 
     private void renderMon() {
+
         pnOrderList.removeAll();
+
+        java.util.Map<String, ChiTietHoaDon> map =
+                new java.util.LinkedHashMap<>();
+
+        for (ChiTietHoaDon ct : dsCT) {
+
+            String key =
+                    ct.getMaMon().getMaMon()
+                    + "_" +
+                    ct.getDonGia();
+
+            if (map.containsKey(key)) {
+
+                ChiTietHoaDon old = map.get(key);
+
+                old.setSoLuong(
+                        old.getSoLuong()
+                        + ct.getSoLuong()
+                );
+
+            } else {
+
+                ChiTietHoaDon newCT =
+                        new ChiTietHoaDon();
+
+                newCT.setMaMon(ct.getMaMon());
+                newCT.setDonGia(ct.getDonGia());
+                newCT.setSoLuong(ct.getSoLuong());
+
+                map.put(key, newCT);
+            }
+        }
 
         int tongSL = 0;
         double tongRight = 0;
 
-        for (ChiTietHoaDon ct : dsCT) {
-            String maMon = ct.getMaMon().getMaMon();
-            MonAn mon = monAnDAO.getMonAnTheoMa(maMon);
+        for (ChiTietHoaDon ct : map.values()) {
 
-            String tenMon = mon != null ? mon.getTenMon() : maMon;
-            double gia = ct.getDonGia();
-            int sl = ct.getSoLuong();
-            double thanhTien = gia * sl;
+            String tenMon =
+                    ct.getMaMon().getTenMon();
+
+            double gia =
+                    ct.getDonGia();
+
+            int sl =
+                    ct.getSoLuong();
+
+            double thanhTien =
+                    gia * sl;
 
             tongSL += sl;
             tongRight += thanhTien;
 
             JPanel row = new JPanel();
-            row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
-            row.setPreferredSize(new Dimension(RIGHT_W, ORDER_ROW_H));
-            row.setMaximumSize(new Dimension(RIGHT_W, ORDER_ROW_H));
-            row.setBackground(Color.WHITE);
-            row.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 220, 220)));
 
-            row.add(cell(tenMon, COL_NAME_W, SwingConstants.LEFT));
-            row.add(cell(formatTien(gia), COL_PRICE_W, SwingConstants.CENTER));
-            row.add(cell(String.valueOf(sl), COL_QTY_W, SwingConstants.CENTER));
-            row.add(cell(formatTien(thanhTien), COL_TOTAL_W, SwingConstants.CENTER));
+            row.setLayout(
+                    new BoxLayout(
+                            row,
+                            BoxLayout.X_AXIS
+                    )
+            );
+
+            row.setPreferredSize(
+                    new Dimension(
+                            RIGHT_W,
+                            ORDER_ROW_H
+                    )
+            );
+
+            row.setMaximumSize(
+                    new Dimension(
+                            RIGHT_W,
+                            ORDER_ROW_H
+                    )
+            );
+
+            row.setBackground(Color.WHITE);
+
+            row.setBorder(
+                    BorderFactory.createMatteBorder(
+                            0,0,1,0,
+                            new Color(220,220,220)
+                    )
+            );
+
+            row.add(cell(
+                    tenMon,
+                    COL_NAME_W,
+                    SwingConstants.LEFT
+            ));
+
+            row.add(cell(
+                    formatTien(gia),
+                    COL_PRICE_W,
+                    SwingConstants.CENTER
+            ));
+
+            row.add(cell(
+                    String.valueOf(sl),
+                    COL_QTY_W,
+                    SwingConstants.CENTER
+            ));
+
+            row.add(cell(
+                    formatTien(thanhTien),
+                    COL_TOTAL_W,
+                    SwingConstants.CENTER
+            ));
 
             pnOrderList.add(row);
         }
 
         pnOrderList.add(Box.createVerticalGlue());
+
         pnOrderList.revalidate();
         pnOrderList.repaint();
 
-        lblTongSoLuong.setText(String.valueOf(tongSL));
-        lblTongTienRight.setText(formatTien(tongRight));
+        lblTongSoLuong.setText(
+                String.valueOf(tongSL)
+        );
+
+        lblTongTienRight.setText(
+                formatTien(tongRight)
+        );
     }
 
     private JLabel cell(String text, int w, int align) {
@@ -770,14 +880,38 @@ public class Order_ThanhToan_GUI extends JPanel {
         );
 
         if (ok) {
-            banDAO.capNhatTrangThaiBan(maBan, "Bàn trống");
+        	try {
 
-            if (lblMaPhieuDatBan != null 
-                    && lblMaPhieuDatBan.getText() != null 
-                    && !"Không có".equalsIgnoreCase(lblMaPhieuDatBan.getText())) {
+        	    ArrayList<Ban> dsBan =
+        	            hoaDonBanDAO.getDanhSachBanTheoHD(maHD);
 
-                phieuDatBanDAO.capNhatTrangThai(lblMaPhieuDatBan.getText(), "Hoàn thành");
-            }
+        	    for (Ban b : dsBan) {
+
+        	        banDAO.capNhatTrangThaiBan(
+        	                b.getMaBan(),
+        	                "Bàn trống"
+        	        );
+        	    }
+
+        	} catch (Exception e) {
+
+        	    e.printStackTrace();
+        	}
+
+        	String maPhieu =
+        	        lblMaPhieuDatBan.getText().trim();
+
+        	if(
+        	        !maPhieu.isEmpty()
+        	        &&
+        	        !"Không có".equalsIgnoreCase(maPhieu)
+        	){
+
+        	    phieuDatBanDAO.capNhatTrangThai(
+        	            maPhieu,
+        	            "Hoàn thành"
+        	    );
+        	}
 
             int diemCongThem = 0;
 
@@ -837,7 +971,7 @@ public class Order_ThanhToan_GUI extends JPanel {
         if (w instanceof TrangChu_GUI) {
             ((TrangChu_GUI) w).showCustomPage(
                     "Order_Mon_GUI",
-                    new Order_Mon_GUI(taiKhoanDangNhap, maBan, tenBan, null, true, laHoaDonMangVe())
+                    new Order_Mon_GUI(taiKhoanDangNhap, maBan, tenBan, null, true, laHoaDonMangVe(),false)
             );
         }
     }
@@ -1400,5 +1534,38 @@ public class Order_ThanhToan_GUI extends JPanel {
                 + "&addInfo=" + noiDung
                 + "&accountName=" + tenChuTK.replace(" ", "%20");
     }
-    
+    private String taoTenBanChung() {
+
+        try {
+
+            ArrayList<Ban> dsBan =
+                    hoaDonBanDAO.getDanhSachBanTheoHD(maHD);
+
+            if (dsBan == null || dsBan.isEmpty()) {
+                return tenBan;
+            }
+
+            StringBuilder sb =
+                    new StringBuilder();
+
+            for (int i = 0; i < dsBan.size(); i++) {
+
+                Ban b = dsBan.get(i);
+
+                sb.append(b.getTenBan());
+
+                if (i < dsBan.size() - 1) {
+                    sb.append(" + ");
+                }
+            }
+
+            return sb.toString();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return tenBan;
+    }
 }

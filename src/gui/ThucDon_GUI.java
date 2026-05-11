@@ -27,7 +27,6 @@ import entity.MonAn;
 public class ThucDon_GUI extends JPanel {
 
 
-    private static final long serialVersionUID = 1L;
 
     private static final Color C_BG = new Color(246, 242, 231);
     private static final Color C_TOP = Color.WHITE;

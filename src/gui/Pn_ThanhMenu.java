@@ -180,6 +180,7 @@ public class Pn_ThanhMenu extends JPanel {
         MenuItemPanel mnXuLy = new MenuItemPanel("Xử lý", "img/mn_xuly.png");
         mnXuLy.addSubItem("Order", "Order_Ban_GUI");
         mnXuLy.addSubItem("Đặt bàn", "DatBan_GUI");
+        mnXuLy.addSubItem("Bar/Bếp", "Bar_Bep_GUI");
         mnXuLy.addSubItem("Hóa đơn", "HoaDon_GUI");
 
         MenuItemPanel mnTraCuu = new MenuItemPanel("Tra cứu", "img/mn_tracuu.png");

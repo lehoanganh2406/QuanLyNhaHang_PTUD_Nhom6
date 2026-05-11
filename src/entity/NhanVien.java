@@ -4,8 +4,6 @@ import java.util.Date;
 
 public class NhanVien {
 
-    private static final long serialVersionUID = 1L;
-
     private String maNV;
     private String hoTen;
     private String anhNhanVien;

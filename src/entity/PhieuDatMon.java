@@ -1,35 +1,30 @@
 package entity;
 
+import java.time.LocalDateTime;
+
 public class PhieuDatMon {
-	private static final long serialVersionUID = 1L;
-	private PhieuDatBan maPhieuDatBan;
-	private MonAn maMon;
-	private int soLuong;
-	private double donGia;
+	private String maPhieuDatMon;
+	private PhieuDatBan phieuDatBan;
+	private String hinhThucDatMon;
 	private String ghiChu;
-	public PhieuDatBan getMaPhieuDatBan() {
-		return maPhieuDatBan;
+	private LocalDateTime thoiGianTao;
+	public String getMaPhieuDatMon() {
+		return maPhieuDatMon;
 	}
-	public void setMaPhieuDatBan(PhieuDatBan maPhieuDatBan) {
-		this.maPhieuDatBan = maPhieuDatBan;
+	public void setMaPhieuDatMon(String maPhieuDatMon) {
+		this.maPhieuDatMon = maPhieuDatMon;
 	}
-	public MonAn getMaMon() {
-		return maMon;
+	public PhieuDatBan getPhieuDatBan() {
+		return phieuDatBan;
 	}
-	public void setMaMon(MonAn maMon) {
-		this.maMon = maMon;
+	public void setPhieuDatBan(PhieuDatBan phieuDatBan) {
+		this.phieuDatBan = phieuDatBan;
 	}
-	public int getSoLuong() {
-		return soLuong;
+	public String getHinhThucDatMon() {
+		return hinhThucDatMon;
 	}
-	public void setSoLuong(int soLuong) {
-		this.soLuong = soLuong;
-	}
-	public double getDonGia() {
-		return donGia;
-	}
-	public void setDonGia(double donGia) {
-		this.donGia = donGia;
+	public void setHinhThucDatMon(String hinhThucDatMon) {
+		this.hinhThucDatMon = hinhThucDatMon;
 	}
 	public String getGhiChu() {
 		return ghiChu;
@@ -37,21 +32,22 @@ public class PhieuDatMon {
 	public void setGhiChu(String ghiChu) {
 		this.ghiChu = ghiChu;
 	}
-	public PhieuDatMon(PhieuDatBan maPhieuDatBan, MonAn maMon, int soLuong, double donGia, String ghiChu) {
-		super();
-		this.maPhieuDatBan = maPhieuDatBan;
-		this.maMon = maMon;
-		this.soLuong = soLuong;
-		this.donGia = donGia;
-		this.ghiChu = ghiChu;
+	public LocalDateTime getThoiGianTao() {
+		return thoiGianTao;
 	}
-	@Override
-	public String toString() {
-		return "PhieuDatMon [maPhieuDatBan=" + maPhieuDatBan + ", maMon=" + maMon + ", soLuong=" + soLuong + ", donGia="
-				+ donGia + ", ghiChu=" + ghiChu + "]";
+	public void setThoiGianTao(LocalDateTime thoiGianTao) {
+		this.thoiGianTao = thoiGianTao;
+	}
+	public PhieuDatMon(String maPhieuDatMon, PhieuDatBan phieuDatBan, String hinhThucDatMon, String ghiChu,
+			LocalDateTime thoiGianTao) {
+		super();
+		this.maPhieuDatMon = maPhieuDatMon;
+		this.phieuDatBan = phieuDatBan;
+		this.hinhThucDatMon = hinhThucDatMon;
+		this.ghiChu = ghiChu;
+		this.thoiGianTao = thoiGianTao;
 	}
 	public PhieuDatMon() {
 		// TODO Auto-generated constructor stub
 	}
-	
 }

@@ -59,7 +59,6 @@ import entity.KhuVuc;
 import entity.TaiKhoan;
 
 public class KhuVuc_GUI extends JPanel {
-    private static final long serialVersionUID = 1L;
 
     private static final String STATUS_HOAT_DONG = "Hoạt động";
     private static final String STATUS_NGUNG_HOAT_DONG = "Ngưng hoạt động";

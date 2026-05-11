@@ -39,7 +39,7 @@ import entity.TaiKhoan;
 
 public class TrangChu_GUI extends JFrame {
 
-    private static final long serialVersionUID = 1L;
+
 
     private Image backgroundImage;
     private TaiKhoan taiKhoanDangNhap;
@@ -143,6 +143,14 @@ public class TrangChu_GUI extends JFrame {
     }
 
     public void showPage(String pageName) {
+    	if(pageCache.containsKey(pageName)){
+
+    	    contentPanel.remove(
+    	            pageCache.get(pageName)
+    	    );
+
+    	    pageCache.remove(pageName);
+    	}
         if (pageName == null || pageName.trim().isEmpty()) return;
 
         System.out.println("Đang chuyển tới: " + pageName);
@@ -309,13 +317,63 @@ public class TrangChu_GUI extends JFrame {
                 );
 
                 if (chon == JOptionPane.YES_OPTION) {
-                    dao.giaHanThoiGianCho(maPhieu);
-                } else {
-                    dao.capNhatTrangThai(maPhieu, "Quá giờ");
 
-                    Ban_DAO banDAO = new Ban_DAO();
-                    banDAO.capNhatTrangThaiBan(maBan, "Bàn trống");
+                    dao.giaHanThoiGianCho(maPhieu);
+
+                } else {
+
+                    dao.capNhatTrangThai(
+                            maPhieu,
+                            "Quá giờ"
+                    );
+
+                    Ban_DAO banDAO =
+                            new Ban_DAO();
+
+                    banDAO.capNhatTrangThaiBan(
+                            maBan,
+                            "Bàn trống"
+                    );
                 }
+
+                // reload lại trang đặt bàn
+                SwingUtilities.invokeLater(() -> {
+
+                    if(pageCache.containsKey("DatBan_GUI")){
+
+                        contentPanel.remove(
+                                pageCache.get("DatBan_GUI")
+                        );
+
+                        pageCache.remove("DatBan_GUI");
+                    }
+
+                    JPanel page =
+                            createPageFromOldFrame(
+                                    "DatBan_GUI"
+                            );
+
+                    if(page != null){
+
+                        contentPanel.add(
+                                page,
+                                "DatBan_GUI"
+                        );
+
+                        pageCache.put(
+                                "DatBan_GUI",
+                                page
+                        );
+
+                        cardLayout.show(
+                                contentPanel,
+                                "DatBan_GUI"
+                        );
+
+                        contentPanel.revalidate();
+                        contentPanel.repaint();
+                    }
+                });
 
                 daThongBao.add(maPhieu);
             

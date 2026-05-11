@@ -25,7 +25,7 @@ import java.util.List;
 
 public class TaiKhoan_GUI extends JFrame {
 
-    private static final long serialVersionUID = 1L;
+
 
     private static final Color CLR_HEADER_BG  = new Color(74, 55, 40);
     private static final Color CLR_HEADER_FG  = Color.WHITE;

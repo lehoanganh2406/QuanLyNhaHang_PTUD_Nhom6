@@ -1,7 +1,7 @@
 package entity;
 
 public class LoaiKhuyenMai {
-	private static final long serialVersionUID = 1L;
+	
 	private String maLoaiKM;
 	private String tenLoaiKM;
 	public String getMaLoaiKM() {

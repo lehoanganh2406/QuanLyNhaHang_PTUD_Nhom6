@@ -148,7 +148,7 @@ public class TraCuu_GUI extends JPanel {
     private static final int COL_MA = 108;
     private static final int COL_GIA = 132;
     private static final int ROW_HEIGHT = 38;
-    private static final int DETAIL_HEIGHT = 250;
+    private static final int DETAIL_HEIGHT = 290;
 
     private static final int KH_COL_MA = 180;
     private static final int KH_COL_TONG = 150;
@@ -2478,7 +2478,12 @@ public class TraCuu_GUI extends JPanel {
             addInfoRowStyled(info, gbc, 2, "Loại món",
                     mon.getMaLoaiMonAn() == null ? "" : safe(mon.getMaLoaiMonAn().getTenLoaiMonAn()), 180, 34);
             addInfoRowStyled(info, gbc, 3, "Giá món", formatMoney(mon.getDonGia()), 180, 34);
-            addInfoRowStyled(info, gbc, 4, "Ghi chú", safe(mon.getMoTa()), 180, 34);
+            addInfoRowStyled(info, gbc, 4,
+                    "Đơn vị tính",
+                    mon.getDonViTinh(),
+                    180,
+                    34);
+            addInfoRowStyled(info, gbc, 5, "Ghi chú", safe(mon.getMoTa()), 180, 34);
 
             inner.add(lblTitle, BorderLayout.NORTH);
             inner.add(info, BorderLayout.CENTER);
@@ -2785,7 +2790,8 @@ public class TraCuu_GUI extends JPanel {
                             maBan,
                             tenBan,
                             null,
-                            true
+                            true,
+                            null
                     )
             );
         }

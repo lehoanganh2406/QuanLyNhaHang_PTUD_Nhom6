@@ -1483,7 +1483,8 @@ public class HoaDon_GUI extends JFrame {
                 tienThua,
                 phuongThuc,
                 diemCongThem,
-                dsCT
+                dsCT,
+                null
         ));
 
         Dimension screen=

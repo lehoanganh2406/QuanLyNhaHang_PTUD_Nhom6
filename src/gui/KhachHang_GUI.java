@@ -164,7 +164,7 @@ public class KhachHang_GUI extends JPanel {
 
         cbLoaiKH = new JComboBox<>();
         styleComboBox(cbLoaiKH);
-        cbLoaiKH.setToolTipText("Loại khách hàng tự động theo điểm: <20 Thường, >=20 Vàng, >=100 Kim cương.");
+        cbLoaiKH.setToolTipText("Loại khách hàng tự động theo điểm: <50 Thường, >=50 Vàng, >=100 Kim cương.");
 
         addRow(panelForm, gbc, 0, "Mã KH", txtMaKH, "Điểm tích lũy", txtDiemTichLuy);
         addRow(panelForm, gbc, 1, "Tên KH", txtTenKH, "SĐT", txtSDT);
@@ -990,7 +990,7 @@ public class KhachHang_GUI extends JPanel {
         if (diem >= 100) {
             tenCanTim = "kim cuong";
             maCanTim = "LKH03";
-        } else if (diem >= 20) {
+        } else if (diem >= 50) {
             tenCanTim = "vang";
             maCanTim = "LKH02";
         } else {

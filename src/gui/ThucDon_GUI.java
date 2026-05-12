@@ -902,30 +902,32 @@ public class ThucDon_GUI extends JPanel {
 
 			@Override
         	public void mouseClicked(MouseEvent e) {
+				// DOUBLE CLICK -> mở chi tiết
+			    if (e.getClickCount() == 2) {
 
-        	    
-				// Nếu click đúng card đang chọn
-        	    if (selectedCard == card) {
-        	        clickCount++;
+			        JFrame parentFrame = getParentFrame();
 
-        	        // Click lần 2 mới bỏ chọn
-        	        if (clickCount > 2) {
-        	            deselect(card);
-        	            selectedCard = null;
-        	            selectedMon = null;
-        	            clickCount = 0;
-        	        }
+			        XuLyMonAn_DigLog dlg =
+			                new XuLyMonAn_DigLog(
+			                        parentFrame,
+			                        ThucDon_GUI.this,
+			                        XuLyMonAn_DigLog.Mode.CHI_TIET,
+			                        mon,
+			                        null
+			                );
 
-        	        return;
-        	    }
+			        dlg.setLocationRelativeTo(parentFrame);
+			        dlg.setVisible(true);
 
-        	    // Nếu chọn card mới
-        	    if (selectedCard != null) {
-        	        deselect(selectedCard);
-        	    }
+			        return;
+			    }
 
-        	    select(card, mon);
-        	    clickCount = 1;
+			 // CLICK 1 LẦN -> chọn món + đổi màu
+			    if (selectedCard != null && selectedCard != card) {
+			        deselect(selectedCard);
+			    }
+
+			    select(card, mon);
         	}
 
             @Override

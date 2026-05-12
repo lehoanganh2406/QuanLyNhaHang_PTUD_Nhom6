@@ -1,6 +1,7 @@
 package gui;
 
 import java.awt.*;
+import javax.swing.*;
 import dao.CaLamViec_DAO;
 import entity.CaLamViec;
 import digLog.DongCa_DigLog;
@@ -17,6 +18,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import entity.TaiKhoan;
+import gui.ManHinhKhach_GUI;
 
 public class Pn_ThanhMenu extends JPanel {
 
@@ -39,6 +41,8 @@ public class Pn_ThanhMenu extends JPanel {
 
     private final JLabel lblUserIcon;
     private final JLabel lblUserText;
+    private final JLabel lblScreenIcon;
+    
 
     private MenuItemPanel selectedMenu;
     private JPopupMenu currentPopupMenu;
@@ -52,6 +56,7 @@ public class Pn_ThanhMenu extends JPanel {
     }
 
     private Navigator navigator;
+    private static ManHinhKhach_GUI manHinhKhach;
 
     public void setNavigator(Navigator navigator) {
         this.navigator = navigator;
@@ -73,11 +78,87 @@ public class Pn_ThanhMenu extends JPanel {
 
         lblUserIcon = new JLabel();
         lblUserIcon.setIcon(loadIcon("img/mn_acout.png", 30, 30));
+        lblScreenIcon = new JLabel();
+        lblScreenIcon.addMouseListener(
+                new MouseAdapter() {
+
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+
+                    	if (
+                    	        manHinhKhach == null
+                    	        ||
+                    	        !manHinhKhach.isDisplayable()
+                    	) {
+                    		manHinhKhach =
+                    		        new ManHinhKhach_GUI();
+
+                    		manHinhKhach.setVisible(true);
+
+                    		SwingUtilities.invokeLater(() -> {
+
+                    		    Window w =
+                    		            SwingUtilities.getWindowAncestor(
+                    		                    Pn_ThanhMenu.this
+                    		            );
+
+                    		    if (w instanceof TrangChu_GUI tc) {
+
+                    		        Component page =
+                    		                tc.getCurrentPage();
+
+                    		        if (page instanceof Order_Mon_GUI om) {
+
+                    		            om.setManHinhKhach(
+                    		                    manHinhKhach
+                    		            );
+
+                    		            om.capNhatManHinhKhach();
+                    		        }
+                    		    }
+                    		});
+
+                    	} else {
+
+                    	    if (manHinhKhach.isVisible()) {
+
+                    	        manHinhKhach.setVisible(false);
+
+                    	    } else {
+
+                    	        manHinhKhach.setVisible(true);
+
+                    	        manHinhKhach.setState(JFrame.NORMAL);
+
+                    	        manHinhKhach.toFront();
+                    	    }
+                    	}
+                    }
+                }
+        );
+
+        lblScreenIcon.setIcon(
+                loadIcon(
+                        "img/mn_screen.png",
+                        28,
+                        28
+                )
+        );
+
+        lblScreenIcon.setCursor(
+                new Cursor(Cursor.HAND_CURSOR)
+        );
+
+        lblScreenIcon.setToolTipText(
+                "Mở màn hình khách"
+        );
 
         lblUserText = new JLabel(buildUserText());
         lblUserText.setFont(new Font("SansSerif", Font.BOLD, 16));
         lblUserText.setForeground(Color.BLACK);
-
+        if (!isBep()) {
+            pnUserInfo.add(lblScreenIcon);
+        }
         pnUserInfo.add(lblUserIcon);
         pnUserInfo.add(lblUserText);
 
@@ -195,12 +276,37 @@ public class Pn_ThanhMenu extends JPanel {
         pnTopMenu.add(createLogoHome());
 
 
-        if (isLeTan()) {
-            addMenu(mnHeThong); // Trang chủ, Đăng xuất, Hỗ trợ
-            addMenu(mnXuLy);    // Order, Đặt bàn
-            addMenu(mnTraCuu);  // Tra cứu
-            addMenu(mnThongKe); // Thống kê theo ca
-        } else {
+        if (isBep()) {
+
+            MenuItemPanel mnBep =
+                    new MenuItemPanel(
+                            "Bar/Bếp",
+                            "img/mn_xuly.png"
+                    );
+
+            mnBep.addDirectPage(
+                    "Bar_Bep_GUI"
+            );
+
+            addMenu(mnBep);
+
+            SwingUtilities.invokeLater(() -> {
+
+                navigateTo("Bar_Bep_GUI");
+            });
+
+        }
+        else if (isLeTan()) {
+
+            addMenu(mnHeThong);
+            addMenu(mnXuLy);
+            addMenu(mnTraCuu);
+            addMenu(mnThongKe);
+
+        }
+        else {
+
+            // QUẢN LÝ
             addMenu(mnHeThong);
             addMenu(mnDanhMuc);
             addMenu(mnXuLy);
@@ -808,5 +914,59 @@ public class Pn_ThanhMenu extends JPanel {
         });
 
         return pnLogo;
+    }
+    public static ManHinhKhach_GUI getManHinhKhach() {
+
+        return manHinhKhach;
+    }
+    private boolean isBep() {
+
+        String phanQuyen = "";
+        String chucVu = "";
+
+        try {
+
+            if (taiKhoanDangNhap != null) {
+
+                if (
+                        taiKhoanDangNhap.getPhanQuyen()
+                        != null
+                ) {
+
+                    phanQuyen =
+                            taiKhoanDangNhap
+                                    .getPhanQuyen()
+                                    .trim()
+                                    .toLowerCase();
+                }
+
+                if (
+                        taiKhoanDangNhap.getMaNV()
+                        != null
+                        &&
+                        taiKhoanDangNhap
+                                .getMaNV()
+                                .getChucVu()
+                        != null
+                ) {
+
+                    chucVu =
+                            taiKhoanDangNhap
+                                    .getMaNV()
+                                    .getChucVu()
+                                    .trim()
+                                    .toLowerCase();
+                }
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return phanQuyen.contains("bếp")
+                || phanQuyen.contains("bep")
+                || chucVu.contains("bếp")
+                || chucVu.contains("bep");
     }
 }

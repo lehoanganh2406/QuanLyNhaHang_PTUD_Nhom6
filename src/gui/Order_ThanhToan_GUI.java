@@ -53,6 +53,7 @@ public class Order_ThanhToan_GUI extends JPanel {
     private String maBan;
     private String tenBan;
     private String maHD;
+    private ManHinhKhach_GUI manHinhKhach;
 
     private final HoaDon_DAO hoaDonDAO = new HoaDon_DAO();
     private final ChiTietHoaDon_DAO chiTietDAO = new ChiTietHoaDon_DAO();
@@ -96,10 +97,11 @@ public class Order_ThanhToan_GUI extends JPanel {
     private double tienCoc = 0;
 	private JLabel lblBan;
 
-    public Order_ThanhToan_GUI(TaiKhoan tk, String maBan, String tenBan) {
+    public Order_ThanhToan_GUI(TaiKhoan tk, String maBan, String tenBan,ManHinhKhach_GUI manHinhKhach) {
         this.taiKhoanDangNhap = tk;
         this.maBan = maBan;
         this.tenBan = tenBan;
+        this.manHinhKhach = manHinhKhach;
 
         setLayout(new BorderLayout());
         setBackground(BG_MAIN);
@@ -541,6 +543,17 @@ public class Order_ThanhToan_GUI extends JPanel {
         tuChonKhuyenMai = false;
         khuyenMaiDangDung = null;
         tinhTongTien();
+
+        if (manHinhKhach != null) {
+
+            manHinhKhach.capNhatHoaDon(
+                    tenBan,
+                    new java.util.LinkedHashMap<>(),
+                    formatTien(tongCong)
+            );
+
+            capNhatManHinhKhachRealtime();
+        }
     }
     
     private void loadThongTinPhieuDatBan(String maPhieuDatBan) {
@@ -756,6 +769,7 @@ public class Order_ThanhToan_GUI extends JPanel {
 
         tinhTienThua();
         capNhatTienKhachTraTheoPhuongThuc();
+        capNhatManHinhKhachRealtime();
     }
 
     private void timKhachTheoSDT() {
@@ -837,6 +851,36 @@ public class Order_ThanhToan_GUI extends JPanel {
         } else {
             lblTienThua.setForeground(Color.BLACK);
         }
+        capNhatManHinhKhachRealtime();
+    }
+    private void capNhatManHinhKhachRealtime() {
+
+        if (manHinhKhach == null) {
+            return;
+        }
+
+        String phuongThuc =
+                cboPhuongThuc.getSelectedItem() == null
+                        ? ""
+                        : cboPhuongThuc.getSelectedItem().toString();
+
+        double tienTra =
+                parseTien(txtTienKhachTra.getText());
+
+        double tienThua =
+                tienTra - tongCong;
+
+        manHinhKhach.capNhatHoaDon(
+                tenBan,
+                new java.util.LinkedHashMap<>(),
+                formatTien(tongCong)
+        );
+
+        manHinhKhach.hienThiThongTinThanhToan(
+                phuongThuc,
+                formatTien(tienTra),
+                formatTien(tienThua)
+        );
     }
 
     private void congTien(int soTien) {
@@ -869,6 +913,25 @@ public class Order_ThanhToan_GUI extends JPanel {
         String maKH = khachHang == null ? null : khachHang.getMaKH();
         String maKM = khuyenMaiDangDung == null ? null : khuyenMaiDangDung.getMaKM();
         double tienThua = tienTra - tongCong;
+     // =====================================
+     // UPDATE MÀN HÌNH KHÁCH
+     // =====================================
+
+     if (manHinhKhach != null) {
+
+         manHinhKhach.hienThiThongTinThanhToan(
+                 phuongThuc,
+                 formatTien(tienTra),
+                 formatTien(tienThua)
+         );
+
+         // HIỆN QR NẾU CHUYỂN KHOẢN
+
+//         if (
+//                 "Chuyển khoản"
+//                         .equalsIgnoreCase(phuongThuc)
+//         ) ;
+     }
         boolean ok = hoaDonDAO.thanhToanHoaDon(
                 maHD,
                 maKH,
@@ -880,6 +943,7 @@ public class Order_ThanhToan_GUI extends JPanel {
         );
 
         if (ok) {
+        	
         	try {
 
         	    ArrayList<Ban> dsBan =
@@ -948,13 +1012,25 @@ public class Order_ThanhToan_GUI extends JPanel {
                     tienThua,
                     phuongThuc,
                     diemCongThem,
-                    dsCT
+                    dsCT,
+                    null
             ));
-            dlg.setSize(650, 760);
+            dlg.setSize(690, 760);
             dlg.setLocationRelativeTo(this);
             dlg.setVisible(true);
+            if (manHinhKhach != null) {
 
+                javax.swing.Timer t =
+                        new javax.swing.Timer(2000, e -> {
+
+                            manHinhKhach.resetVeMacDinh();
+                        });
+
+                t.setRepeats(false);
+                t.start();
+            }
             Window w = SwingUtilities.getWindowAncestor(this);
+            
             if (w instanceof TrangChu_GUI) {
                 ((TrangChu_GUI) w).showCustomPage(
                         "Order_Ban_GUI",
@@ -971,7 +1047,8 @@ public class Order_ThanhToan_GUI extends JPanel {
         if (w instanceof TrangChu_GUI) {
             ((TrangChu_GUI) w).showCustomPage(
                     "Order_Mon_GUI",
-                    new Order_Mon_GUI(taiKhoanDangNhap, maBan, tenBan, null, true, laHoaDonMangVe(),false)
+                    
+                    new Order_Mon_GUI(taiKhoanDangNhap, maBan, tenBan, null, true, laHoaDonMangVe(),false, manHinhKhach)
             );
         }
     }
@@ -1415,7 +1492,8 @@ public class Order_ThanhToan_GUI extends JPanel {
                 0,
                 cboPhuongThuc.getSelectedItem().toString(),
                 0,
-                dsCT
+                dsCT,
+                taoLinkVietQR()
         ));
 
         dlg.setSize(650, 760);
@@ -1471,6 +1549,37 @@ public class Order_ThanhToan_GUI extends JPanel {
         lblInfo.setFont(new Font("SansSerif", Font.PLAIN, 18));
 
         JLabel lblQR = new JLabel("Đang tải QR...", SwingConstants.CENTER);
+     // =====================================
+     // HIỆN QR LÊN MÀN HÌNH KHÁCH
+     // =====================================
+
+     if (manHinhKhach != null) {
+
+         try {
+
+             String linkQR = taoLinkVietQR();
+
+             ImageIcon qrKH =
+                     new ImageIcon(
+                             new java.net.URL(linkQR)
+                     );
+
+             Image imgKH =
+                     qrKH.getImage().getScaledInstance(
+                             850,
+                             850,
+                             Image.SCALE_SMOOTH
+                     );
+
+             manHinhKhach.hienThiQR(
+                     new ImageIcon(imgKH)
+             );
+
+         } catch (Exception ex) {
+
+             ex.printStackTrace();
+         }
+     }
         lblQR.setPreferredSize(new Dimension(360, 360));
         lblQR.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 180)));
 
@@ -1490,12 +1599,26 @@ public class Order_ThanhToan_GUI extends JPanel {
         btnHuy.setFont(new Font("SansSerif", Font.BOLD, 16));
 
         btnDaThanhToan.addActionListener(e -> {
+
             daXacNhan[0] = true;
+
+            if (manHinhKhach != null) {
+
+                capNhatManHinhKhachRealtime();
+            }
+
             dlg.dispose();
         });
 
         btnHuy.addActionListener(e -> {
+
             daXacNhan[0] = false;
+
+            if (manHinhKhach != null) {
+
+                capNhatManHinhKhachRealtime();
+            }
+
             dlg.dispose();
         });
 

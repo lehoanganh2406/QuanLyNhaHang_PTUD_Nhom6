@@ -383,4 +383,13 @@ public class TrangChu_GUI extends JFrame {
             ex.printStackTrace();
         }
     }
+    public Component getCurrentPage() {
+
+        if (contentPanel.getComponentCount() > 0) {
+
+            return contentPanel.getComponent(0);
+        }
+
+        return null;
+    }
 }

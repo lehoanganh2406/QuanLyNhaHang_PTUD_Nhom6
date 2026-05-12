@@ -171,12 +171,13 @@ public class Order_Mon_GUI extends JPanel {
     private String maPhieuDatBan;
     private boolean laBanDangPhucVu;
 	private JLabel lblTenBan;
-    public Order_Mon_GUI(TaiKhoan tk, String maBan, String tenBan, String maPhieuDatBan, boolean laBanDangPhucVu) {
-        this(tk, maBan, tenBan, maPhieuDatBan, laBanDangPhucVu, false,false);
+	private ManHinhKhach_GUI manHinhKhach;
+    public Order_Mon_GUI(TaiKhoan tk, String maBan, String tenBan, String maPhieuDatBan, boolean laBanDangPhucVu, ManHinhKhach_GUI manHinhKhach) {
+        this(tk, maBan, tenBan, maPhieuDatBan, laBanDangPhucVu, false,false,manHinhKhach);
     }
 
     public Order_Mon_GUI(TaiKhoan tk, String maBan, String tenBan,
-            String maPhieuDatBan, boolean laBanDangPhucVu, boolean mangVeMacDinh,boolean laOrderRieng) {
+            String maPhieuDatBan, boolean laBanDangPhucVu, boolean mangVeMacDinh,boolean laOrderRieng, ManHinhKhach_GUI manHinhKhach) {
         this.taiKhoanDangNhap = tk;
         this.maBan = maBan;
         this.tenBan = tenBan;
@@ -185,6 +186,7 @@ public class Order_Mon_GUI extends JPanel {
         this.laBanDangPhucVu = laBanDangPhucVu;
         this.mangVeMacDinh = mangVeMacDinh;
         this.laOrderRieng = laOrderRieng;
+        this.manHinhKhach = manHinhKhach;
 
         init();
         napDuLieuBanKhiMoForm();
@@ -247,6 +249,7 @@ public class Order_Mon_GUI extends JPanel {
             if (coMonDangPhucVu) {
 
                 loadMonDangPhucVuTheoBan();
+                capNhatManHinhKhach();
 
                 return;
             }
@@ -262,11 +265,13 @@ public class Order_Mon_GUI extends JPanel {
             ) {
 
                 loadMonDatTheoPhieu(maPhieuDatBan);
+                capNhatManHinhKhach();
 
                 return;
             }
 
             renderOrderList();
+            capNhatManHinhKhach();
 
         } catch (Exception e) {
 
@@ -527,13 +532,20 @@ public class Order_Mon_GUI extends JPanel {
         styleMainButton(btnThanhToan, BTN_PAY, Color.BLACK, 20, true);
 
         btnQuayLai.addActionListener(e -> {
+
             if (!xacNhanRoiManHinhNeuCoThayDoi()) {
                 return;
+            }
+
+            if (manHinhKhach != null) {
+
+                manHinhKhach.resetVeMacDinh();
             }
 
             Window w = SwingUtilities.getWindowAncestor(Order_Mon_GUI.this);
 
             if (w instanceof TrangChu_GUI) {
+
                 ((TrangChu_GUI) w).showCustomPage(
                         "Order_Ban_GUI",
                         new Order_Ban_GUI(taiKhoanDangNhap)
@@ -595,7 +607,8 @@ public class Order_Mon_GUI extends JPanel {
                                     null,
                                     true,
                                     false,
-                                    false
+                                    false,
+                                    manHinhKhach
                             )
                     );
                 }
@@ -643,7 +656,8 @@ public class Order_Mon_GUI extends JPanel {
                                     null,
                                     true,
                                     false,
-                                    false
+                                    false,
+                                    manHinhKhach
                             )
                     );
                 }
@@ -663,6 +677,7 @@ public class Order_Mon_GUI extends JPanel {
             loadMonDangPhucVuTheoBan();
 
             renderOrderList();
+            capNhatManHinhKhach();
 
             revalidate();
 
@@ -672,40 +687,107 @@ public class Order_Mon_GUI extends JPanel {
 
         
         btnThanhToan.addActionListener(e -> {
-            boolean laMangVe = chkMangVe != null && chkMangVe.isSelected();
 
-            // Tại bàn: vẫn bắt buộc gửi thực đơn trước
-            if (!laMangVe && (coThayDoiChuaGui || !dsMonChoHuy.isEmpty())) {
+            // =====================================
+            // CHECK GIỎ HÀNG
+            // =====================================
+
+            if (gioHang.isEmpty()) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Bàn hiện tại chưa có món để thanh toán."
+                );
+
+                return;
+            }
+
+            boolean laMangVe =
+                    chkMangVe != null
+                    && chkMangVe.isSelected();
+
+            // =====================================
+            // TẠI BÀN -> BẮT BUỘC GỬI BẾP
+            // =====================================
+
+            if (
+                    !laMangVe
+                    &&
+                    (
+                            coThayDoiChuaGui
+                            ||
+                            !dsMonChoHuy.isEmpty()
+                    )
+            ) {
+
                 JOptionPane.showMessageDialog(
                         this,
                         "Có món chưa gửi thực đơn. Vui lòng gửi thực đơn trước khi thanh toán."
                 );
+
                 return;
             }
 
-            // Mang về: nếu có món chưa gửi thì tự lưu như nút Gửi thực đơn
-            if (laMangVe && (!daGuiThucDon || coThayDoiChuaGui || !dsMonChoHuy.isEmpty())) {
-                boolean okLuu = guiThucDonVaLuuCSDL(false);
+            // =====================================
+            // MANG VỀ -> AUTO LƯU + GỬI BẾP
+            // =====================================
+
+            if (
+                    laMangVe
+                    &&
+                    (
+                            !daGuiThucDon
+                            ||
+                            coThayDoiChuaGui
+                            ||
+                            !dsMonChoHuy.isEmpty()
+                    )
+            ) {
+
+                boolean okLuu =
+                        guiThucDonVaLuuCSDL(false);
 
                 if (!okLuu) {
-                    JOptionPane.showMessageDialog(this, "Không lưu được món mang về.");
+
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Không lưu được hóa đơn mang về."
+                    );
+
                     return;
                 }
             }
 
-            HoaDon hd = hoaDonDAO.timHoaDonChuaThanhToanTheoBan(maBan);
+            // =====================================
+            // MỞ THANH TOÁN
+            // =====================================
 
-            if (hd == null) {
-                JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn chưa thanh toán.");
-                return;
-            }
-
-            Window w = SwingUtilities.getWindowAncestor(Order_Mon_GUI.this);
+            Window w =
+                    SwingUtilities.getWindowAncestor(
+                            Order_Mon_GUI.this
+                    );
 
             if (w instanceof TrangChu_GUI) {
+            	if (manHinhKhach != null) {
+
+            	    manHinhKhach.hienThiThongTinThanhToan(
+            	            "Tiền mặt",
+            	            "0",
+            	            "0"
+            	    );
+
+            	    manHinhKhach.revalidate();
+            	    manHinhKhach.repaint();
+            	}
                 ((TrangChu_GUI) w).showCustomPage(
                         "Order_ThanhToan_GUI",
-                        new Order_ThanhToan_GUI(taiKhoanDangNhap, maBan, tenBan)
+
+                        new Order_ThanhToan_GUI(
+                                taiKhoanDangNhap,
+                                maBan,
+                                tenBan,
+                                manHinhKhach
+                        )
                 );
             }
         });
@@ -791,21 +873,81 @@ public class Order_Mon_GUI extends JPanel {
     }
 
     private void capNhatTrangThaiNutTheoGuiMon() {
-        boolean coMonTrongGio = !gioHang.isEmpty();
-        boolean coDuLieuDeGui = !gioHang.isEmpty() || !dsMonChoHuy.isEmpty();
-        boolean laMangVe = chkMangVe != null && chkMangVe.isSelected();
 
-        boolean coMonChuaGui = coThayDoiChuaGui || !dsMonChoHuy.isEmpty();
+        boolean coMonTrongGio = false;
 
-        boolean choTamTinhThanhToan =
-                laMangVe || (daGuiThucDon && !coMonChuaGui);
+        // =========================
+        // CHECK GIỎ HÀNG
+        // =========================
 
-        if (btnThanhToan != null) {
-            btnThanhToan.setEnabled(coMonTrongGio && choTamTinhThanhToan);
+        if (!gioHang.isEmpty()) {
+            coMonTrongGio = true;
         }
 
+        // =========================
+        // CHECK HÓA ĐƠN DB
+        // =========================
+
+        HoaDon hd =
+                hoaDonDAO
+                .timHoaDonChuaThanhToanTheoBan(maBan);
+
+        if (hd != null) {
+
+            maHoaDonHienTai = hd.getMaHD();
+
+            List<ChiTietHoaDon> dsCT =
+                    chiTietHoaDonDAO
+                    .getChiTietTheoMaHD(
+                            hd.getMaHD()
+                    );
+
+            if (dsCT != null && !dsCT.isEmpty()) {
+                coMonTrongGio = true;
+            }
+        }
+
+        boolean coDuLieuDeGui =
+                !gioHang.isEmpty()
+                || !dsMonChoHuy.isEmpty();
+
+        boolean laMangVe =
+                chkMangVe != null
+                && chkMangVe.isSelected();
+
+        boolean coMonChuaGui =
+                coThayDoiChuaGui
+                || !dsMonChoHuy.isEmpty();
+
+        boolean choTamTinhThanhToan =
+                laMangVe
+                || (
+                        maHoaDonHienTai != null
+                        && !coMonChuaGui
+                   );
+
+        // =========================
+        // NÚT THANH TOÁN
+        // =========================
+
+        if (btnThanhToan != null) {
+
+            btnThanhToan.setEnabled(
+                    coMonTrongGio
+                    && choTamTinhThanhToan
+            );
+        }
+
+        // =========================
+        // NÚT GỬI MÓN
+        // =========================
+
         if (btnGuiThucDon != null) {
-            btnGuiThucDon.setEnabled(coDuLieuDeGui && (!daGuiThucDon || coThayDoiChuaGui));
+
+            btnGuiThucDon.setEnabled(
+                    coDuLieuDeGui
+                    && (!daGuiThucDon || coThayDoiChuaGui)
+            );
         }
     }
     private boolean xacNhanRoiManHinhNeuCoThayDoi() {
@@ -976,7 +1118,7 @@ public class Order_Mon_GUI extends JPanel {
                                     ? ""
                                     : item.ghiChu,
 
-                                    "Đang phục vụ",
+                                    "Đã gửi bếp",
 
                                     null,
 
@@ -1033,9 +1175,6 @@ public class Order_Mon_GUI extends JPanel {
                             : item.ghiChu
                     );
 
-                    ctCu.setTrangThai(
-                            "Đang phục vụ"
-                    );
 
                     boolean ok =
                             chiTietHoaDonDAO.capNhatChiTietHoaDon(ctCu);
@@ -1078,36 +1217,137 @@ public class Order_Mon_GUI extends JPanel {
                                 )
                         );
 
-                // =============================================
-                // HỦY HẾT
-                // =============================================
+             // =============================================
+             // HỦY HẾT
+             // =============================================
 
-                if (
-                        itemConLai == null
-                        ||
-                        itemConLai.soLuong <= 0
-                ) {
+             if (
+                     itemConLai == null
+                     ||
+                     itemConLai.soLuong <= 0
+             ) {
 
-                    boolean ok =
-                            chiTietHoaDonDAO.huyMon(
-                                    maHD,
-                                    huy.maMon,
-                                    huy.maBan,
-                                    huy.lyDo,
-                                    huy.soLuongHuy
-                            );
+                 String dvt =
+                         ctCu.getMaMon().getDonViTinh() == null
+                         ? ""
+                         : ctCu.getMaMon()
+                               .getDonViTinh()
+                               .trim()
+                               .toLowerCase();
 
-                    if (!ok) {
+                 boolean laNuocUong =
+                         dvt.contains("lon")
+                         || dvt.contains("chai")
+                         || dvt.contains("ly");
 
-                        JOptionPane.showMessageDialog(
-                                this,
-                                "Hủy món thất bại."
-                        );
+                 // =====================================
+                 // NƯỚC UỐNG -> UPDATE SL
+                 // =====================================
 
-                        return false;
-                    }
-                }
+                 if (laNuocUong) {
 
+                     int slMoi =
+                             ctCu.getSoLuong()
+                             - huy.soLuongHuy;
+
+                     // ===== HẾT -> XÓA =====
+
+                     if (slMoi <= 0) {
+
+                         boolean ok =
+                                 chiTietHoaDonDAO.huyMon(
+                                         maHD,
+                                         huy.maMon,
+                                         huy.maBan,
+                                         huy.lyDo,
+                                         huy.soLuongHuy
+                                 );
+
+                         if (!ok) {
+
+                             JOptionPane.showMessageDialog(
+                                     this,
+                                     "Hủy món thất bại."
+                             );
+
+                             return false;
+                         }
+                     }
+
+                     // ===== CÒN -> UPDATE SỐ LƯỢNG =====
+
+                     else {
+
+                         ctCu.setSoLuong(slMoi);
+
+                         ctCu.setLyDoHuy(
+                                 huy.lyDo
+                         );
+
+                         ctCu.setSoLuongHuy(
+                                 huy.soLuongHuy
+                         );
+
+                         ctCu.setThoiGianHuy(
+                                 LocalDateTime.now()
+                         );
+
+                         boolean ok =
+                                 chiTietHoaDonDAO
+                                 .capNhatChiTietHoaDon(ctCu);
+                         if (ok) {
+
+                        	    String key =
+                        	            taoKeyGioHang(
+                        	                    ctCu.getMaMon().getMaMon(),
+                        	                    ctCu.getMaBan().getMaBan()
+                        	            );
+
+                        	    // GIỮ NGUYÊN TRẠNG THÁI CŨ
+                        	    trangThaiMap.put(
+                        	            key,
+                        	            ctCu.getTrangThai()
+                        	    );
+                        	}
+
+                         if (!ok) {
+
+                             JOptionPane.showMessageDialog(
+                                     this,
+                                     "Cập nhật số lượng thất bại."
+                             );
+
+                             return false;
+                         }
+                     }
+                 }
+
+                 // =====================================
+                 // MÓN THƯỜNG -> HỦY CŨ
+                 // =====================================
+
+                 else {
+
+                     boolean ok =
+                             chiTietHoaDonDAO.huyMon(
+                                     maHD,
+                                     huy.maMon,
+                                     huy.maBan,
+                                     huy.lyDo,
+                                     huy.soLuongHuy
+                             );
+
+                     if (!ok) {
+
+                         JOptionPane.showMessageDialog(
+                                 this,
+                                 "Hủy món thất bại."
+                         );
+
+                         return false;
+                     }
+                 }
+             }
                 // =============================================
                 // HỦY 1 PHẦN
                 // =============================================
@@ -1140,9 +1380,6 @@ public class Order_Mon_GUI extends JPanel {
                             LocalDateTime.now()
                     );
 
-                    ctCu.setTrangThai(
-                            "Đang phục vụ"
-                    );
 
                     boolean ok =
                             chiTietHoaDonDAO.capNhatChiTietHoaDon(ctCu);
@@ -1270,6 +1507,7 @@ public class Order_Mon_GUI extends JPanel {
             taoTabsLoai();
             locDanhSachMon();
             renderOrderList();
+
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Không tải được dữ liệu món ăn.");
@@ -1284,61 +1522,64 @@ public class Order_Mon_GUI extends JPanel {
             // TÌM HÓA ĐƠN THEO BÀN
             // =========================================
 
-        	HoaDon hdBan =
-        	        hoaDonDAO
-        	        .timHoaDonChuaThanhToanTheoBan(
-        	                maBan
-        	        );
+            HoaDon hdBan =
+                    hoaDonDAO
+                    .timHoaDonChuaThanhToanTheoBan(
+                            maBan
+                    );
 
-        	if(hdBan == null){
-        	    return;
-        	}
+            if(hdBan == null){
+                return;
+            }
 
-        	String maHD =
-        	        hdBan.getMaHD();
+            String maHD =
+                    hdBan.getMaHD();
+
             if(maHD == null){
                 return;
             }
 
             maHoaDonHienTai = maHD;
-         // =========================================
-         // LOAD TÊN BÀN CHUNG
-         // =========================================
 
-         try{
+            // =========================================
+            // LOAD TÊN BÀN GHÉP
+            // =========================================
 
-             List<String> dsBanChung =
-                     hoaDonBanDAO.getDanhSachBanTheoHoaDon(
-                             maHoaDonHienTai
-                     );
+            try{
 
-             if(
-                     dsBanChung != null
-                     &&
-                     dsBanChung.size() > 1
-             ){
+                List<String> dsBanChung =
+                        hoaDonBanDAO.getDanhSachBanTheoHoaDon(
+                                maHoaDonHienTai
+                        );
 
-            	 tenBanHienThi =
-            		        "Bàn " +
-            		        String.join(" + ", dsBanChung);
-                 if(lblTenBan != null){
-                	    lblTenBan.setText(tenBanHienThi);
-                	}
+                if(
+                        dsBanChung != null
+                        &&
+                        dsBanChung.size() > 1
+                ){
 
-             }else{
+                    tenBanHienThi =
+                            String.join(" + ", dsBanChung);
 
-            	 tenBanHienThi = "Bàn " + tenBan;
-                 if(lblTenBan != null){
-                	    lblTenBan.setText(tenBanHienThi);
-                	}
-             }
+                    if(lblTenBan != null){
+                        lblTenBan.setText(tenBanHienThi);
+                    }
 
-         }catch(Exception ex){
+                }else{
 
-             ex.printStackTrace();
+                    tenBanHienThi = tenBan;
 
-             tenBanHienThi = tenBan;
-         }
+                    if(lblTenBan != null){
+                        lblTenBan.setText(tenBanHienThi);
+                    }
+                }
+
+            }catch(Exception ex){
+
+                ex.printStackTrace();
+
+                tenBanHienThi = tenBan;
+            }
 
             daGuiThucDon = true;
 
@@ -1349,81 +1590,15 @@ public class Order_Mon_GUI extends JPanel {
             soLuongDaGuiMap.clear();
 
             // =========================================
-            // LOGIC LOAD MÓN
+            // LOAD MÓN THEO ĐÚNG BÀN
             // =========================================
 
-            List<ChiTietHoaDon> dsCT;
-
-            // =========================================
-            // CASE 1: KHÔNG PHẢI PHIẾU ĐẶT
-            // -> FLOW CŨ
-            // =========================================
-
-            if(
-                    maPhieuDatBan == null
-                    ||
-                    maPhieuDatBan.trim().isEmpty()
-            ){
-
-                if(laOrderRieng){
-
-                    dsCT =
-                            chiTietHoaDonDAO
-                            .getChiTietTheoMaHDVaBan(
-                                    maHoaDonHienTai,
-                                    maBan
-                            );
-
-                }else{
-
-                    dsCT =
-                            chiTietHoaDonDAO
-                            .getChiTietTheoMaHD(
-                                    maHoaDonHienTai
-                            );
-                }
-            }
-
-            // =========================================
-            // CASE 2: CÓ PHIẾU ĐẶT
-            // =========================================
-
-            else{
-
-                // ==============================
-                // ORDER RIÊNG
-                // ==============================
-
-                if(laOrderRieng){
-
-                    dsCT =
-                            chiTietHoaDonDAO
-                            .getChiTietTheoMaHDVaBan(
-                                    maHoaDonHienTai,
-                                    maBan
-                            );
-                }
-
-                // ==============================
-                // ORDER CHUNG
-                // ==============================
-
-                else{
-
-                    boolean banDaCoMon =
-                            chiTietHoaDonDAO
-                            .kiemTraBanCoMonTheoBan(
-                                    maBan
-                            );
-
-                    dsCT =
-                            chiTietHoaDonDAO
-                            .getChiTietTheoMaHDVaBan(
-                                    maHoaDonHienTai,
-                                    maBan
-                            );
-                }
-            }
+            List<ChiTietHoaDon> dsCT =
+                    chiTietHoaDonDAO
+                    .getChiTietTheoMaHDVaBan(
+                            maHoaDonHienTai,
+                            maBan
+                    );
 
             // =========================================
             // LOAD GIỎ HÀNG
@@ -1498,6 +1673,7 @@ public class Order_Mon_GUI extends JPanel {
             coThayDoiChuaGui = false;
 
             renderOrderList();
+            capNhatManHinhKhach();
 
             capNhatTrangThaiNutTheoGuiMon();
 
@@ -1647,6 +1823,7 @@ public class Order_Mon_GUI extends JPanel {
         }
 
         renderOrderList();
+        capNhatManHinhKhach();
 
         capNhatCoThayDoiChuaGui();
     }
@@ -1990,6 +2167,7 @@ public class Order_Mon_GUI extends JPanel {
             btnUp.addActionListener(e -> {
                 item.soLuong++;
                 renderOrderList();
+                capNhatManHinhKhach();
                 capNhatCoThayDoiChuaGui();
             });
 
@@ -2019,6 +2197,7 @@ public class Order_Mon_GUI extends JPanel {
                 }
 
                 renderOrderList();
+                capNhatManHinhKhach();
                 capNhatCoThayDoiChuaGui();
             });
 
@@ -2059,18 +2238,18 @@ public class Order_Mon_GUI extends JPanel {
                 public void mouseClicked(java.awt.event.MouseEvent e) {
 
                     try {
-
-                    	soLuongDaGuiMap.getOrDefault(
-                    	        taoKeyGioHang(
-                    	                item.mon.getMaMon(),
-                    	                item.maBan
-                    	        ),
-                    	        0
-                    	);
+                    	int slDaGuiNow =
+                                soLuongDaGuiMap.getOrDefault(
+                                        taoKeyGioHang(
+                                                item.mon.getMaMon(),
+                                                item.maBan
+                                        ),
+                                        0
+                                );
 
                         // ===== CHƯA GỬI =====
 
-                        if (slDaGui <= 0) {
+                        if (slDaGuiNow <= 0) {
 
                         	gioHang.remove(
                         	        taoKeyGioHang(
@@ -2080,6 +2259,7 @@ public class Order_Mon_GUI extends JPanel {
                         	);
 
                             renderOrderList();
+                            capNhatManHinhKhach();
 
                             capNhatCoThayDoiChuaGui();
 
@@ -2100,12 +2280,29 @@ public class Order_Mon_GUI extends JPanel {
                             String trangThai =
                                     ct.getTrangThai();
 
+                         // ===== CHECK ĐƠN VỊ TÍNH =====
+
+                            String dvt =
+                                    item.mon.getDonViTinh() == null
+                                    ? ""
+                                    : item.mon.getDonViTinh().trim().toLowerCase();
+
+                            boolean laNuocUong =
+                                    dvt.contains("lon")
+                                    || dvt.contains("chai")
+                                    || dvt.contains("chai lớn")
+                                    || dvt.contains("chai nhỏ");
+
                             // ===== KHÔNG CHO HỦY =====
 
                             if (
-                                    "Đang chế biến".equalsIgnoreCase(trangThai)
-                                    ||
-                                    "Hoàn thành".equalsIgnoreCase(trangThai)
+                                    !laNuocUong
+                                    &&
+                                    (
+                                        "Đang chế biến".equalsIgnoreCase(trangThai)
+                                        ||
+                                        "Hoàn thành".equalsIgnoreCase(trangThai)
+                                    )
                             ) {
 
                                 JOptionPane.showMessageDialog(
@@ -2124,7 +2321,7 @@ public class Order_Mon_GUI extends JPanel {
                         moPopupHuyMonTam(
                                 lblXoa,
                                 item,
-                                slDaGui
+                                slDaGuiNow
                         );
 
                     } catch (Exception ex) {
@@ -2621,9 +2818,64 @@ public class Order_Mon_GUI extends JPanel {
             String lyDo = txtLyDo.getText().trim();
 
             if (lyDo.isEmpty() || "Lý do".equalsIgnoreCase(lyDo)) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập lý do hủy.");
+            	txtLyDo.setBorder(
+                        BorderFactory.createCompoundBorder(
+                                BorderFactory.createLineBorder(
+                                        Color.RED,
+                                        3
+                                ),
+                                BorderFactory.createEmptyBorder(
+                                        4, 6, 4, 6
+                                )
+                        )
+                );
+
+                txtLyDo.revalidate();
+                txtLyDo.repaint();
+
+                txtLyDo.requestFocusInWindow();
                 return;
             }
+            txtLyDo.getDocument().addDocumentListener(
+                    new DocumentListener() {
+
+                        private void resetBorder() {
+
+                            if (!txtLyDo.getText().trim().isEmpty()) {
+
+                                txtLyDo.setBorder(
+                                        BorderFactory.createCompoundBorder(
+                                                BorderFactory.createLineBorder(
+                                                        Color.GRAY,
+                                                        1
+                                                ),
+                                                BorderFactory.createEmptyBorder(
+                                                        4, 6, 4, 6
+                                                )
+                                        )
+                                );
+
+                                txtLyDo.revalidate();
+                                txtLyDo.repaint();
+                            }
+                        }
+
+                        @Override
+                        public void insertUpdate(DocumentEvent e) {
+                            resetBorder();
+                        }
+
+                        @Override
+                        public void removeUpdate(DocumentEvent e) {
+                            resetBorder();
+                        }
+
+                        @Override
+                        public void changedUpdate(DocumentEvent e) {
+                            resetBorder();
+                        }
+                    }
+            );
 
             int slHuy = soLuongHuy[0];
             int slDaGui =
@@ -2660,6 +2912,7 @@ public class Order_Mon_GUI extends JPanel {
             }
 
             renderOrderList();
+            capNhatManHinhKhach();
             capNhatCoThayDoiChuaGui();
             popup.setVisible(false);
         });
@@ -2814,6 +3067,7 @@ public class Order_Mon_GUI extends JPanel {
              }
          }
          renderOrderList();
+         capNhatManHinhKhach();
 
          capNhatTrangThaiNutTheoGuiMon();
 
@@ -2839,6 +3093,7 @@ public class Order_Mon_GUI extends JPanel {
             	        )
             	);
                 renderOrderList();
+                capNhatManHinhKhach();
                 capNhatCoThayDoiChuaGui();
                 return;
             }
@@ -2867,11 +3122,43 @@ public class Order_Mon_GUI extends JPanel {
 
             item.soLuong = slMoi;
             renderOrderList();
+            capNhatManHinhKhach();
             capNhatCoThayDoiChuaGui();
 
         } catch (Exception ex) {
             txtSL.setText(String.valueOf(item.soLuong));
             JOptionPane.showMessageDialog(this, "Số lượng phải là số nguyên hợp lệ.");
         }
+        
+    }
+    public void capNhatManHinhKhach() {
+
+        manHinhKhach =
+                Pn_ThanhMenu.getManHinhKhach();
+
+        if (manHinhKhach == null) {
+            return;
+        }
+
+        double tongTien = 0;
+
+        for (OrderItem item : gioHang.values()) {
+
+            tongTien +=
+                    item.soLuong
+                    * item.mon.getDonGia();
+        }
+
+        manHinhKhach.capNhatHoaDon(
+                tenBanHienThi,
+                new LinkedHashMap<>(gioHang),
+                formatTien(tongTien) + "đ"
+        );
+
+        manHinhKhach.revalidate();
+        manHinhKhach.repaint();
+    }
+    public void setManHinhKhach(ManHinhKhach_GUI manHinhKhach) {
+        this.manHinhKhach = manHinhKhach;
     }
 }

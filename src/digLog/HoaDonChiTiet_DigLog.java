@@ -41,7 +41,8 @@ public class HoaDonChiTiet_DigLog extends JPanel {
             double tienThua,
             String phuongThuc,
             int diemCongThem,
-            List<ChiTietHoaDon> dsCT
+            List<ChiTietHoaDon> dsCT,
+            String linkQR
     )  {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
@@ -108,6 +109,76 @@ public class HoaDonChiTiet_DigLog extends JPanel {
                         ? "0"
                         : "+" + diemCongThem
         ));
+     // =============================
+     // QR THANH TOÁN
+     // =============================
+
+        if (
+                linkQR != null
+                &&
+                !linkQR.trim().isEmpty()
+        ) {
+
+            try {
+
+                billPanel.add(
+                        Box.createVerticalStrut(20)
+                );
+
+                JLabel lblQRTitle =
+                        new JLabel(
+                                "QUÉT QR ĐỂ THANH TOÁN",
+                                SwingConstants.CENTER
+                        );
+
+                lblQRTitle.setFont(
+                        new Font(
+                                "SansSerif",
+                                Font.BOLD,
+                                20
+                        )
+                );
+
+                lblQRTitle.setAlignmentX(
+                        Component.CENTER_ALIGNMENT
+                );
+
+                billPanel.add(lblQRTitle);
+
+                billPanel.add(
+                        Box.createVerticalStrut(12)
+                );
+
+                java.net.URL url =
+                        new java.net.URL(linkQR);
+
+                ImageIcon icon =
+                        new ImageIcon(url);
+
+                Image img =
+                        icon.getImage()
+                                .getScaledInstance(
+                                        260,
+                                        260,
+                                        Image.SCALE_SMOOTH
+                                );
+
+                JLabel lblQR =
+                        new JLabel(
+                                new ImageIcon(img)
+                        );
+
+                lblQR.setAlignmentX(
+                        Component.CENTER_ALIGNMENT
+                );
+
+                billPanel.add(lblQR);
+
+            } catch (Exception ex) {
+
+                ex.printStackTrace();
+            }
+        }
 
         JButton btnIn = new JButton("In hóa đơn / Xuất PDF");
         JButton btnDong = new JButton("Đóng");
@@ -185,7 +256,16 @@ public class HoaDonChiTiet_DigLog extends JPanel {
         );
 
         p.setBackground(
-                new Color(230,230,230)
+        		new Color(245,245,245)
+        );
+        p.setBorder(
+                BorderFactory.createMatteBorder(
+                        0,
+                        0,
+                        1,
+                        0,
+                        new Color(210,210,210)
+                )
         );
 
         GridBagConstraints gbc=
@@ -200,7 +280,7 @@ public class HoaDonChiTiet_DigLog extends JPanel {
         gbc.insets=new Insets(0,0,0,0);
 
         gbc.gridx=0;
-        gbc.weightx=4;
+        gbc.weightx=5;
         p.add(cell("Món",true,SwingConstants.LEFT),gbc);
 
         gbc.gridx=1;
@@ -246,7 +326,7 @@ public class HoaDonChiTiet_DigLog extends JPanel {
 
         gbc.fill=GridBagConstraints.BOTH;
 
-        gbc.insets=new Insets(6,4,6,4);
+        gbc.insets=new Insets(1,4,1,4);
 
         gbc.gridy=0;
 
@@ -312,6 +392,29 @@ public class HoaDonChiTiet_DigLog extends JPanel {
         JLabel lbl=new JLabel(text);
 
         lbl.setHorizontalAlignment(align);
+        Dimension size;
+
+        switch (align) {
+
+            case SwingConstants.LEFT:
+
+                size = new Dimension(260, 28);
+                break;
+
+            case SwingConstants.CENTER:
+
+                size = new Dimension(70, 28);
+                break;
+
+            default:
+
+                size = new Dimension(130, 28);
+                break;
+        }
+
+        lbl.setPreferredSize(size);
+        lbl.setMinimumSize(size);
+        lbl.setMaximumSize(size);
 
         lbl.setVerticalAlignment(
                 SwingConstants.CENTER
@@ -329,10 +432,10 @@ public class HoaDonChiTiet_DigLog extends JPanel {
 
         lbl.setBorder(
                 BorderFactory.createEmptyBorder(
+                        3,
                         6,
-                        8,
-                        6,
-                        8
+                        3,
+                        6
                 )
         );
 

@@ -138,7 +138,8 @@ public class NhanVien_GUI extends JFrame {
         cbChucVu = new JComboBox<>(new String[]{
         	    "-- Chọn chức vụ --",
         	    "Quản lý",
-        	    "Lễ tân"
+        	    "Lễ tân",
+        	    "Bếp"
         	});
         styleComboBox(cbChucVu);
         addRow(pnlFields, gbc, 0, "Mã nhân viên", txtMaNV, "Chức vụ", cbChucVu);

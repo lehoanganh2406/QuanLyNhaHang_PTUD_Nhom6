@@ -1206,7 +1206,6 @@ public class PhieuDatBan_DigLog extends JDialog {
                             );
 
                     for (ChiTietDatMon pdm : dsMon) {
-
                         String maBanInsert =
                                 dsBanDaChon.get(0);
 
@@ -1219,9 +1218,13 @@ public class PhieuDatBan_DigLog extends JDialog {
                                         ),
                                         pdm.getSoLuong(),
                                         pdm.getDonGia(),
-                                        pdm.getGhiChu() == null
-                                                ? ""
-                                                : pdm.getGhiChu(),
+                                        "[DAT_CHUNG] "
+                                        		+
+                                        		(
+                                        		    pdm.getGhiChu() == null
+                                        		    ? ""
+                                        		    : pdm.getGhiChu()
+                                        		),
                                         "Đã gửi bếp",
                                         null,
                                         0,

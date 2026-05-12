@@ -42,6 +42,7 @@ CREATE TABLE MonAn (
     maMon VARCHAR(20) NOT NULL PRIMARY KEY,
     maLoaiMonAn VARCHAR(20) NOT NULL,
     tenMon NVARCHAR(100) NOT NULL,
+    donViTinh NVARCHAR(50),
     anhMon NVARCHAR(255) NULL,
     giaGoc DECIMAL(18,2) NOT NULL DEFAULT 0,
     donGia AS CAST(giaGoc * 1.4 AS DECIMAL(18,2)) PERSISTED,
@@ -254,7 +255,7 @@ CREATE TABLE ChiTietHoaDon (
     CONSTRAINT FK_ChiTietHoaDon_Ban FOREIGN KEY (maBan) REFERENCES Ban(maBan),
     CONSTRAINT CK_ChiTietHoaDon_SoLuong CHECK (soLuong > 0),
     CONSTRAINT CK_ChiTietHoaDon_DonGia CHECK (donGia >= 0),
-    CONSTRAINT CK_ChiTietHoaDon_SoLuongHuy CHECK (soLuongHuy >= 0 AND soLuongHuy <= soLuong)
+    CONSTRAINT CK_ChiTietHoaDon_SoLuongHuy CHECK (soLuongHuy >= 0)
 );
 GO
 CREATE TABLE HoaDon_Ban (
@@ -475,53 +476,53 @@ GO
 6. DỮ LIỆU MÓN ĂN
 Lẩu đưa vào Món chính
 ==========================================================*/
-INSERT INTO MonAn 
-(maMon, maLoaiMonAn, tenMon, anhMon, giaGoc, moTa, trangThai)
+INSERT INTO MonAn
+(maMon, maLoaiMonAn, tenMon ,donViTinh, anhMon, giaGoc, moTa, trangThai)
 VALUES
 -- LM01: Món khai vị
-('MM001', 'LM01', N'Gỏi cuốn tôm thịt', N'goicuon.png', 32143, N'Khai vị truyền thống', 1),
-('MM002', 'LM01', N'Súp cua', N'supcua.png', 39286, N'Súp cua nóng', 1),
-('MM003', 'LM01', N'Chả giò hải sản', N'chagiohaisan.png', 46429, N'Chả giò chiên giòn', 1),
-('MM004', 'LM01', N'Salad cá ngừ', N'saladcangu.png', 50000, N'Salad tươi mát', 1),
-('MM005', 'LM01', N'Khoai tây chiên', N'khoaitaychien.png', 28571, N'Ăn kèm khai vị', 1),
-('MM006', 'LM01', N'Cánh gà chiên nước mắm', N'canhga.png', 60714, N'Cánh gà đậm vị', 1),
+('MM001','LM01',N'Gỏi cuốn tôm thịt',N'phần',N'goicuon.png',32143,N'Khai vị truyền thống',1),
+('MM002','LM01',N'Súp cua',N'tô',N'supcua.png',39286,N'Súp cua nóng',1),
+('MM003','LM01',N'Chả giò hải sản',N'phần',N'chagiohaisan.png',46429,N'Chả giò chiên giòn',1),
+('MM004','LM01',N'Salad cá ngừ',N'đĩa',N'saladcangu.png',50000,N'Salad tươi mát',1),
+('MM005','LM01',N'Khoai tây chiên',N'phần',N'khoaitaychien.png',28571,N'Ăn kèm khai vị',1),
+('MM006','LM01',N'Cánh gà chiên nước mắm',N'phần',N'canhga.png',60714,N'Cánh gà đậm vị',1),
 
 -- LM02: Món chính
-('MM007', 'LM02', N'Cơm chiên hải sản', N'comchienhaisan.png', 85714, N'Cơm chiên hải sản đặc biệt', 1),
-('MM008', 'LM02', N'Bò lúc lắc', N'boluclac.png', 117857, N'Bò mềm ăn kèm khoai tây', 1),
-('MM009', 'LM02', N'Sườn nướng mật ong', N'suonnuong.png', 107143, N'Sườn nướng thơm ngon', 1),
-('MM010', 'LM02', N'Lẩu thái hải sản', N'lauthai.png', 200000, N'Lẩu vị chua cay', 1),
-('MM011', 'LM02', N'Lẩu nấm', N'launam.png', 185714, N'Lẩu thanh đạm', 1),
-('MM012', 'LM02', N'Mì xào hải sản', N'mixaohaisan.png', 78571, N'Mì xào đậm vị', 1),
-('MM013', 'LM02', N'Cơm gà xối mỡ', N'comgaxoimo.png', 64286, N'Cơm gà giòn rụm', 1),
-('MM014', 'LM02', N'Cá hồi sốt bơ tỏi', N'cahoi.png', 135714, N'Cá hồi áp chảo', 1),
-('MM015', 'LM02', N'Bò né', N'bone.png', 67857, N'Bò né trứng ốp la', 1),
-('MM016', 'LM02', N'Gà nướng lu', N'ganuonglu.png', 150000, N'Gà nướng nguyên con', 1),
-('MM017', 'LM02', N'Tôm nướng muối ớt', N'tomnuong.png', 125000, N'Tôm nướng cay nhẹ', 1),
-('MM018', 'LM02', N'Mực chiên giòn', N'mucchien.png', 92857, N'Mực tươi chiên giòn', 1),
-('MM019', 'LM02', N'Cơm chiên cá mặn', N'comchiencaman.png', 75000, N'Cơm chiên cá mặn đậm đà', 1),
-('MM020', 'LM02', N'Bún bò Nam Bộ', N'bunbonambo.png', 60714, N'Bún bò trộn rau', 1),
+('MM007','LM02',N'Cơm chiên hải sản',N'phần',N'comchienhaisan.png',85714,N'Cơm chiên hải sản đặc biệt',1),
+('MM008','LM02',N'Bò lúc lắc',N'phần',N'boluclac.png',117857,N'Bò mềm ăn kèm khoai tây',1),
+('MM009','LM02',N'Sườn nướng mật ong',N'phần',N'suonnuong.png',107143,N'Sườn nướng thơm ngon',1),
+('MM010','LM02',N'Lẩu thái hải sản',N'nồi',N'lauthai.png',200000,N'Lẩu vị chua cay',1),
+('MM011','LM02',N'Lẩu nấm',N'nồi',N'launam.png',185714,N'Lẩu thanh đạm',1),
+('MM012','LM02',N'Mì xào hải sản',N'đĩa',N'mixaohaisan.png',78571,N'Mì xào đậm vị',1),
+('MM013','LM02',N'Cơm gà xối mỡ',N'phần',N'comgaxoimo.png',64286,N'Cơm gà giòn rụm',1),
+('MM014','LM02',N'Cá hồi sốt bơ tỏi',N'phần',N'cahoi.png',135714,N'Cá hồi áp chảo',1),
+('MM015','LM02',N'Bò né',N'phần',N'bone.png',67857,N'Bò né trứng ốp la',1),
+('MM016','LM02',N'Gà nướng lu',N'con',N'ganuonglu.png',150000,N'Gà nướng nguyên con',1),
+('MM017','LM02',N'Tôm nướng muối ớt',N'phần',N'tomnuong.png',125000,N'Tôm nướng cay nhẹ',1),
+('MM018','LM02',N'Mực chiên giòn',N'phần',N'mucchien.png',92857,N'Mực tươi chiên giòn',1),
+('MM019','LM02',N'Cơm chiên cá mặn',N'phần',N'comchiencaman.png',75000,N'Cơm chiên cá mặn đậm đà',1),
+('MM020','LM02',N'Bún bò Nam Bộ',N'tô',N'bunbonambo.png',60714,N'Bún bò trộn rau',1),
 
 -- LM03: Món phụ
-('MM021', 'LM03', N'Cơm trắng', N'comtrang.png', 10714, N'Cơm dùng kèm', 1),
-('MM022', 'LM03', N'Bún tươi', N'buntuoi.png', 8571, N'Bún dùng kèm', 1),
-('MM023', 'LM03', N'Rau sống', N'rausong.png', 14286, N'Rau ăn kèm', 1),
-('MM024', 'LM03', N'Kim chi', N'kimchi.png', 17857, N'Món phụ ăn kèm', 1),
-('MM025', 'LM03', N'Bánh mì', N'banhmi.png', 7143, N'Bánh mì nóng giòn', 1),
+('MM021','LM03',N'Cơm trắng',N'chén',N'comtrang.png',10714,N'Cơm dùng kèm',1),
+('MM022','LM03',N'Bún tươi',N'phần',N'buntuoi.png',8571,N'Bún dùng kèm',1),
+('MM023','LM03',N'Rau sống',N'phần',N'rausong.png',14286,N'Rau ăn kèm',1),
+('MM024','LM03',N'Kim chi',N'phần',N'kimchi.png',17857,N'Món phụ ăn kèm',1),
+('MM025','LM03',N'Bánh mì',N'ổ',N'banhmi.png',7143,N'Bánh mì nóng giòn',1),
 
 -- LM04: Tráng miệng
-('MM026', 'LM04', N'Bánh flan', N'banhflan.png', 21429, N'Tráng miệng mềm mịn', 1),
-('MM027', 'LM04', N'Trái cây thập cẩm', N'traicay.png', 35714, N'Trái cây theo mùa', 1),
-('MM028', 'LM04', N'Rau câu dừa', N'raucaudua.png', 20000, N'Mát lạnh', 1),
+('MM026','LM04',N'Bánh flan',N'cái',N'banhflan.png',21429,N'Tráng miệng mềm mịn',1),
+('MM027','LM04',N'Trái cây thập cẩm',N'đĩa',N'traicay.png',35714,N'Trái cây theo mùa',1),
+('MM028','LM04',N'Rau câu dừa',N'phần',N'raucaudua.png',20000,N'Mát lạnh',1),
+('MM035','LM04',N'Kem vani',N'ly',N'kemvani.png',25000,N'Kem lạnh tráng miệng',1),
 
 -- LM05: Nước uống
-('MM029', 'LM05', N'Coca Cola', N'coca.png', 14286, N'Nước ngọt có gas', 1),
-('MM030', 'LM05', N'Nước suối', N'nuocsuoi.png', 10714, N'Nước suối chai', 1),
-('MM031', 'LM05', N'Trà đào', N'tradao.png', 25000, N'Trà đào cam sả', 1),
-('MM032', 'LM05', N'Nước cam', N'nuoccam.png', 21429, N'Nước cam tươi', 1),
-('MM033', 'LM05', N'Pepsi', N'pepsi.png', 14286, N'Nước ngọt có gas', 1),
-('MM034', 'LM05', N'7 Up', N'7up.png', 14286, N'Nước ngọt chanh', 1),
-('MM035', 'LM04', N'Kem vani', N'kemvani.png', 25000, N'Kem lạnh tráng miệng', 1);
+('MM029','LM05',N'Coca Cola',N'lon',N'coca.png',14286,N'Nước ngọt có gas',1),
+('MM030','LM05',N'Nước suối',N'chai',N'nuocsuoi.png',10714,N'Nước suối chai',1),
+('MM031','LM05',N'Trà đào',N'ly',N'tradao.png',25000,N'Trà đào cam sả',1),
+('MM032','LM05',N'Nước cam',N'ly',N'nuoccam.png',21429,N'Nước cam tươi',1),
+('MM033','LM05',N'Pepsi',N'lon',N'pepsi.png',14286,N'Nước ngọt có gas',1),
+('MM034','LM05',N'7 Up',N'lon',N'7up.png',14286,N'Nước ngọt chanh',1);
 GO
 
 
@@ -538,7 +539,7 @@ INSERT INTO NhanVien (
 VALUES
 ('NV001', N'Lê Hoàng Anh', N'hoanganh.png', '2005-06-24', 1, '079205000001', 'anhcon2406@gmail.com', '0329933607', N'Quản lý', N'Đang làm', NULL),
 ('NV002', N'Trần Quốc Dũng', N'quocdung.png', '2005-03-15', 1, '079205000002', 'quocdung@hyv.com', '0901000002', N'Lễ tân', N'Đang làm', NULL),
-('NV003', N'Nguyễn Hạ Ánh Dương', N'anhduong.png', '2005-09-10', 0, '079205000003', 'anhduong@hyv.com', '0901000003', N'Lễ tân', N'Đang làm', NULL),
+('NV003', N'Nguyễn Hạ Ánh Dương', N'anhduong.png', '2005-09-10', 0, '079205000003', 'anhduong@hyv.com', '0901000003', N'Bếp', N'Đang làm', NULL),
 ('NV004', N'Huỳnh Thị Ngọc Tiên', N'ngoctien.png', '2005-11-20', 0, '079205000004', 'ngoctien@hyv.com', '0901000004', N'Lễ tân', N'Đang làm', NULL);
 GO
 
@@ -546,7 +547,7 @@ INSERT INTO TaiKhoan (maTaiKhoan, tenDangNhap, matKhau, phanQuyen, trangThai, ma
 VALUES
 ('TK01', 'NV001', 'quanly', N'Quản lý', 1, 'NV001'),
 ('TK02', 'NV002', 'nhanvien', N'Lễ tân', 1, 'NV002'),
-('TK03', 'NV003', 'nhanvien', N'Lễ tân', 1, 'NV003'),
+('TK03', 'NV003', 'nhanvien', N'Bếp', 1, 'NV003'),
 ('TK04', 'NV004', 'nhanvien', N'Lễ tân', 1, 'NV004');
 GO
 
@@ -716,4 +717,3 @@ SELECT * FROM PhieuDatBan;
 SELECT * FROM HoaDon;
 SELECT * FROM ChiTietHoaDon;
 GO
-

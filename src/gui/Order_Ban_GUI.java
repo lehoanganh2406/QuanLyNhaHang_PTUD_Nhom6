@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -915,30 +916,74 @@ public class Order_Ban_GUI extends JPanel {
     }
     private void moManHinhOrderMon(Ban ban, String[] phieu) {
         try {
-            stopTimers();
+        	// =====================================
+        	// LẤY THÔNG TIN PHIẾU
+        	// =====================================
 
-            String maPhieuDatBan = null;
+        	String maPhieuDatBan = null;
 
-            if (phieu != null && phieu.length > 0) {
-                maPhieuDatBan = phieu[0];
-            } else {
-                String[] phieuGanNhat = timPhieuDaNhanBanCuaBan(ban.getMaBan());
-                if (phieuGanNhat != null && phieuGanNhat.length > 0) {
-                    maPhieuDatBan = phieuGanNhat[0];
-                }
-            }
+        	if (phieu != null && phieu.length > 0) {
 
-            boolean laBanDangPhucVu = "Bàn đang phục vụ".equalsIgnoreCase(
-                    chuanHoaTrangThai(ban.getTrangThai())
-            );
+        	    maPhieuDatBan = phieu[0];
 
-            Order_Mon_GUI orderMon = new Order_Mon_GUI(
-                    taiKhoanDangNhap,
-                    ban.getMaBan(),
-                    ban.getTenBan(),
-                    maPhieuDatBan,
-                    laBanDangPhucVu
-            );
+        	} else {
+
+        	    String[] phieuGanNhat =
+        	            timPhieuDaNhanBanCuaBan(
+        	                    ban.getMaBan()
+        	            );
+
+        	    if (
+        	            phieuGanNhat != null
+        	            &&
+        	            phieuGanNhat.length > 0
+        	    ) {
+
+        	        maPhieuDatBan =
+        	                phieuGanNhat[0];
+        	    }
+        	}
+
+        	// =====================================
+        	// CHECK TRẠNG THÁI BÀN
+        	// =====================================
+
+        	boolean laBanDangPhucVu =
+        	        "Bàn đang phục vụ".equalsIgnoreCase(
+        	                chuanHoaTrangThai(
+        	                        ban.getTrangThai()
+        	                )
+        	        );
+
+        	// =====================================
+        	// MỞ MÀN HÌNH KHÁCH
+        	// =====================================
+
+        	ManHinhKhach_GUI manHinhKhach =
+        	        Pn_ThanhMenu.getManHinhKhach();
+
+        	if (manHinhKhach != null) {
+
+        	    manHinhKhach.capNhatHoaDon(
+        	            ban.getTenBan(),
+        	            new LinkedHashMap<>(),
+        	            "0đ"
+        	    );
+        	}
+
+        	// =====================================
+        	// MỞ ORDER
+        	// =====================================
+
+        	Order_Mon_GUI orderMon =
+        	        new Order_Mon_GUI(
+        	                taiKhoanDangNhap,
+        	                ban.getMaBan(),
+        	                ban.getTenBan(),
+        	                maPhieuDatBan,
+        	                laBanDangPhucVu,
+        	                manHinhKhach
+        	        );
 
             Window window = SwingUtilities.getWindowAncestor(this);
 

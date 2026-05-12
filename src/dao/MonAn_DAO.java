@@ -42,6 +42,7 @@ public class MonAn_DAO {
         String maLoai = rs.getString("maLoaiMonAn");
         String tenLoai = rs.getString("tenLoaiMonAn");
         String tenMon = rs.getString("tenMon");
+        String donViTinh = rs.getString("donViTinh");
         String anhMon = rs.getString("anhMon");
         double giaGoc = rs.getDouble("giaGoc");
         double donGia = rs.getDouble("donGia");
@@ -49,7 +50,7 @@ public class MonAn_DAO {
         boolean trangThai = rs.getBoolean("trangThai");
 
         LoaiMonAn loai = new LoaiMonAn(maLoai, tenLoai);
-        return new MonAn(maMon, loai, tenMon, anhMon, giaGoc, donGia, moTa, trangThai);
+        return new MonAn(maMon, loai, tenMon, donViTinh, anhMon, giaGoc, donGia, moTa, trangThai);
     }
 
     public ArrayList<MonAn> getAllMonAn() {
@@ -57,7 +58,7 @@ public class MonAn_DAO {
         Connection con = ConnectDB.getInstance().getConnection();
 
         String sql = "SELECT m.maMon, m.maLoaiMonAn, l.tenLoaiMonAn, "
-                + "m.tenMon, m.anhMon, m.giaGoc, m.donGia, m.moTa, m.trangThai "
+                + "m.tenMon, m.donViTinh, m.anhMon, m.giaGoc, m.donGia, m.moTa, m.trangThai "
                 + "FROM MonAn m "
                 + "JOIN LoaiMonAn l ON m.maLoaiMonAn = l.maLoaiMonAn "
                 + "ORDER BY m.maMon";
@@ -80,7 +81,7 @@ public class MonAn_DAO {
         Connection con = ConnectDB.getInstance().getConnection();
 
         String sql = "SELECT m.maMon, m.maLoaiMonAn, l.tenLoaiMonAn, "
-                + "m.tenMon, m.anhMon, m.giaGoc, m.donGia, m.moTa, m.trangThai "
+                + "m.tenMon, m.donViTinh, m.anhMon, m.giaGoc, m.donGia, m.moTa, m.trangThai "
                 + "FROM MonAn m "
                 + "JOIN LoaiMonAn l ON m.maLoaiMonAn = l.maLoaiMonAn "
                 + "WHERE m.maMon = ?";
@@ -106,7 +107,7 @@ public class MonAn_DAO {
         Connection con = ConnectDB.getInstance().getConnection();
 
         String sql = "SELECT m.maMon, m.maLoaiMonAn, l.tenLoaiMonAn, "
-                + "m.tenMon, m.anhMon, m.giaGoc, m.donGia, m.moTa, m.trangThai "
+                + "m.tenMon, m.donViTinh, m.anhMon, m.giaGoc, m.donGia, m.moTa, m.trangThai "
                 + "FROM MonAn m "
                 + "JOIN LoaiMonAn l ON m.maLoaiMonAn = l.maLoaiMonAn "
                 + "WHERE m.tenMon LIKE ? "
@@ -133,7 +134,7 @@ public class MonAn_DAO {
         Connection con = ConnectDB.getInstance().getConnection();
 
         String sql = "SELECT m.maMon, m.maLoaiMonAn, l.tenLoaiMonAn, "
-                + "m.tenMon, m.anhMon, m.giaGoc, m.donGia, m.moTa, m.trangThai "
+                + "m.tenMon, m.donViTinh, m.anhMon, m.giaGoc, m.donGia, m.moTa, m.trangThai "
                 + "FROM MonAn m "
                 + "JOIN LoaiMonAn l ON m.maLoaiMonAn = l.maLoaiMonAn "
                 + "WHERE m.maLoaiMonAn = ? "
@@ -158,16 +159,17 @@ public class MonAn_DAO {
     public boolean themMonAn(MonAn mon) {
         Connection con = ConnectDB.getInstance().getConnection();
 
-        String sql = "INSERT INTO MonAn (maLoaiMonAn, tenMon, anhMon, giaGoc, moTa, trangThai) "
+        String sql = "INSERT INTO MonAn (maLoaiMonAn, tenMon,donViTinh, anhMon, giaGoc, moTa, trangThai) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, mon.getMaLoaiMonAn().getMaLoaiMonAn());
             stmt.setString(2, mon.getTenMon());
-            stmt.setString(3, mon.getAnhMon());
-            stmt.setDouble(4, mon.getGiaGoc());
-            stmt.setString(5, mon.getMoTa());
-            stmt.setBoolean(6, mon.isTrangThai());
+            stmt.setString(3, mon.getDonViTinh());
+            stmt.setString(4, mon.getAnhMon());
+            stmt.setDouble(5, mon.getGiaGoc());
+            stmt.setString(6, mon.getMoTa());
+            stmt.setBoolean(7, mon.isTrangThai());
 
             return stmt.executeUpdate() > 0;
 

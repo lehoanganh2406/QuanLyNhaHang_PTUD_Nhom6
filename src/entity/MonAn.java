@@ -6,8 +6,9 @@ public class MonAn {
     private String maMon;
     private LoaiMonAn maLoaiMonAn;
     private String tenMon;
+    private String donViTinh;
     private String anhMon;
-
+   
     private double giaGoc;   // ✅ thêm
     private double donGia;   // chỉ đọc
 
@@ -19,21 +20,32 @@ public class MonAn {
     public MonAn(String maMon) {
         this.maMon = maMon;
     }
+    
+    public String getDonViTinh() {
+		return donViTinh;
+	}
 
-    public MonAn(String maMon, LoaiMonAn maLoaiMonAn, String tenMon,
-                 String anhMon, double giaGoc, double donGia,
-                 String moTa, boolean trangThai) {
-        this.maMon = maMon;
-        this.maLoaiMonAn = maLoaiMonAn;
-        this.tenMon = tenMon;
-        this.anhMon = anhMon;
-        this.giaGoc = giaGoc;
-        this.donGia = donGia;
-        this.moTa = moTa;
-        this.trangThai = trangThai;
-    }
+	public void setDonViTinh(String donViTinh) {
+		this.donViTinh = donViTinh;
+	}
 
-    // ================= GET/SET =================
+    
+
+	public MonAn(String maMon, LoaiMonAn maLoaiMonAn, String tenMon, String donViTinh, String anhMon, double giaGoc,
+			double donGia, String moTa, boolean trangThai) {
+		super();
+		this.maMon = maMon;
+		this.maLoaiMonAn = maLoaiMonAn;
+		this.tenMon = tenMon;
+		this.donViTinh = donViTinh;
+		this.anhMon = anhMon;
+		this.giaGoc = giaGoc;
+		this.donGia = donGia;
+		this.moTa = moTa;
+		this.trangThai = trangThai;
+	}
+
+	// ================= GET/SET =================
 
     public String getMaMon() { return maMon; }
     public void setMaMon(String maMon) { this.maMon = maMon; }

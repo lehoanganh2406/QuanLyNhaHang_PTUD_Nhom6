@@ -7,12 +7,15 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import dao.ChiTietHoaDon_DAO;
+import dao.HoaDon_DAO;
 import entity.ChiTietHoaDon;
 
 public class Bar_Bep_GUI extends JPanel {
 
     private JPanel pnTrai,pnPhai;
     private ChiTietHoaDon_DAO dao=new ChiTietHoaDon_DAO();
+    private HoaDon_DAO hdDAO =
+            new HoaDon_DAO();
 
     private final Color BG_MAIN=new Color(245,247,250);
     private final Color BG_HEADER2=new Color(0xD9D9D9);
@@ -163,7 +166,7 @@ public class Bar_Bep_GUI extends JPanel {
 
         List<ChiTietHoaDon> dsTrai=
                 dao.getMonTheoTrangThai(
-                        "Đang phục vụ"
+                        "Đã gửi bếp"
                 );
 
         sapXep(dsTrai);
@@ -345,10 +348,39 @@ public class Bar_Bep_GUI extends JPanel {
                     +")";
 
         }else{
+        	String dsBan =
+        	        hdDAO.layChuoiBanTheoHD(
+        	                ct.getMaHD().getMaHD()
+        	        );
 
-            thongTinBan=
-                    "Bàn "
-                    +ct.getMaBan().getMaBan();
+        	if(dsBan.contains(",")){
+
+        	    // món đặt trước chung
+        	    boolean laMonDatTruocChung =
+        	            ct.getTrangThai()
+        	            .equalsIgnoreCase("Đã gửi bếp")
+        	            &&
+        	            ct.getGhiChu() != null
+        	            &&
+        	            ct.getGhiChu().contains("[DAT_CHUNG]");
+
+        	    if(laMonDatTruocChung){
+
+        	        thongTinBan =
+        	                dsBan.replace(", ", "+");
+        	    }
+        	    else{
+
+        	        // order trực tiếp sau nhận bàn
+        	        thongTinBan =
+        	                ct.getMaBan().getMaBan();
+        	    }
+
+        	}else{
+
+        	    thongTinBan =
+        	            ct.getMaBan().getMaBan();
+        	}
         }
 
         long phut = ct.getThoiGianGui()==null

@@ -666,20 +666,54 @@ public class KhuVuc_GUI extends JPanel {
     }
 
     private int demBanDangDungTheoKhuVuc(String maKhuVuc) {
+
         String sql = ""
                 + "SELECT COUNT(DISTINCT b.maBan) "
                 + "FROM Ban b "
                 + "WHERE b.maKhuVuc = ? "
                 + "AND ( "
-                + "    EXISTS (SELECT 1 FROM HoaDon hd WHERE hd.maBan = b.maBan AND hd.thoiGianRa IS NULL AND (hd.trangThai IS NULL OR hd.trangThai <> N'Đã hủy')) "
-                + "    OR EXISTS (SELECT 1 FROM PhieuDatBan pdb WHERE pdb.maBan = b.maBan AND CAST(pdb.thoiGianDen AS DATE) = CAST(GETDATE() AS DATE) AND (pdb.trangThai IS NULL OR pdb.trangThai <> N'Đã hủy')) "
+
+                // HÓA ĐƠN ĐANG PHỤC VỤ
+                + "    EXISTS ( "
+                + "        SELECT 1 "
+                + "        FROM HoaDon hd "
+                + "        JOIN HoaDon_Ban hdb "
+                + "            ON hd.maHD = hdb.maHD "
+                + "        WHERE hdb.maBan = b.maBan "
+                + "          AND hd.thoiGianRa IS NULL "
+                + "          AND ( "
+                + "                hd.trangThai IS NULL "
+                + "                OR hd.trangThai <> N'Đã hủy' "
+                + "          ) "
+                + "    ) "
+
+                // PHIẾU ĐẶT BÀN
+                + "    OR EXISTS ( "
+                + "        SELECT 1 "
+                + "        FROM PhieuDatBan pdb "
+                + "        JOIN PhieuDatBan_Ban pdbb "
+                + "            ON pdb.maPhieuDatBan = pdbb.maPhieuDatBan "
+                + "        WHERE pdbb.maBan = b.maBan "
+                + "          AND CAST(pdb.thoiGianDen AS DATE) = CAST(GETDATE() AS DATE) "
+                + "          AND ( "
+                + "                pdb.trangThai IS NULL "
+                + "                OR pdb.trangThai <> N'Đã hủy' "
+                + "          ) "
+                + "    ) "
+
                 + ")";
+
         try (PreparedStatement stmt = ConnectDB.getConnection().prepareStatement(sql)) {
+
             stmt.setString(1, maKhuVuc);
+
             try (ResultSet rs = stmt.executeQuery()) {
+
                 return rs.next() ? rs.getInt(1) : 0;
             }
+
         } catch (Exception e) {
+
             e.printStackTrace();
             return 0;
         }

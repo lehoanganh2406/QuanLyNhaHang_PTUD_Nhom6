@@ -249,12 +249,38 @@ public class Order_Ban_GUI extends JPanel {
         JPanel pnlHeaderRow = new JPanel(new BorderLayout(12, 0));
         pnlHeaderRow.setOpaque(false);
 
-        pnlTabsKhuVuc = new JPanel(new WrapLayout(FlowLayout.LEFT, 0, 0));
+//        pnlTabsKhuVuc = new JPanel(new WrapLayout(FlowLayout.LEFT, 0, 0));
+//        pnlTabsKhuVuc.setOpaque(false);
+//
+//        JPanel pnlDateWrap = createDatePanel();
+//
+//        pnlHeaderRow.add(pnlTabsKhuVuc, BorderLayout.CENTER);
+//        pnlHeaderRow.add(pnlDateWrap, BorderLayout.EAST);
+        pnlTabsKhuVuc = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         pnlTabsKhuVuc.setOpaque(false);
+
+        JScrollPane scrTabs = new JScrollPane(
+            pnlTabsKhuVuc,
+            JScrollPane.VERTICAL_SCROLLBAR_NEVER,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+        );
+        scrTabs.setBorder(null);
+        scrTabs.getViewport().setBackground(BG_APP);
+        scrTabs.setOpaque(false);
+        scrTabs.getViewport().setOpaque(false);
+        scrTabs.getHorizontalScrollBar().setUnitIncrement(40);
+        scrTabs.addMouseWheelListener(e -> {
+            javax.swing.JScrollBar bar = scrTabs.getHorizontalScrollBar();
+            bar.setValue(bar.getValue() + e.getWheelRotation() * 40);
+        });
+        pnlTabsKhuVuc.addMouseWheelListener(e -> {
+            javax.swing.JScrollBar bar = scrTabs.getHorizontalScrollBar();
+            bar.setValue(bar.getValue() + e.getWheelRotation() * 40);
+        });
 
         JPanel pnlDateWrap = createDatePanel();
 
-        pnlHeaderRow.add(pnlTabsKhuVuc, BorderLayout.CENTER);
+        pnlHeaderRow.add(scrTabs, BorderLayout.CENTER);
         pnlHeaderRow.add(pnlDateWrap, BorderLayout.EAST);
 
         pnlTopCenter.add(lblTitle);

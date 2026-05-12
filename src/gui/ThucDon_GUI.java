@@ -621,7 +621,30 @@ public class ThucDon_GUI extends JPanel {
         rightPanel.add(btnXoaLoai);
 
         // ===== GHÉP =====
-        pTabBar.add(leftPanel, BorderLayout.CENTER);
+//        pTabBar.add(leftPanel, BorderLayout.CENTER);
+//        pTabBar.add(rightPanel, BorderLayout.EAST);
+     // Bọc leftPanel trong JScrollPane nằm ngang
+        JScrollPane scrTabsLeft = new JScrollPane(
+            leftPanel,
+            JScrollPane.VERTICAL_SCROLLBAR_NEVER,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+        );
+        scrTabsLeft.setBorder(null);
+        scrTabsLeft.getViewport().setBackground(C_TAB_BAR);
+        scrTabsLeft.setOpaque(false);
+        scrTabsLeft.getViewport().setOpaque(false);
+        scrTabsLeft.getHorizontalScrollBar().setUnitIncrement(40);
+        scrTabsLeft.addMouseWheelListener(e -> {
+            javax.swing.JScrollBar bar = scrTabsLeft.getHorizontalScrollBar();
+            bar.setValue(bar.getValue() + e.getWheelRotation() * 40);
+        });
+        leftPanel.addMouseWheelListener(e -> {
+            javax.swing.JScrollBar bar = scrTabsLeft.getHorizontalScrollBar();
+            bar.setValue(bar.getValue() + e.getWheelRotation() * 40);
+        });
+
+        // ===== GHÉP =====
+        pTabBar.add(scrTabsLeft, BorderLayout.CENTER);
         pTabBar.add(rightPanel, BorderLayout.EAST);
 
         pTabBar.revalidate();

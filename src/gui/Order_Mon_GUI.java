@@ -355,14 +355,44 @@ public class Order_Mon_GUI extends JPanel {
         topPanel.add(centerWrap, BorderLayout.CENTER);
         topPanel.add(Box.createHorizontalStrut(1), BorderLayout.EAST);
 
+//        pnTabs = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+//        pnTabs.setBackground(BG_MAIN);
+//        pnTabs.setBorder(new EmptyBorder(8, 0, 0, 0));
+//
+//        JPanel tabWrap = new JPanel(new BorderLayout());
+//        tabWrap.setBackground(BG_MAIN);
+//        tabWrap.setPreferredSize(new Dimension(0, 58));
+//        tabWrap.add(pnTabs, BorderLayout.CENTER);
         pnTabs = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         pnTabs.setBackground(BG_MAIN);
         pnTabs.setBorder(new EmptyBorder(8, 0, 0, 0));
 
+        // Bọc trong JScrollPane nằm ngang
+        JScrollPane scrTabs = new JScrollPane(
+            pnTabs,
+            JScrollPane.VERTICAL_SCROLLBAR_NEVER,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+        );
+        scrTabs.setBorder(null);
+        scrTabs.getViewport().setBackground(BG_MAIN);
+        scrTabs.setOpaque(false);
+        scrTabs.getViewport().setOpaque(false);
+        scrTabs.getHorizontalScrollBar().setUnitIncrement(40);
+
+        // Cho phép scroll bằng con lăn chuột theo chiều ngang
+        scrTabs.addMouseWheelListener(e -> {
+            javax.swing.JScrollBar bar = scrTabs.getHorizontalScrollBar();
+            bar.setValue(bar.getValue() + e.getWheelRotation() * 40);
+        });
+        pnTabs.addMouseWheelListener(e -> {
+            javax.swing.JScrollBar bar = scrTabs.getHorizontalScrollBar();
+            bar.setValue(bar.getValue() + e.getWheelRotation() * 40);
+        });
+
         JPanel tabWrap = new JPanel(new BorderLayout());
         tabWrap.setBackground(BG_MAIN);
         tabWrap.setPreferredSize(new Dimension(0, 58));
-        tabWrap.add(pnTabs, BorderLayout.CENTER);
+        tabWrap.add(scrTabs, BorderLayout.CENTER); // thay pnTabs bằng scrTabs
 
         pnFoodGrid = new FoodGridPanel();
         pnFoodGrid.setBackground(BG_MAIN);

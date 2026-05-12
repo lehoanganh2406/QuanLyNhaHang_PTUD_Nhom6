@@ -455,12 +455,42 @@ public class TraCuu_GUI extends JPanel {
         pnlHeader.add(lblTitle, BorderLayout.WEST);
         pnlHeader.add(pnlRight, BorderLayout.CENTER);
 
+//        pnlTabsLoaiMon = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+//        pnlTabsLoaiMon.setOpaque(false);
+//        pnlTabsLoaiMon.setBorder(new EmptyBorder(0, 12, 0, 12));
+//
+//        pnlTop.add(pnlHeader);
+//        pnlTop.add(pnlTabsLoaiMon);
+        
         pnlTabsLoaiMon = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         pnlTabsLoaiMon.setOpaque(false);
-        pnlTabsLoaiMon.setBorder(new EmptyBorder(0, 12, 0, 12));
+
+        JScrollPane scrTabsLoai = new JScrollPane(
+            pnlTabsLoaiMon,
+            JScrollPane.VERTICAL_SCROLLBAR_NEVER,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+        );
+        scrTabsLoai.setBorder(null);
+        scrTabsLoai.getViewport().setOpaque(false);
+        scrTabsLoai.setOpaque(false);
+        scrTabsLoai.getHorizontalScrollBar().setUnitIncrement(40);
+        scrTabsLoai.addMouseWheelListener(e -> {
+            javax.swing.JScrollBar bar = scrTabsLoai.getHorizontalScrollBar();
+            bar.setValue(bar.getValue() + e.getWheelRotation() * 40);
+        });
+        pnlTabsLoaiMon.addMouseWheelListener(e -> {
+            javax.swing.JScrollBar bar = scrTabsLoai.getHorizontalScrollBar();
+            bar.setValue(bar.getValue() + e.getWheelRotation() * 40);
+        });
+
+        JPanel tabLoaiWrap = new JPanel(new BorderLayout());
+        tabLoaiWrap.setOpaque(false);
+        tabLoaiWrap.setBorder(new EmptyBorder(0, 12, 0, 12));
+        tabLoaiWrap.setPreferredSize(new Dimension(0, 46));
+        tabLoaiWrap.add(scrTabsLoai, BorderLayout.CENTER);
 
         pnlTop.add(pnlHeader);
-        pnlTop.add(pnlTabsLoaiMon);
+        pnlTop.add(tabLoaiWrap);
 
         btnTim.addActionListener(e -> locDuLieuMonAn());
         btnLamMoi.addActionListener(e -> lamMoiBoLoc());

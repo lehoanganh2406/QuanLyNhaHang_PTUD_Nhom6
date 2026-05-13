@@ -166,6 +166,7 @@ public class ChuyenBan_DigLog extends JDialog {
             }
 
             dispose();
+            
         });
 
         bottom.add(btnHuy);
@@ -352,17 +353,39 @@ public class ChuyenBan_DigLog extends JDialog {
             addMouseListener(
                     new java.awt.event.MouseAdapter(){
 
-                        @Override
-                        public void mouseClicked(
-                                java.awt.event.MouseEvent e
-                        ){
+                    	@Override
+                    	public void mouseClicked(
+                    	        java.awt.event.MouseEvent e
+                    	){
 
-                            maBanMoi=
-                                    ban.getMaBan();
+                    	    String tt =
+                    	            ban.getTrangThai() == null
+                    	            ? ""
+                    	            : ban.getTrangThai()
+                    	                  .trim()
+                    	                  .toLowerCase();
 
-                            repaint();
-                            tabbedPane.repaint();
-                        }
+                    	    if(
+                    	            tt.contains("đang phục vụ")
+                    	            ||
+                    	            tt.contains("đang chờ")
+                    	    ){
+
+                    	        JOptionPane.showMessageDialog(
+                    	                ChuyenBan_DigLog.this,
+                    	                "Không thể chuyển vào bàn đang sử dụng!"
+                    	        );
+
+                    	        return;
+                    	    }
+
+                    	    maBanMoi =
+                    	            ban.getMaBan();
+
+                    	    repaint();
+
+                    	    tabbedPane.repaint();
+                    	}
                     }
             );
         }

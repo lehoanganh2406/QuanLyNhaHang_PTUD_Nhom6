@@ -402,15 +402,16 @@ public class Bar_Bep_GUI extends JPanel {
         	    }
         	    else{
 
-        	        // order trực tiếp sau nhận bàn
+        	        // chuyển bàn -> lấy bàn hiện tại
         	        thongTinBan =
-        	                ct.getMaBan().getMaBan();
+        	                dsBan;
         	    }
 
         	}else{
 
+        	    // chỉ có 1 bàn
         	    thongTinBan =
-        	            ct.getMaBan().getMaBan();
+        	            dsBan;
         	}
         }
 

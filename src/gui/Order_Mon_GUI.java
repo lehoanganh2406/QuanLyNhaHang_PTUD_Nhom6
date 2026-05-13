@@ -614,6 +614,11 @@ public class Order_Mon_GUI extends JPanel {
                                 maBan,
                                 maBanMoi
                         );
+                chiTietHoaDonDAO.capNhatMaBanTheoHoaDon(
+                        maHD,
+                        maBan,
+                        maBanMoi
+                );
 
                 if (!okHD) {
                     JOptionPane.showMessageDialog(this, "Chuyển bàn thất bại.");

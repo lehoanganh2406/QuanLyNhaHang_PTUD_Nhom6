@@ -557,9 +557,12 @@ public class Ban_DAO {
 	    String sql = """
 
 	        SELECT
-	            b.maBan,
-	            b.tenBan,
-	            kv.tenKhuVuc,
+    b.maBan,
+    b.tenBan,
+    kv.tenKhuVuc,
+    b.soChoNgoi,
+
+  
 
 	            CASE
 

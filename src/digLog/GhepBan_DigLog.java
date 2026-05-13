@@ -233,7 +233,26 @@ public class GhepBan_DigLog extends JDialog {
         private void toggleSelect() {
 
             String maBan = ban.getMaBan();
+            String tt =
+                    ban.getTrangThai() == null
+                    ? ""
+                    : ban.getTrangThai()
+                          .trim()
+                          .toLowerCase();
 
+            if(
+                    tt.contains("đang chờ")
+                    ||
+                    tt.contains("bàn đặt")
+            ){
+
+                JOptionPane.showMessageDialog(
+                        GhepBan_DigLog.this,
+                        "Không thể ghép bàn đặt!"
+                );
+
+                return;
+            }
             HoaDon hdBan =
                     hoaDonDAO.timHoaDonChungTheoBan(
                             maBan

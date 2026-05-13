@@ -215,17 +215,27 @@ public class ChiTietHoaDon_DAO {
             Connection con = ConnectDB.getConnection();
 
             String sql = """
-                    SELECT cthd.*,
-                           ma.tenMon,
-                           ma.anhMon,
-                           hd.hinhThucPhucVu
-                    FROM ChiTietHoaDon cthd
-                    JOIN MonAn ma
-                        ON ma.maMon = cthd.maMon
-                    JOIN HoaDon hd
-                        ON hd.maHD = cthd.maHD
-                    WHERE cthd.trangThai = ?
-                    ORDER BY cthd.thoiGianGui ASC
+                    SELECT
+    cthd.*,
+    hb.maBan AS maBanHienTai,
+    ma.tenMon,
+    ma.anhMon,
+    hd.hinhThucPhucVu
+
+FROM ChiTietHoaDon cthd
+
+JOIN MonAn ma
+    ON ma.maMon = cthd.maMon
+
+JOIN HoaDon hd
+    ON hd.maHD = cthd.maHD
+
+JOIN HoaDon_Ban hb
+    ON hb.maHD = cthd.maHD
+
+WHERE cthd.trangThai = ?
+
+ORDER BY cthd.thoiGianGui ASC
                     """;
 
             PreparedStatement ps = con.prepareStatement(sql);
@@ -1156,5 +1166,40 @@ ORDER BY ct.thoiGianGui
 	    }
 
 	    return ds;
+	}
+ public boolean capNhatMaBanTheoHoaDon(
+	        String maHD,
+	        String maBanCu,
+	        String maBanMoi
+	) {
+
+	    try {
+
+	        Connection con =
+	                ConnectDB.getConnection();
+
+	        String sql =
+	                """
+	                UPDATE ChiTietHoaDon
+	                SET maBan = ?
+	                WHERE maHD = ?
+	                AND maBan = ?
+	                """;
+
+	        PreparedStatement ps =
+	                con.prepareStatement(sql);
+
+	        ps.setString(1, maBanMoi);
+	        ps.setString(2, maHD);
+	        ps.setString(3, maBanCu);
+
+	        return ps.executeUpdate() > 0;
+
+	    } catch (Exception e) {
+
+	        e.printStackTrace();
+	    }
+
+	    return false;
 	}
 }

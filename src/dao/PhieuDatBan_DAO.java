@@ -183,7 +183,8 @@ public class PhieuDatBan_DAO {
     public boolean kiemTraTrungLich(
             String maBan,
             Timestamp thoiGianDen,
-            int soPhutMacDinh
+            int soPhutMacDinh,
+            String maPhieuBoQua
     ) {
 
         Connection con = null;
@@ -209,6 +210,7 @@ public class PhieuDatBan_DAO {
                     N'Đã đặt',
                     N'Đã nhận bàn'
                 )
+                AND pdb.maPhieuDatBan <> ?
                 AND ABS(
                     DATEDIFF(
                         MINUTE,
@@ -222,9 +224,11 @@ public class PhieuDatBan_DAO {
 
             stmt.setString(1, maBan);
 
-            stmt.setTimestamp(2, thoiGianDen);
+            stmt.setString(2, maPhieuBoQua);
 
-            stmt.setInt(3, soPhutMacDinh);
+            stmt.setTimestamp(3, thoiGianDen);
+
+            stmt.setInt(4, soPhutMacDinh);
 
             rs = stmt.executeQuery();
 

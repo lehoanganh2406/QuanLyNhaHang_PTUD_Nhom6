@@ -1346,8 +1346,12 @@ public class PhieuDatBan_DigLog extends JDialog {
         try {
             PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
 
-            boolean biTrung = dao.kiemTraTrungLich(maBanDuocChon, thoiGianDaChon, 120);
-            if (biTrung) {
+            boolean biTrung = dao.kiemTraTrungLich(
+                    maBanDuocChon,
+                    thoiGianDaChon,
+                    120,
+                    maPhieuHienTai
+            );            if (biTrung) {
                 JOptionPane.showMessageDialog(
                         this,
                         "Bàn này đã trùng lịch đặt, vui lòng chọn lại bàn khác!",
@@ -1611,7 +1615,12 @@ public class PhieuDatBan_DigLog extends JDialog {
         try {
             PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
 
-            boolean biTrung = dao.kiemTraTrungLich(maBanDuocChon, thoiGianDaChon, 120);
+            boolean biTrung = dao.kiemTraTrungLich(
+                    maBanDuocChon,
+                    thoiGianDaChon,
+                    120,
+                    maPhieuHienTai
+            );
             if (biTrung) {
                 String[] oldData = dao.timTheoMaPhieu(maPhieuHienTai);
                 if (oldData != null) {
@@ -1633,19 +1642,25 @@ public class PhieuDatBan_DigLog extends JDialog {
             BigDecimal tienCoc = new BigDecimal(tienCocText);
 
             Connection con = ConnectDB.getConnection();
-            String sql = "UPDATE PhieuDatBan "
-                    + "SET maBan = ?, tenKhach = ?, sdt = ?, soLuongNguoi = ?, thoiGianDen = ?, tienCoc = ?, ghiChu = ? "
-                    + "WHERE maPhieuDatBan = ?";
+            String sql = """
+            	    UPDATE PhieuDatBan
+            	    SET tenKhach = ?,
+            	        sdt = ?,
+            	        soLuongNguoi = ?,
+            	        thoiGianDen = ?,
+            	        tienCoc = ?,
+            	        ghiChu = ?
+            	    WHERE maPhieuDatBan = ?
+            	""";
 
             PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, maBanDuocChon);
-            ps.setString(2, txtKhachHang.getText().trim());
-            ps.setString(3, txtSoDienThoai.getText().trim());
-            ps.setInt(4, (Integer) spnSoLuongKhach.getValue());
-            ps.setTimestamp(5, thoiGianDaChon);
-            ps.setBigDecimal(6, tienCoc);
-            ps.setString(7, txtGhiChu.getText().trim());
-            ps.setString(8, maPhieuHienTai);
+            ps.setString(1, txtKhachHang.getText().trim());
+            ps.setString(2, txtSoDienThoai.getText().trim());
+            ps.setInt(3, (Integer) spnSoLuongKhach.getValue());
+            ps.setTimestamp(4, thoiGianDaChon);
+            ps.setBigDecimal(5, tienCoc);
+            ps.setString(6, txtGhiChu.getText().trim());
+            ps.setString(7, maPhieuHienTai);
 
             int n = ps.executeUpdate();
             ps.close();

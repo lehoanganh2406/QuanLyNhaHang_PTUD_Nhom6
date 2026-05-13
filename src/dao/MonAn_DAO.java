@@ -37,20 +37,45 @@ public class MonAn_DAO {
         return "MM001";
     }
 
+//    private MonAn taoMonAnTuResultSet(ResultSet rs) throws SQLException {
+//        String maMon = rs.getString("maMon");
+//        String maLoai = rs.getString("maLoaiMonAn");
+//        String tenLoai = rs.getString("tenLoaiMonAn");
+//        String tenMon = rs.getString("tenMon");
+//        String donViTinh = rs.getString("donViTinh");
+//        String anhMon = rs.getString("anhMon");
+//        double giaGoc = rs.getDouble("giaGoc");
+//        double donGia = rs.getDouble("donGia");
+//        String moTa = rs.getString("moTa");
+//        boolean trangThai = rs.getBoolean("trangThai");
+//
+//        LoaiMonAn loai = new LoaiMonAn(maLoai, tenLoai);
+//        return new MonAn(maMon, loai, tenMon, donViTinh, anhMon, giaGoc, donGia, moTa, trangThai);
+//    }
     private MonAn taoMonAnTuResultSet(ResultSet rs) throws SQLException {
         String maMon = rs.getString("maMon");
         String maLoai = rs.getString("maLoaiMonAn");
         String tenLoai = rs.getString("tenLoaiMonAn");
         String tenMon = rs.getString("tenMon");
-        String donViTinh = rs.getString("donViTinh");
         String anhMon = rs.getString("anhMon");
+        String donViTinh = rs.getString("donViTinh");
         double giaGoc = rs.getDouble("giaGoc");
         double donGia = rs.getDouble("donGia");
         String moTa = rs.getString("moTa");
         boolean trangThai = rs.getBoolean("trangThai");
 
         LoaiMonAn loai = new LoaiMonAn(maLoai, tenLoai);
-        return new MonAn(maMon, loai, tenMon, donViTinh, anhMon, giaGoc, donGia, moTa, trangThai);
+        return new MonAn(
+        	    maMon,
+        	    loai,
+        	    tenMon,
+        	    donViTinh,
+        	    anhMon,
+        	    giaGoc,
+        	    donGia,
+        	    moTa,
+        	    trangThai
+        	);
     }
 
     public ArrayList<MonAn> getAllMonAn() {

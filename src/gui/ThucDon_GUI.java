@@ -680,38 +680,65 @@ public class ThucDon_GUI extends JPanel {
 //        activeTabBtn = btn;
 //    }
     
+//    private void setActiveTab(JButton btn) {
+//
+//        // duyệt toàn bộ component trong pTabBar
+//        for (Component c : pTabBar.getComponents()) {
+//
+//            // nếu là panel → duyệt tiếp bên trong
+//            if (c instanceof JPanel) {
+//                JPanel panel = (JPanel) c;
+//
+//                for (Component inner : panel.getComponents()) {
+//                    if (inner instanceof JButton) {
+//                        JButton b = (JButton) inner;
+//
+//                        b.setBackground(C_TAB_BAR);
+//                        b.setFont(new Font("Times New Roman", Font.PLAIN, sc(20)));
+//                    }
+//                }
+//            }
+//
+//            // nếu lỡ có button nằm trực tiếp
+//            if (c instanceof JButton) {
+//                JButton b = (JButton) c;
+//                b.setBackground(C_TAB_BAR);
+//                b.setFont(new Font("Times New Roman", Font.PLAIN, sc(20)));
+//            }
+//        }
+//
+//        // set tab đang chọn
+//        btn.setBackground(C_TAB_ACTIVE);
+//        btn.setFont(new Font("Times New Roman", Font.BOLD, sc(20)));
+//
+//        activeTabBtn = btn;
+//    }
     private void setActiveTab(JButton btn) {
 
-        // duyệt toàn bộ component trong pTabBar
-        for (Component c : pTabBar.getComponents()) {
+        resetTabButtons(pTabBar);
 
-            // nếu là panel → duyệt tiếp bên trong
-            if (c instanceof JPanel) {
-                JPanel panel = (JPanel) c;
-
-                for (Component inner : panel.getComponents()) {
-                    if (inner instanceof JButton) {
-                        JButton b = (JButton) inner;
-
-                        b.setBackground(C_TAB_BAR);
-                        b.setFont(new Font("Times New Roman", Font.PLAIN, sc(20)));
-                    }
-                }
-            }
-
-            // nếu lỡ có button nằm trực tiếp
-            if (c instanceof JButton) {
-                JButton b = (JButton) c;
-                b.setBackground(C_TAB_BAR);
-                b.setFont(new Font("Times New Roman", Font.PLAIN, sc(20)));
-            }
-        }
-
-        // set tab đang chọn
         btn.setBackground(C_TAB_ACTIVE);
         btn.setFont(new Font("Times New Roman", Font.BOLD, sc(20)));
 
         activeTabBtn = btn;
+    }
+
+    private void resetTabButtons(Container container) {
+
+        for (Component c : container.getComponents()) {
+
+            if (c instanceof JButton) {
+                JButton b = (JButton) c;
+
+                b.setBackground(C_TAB_BAR);
+                b.setFont(new Font("Times New Roman", Font.PLAIN, sc(20)));
+            }
+
+            // duyệt đệ quy toàn bộ container con
+            if (c instanceof Container) {
+                resetTabButtons((Container) c);
+            }
+        }
     }
 
     public void reloadTabs() {
@@ -1160,27 +1187,44 @@ public class ThucDon_GUI extends JPanel {
         }
     }
 
-    private void refreshAll() {
-        txtSearch.setText("Nhập tên món ăn cần tìm ...");
-        txtSearch.setForeground(Color.GRAY);
-        txtGiaTu.setText("");
-        txtGiaDen.setText("");
-
+//    private void refreshAll() {
+//        txtSearch.setText("Nhập tên món ăn cần tìm ...");
+//        txtSearch.setForeground(Color.GRAY);
+//        txtGiaTu.setText("");
+//        txtGiaDen.setText("");
+//
+//        selectedMon = null;
+//        selectedCard = null;
+//        currentCategory = null;
+//
+//        cache.clear();
+//        pCards.removeAll();
+//
+//        pCards.add(makeLoadingPanel("Đang tải dữ liệu..."), "LOADING");
+//        cardLayout.show(pCards, "LOADING");
+//
+//        buildTabs();
+//        loadAllFirstTime();
+//
+//        pCards.revalidate();
+//        pCards.repaint();
+//    }
+    
+    public void refreshAll() {
+        cache.clear();
+        currentCategory = null;
         selectedMon = null;
         selectedCard = null;
-        currentCategory = null;
 
-        cache.clear();
         pCards.removeAll();
-
         pCards.add(makeLoadingPanel("Đang tải dữ liệu..."), "LOADING");
         cardLayout.show(pCards, "LOADING");
 
         buildTabs();
         loadAllFirstTime();
 
-        pCards.revalidate();
-        pCards.repaint();
+        revalidate();
+        repaint();
     }
 
     private JPanel makeLoadingPanel(String msg) {
@@ -1196,66 +1240,102 @@ public class ThucDon_GUI extends JPanel {
         return p;
     }
 
-    private void loadImgAsync(JLabel lbl, String path, int w, int h) {
-        new SwingWorker<ImageIcon, Void>() {
-            @Override
-            protected ImageIcon doInBackground() {
-                try {
+//    private void loadImgAsync(JLabel lbl, String path, int w, int h) {
+//        new SwingWorker<ImageIcon, Void>() {
+//            @Override
+//            protected ImageIcon doInBackground() {
+//                try {
+//
+//
+//                    if (path == null || path.trim().isEmpty()) {
+//                        return null;
+//                    }
+//
+//                    String name = path.trim();
+//
+//                    if (name.contains(".")) {
+//                        name = name.substring(0, name.lastIndexOf("."));
+//                    }
+//
+//                    String baseDir = System.getProperty("user.dir") + File.separator + "img";
+//                    String[] exts = {".png", ".jpg", ".jpeg"};
+//
+//                    for (String ext : exts) {
+//                        File file = new File(baseDir + File.separator + name + ext);
+//
+//
+//                        if (file.exists()) {
+//                            Image img = new ImageIcon(file.getAbsolutePath())
+//                                    .getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+//                            return new ImageIcon(img);
+//                        }
+//                    }
+//
+//
+//
+//                    return null;
+//                } catch (Exception e) {
+//                    return null;
+//                }
+//
+//            }
+//            @Override
+//            protected void done() {
+//                try {
+//
+//
+//                    ImageIcon icon = get();
+//
+//                    if (icon != null) {
+//                        lbl.setIcon(icon);
+//                        lbl.setText("");
+//                    } else {
+//                        lbl.setIcon(null);
+//                        lbl.setText("Không có ảnh");
+//                    }
+//                } catch (Exception e) {
+//                    lbl.setIcon(null);
+//                    lbl.setText("Lỗi ảnh");
+//                }
+//
+//            }
+//        }.execute();
+//    }
+    private void loadImgAsync(JLabel lblImg, String anhMon, int w, int h) {
+        lblImg.setIcon(null);
+        lblImg.setText("Không có ảnh");
 
+        if (anhMon == null || anhMon.trim().isEmpty()) return;
 
-                    if (path == null || path.trim().isEmpty()) {
-                        return null;
-                    }
+        String baseDir = System.getProperty("user.dir") + File.separator + "img";
+        String input = anhMon.trim();
 
-                    String name = path.trim();
+        File file = new File(input);
+        if (!file.exists()) {
+            file = new File(baseDir, input);
+        }
 
-                    if (name.contains(".")) {
-                        name = name.substring(0, name.lastIndexOf("."));
-                    }
+        if (!file.exists()) {
+            String name = input;
+            int dot = input.lastIndexOf('.');
+            if (dot > 0) name = input.substring(0, dot);
 
-                    String baseDir = System.getProperty("user.dir") + File.separator + "img";
-                    String[] exts = {".png", ".jpg", ".jpeg"};
-
-                    for (String ext : exts) {
-                        File file = new File(baseDir + File.separator + name + ext);
-
-
-                        if (file.exists()) {
-                            Image img = new ImageIcon(file.getAbsolutePath())
-                                    .getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
-                            return new ImageIcon(img);
-                        }
-                    }
-
-
-
-                    return null;
-                } catch (Exception e) {
-                    return null;
+            String[] exts = {".png", ".jpg", ".jpeg", ".gif"};
+            for (String ext : exts) {
+                File f = new File(baseDir, name + ext);
+                if (f.exists()) {
+                    file = f;
+                    break;
                 }
-
             }
-            @Override
-            protected void done() {
-                try {
+        }
 
+        if (!file.exists()) return;
 
-                    ImageIcon icon = get();
-
-                    if (icon != null) {
-                        lbl.setIcon(icon);
-                        lbl.setText("");
-                    } else {
-                        lbl.setIcon(null);
-                        lbl.setText("Không có ảnh");
-                    }
-                } catch (Exception e) {
-                    lbl.setIcon(null);
-                    lbl.setText("Lỗi ảnh");
-                }
-
-            }
-        }.execute();
+        ImageIcon icon = new ImageIcon(file.getAbsolutePath());
+        Image scaled = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+        lblImg.setIcon(new ImageIcon(scaled));
+        lblImg.setText("");
     }
 
 

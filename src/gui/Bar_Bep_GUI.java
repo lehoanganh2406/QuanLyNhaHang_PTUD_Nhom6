@@ -1,9 +1,16 @@
 package gui;
 
 import java.awt.*;
+import java.io.File;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import dao.ChiTietHoaDon_DAO;
@@ -16,6 +23,7 @@ public class Bar_Bep_GUI extends JPanel {
     private ChiTietHoaDon_DAO dao=new ChiTietHoaDon_DAO();
     private HoaDon_DAO hdDAO =
             new HoaDon_DAO();
+    private Set<String> danhSachDaThongBao = new HashSet<>();
 
     private final Color BG_MAIN=new Color(245,247,250);
     private final Color BG_HEADER2=new Color(0xD9D9D9);
@@ -44,7 +52,7 @@ public class Bar_Bep_GUI extends JPanel {
 
         loadData();
 
-        new Timer(3000,e->loadData()).start();
+        new Timer(2000,e->loadData()).start();
     }
 
     // ================= PANEL =================
@@ -164,10 +172,33 @@ public class Bar_Bep_GUI extends JPanel {
         pnTrai.removeAll();
         pnPhai.removeAll();
 
-        List<ChiTietHoaDon> dsTrai=
+        List<ChiTietHoaDon> dsTrai =
                 dao.getMonTheoTrangThai(
                         "Đã gửi bếp"
                 );
+
+        boolean coMonMoi = false;
+
+        for(ChiTietHoaDon ct : dsTrai){
+
+            String key =
+                    ct.getMaHD().getMaHD()
+                    + "_"
+                    + ct.getMaMon().getMaMon()
+                    + "_"
+                    + ct.getMaBan().getMaBan();
+
+            if(!danhSachDaThongBao.contains(key)){
+
+                danhSachDaThongBao.add(key);
+
+                coMonMoi = true;
+            }
+        }
+
+        if(coMonMoi){
+            phatAmThanh();
+        }
 
         sapXep(dsTrai);
 
@@ -586,5 +617,25 @@ public class Bar_Bep_GUI extends JPanel {
                         22
                 )
         );
+    }
+    private void phatAmThanh() {
+
+        try {
+
+            File file = new File("libs/notification.wav");
+
+            AudioInputStream audio =
+                    AudioSystem.getAudioInputStream(file);
+
+            Clip clip = AudioSystem.getClip();
+
+            clip.open(audio);
+
+            clip.start();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
     }
 }

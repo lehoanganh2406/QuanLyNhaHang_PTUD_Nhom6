@@ -143,25 +143,21 @@ public class TrangChu_GUI extends JFrame {
     }
 
     public void showPage(String pageName) {
-    	if(pageCache.containsKey(pageName)){
 
-    	    contentPanel.remove(
-    	            pageCache.get(pageName)
-    	    );
-
-    	    pageCache.remove(pageName);
-    	}
         if (pageName == null || pageName.trim().isEmpty()) return;
 
         System.out.println("Đang chuyển tới: " + pageName);
 
+        // KHÔNG remove TrangChu
         if ("TrangChu_GUI".equals(pageName)) {
             cardLayout.show(contentPanel, "TrangChu_GUI");
+            contentPanel.revalidate();
+            contentPanel.repaint();
             SwingUtilities.invokeLater(() -> kiemTraPhieuQuaGio());
             return;
         }
 
-        // Nếu trang cũ đã có trong cache thì xóa ra để tạo mới
+        // Chỉ remove các page khác
         if (pageCache.containsKey(pageName)) {
             JPanel oldPage = pageCache.get(pageName);
             contentPanel.remove(oldPage);
@@ -173,7 +169,7 @@ public class TrangChu_GUI extends JFrame {
         if (page == null) {
             JOptionPane.showMessageDialog(
                     this,
-                    "Trang " + pageName + " chưa tạo được.\nKiểm tra class có tồn tại không hoặc constructor có TaiKhoan không.",
+                    "Trang " + pageName + " chưa tạo được.",
                     "Lỗi chuyển trang",
                     JOptionPane.ERROR_MESSAGE
             );
@@ -186,6 +182,7 @@ public class TrangChu_GUI extends JFrame {
         cardLayout.show(contentPanel, pageName);
         contentPanel.revalidate();
         contentPanel.repaint();
+
         SwingUtilities.invokeLater(() -> kiemTraPhieuQuaGio());
     }
 

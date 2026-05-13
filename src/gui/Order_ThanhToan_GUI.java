@@ -1645,8 +1645,8 @@ public class Order_ThanhToan_GUI extends JPanel {
     }
 
     private String taoLinkVietQR() {
-        String bankId = "970436"; // Vietcombank. Đổi theo ngân hàng của bạn
-        String soTaiKhoan = "123456789"; // đổi số tài khoản nhận tiền
+        String bankId = "970407"; // Vietcombank. Đổi theo ngân hàng của bạn
+        String soTaiKhoan = "2406005607"; // đổi số tài khoản nhận tiền
         String tenChuTK = "NHA HANG HY VONG";
         String noiDung = maHD;
         long soTien = Math.round(tongCong);

@@ -473,19 +473,41 @@ public class Ban_GUI extends JPanel {
             String sql =
                     "SELECT b.maBan, " +
                     "CASE " +
+
+                    // ĐANG PHỤC VỤ
                     "WHEN EXISTS ( " +
-                    "    SELECT 1 FROM HoaDon hd " +
-                    "    WHERE hd.maBan = b.maBan " +
+                    "    SELECT 1 " +
+                    "    FROM HoaDon hd " +
+                    "    JOIN HoaDon_Ban hdb " +
+                    "        ON hd.maHD = hdb.maHD " +
+                    "    WHERE hdb.maBan = b.maBan " +
                     "      AND hd.thoiGianRa IS NULL " +
-                    "      AND (hd.trangThai IS NULL OR hd.trangThai NOT IN (N'Đã thanh toán', N'Đã hủy', N'Hủy', N'Hoàn tất', N'Đã hoàn thành')) " +
+                    "      AND ( " +
+                    "            hd.trangThai IS NULL " +
+                    "            OR hd.trangThai NOT IN " +
+                    "            (N'Đã thanh toán', N'Đã hủy', N'Hủy', N'Hoàn tất', N'Đã hoàn thành') " +
+                    "      ) " +
                     ") THEN N'Đang phục vụ' " +
+
+                    // ĐÃ ĐẶT
                     "WHEN EXISTS ( " +
-                    "    SELECT 1 FROM PhieuDatBan pdb " +
-                    "    WHERE pdb.maBan = b.maBan " +
+                    "    SELECT 1 " +
+                    "    FROM PhieuDatBan pdb " +
+                    "    JOIN PhieuDatBan_Ban pdbb " +
+                    "        ON pdb.maPhieuDatBan = pdbb.maPhieuDatBan " +
+                    "    WHERE pdbb.maBan = b.maBan " +
                     "      AND CAST(pdb.thoiGianDen AS DATE) = CAST(GETDATE() AS DATE) " +
-                    "      AND (pdb.trangThai IS NULL OR pdb.trangThai NOT IN (N'Đã hủy', N'Hủy', N'Đã nhận bàn', N'Hoàn tất', N'Đã hoàn thành')) " +
+                    "      AND ( " +
+                    "            pdb.trangThai IS NULL " +
+                    "            OR pdb.trangThai NOT IN " +
+                    "            (N'Đã hủy', N'Hủy', N'Đã nhận bàn', N'Hoàn tất', N'Đã hoàn thành') " +
+                    "      ) " +
                     ") THEN N'Đã đặt' " +
-                    "ELSE N'Bàn trống' END AS trangThaiHienTai " +
+
+                    // CÒN LẠI
+                    "ELSE N'Bàn trống' " +
+                    "END AS trangThaiHienTai " +
+
                     "FROM Ban b";
             stmt = con.prepareStatement(sql);
             rs = stmt.executeQuery();

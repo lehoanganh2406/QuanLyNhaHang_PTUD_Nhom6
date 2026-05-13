@@ -69,7 +69,6 @@ public class KhachHang_GUI extends JPanel {
 
     private final Set<Integer> highlightedRows = new HashSet<>();
 
-    // Ẩn khỏi giao diện thôi, không đụng SQL
     private final Set<String> hiddenCustomerIds = new HashSet<>();
 
     // Danh sách khách 6 tháng không hoạt động
@@ -472,27 +471,38 @@ public class KhachHang_GUI extends JPanel {
         int row = tblKhachHang.getSelectedRow();
 
         if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một khách hàng trong bảng để ẩn khỏi giao diện!");
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một khách hàng trong bảng để xóa!");
             return;
         }
 
+        // Lấy thông tin từ bảng
         String maKH = getValue(row, 0);
         String tenKH = getValue(row, 1);
 
         int confirm = JOptionPane.showConfirmDialog(
                 this,
-                "Bạn có chắc chắn muốn ẩn khách hàng " + maKH + " - " + tenKH + " khỏi giao diện không?\n"
-                        + "Dữ liệu trong database sẽ được giữ nguyên.",
-                "Xác nhận ẩn khỏi giao diện",
-                JOptionPane.YES_NO_OPTION
+                "Bạn có chắc chắn muốn XÓA VĨNH VIỄN khách hàng này khỏi cơ sở dữ liệu?\n" 
+                + "Mã: " + maKH + " - Tên: " + tenKH,
+                "Xác nhận xóa vĩnh viễn",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
         );
 
         if (confirm == JOptionPane.YES_OPTION) {
-            hiddenCustomerIds.add(maKH);
-            loadKhachHangTuSQL();
-            lamMoi();
-            JOptionPane.showMessageDialog(this,
-                    "Đã ẩn khách hàng khỏi giao diện.\nDữ liệu trong database không thay đổi.");
+            // THỰC HIỆN XÓA TRONG SQL
+            boolean result = khachHangDAO.xoaKhachHang(maKH);
+
+            if (result) {
+                JOptionPane.showMessageDialog(this, "Đã xóa khách hàng khỏi hệ thống thành công!");
+                // Cập nhật lại giao diện ngay lập tức
+                loadKhachHangTuSQL(); 
+                lamMoi(); 
+            } else {
+                JOptionPane.showMessageDialog(this, 
+                    "Không thể xóa khách hàng này!\nLý do: Khách hàng đã có lịch sử giao dịch (Hóa đơn) trong hệ thống.", 
+                    "Lỗi hệ thống", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 

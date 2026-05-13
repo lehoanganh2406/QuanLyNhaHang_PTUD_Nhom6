@@ -235,17 +235,20 @@ public class KhachHang_DAO {
 	}
 
 	public boolean xoaKhachHang(String maKH) {
-		Connection con = ConnectDB.getInstance().getConnection();
-		String sql = "DELETE FROM KhachHang WHERE maKH = ?";
+	    Connection con = ConnectDB.getInstance().getConnection();
+	    // Lệnh DELETE sẽ xóa vĩnh viễn dòng dữ liệu trong SQL
+	    String sql = "DELETE FROM KhachHang WHERE maKH = ?";
 
-		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-			stmt.setString(1, maKH);
-			return stmt.executeUpdate() > 0;
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+	    try (PreparedStatement stmt = con.prepareStatement(sql)) {
+	        stmt.setString(1, maKH);
+	        return stmt.executeUpdate() > 0;
+	    } catch (SQLException e) {
+	        // Nếu lỗi do khách hàng đã có hóa đơn, SQL sẽ quăng lỗi Foreign Key
+	        System.out.println("Lỗi: Không thể xóa khách hàng vì đã có dữ liệu liên quan (Hóa đơn/Phiếu đặt)!");
+	        e.printStackTrace();
+	    }
 
-		return false;
+	    return false;
 	}
 
 	public double layTongGiaoDichTheoMaKH(String maKH) {

@@ -29,7 +29,9 @@ public class MonAn {
 		this.donViTinh = donViTinh;
 	}
 
-    
+	public void setDonGia(double donGia) {
+	    this.donGia = donGia;
+	}
 
 	public MonAn(String maMon, LoaiMonAn maLoaiMonAn, String tenMon, String donViTinh, String anhMon, double giaGoc,
 			double donGia, String moTa, boolean trangThai) {

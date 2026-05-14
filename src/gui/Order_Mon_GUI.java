@@ -3187,7 +3187,8 @@ public class Order_Mon_GUI extends JPanel {
         manHinhKhach.capNhatHoaDon(
                 tenBanHienThi,
                 new LinkedHashMap<>(gioHang),
-                formatTien(tongTien) + "đ"
+                formatTien(tongTien),
+                "0đ"
         );
 
         manHinhKhach.revalidate();

@@ -493,7 +493,8 @@ public class ManHinhKhach_GUI extends JFrame {
  public void capNhatHoaDon(
          String tenBan,
          Map<String, Order_Mon_GUI.OrderItem> gioHang,
-         String tongTien
+         String tongTien,
+         String khuyenMai
  ){
 
      if (dangHienQR) {
@@ -630,8 +631,7 @@ public class ManHinhKhach_GUI extends JFrame {
      // TÍNH TIỀN
      double vat = tong * 0.07;
 
-     double tongCong =
-             tong + vat;
+ 
 
      lblTongTien.setText(
              "Tổng tiền: "
@@ -646,14 +646,14 @@ public class ManHinhKhach_GUI extends JFrame {
      );
 
      lblKhuyenMai.setText(
-             "Khuyến mãi: 0đ"
-     );
+    	        "Khuyến mãi: " + khuyenMai
+    	);
 
      lblTongCong.setText(
-             "TỔNG CỘNG: "
-                     + formatTien(tongCong)
-                     + "đ"
-     );
+    	        "TỔNG CỘNG: "
+    	                + tongTien
+    	                + "đ"
+    	);
 
      // ẨN THANH TOÁN
      lblPhuongThuc.setVisible(false);

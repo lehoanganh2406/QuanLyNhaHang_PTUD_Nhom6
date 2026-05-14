@@ -993,6 +993,7 @@ public class Order_Ban_GUI extends JPanel {
         	    manHinhKhach.capNhatHoaDon(
         	            ban.getTenBan(),
         	            new LinkedHashMap<>(),
+        	            "0đ",
         	            "0đ"
         	    );
         	}

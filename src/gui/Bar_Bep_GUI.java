@@ -52,7 +52,7 @@ public class Bar_Bep_GUI extends JPanel {
 
         loadData();
 
-        new Timer(3000,e->loadData()).start();
+        new Timer(2000,e->loadData()).start();
     }
 
     // ================= PANEL =================

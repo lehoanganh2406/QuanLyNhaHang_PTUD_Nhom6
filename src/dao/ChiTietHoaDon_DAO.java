@@ -24,7 +24,8 @@ public class ChiTietHoaDon_DAO {
 
             String sql = """
                     SELECT ct.*,
-                           m.tenMon
+                           m.tenMon,
+                           m.donGia
                     FROM ChiTietHoaDon ct
                     JOIN MonAn m
                         ON ct.maMon = m.maMon
@@ -179,6 +180,9 @@ public class ChiTietHoaDon_DAO {
 
                 mon.setTenMon(
                         rs.getString("tenMon")
+                );
+                mon.setDonGia(
+                        rs.getDouble("donGia")
                 );
 
                 ChiTietHoaDon ct =
@@ -488,6 +492,9 @@ ORDER BY cthd.thoiGianGui ASC
 
         mon.setMaMon(
                 rs.getString("maMon")
+        );
+        mon.setDonGia(
+                rs.getDouble("donGia")
         );
 
         try {
@@ -874,7 +881,7 @@ ORDER BY cthd.thoiGianGui ASC
 
             String sql =
                     """
-                    SELECT ct.*, m.tenMon
+                    SELECT ct.*, m.tenMon,m.donGia
 FROM ChiTietHoaDon ct
 JOIN MonAn m
     ON ct.maMon = m.maMon
@@ -921,6 +928,9 @@ ORDER BY ct.thoiGianGui
 
                 mon.setTenMon(
                         rs.getString("tenMon")
+                );
+                mon.setDonGia(
+                        rs.getDouble("donGia")
                 );
 
                 ChiTietHoaDon ct =

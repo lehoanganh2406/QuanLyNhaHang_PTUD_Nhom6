@@ -3,6 +3,7 @@ package gui;
 import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.swing.*;
@@ -96,6 +97,7 @@ public class Order_ThanhToan_GUI extends JPanel {
     private double tongCong = 0;
     private double tienCoc = 0;
 	private JLabel lblBan;
+	private double tienDuTuCoc = 0;
 
     public Order_ThanhToan_GUI(TaiKhoan tk, String maBan, String tenBan,ManHinhKhach_GUI manHinhKhach) {
         this.taiKhoanDangNhap = tk;
@@ -506,7 +508,7 @@ public class Order_ThanhToan_GUI extends JPanel {
     }
 
     private void loadHoaDon() {
-        HoaDon hd = hoaDonDAO.timHoaDonChuaThanhToanTheoBan(maBan);
+    	HoaDon hd = hoaDonDAO.timHoaDonChungTheoBan(maBan);
 
         if (hd == null) {
             JOptionPane.showMessageDialog(this, "Không tìm thấy hóa đơn chưa thanh toán.");
@@ -537,7 +539,7 @@ public class Order_ThanhToan_GUI extends JPanel {
 
         loadThongTinPhieuDatBan(maPhieu);
 
-        dsCT = chiTietDAO.getChiTietTheoMaHD(maHD);
+        dsCT = chiTietDAO.getChiTietGopTheoHoaDon(maHD);
         renderMon();
 
         tuChonKhuyenMai = false;
@@ -546,11 +548,6 @@ public class Order_ThanhToan_GUI extends JPanel {
 
         if (manHinhKhach != null) {
 
-            manHinhKhach.capNhatHoaDon(
-                    tenBan,
-                    new java.util.LinkedHashMap<>(),
-                    formatTien(tongCong)
-            );
 
             capNhatManHinhKhachRealtime();
         }
@@ -758,8 +755,12 @@ public class Order_ThanhToan_GUI extends JPanel {
         }
 
         tongCong = tongTien + tienVAT - tienGiam - tienCoc;
+
         if (tongCong < 0) {
+            tienDuTuCoc = -tongCong;
             tongCong = 0;
+        } else {
+            tienDuTuCoc = 0;
         }
 
         lblTongThanhTien.setText(formatTien(tongTien));
@@ -842,7 +843,7 @@ public class Order_ThanhToan_GUI extends JPanel {
 
     private void tinhTienThua() {
         double tienTra = parseTien(txtTienKhachTra.getText());
-        double thua = tienTra - tongCong;
+        double thua = tienTra - tongCong + tienDuTuCoc;
 
         lblTienThua.setText(formatTien(thua));
 
@@ -870,10 +871,30 @@ public class Order_ThanhToan_GUI extends JPanel {
         double tienThua =
                 tienTra - tongCong;
 
+        LinkedHashMap<String, Order_Mon_GUI.OrderItem> gioHangHoaDon =
+                new LinkedHashMap<>();
+
+        for (ChiTietHoaDon ct : dsCT) {
+
+            String maMon =
+                    ct.getMaMon().getMaMon();
+
+            Order_Mon_GUI.OrderItem item =
+                    new Order_Mon_GUI.OrderItem(
+                            tenBan,
+                            ct.getMaMon(),
+                            ct.getSoLuong(),
+                            ct.getGhiChu()
+                    );
+
+            gioHangHoaDon.put(maMon, item);
+        }
+
         manHinhKhach.capNhatHoaDon(
                 tenBan,
-                new java.util.LinkedHashMap<>(),
-                formatTien(tongCong)
+                gioHangHoaDon,
+                formatTien(tongCong),
+                lblKhuyenMai.getText()
         );
 
         manHinhKhach.hienThiThongTinThanhToan(

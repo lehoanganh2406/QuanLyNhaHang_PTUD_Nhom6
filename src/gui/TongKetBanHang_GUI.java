@@ -1022,7 +1022,7 @@ public class TongKetBanHang_GUI extends JPanel {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Lưu báo cáo doanh thu");
         chooser.setFileFilter(new FileNameExtensionFilter("Excel 97-2003 (*.xls)", "xls"));
-        chooser.setSelectedFile(new File("BaoCaoDoanhThu_" + selectedMode.getText() + ".xls"));
+        chooser.setSelectedFile(new File(taoTenFileBaoCao(range)));
 
         int result = chooser.showSaveDialog(this);
         if (result != JFileChooser.APPROVE_OPTION) {
@@ -1103,6 +1103,58 @@ public class TongKetBanHang_GUI extends JPanel {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Xuất báo cáo thất bại:\n" + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private String taoTenFileBaoCao(DateRange range) {
+        if (range == null) {
+            return "BaoCaoDoanhThu.xls";
+        }
+
+        if (selectedMode == PeriodMode.NGAY) {
+            if (range.start.equals(range.end)) {
+                return "BaoCaoDoanhThu_Ngay_" + dinhDangNgayChoFile(range.start) + ".xls";
+            }
+
+            return "BaoCaoDoanhThu_TuNgay_" + dinhDangNgayChoFile(range.start)
+                    + "_DenNgay_" + dinhDangNgayChoFile(range.end) + ".xls";
+        }
+
+        if (selectedMode == PeriodMode.TUAN) {
+            int fromWeek = getWeekNumber(cboFromWeek);
+            int toWeek = getWeekNumber(cboToWeek);
+            int year = Integer.parseInt(cboWeekYear.getSelectedItem().toString());
+
+            if (fromWeek == toWeek) {
+                return String.format("BaoCaoDoanhThu_Tuan_%02d_Nam_%d.xls", fromWeek, year);
+            }
+
+            return String.format("BaoCaoDoanhThu_Tuan_%02d_DenTuan_%02d_Nam_%d.xls", fromWeek, toWeek, year);
+        }
+
+        if (selectedMode == PeriodMode.THANG) {
+            int fromMonth = cboFromMonth.getSelectedIndex() + 1;
+            int toMonth = cboToMonth.getSelectedIndex() + 1;
+            int year = Integer.parseInt(cboMonthYear.getSelectedItem().toString());
+
+            if (fromMonth == toMonth) {
+                return String.format("BaoCaoDoanhThu_Thang_%02d_Nam_%d.xls", fromMonth, year);
+            }
+
+            return String.format("BaoCaoDoanhThu_Thang_%02d_DenThang_%02d_Nam_%d.xls", fromMonth, toMonth, year);
+        }
+
+        int fromYear = Integer.parseInt(cboFromYear.getSelectedItem().toString());
+        int toYear = Integer.parseInt(cboToYear.getSelectedItem().toString());
+
+        if (fromYear == toYear) {
+            return "BaoCaoDoanhThu_Nam_" + fromYear + ".xls";
+        }
+
+        return "BaoCaoDoanhThu_TuNam_" + fromYear + "_DenNam_" + toYear + ".xls";
+    }
+
+    private String dinhDangNgayChoFile(LocalDate date) {
+        return date.format(DateTimeFormatter.ofPattern("ddMMyyyy"));
     }
 
     private LocalDate toLocalDate(Date date) {

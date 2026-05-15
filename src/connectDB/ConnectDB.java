@@ -21,10 +21,10 @@ public class ConnectDB {
 //        máy khac kết nói cùng db cùng mạng
 
         
-=======
-        String url = "jdbc:sqlserver://192.168.1.127:1433;databaseName=QL_NhaHang;encrypt=true;trustServerCertificate=true";
 
->>>>>>> da36c3a388a6db88db34046d3d3cf7ca7cb6b80b
+//        String url = "jdbc:sqlserver://192.168.1.127:1433;databaseName=QL_NhaHang;encrypt=true;trustServerCertificate=true";
+
+//>>>>>>> da36c3a388a6db88db34046d3d3cf7ca7cb6b80b
         try {
         	if (con == null || con.isClosed()) {
         		con = DriverManager.getConnection(url, username, password);

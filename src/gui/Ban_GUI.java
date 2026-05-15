@@ -18,21 +18,16 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.text.Normalizer;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,7 +60,7 @@ import entity.LoaiBan;
 import entity.TaiKhoan;
 
 public class Ban_GUI extends JPanel {
-
+    private static final long serialVersionUID = 1L;
 
     private static final String FILTER_ALL = "ALL";
     private static final String STATUS_TRONG = "Bàn trống";
@@ -80,7 +75,7 @@ public class Ban_GUI extends JPanel {
 
     private final List<Ban> dsBan = new ArrayList<>();
     private final Map<String, KhuVuc> khuVucMap = new LinkedHashMap<>();
-    private final Map<String, String> loaiBanMap = createLoaiBanMap();
+    private final Map<String, String> loaiBanMap = new LinkedHashMap<>();
     private final Map<String, String> hienThiTrangThaiMap = new HashMap<>();
     private final Map<String, JButton> floorButtonMap = new LinkedHashMap<>();
     private final Map<String, BanCard> banCardMap = new HashMap<>();
@@ -172,8 +167,10 @@ public class Ban_GUI extends JPanel {
 
         JPanel searchRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         searchRow.setOpaque(false);
+
         JLabel lblSearch = new JLabel("Tìm bàn:");
         lblSearch.setFont(new Font("SansSerif", Font.BOLD, 13));
+
         txtSearch = new PromptTextField("Nhập mã bàn, tên bàn, khu vực, loại bàn hoặc trạng thái...");
         txtSearch.setPreferredSize(new Dimension(360, 36));
         txtSearch.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -185,8 +182,10 @@ public class Ban_GUI extends JPanel {
             @Override public void removeUpdate(DocumentEvent e) { renderData(); }
             @Override public void changedUpdate(DocumentEvent e) { renderData(); }
         });
+
         JButton btnLamMoi = createActionButton("Làm mới", new Color(245, 235, 220), new Color(120, 90, 70));
         btnLamMoi.addActionListener(e -> napDuLieuVaRender(true));
+
         searchRow.add(lblSearch);
         searchRow.add(txtSearch);
         searchRow.add(btnLamMoi);
@@ -195,14 +194,19 @@ public class Ban_GUI extends JPanel {
 
         JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonRow.setOpaque(false);
+
         JButton btnThem = createActionButton("Thêm bàn", new Color(225, 240, 255), new Color(40, 100, 180));
         btnThem.addActionListener(e -> moDialogThemBan());
+
         JButton btnSua = createActionButton("Sửa bàn", new Color(230, 244, 234), new Color(46, 125, 50));
         btnSua.addActionListener(e -> moDialogSuaBan());
+
         JButton btnXoa = createActionButton("Xóa bàn", new Color(255, 235, 238), new Color(198, 40, 40));
         btnXoa.addActionListener(e -> xuLyXoaBan());
+
         JButton btnChuyen = createActionButton("Chuyển khu vực", new Color(232, 245, 253), new Color(2, 119, 189));
         btnChuyen.addActionListener(e -> moDialogChuyenKhuVuc());
+
         buttonRow.add(btnThem);
         buttonRow.add(btnSua);
         buttonRow.add(btnXoa);
@@ -233,11 +237,13 @@ public class Ban_GUI extends JPanel {
 
         JPanel selectedCard = createCard();
         selectedCard.setLayout(new BorderLayout(0, 14));
+
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
         JLabel lblDetail = new JLabel("Chi tiết bàn đang chọn");
         lblDetail.setFont(new Font("SansSerif", Font.BOLD, 18));
         top.add(lblDetail, BorderLayout.WEST);
+
         lblDangChon = new JLabel("Chưa chọn bàn");
         lblDangChon.setFont(new Font("SansSerif", Font.BOLD, 13));
         lblDangChon.setForeground(new Color(120, 120, 120));
@@ -253,16 +259,19 @@ public class Ban_GUI extends JPanel {
         gbc.weightx = 1;
         gbc.gridx = 0;
         gbc.gridy = 0;
+
         lblChonMa = addDetailRow(form, gbc, "Mã bàn:");
         lblChonTen = addDetailRow(form, gbc, "Tên bàn:");
         lblChonKhu = addDetailRow(form, gbc, "Khu vực:");
         lblChonLoai = addDetailRow(form, gbc, "Loại bàn:");
         lblChonChoNgoi = addDetailRow(form, gbc, "Số chỗ ngồi:");
         lblChonTrangThai = addDetailRow(form, gbc, "Trạng thái thực tế:");
+
         gbc.gridy++;
         JLabel lblNote = new JLabel("Ghi chú / nhật ký:");
         lblNote.setFont(new Font("SansSerif", Font.BOLD, 13));
         form.add(lblNote, gbc);
+
         gbc.gridy++;
         txtGhiChu = new JTextArea(8, 20);
         txtGhiChu.setEditable(false);
@@ -273,9 +282,12 @@ public class Ban_GUI extends JPanel {
                 new LineBorder(new Color(225, 225, 225), 1, true),
                 new EmptyBorder(10, 10, 10, 10)));
         txtGhiChu.setBackground(new Color(250, 250, 250));
-        form.add(new JScrollPane(txtGhiChu), gbc);
-        selectedCard.add(form, BorderLayout.CENTER);
 
+        JScrollPane noteScroll = new JScrollPane(txtGhiChu);
+        noteScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        form.add(noteScroll, gbc);
+
+        selectedCard.add(form, BorderLayout.CENTER);
         rightPanel.add(statsCard);
         rightPanel.add(Box.createRigidArea(new Dimension(0, 16)));
         rightPanel.add(selectedCard);
@@ -311,6 +323,7 @@ public class Ban_GUI extends JPanel {
         lbl.setFont(new Font("SansSerif", Font.BOLD, 13));
         container.add(lbl, gbc);
         gbc.gridy++;
+
         JLabel value = new JLabel("-");
         value.setOpaque(true);
         value.setBackground(Color.WHITE);
@@ -330,6 +343,233 @@ public class Ban_GUI extends JPanel {
                 new LineBorder(new Color(228, 228, 228), 1, true),
                 new EmptyBorder(16, 16, 16, 16)));
         return panel;
+    }
+
+    private JButton createActionButton(String text, Color bg, Color fg) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("SansSerif", Font.BOLD, 13));
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setBackground(bg);
+        button.setForeground(fg);
+        button.setOpaque(true);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(fg.brighter(), 1, true),
+                new EmptyBorder(8, 14, 8, 14)));
+        return button;
+    }
+
+    private JButton createFilterButton(String text, boolean selected) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("SansSerif", Font.BOLD, 13));
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
+        button.setBorderPainted(true);
+        styleFilterButton(button, selected);
+        return button;
+    }
+
+    private void styleFilterButton(JButton button, boolean selected) {
+        if (selected) {
+            button.setBackground(new Color(40, 100, 180));
+            button.setForeground(Color.WHITE);
+            button.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(new Color(25, 75, 145), 1, true),
+                    new EmptyBorder(9, 16, 9, 16)));
+        } else {
+            button.setBackground(Color.WHITE);
+            button.setForeground(new Color(55, 55, 55));
+            button.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(new Color(215, 215, 215), 1, true),
+                    new EmptyBorder(9, 16, 9, 16)));
+        }
+    }
+
+    private void napDuLieuVaRender(boolean giuLaiLuaChon) {
+        String maDangChon = banDangChon == null ? null : banDangChon.getMaBan();
+        dsBan.clear();
+        khuVucMap.clear();
+        loaiBanMap.clear();
+        hienThiTrangThaiMap.clear();
+        banCardMap.clear();
+
+        try {
+            for (Object obj : khuVucDAO.getAllKhuVuc()) {
+                if (obj instanceof KhuVuc) {
+                    KhuVuc kv = (KhuVuc) obj;
+                    khuVucMap.put(kv.getMaKhuVuc(), kv);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            thongBaoLoi("Không tải được danh sách khu vực từ CSDL.");
+        }
+
+        napLoaiBanTuCSDL();
+
+        try {
+            for (Object obj : banDAO.getAllBan()) {
+                if (obj instanceof Ban) {
+                    Ban ban = (Ban) obj;
+                    boSungThongTinBan(ban);
+                    dsBan.add(ban);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            thongBaoLoi("Không tải được danh sách bàn từ CSDL.");
+        }
+
+        sapXepBan(dsBan);
+        napTrangThaiHienTai();
+        damBaoBoLocHopLe();
+        buildFilterButtons();
+
+        banDangChon = giuLaiLuaChon && maDangChon != null ? timBanTheoMa(maDangChon) : null;
+        renderData();
+        capNhatThongTinChon();
+    }
+
+    private void napLoaiBanTuCSDL() {
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            con = ConnectDB.getConnection();
+            if (con == null) return;
+            String sql = "SELECT maLoaiBan, tenLoaiBan FROM LoaiBan ORDER BY maLoaiBan";
+            stmt = con.prepareStatement(sql);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                loaiBanMap.put(rs.getString("maLoaiBan"), rs.getString("tenLoaiBan"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeQuietly(rs);
+            closeQuietly(stmt);
+        }
+
+        if (loaiBanMap.isEmpty()) {
+            loaiBanMap.put("LB001", "Bàn 2 người");
+            loaiBanMap.put("LB002", "Bàn 4 người");
+            loaiBanMap.put("LB003", "Bàn 6 người");
+            loaiBanMap.put("LB004", "Bàn 8 người");
+        }
+    }
+
+    private void boSungThongTinBan(Ban ban) {
+        if (ban == null) return;
+
+        if (ban.getMaKhuVuc() != null) {
+            String maKV = ban.getMaKhuVuc().getMaKhuVuc();
+            KhuVuc kvDayDu = khuVucMap.get(maKV);
+            if (kvDayDu != null) ban.setMaKhuVuc(kvDayDu);
+        }
+
+        if (ban.getMaLoaiBan() != null) {
+            String maLoai = ban.getMaLoaiBan().getMaLoaiBan();
+            String tenLoai = loaiBanMap.get(maLoai);
+            if (tenLoai != null) ban.setMaLoaiBan(new LoaiBan(maLoai, tenLoai));
+        }
+    }
+
+    private void napTrangThaiHienTai() {
+        hienThiTrangThaiMap.clear();
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            con = ConnectDB.getConnection();
+            if (con == null) return;
+
+            String sql =
+                    "SELECT b.maBan, " +
+                    "CASE " +
+                    "WHEN b.trangThai = N'Bảo trì' THEN N'Bảo trì' " +
+                    "WHEN EXISTS ( " +
+                    "   SELECT 1 FROM HoaDon_Ban hdb " +
+                    "   JOIN HoaDon hd ON hd.maHD = hdb.maHD " +
+                    "   WHERE hdb.maBan = b.maBan " +
+                    "   AND hd.thoiGianRa IS NULL " +
+                    "   AND (hd.trangThai IS NULL OR hd.trangThai NOT IN " +
+                    "       (N'Đã thanh toán', N'Đã hủy', N'Hủy', N'Hoàn tất', N'Đã hoàn thành')) " +
+                    ") THEN N'Đang phục vụ' " +
+                    "WHEN EXISTS ( " +
+                    "   SELECT 1 FROM PhieuDatBan_Ban pdbb " +
+                    "   JOIN PhieuDatBan pdb ON pdb.maPhieuDatBan = pdbb.maPhieuDatBan " +
+                    "   WHERE pdbb.maBan = b.maBan " +
+                    "   AND CAST(pdb.thoiGianDen AS DATE) = CAST(GETDATE() AS DATE) " +
+                    "   AND (pdb.trangThai IS NULL OR pdb.trangThai IN " +
+                    "       (N'Đang chờ', N'Đã đặt', N'Chờ nhận bàn')) " +
+                    ") THEN N'Đã đặt' " +
+                    "ELSE N'Bàn trống' END AS trangThaiHienTai " +
+                    "FROM Ban b";
+
+            stmt = con.prepareStatement(sql);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                hienThiTrangThaiMap.put(rs.getString("maBan"), chuanHoaTrangThai(rs.getString("trangThaiHienTai")));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeQuietly(rs);
+            closeQuietly(stmt);
+        }
+    }
+
+    private String layTrangThaiHienTaiTuCSDL(String maBan) {
+        if (maBan == null || maBan.trim().isEmpty()) return STATUS_TRONG;
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            con = ConnectDB.getConnection();
+            if (con == null) return STATUS_PHUC_VU;
+
+            String sql =
+                    "SELECT CASE " +
+                    "WHEN b.trangThai = N'Bảo trì' THEN N'Bảo trì' " +
+                    "WHEN EXISTS ( " +
+                    "   SELECT 1 FROM HoaDon_Ban hdb " +
+                    "   JOIN HoaDon hd ON hd.maHD = hdb.maHD " +
+                    "   WHERE hdb.maBan = b.maBan " +
+                    "   AND hd.thoiGianRa IS NULL " +
+                    "   AND (hd.trangThai IS NULL OR hd.trangThai NOT IN " +
+                    "       (N'Đã thanh toán', N'Đã hủy', N'Hủy', N'Hoàn tất', N'Đã hoàn thành')) " +
+                    ") THEN N'Đang phục vụ' " +
+                    "WHEN EXISTS ( " +
+                    "   SELECT 1 FROM PhieuDatBan_Ban pdbb " +
+                    "   JOIN PhieuDatBan pdb ON pdb.maPhieuDatBan = pdbb.maPhieuDatBan " +
+                    "   WHERE pdbb.maBan = b.maBan " +
+                    "   AND CAST(pdb.thoiGianDen AS DATE) = CAST(GETDATE() AS DATE) " +
+                    "   AND (pdb.trangThai IS NULL OR pdb.trangThai IN " +
+                    "       (N'Đang chờ', N'Đã đặt', N'Chờ nhận bàn')) " +
+                    ") THEN N'Đã đặt' " +
+                    "ELSE N'Bàn trống' END AS trangThaiHienTai " +
+                    "FROM Ban b WHERE b.maBan = ?";
+
+            stmt = con.prepareStatement(sql);
+            stmt.setString(1, maBan);
+            rs = stmt.executeQuery();
+            if (rs.next()) return chuanHoaTrangThai(rs.getString("trangThaiHienTai"));
+            return STATUS_TRONG;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return STATUS_PHUC_VU;
+        } finally {
+            closeQuietly(rs);
+            closeQuietly(stmt);
+        }
+    }
+
+    private boolean laBanDangDatHoacPhucVu(String maBan) {
+        String trangThai = layTrangThaiHienTaiTuCSDL(maBan);
+        return STATUS_DAT.equalsIgnoreCase(trangThai) || STATUS_PHUC_VU.equalsIgnoreCase(trangThai);
     }
 
     private void buildFilterButtons() {
@@ -369,173 +609,9 @@ public class Ban_GUI extends JPanel {
         }
     }
 
-    private JButton createFilterButton(String text, boolean selected) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("SansSerif", Font.BOLD, 13));
-        button.setFocusPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setOpaque(true);
-        button.setContentAreaFilled(true);
-        button.setBorderPainted(true);
-        styleFilterButton(button, selected);
-        return button;
-    }
-
-    private void styleFilterButton(JButton button, boolean selected) {
-        if (selected) {
-            button.setBackground(new Color(40, 100, 180));
-            button.setForeground(Color.WHITE);
-            button.setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(new Color(25, 75, 145), 1, true),
-                    new EmptyBorder(9, 16, 9, 16)));
-        } else {
-            button.setBackground(Color.WHITE);
-            button.setForeground(new Color(55, 55, 55));
-            button.setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(new Color(215, 215, 215), 1, true),
-                    new EmptyBorder(9, 16, 9, 16)));
-        }
-    }
-
-    private JButton createActionButton(String text, Color bg, Color fg) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("SansSerif", Font.BOLD, 13));
-        button.setFocusPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setBackground(bg);
-        button.setForeground(fg);
-        button.setOpaque(true);
-        button.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(fg.brighter(), 1, true),
-                new EmptyBorder(8, 14, 8, 14)));
-        return button;
-    }
-
-    private void napDuLieuVaRender(boolean giuLaiLuaChon) {
-        String maDangChon = banDangChon == null ? null : banDangChon.getMaBan();
-
-        dsBan.clear();
-        khuVucMap.clear();
-        hienThiTrangThaiMap.clear();
-        banCardMap.clear();
-
-        try {
-            for (Object obj : khuVucDAO.getAllKhuVuc()) {
-                if (obj instanceof KhuVuc) {
-                    KhuVuc kv = (KhuVuc) obj;
-                    khuVucMap.put(kv.getMaKhuVuc(), kv);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            thongBaoLoi("Không tải được danh sách khu vực từ CSDL.");
-        }
-
-        try {
-            for (Object obj : banDAO.getAllBan()) {
-                if (obj instanceof Ban) {
-                    dsBan.add((Ban) obj);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            thongBaoLoi("Không tải được danh sách bàn từ CSDL.");
-        }
-
-        sapXepBan(dsBan);
-        napTrangThaiHienTai();
-        damBaoBoLocHopLe();
-        buildFilterButtons();
-
-        banDangChon = giuLaiLuaChon && maDangChon != null ? timBanTheoMa(maDangChon) : null;
-        renderData();
-        capNhatThongTinChon();
-    }
-
     private void damBaoBoLocHopLe() {
-        if (FILTER_ALL.equals(floorFilter)) return;
-        if (!khuVucMap.containsKey(floorFilter)) {
+        if (!FILTER_ALL.equals(floorFilter) && !khuVucMap.containsKey(floorFilter)) {
             floorFilter = FILTER_ALL;
-        }
-    }
-
-    private void napTrangThaiHienTai() {
-        hienThiTrangThaiMap.clear();
-        Connection con = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        try {
-            con = ConnectDB.getConnection();
-            if (con == null) {
-                napTrangThaiTuDAO();
-                return;
-            }
-            String sql =
-                    "SELECT b.maBan, " +
-                    "CASE " +
-
-                    // ĐANG PHỤC VỤ
-                    "WHEN EXISTS ( " +
-                    "    SELECT 1 " +
-                    "    FROM HoaDon hd " +
-                    "    JOIN HoaDon_Ban hdb " +
-                    "        ON hd.maHD = hdb.maHD " +
-                    "    WHERE hdb.maBan = b.maBan " +
-                    "      AND hd.thoiGianRa IS NULL " +
-                    "      AND ( " +
-                    "            hd.trangThai IS NULL " +
-                    "            OR hd.trangThai NOT IN " +
-                    "            (N'Đã thanh toán', N'Đã hủy', N'Hủy', N'Hoàn tất', N'Đã hoàn thành') " +
-                    "      ) " +
-                    ") THEN N'Đang phục vụ' " +
-
-                    // ĐÃ ĐẶT
-                    "WHEN EXISTS ( " +
-                    "    SELECT 1 " +
-                    "    FROM PhieuDatBan pdb " +
-                    "    JOIN PhieuDatBan_Ban pdbb " +
-                    "        ON pdb.maPhieuDatBan = pdbb.maPhieuDatBan " +
-                    "    WHERE pdbb.maBan = b.maBan " +
-                    "      AND CAST(pdb.thoiGianDen AS DATE) = CAST(GETDATE() AS DATE) " +
-                    "      AND ( " +
-                    "            pdb.trangThai IS NULL " +
-                    "            OR pdb.trangThai NOT IN " +
-                    "            (N'Đã hủy', N'Hủy', N'Đã nhận bàn', N'Hoàn tất', N'Đã hoàn thành') " +
-                    "      ) " +
-                    ") THEN N'Đã đặt' " +
-
-                    // CÒN LẠI
-                    "ELSE N'Bàn trống' " +
-                    "END AS trangThaiHienTai " +
-
-                    "FROM Ban b";
-            stmt = con.prepareStatement(sql);
-            rs = stmt.executeQuery();
-            while (rs.next()) {
-                hienThiTrangThaiMap.put(rs.getString("maBan"), chuanHoaTrangThai(rs.getString("trangThaiHienTai")));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            napTrangThaiTuDAO();
-        } finally {
-            closeQuietly(rs);
-            closeQuietly(stmt);
-        }
-    }
-
-    private void napTrangThaiTuDAO() {
-        try {
-            Timestamp now = Timestamp.valueOf(LocalDateTime.now());
-            for (Object obj : banDAO.getDanhSachBanTheoThoiGian(now)) {
-                if (obj instanceof String[]) {
-                    String[] row = (String[]) obj;
-                    if (row.length >= 3) {
-                        hienThiTrangThaiMap.put(row[0], chuanHoaTrangThai(row[2]));
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -545,9 +621,7 @@ public class Ban_GUI extends JPanel {
         banCardMap.clear();
 
         Map<String, List<Ban>> grouped = new LinkedHashMap<>();
-        for (String maKV : khuVucMap.keySet()) {
-            grouped.put(maKV, new ArrayList<>());
-        }
+        for (String maKV : khuVucMap.keySet()) grouped.put(maKV, new ArrayList<>());
 
         for (Ban ban : dsBan) {
             if (!phuHopBoLoc(ban)) continue;
@@ -578,6 +652,7 @@ public class Ban_GUI extends JPanel {
 
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
+
         JPanel titlePanel = new JPanel(new GridLayout(2, 1));
         titlePanel.setOpaque(false);
         JLabel lblTitle = new JLabel(xayDungTenHienThiKhuVuc(khuVuc));
@@ -590,14 +665,13 @@ public class Ban_GUI extends JPanel {
         titlePanel.add(lblTitle);
         titlePanel.add(lblSub);
         header.add(titlePanel, BorderLayout.WEST);
+
         JLabel lblCount = new JLabel(dsTheoKV.size() + " / " + khuVuc.getSoLuongBan() + " bàn");
         lblCount.setFont(new Font("SansSerif", Font.BOLD, 14));
         lblCount.setForeground(dsTheoKV.size() > khuVuc.getSoLuongBan() ? new Color(198, 40, 40) : new Color(40, 100, 180));
         header.add(lblCount, BorderLayout.EAST);
         wrapper.add(header, BorderLayout.NORTH);
 
-        JPanel itemsWrap = new JPanel(new GridLayout(0, 5, 12, 12));
-        itemsWrap.setOpaque(false);
         if (dsTheoKV.isEmpty()) {
             JPanel empty = new JPanel(new BorderLayout());
             empty.setOpaque(true);
@@ -613,6 +687,8 @@ public class Ban_GUI extends JPanel {
             return wrapper;
         }
 
+        JPanel itemsWrap = new JPanel(new GridLayout(0, 5, 12, 16));
+        itemsWrap.setOpaque(false);
         for (Ban ban : dsTheoKV) {
             BanCard card = new BanCard(ban);
             banCardMap.put(ban.getMaBan(), card);
@@ -626,8 +702,10 @@ public class Ban_GUI extends JPanel {
         if (ban == null) return false;
         String maKV = ban.getMaKhuVuc() == null ? "" : ban.getMaKhuVuc().getMaKhuVuc();
         if (!FILTER_ALL.equals(floorFilter) && !Objects.equals(floorFilter, maKV)) return false;
+
         String keyword = normalize(txtSearch == null ? "" : txtSearch.getText());
         if (keyword.isEmpty()) return true;
+
         return normalize(ban.getMaBan()).contains(keyword)
                 || normalize(layTenBanHienThi(ban)).contains(keyword)
                 || normalize(layTenKhuVuc(ban)).contains(keyword)
@@ -640,6 +718,7 @@ public class Ban_GUI extends JPanel {
         int trong = 0;
         int daDat = 0;
         int dangPhucVu = 0;
+
         for (Ban ban : dsBan) {
             if (!phuHopBoLoc(ban)) continue;
             tong++;
@@ -648,10 +727,17 @@ public class Ban_GUI extends JPanel {
             else if (STATUS_DAT.equalsIgnoreCase(status)) daDat++;
             else if (STATUS_PHUC_VU.equalsIgnoreCase(status)) dangPhucVu++;
         }
+
         lblTongBan.setText(String.valueOf(tong));
         lblBanTrong.setText(String.valueOf(trong));
         lblDaDat.setText(String.valueOf(daDat));
         lblDangPhucVu.setText(String.valueOf(dangPhucVu));
+    }
+
+    private void chonBan(Ban ban) {
+        this.banDangChon = ban;
+        capNhatThongTinChon();
+        capNhatHighlightLuaChon();
     }
 
     private void capNhatThongTinChon() {
@@ -689,12 +775,6 @@ public class Ban_GUI extends JPanel {
         }
     }
 
-    private void chonBan(Ban ban) {
-        this.banDangChon = ban;
-        capNhatThongTinChon();
-        capNhatHighlightLuaChon();
-    }
-
     private void taiLaiVaChonBan(String maBanCanChon) {
         napDuLieuVaRender(false);
         banDangChon = timBanTheoMa(maBanCanChon);
@@ -707,27 +787,28 @@ public class Ban_GUI extends JPanel {
             thongBao("Không có dữ liệu khu vực để thêm bàn.");
             return;
         }
+
         JComboBox<ComboItem<KhuVuc>> cboKhuVuc = new JComboBox<>(taoDanhSachKhuVuc());
         cboKhuVuc.setRenderer(new ComboRenderer());
         JComboBox<ComboItem<String>> cboLoaiBan = new JComboBox<>(taoDanhSachLoaiBan());
         cboLoaiBan.setRenderer(new ComboRenderer());
         JComboBox<String> cboTrangThai = new JComboBox<>(new String[] { STATUS_TRONG, STATUS_BAO_TRI });
         JTextArea txtAreaGhiChu = createDialogTextArea();
+
         JLabel lblPreviewMa = createPreviewLabel();
         JLabel lblPreviewTen = createPreviewLabel();
         JLabel lblPreviewSoCho = createPreviewLabel();
 
         Runnable capNhatPreview = () -> {
-            ComboItem<KhuVuc> itemKV = (ComboItem<KhuVuc>) cboKhuVuc.getSelectedItem();
-            ComboItem<String> itemLoai = (ComboItem<String>) cboLoaiBan.getSelectedItem();
+            ComboItem<KhuVuc> itemKV = getSelectedComboItem(cboKhuVuc);
+            ComboItem<String> itemLoai = getSelectedComboItem(cboLoaiBan);
             if (itemKV == null || itemKV.getValue() == null) {
                 lblPreviewMa.setText("Mã bàn dự kiến: -");
                 lblPreviewTen.setText("Tên bàn dự kiến: -");
                 lblPreviewSoCho.setText("Số chỗ ngồi tự động: -");
                 return;
             }
-            KhuVuc kv = itemKV.getValue();
-            String maMoi = taoMaBanKhaDung(kv, null);
+            String maMoi = taoMaBanKhaDung(itemKV.getValue(), null);
             lblPreviewMa.setText("Mã bàn dự kiến: " + safe(maMoi, "-"));
             lblPreviewTen.setText("Tên bàn dự kiến: " + safe(taoTenBanTheoMa(maMoi), "-"));
             lblPreviewSoCho.setText(itemLoai == null || itemLoai.getValue() == null
@@ -746,14 +827,15 @@ public class Ban_GUI extends JPanel {
         addFormRow(panel, 4, "Mã bàn", lblPreviewMa);
         addFormRow(panel, 5, "Tên bàn", lblPreviewTen);
         addFormRow(panel, 6, "Số chỗ", lblPreviewSoCho);
-        JPanel wrapper = createDialogWrapper("Thêm bàn mới",
-                "Mã bàn và tên bàn được sinh theo ký hiệu khu vực đang chọn.", panel, 720, 620);
+
+        JPanel wrapper = createDialogWrapper("Thêm bàn mới", "Mã bàn và tên bàn được sinh theo ký hiệu khu vực đang chọn.", panel, 720, 620);
 
         while (true) {
             int option = JOptionPane.showConfirmDialog(this, wrapper, "Thêm bàn mới", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (option != JOptionPane.OK_OPTION) return;
-            ComboItem<KhuVuc> itemKV = (ComboItem<KhuVuc>) cboKhuVuc.getSelectedItem();
-            ComboItem<String> itemLoai = (ComboItem<String>) cboLoaiBan.getSelectedItem();
+
+            ComboItem<KhuVuc> itemKV = getSelectedComboItem(cboKhuVuc);
+            ComboItem<String> itemLoai = getSelectedComboItem(cboLoaiBan);
             if (itemKV == null || itemKV.getValue() == null) {
                 thongBao("Vui lòng chọn khu vực.");
                 continue;
@@ -762,28 +844,28 @@ public class Ban_GUI extends JPanel {
                 thongBao("Vui lòng chọn loại bàn.");
                 continue;
             }
+
             KhuVuc kv = itemKV.getValue();
             if (!khuVucDangHoatDong(kv)) {
                 thongBao("Khu vực này đang không hoạt động nên không thể thêm bàn.");
                 continue;
             }
-            if (!conSucChuaDeThem(kv.getMaKhuVuc(), null)) {
-                thongBao("Khu vực này đã đủ số lượng bàn theo cấu hình (" + kv.getSoLuongBan() + " bàn).");
-                continue;
-            }
+
             String maMoi = taoMaBanKhaDung(kv, null);
-            String tenMoi = taoTenBanTheoMa(maMoi);
             if (maMoi == null || maMoi.trim().isEmpty()) {
-                thongBao("Không thể tự sinh mã bàn. Kiểm tra lại ký hiệu khu vực.");
+                thongBao("Không thể tự sinh mã bàn. Khu vực có thể đã đủ sức chứa hoặc chưa có ký hiệu.");
                 continue;
             }
             if (timBanTheoMa(maMoi) != null) {
                 thongBao("Mã bàn " + maMoi + " đã tồn tại. Vui lòng làm mới dữ liệu rồi thử lại.");
                 return;
             }
+
             int soCho = macDinhChoNgoiTheoLoai(itemLoai.getValue());
+            String tenMoi = taoTenBanTheoMa(maMoi);
             String trangThai = chuanHoaTrangThai(Objects.toString(cboTrangThai.getSelectedItem(), STATUS_TRONG));
             String ghiChu = catGhiChuBan(nullIfBlank(txtAreaGhiChu.getText()));
+
             Ban banMoi = new Ban(maMoi, kv, new LoaiBan(itemLoai.getValue(), itemLoai.getLabel()), tenMoi, ghiChu, soCho, trangThai);
             if (banDAO.themBan(banMoi)) {
                 thongBao("Đã thêm bàn thành công.\nMã bàn: " + maMoi + "\nTên bàn: " + tenMoi + "\nSố chỗ: " + soCho);
@@ -798,64 +880,56 @@ public class Ban_GUI extends JPanel {
     private void moDialogSuaBan() {
         Ban ban = yeuCauChonBan();
         if (ban == null) return;
-        String trangThaiHienTai = layTrangThaiHienThi(ban);
-        if (STATUS_DAT.equalsIgnoreCase(trangThaiHienTai) || STATUS_PHUC_VU.equalsIgnoreCase(trangThaiHienTai)) {
-            thongBao("Không thể sửa bàn đang ở trạng thái: " + trangThaiHienTai + ".\nVui lòng xử lý phiếu đặt/hóa đơn trước.");
-            return;
-        }
 
-        JTextField txtMaBan = new JTextField(ban.getMaBan());
-        txtMaBan.setEditable(false);
-        JTextField txtKhuVuc = new JTextField(layTenKhuVuc(ban));
-        txtKhuVuc.setEditable(false);
-        JTextField txtTenBan = new JTextField(safe(layTenBanHienThi(ban), ""));
-        txtTenBan.setEditable(false);
         JComboBox<ComboItem<String>> cboLoaiBan = new JComboBox<>(taoDanhSachLoaiBan());
         cboLoaiBan.setRenderer(new ComboRenderer());
-        chonLoaiBan(cboLoaiBan, ban.getMaLoaiBan() == null ? null : ban.getMaLoaiBan().getMaLoaiBan());
-        JLabel lblSoCho = createPreviewLabel();
-        lblSoCho.setText("Số chỗ tự động: " + ban.getSoChoNgoi());
-        cboLoaiBan.addActionListener(e -> {
-            ComboItem<String> itemLoai = (ComboItem<String>) cboLoaiBan.getSelectedItem();
-            lblSoCho.setText(itemLoai == null || itemLoai.getValue() == null
-                    ? "Số chỗ tự động: -"
-                    : "Số chỗ tự động: " + macDinhChoNgoiTheoLoai(itemLoai.getValue()));
-        });
+        chonLoaiBanTrongCombo(cboLoaiBan, ban.getMaLoaiBan() == null ? null : ban.getMaLoaiBan().getMaLoaiBan());
+
         JComboBox<String> cboTrangThai = new JComboBox<>(new String[] { STATUS_TRONG, STATUS_BAO_TRI });
-        cboTrangThai.setSelectedItem(chuanHoaTrangThaiDeLuu(ban));
+        String status = layTrangThaiHienThi(ban);
+        cboTrangThai.setSelectedItem(STATUS_BAO_TRI.equalsIgnoreCase(status) ? STATUS_BAO_TRI : STATUS_TRONG);
+
         JTextArea txtAreaGhiChu = createDialogTextArea();
         txtAreaGhiChu.setText(safe(ban.getGhiChu(), ""));
 
+        JLabel lblMaBan = createPreviewLabel("Mã bàn: " + ban.getMaBan());
+        JLabel lblTenBan = createPreviewLabel("Tên bàn: " + layTenBanHienThi(ban));
+        JLabel lblKhuVuc = createPreviewLabel("Khu vực: " + layTenKhuVuc(ban));
+
         JPanel panel = createFormPanel();
-        addFormRow(panel, 0, "Mã bàn", txtMaBan);
-        addFormRow(panel, 1, "Khu vực", txtKhuVuc);
-        addFormRow(panel, 2, "Tên bàn", txtTenBan);
+        addFormRow(panel, 0, "Mã bàn", lblMaBan);
+        addFormRow(panel, 1, "Tên bàn", lblTenBan);
+        addFormRow(panel, 2, "Khu vực", lblKhuVuc);
         addFormRow(panel, 3, "Loại bàn", cboLoaiBan);
-        addFormRow(panel, 4, "Số chỗ", lblSoCho);
-        addFormRow(panel, 5, "Trạng thái lưu", cboTrangThai);
-        addFormRow(panel, 6, "Ghi chú", createDialogScrollPane(txtAreaGhiChu));
+        addFormRow(panel, 4, "Trạng thái", cboTrangThai);
+        addFormRow(panel, 5, "Ghi chú", createDialogScrollPane(txtAreaGhiChu));
+
+        JPanel wrapper = createDialogWrapper("Sửa thông tin bàn", "Không cho sửa mã bàn trực tiếp. Nếu muốn đổi khu vực hãy dùng chức năng Chuyển khu vực.", panel, 720, 560);
 
         while (true) {
-            int option = JOptionPane.showConfirmDialog(this, panel, "Sửa thông tin bàn", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            int option = JOptionPane.showConfirmDialog(this, wrapper, "Sửa thông tin bàn", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (option != JOptionPane.OK_OPTION) return;
-            ComboItem<String> itemLoai = (ComboItem<String>) cboLoaiBan.getSelectedItem();
+
+            ComboItem<String> itemLoai = getSelectedComboItem(cboLoaiBan);
             if (itemLoai == null || itemLoai.getValue() == null) {
                 thongBao("Vui lòng chọn loại bàn.");
                 continue;
             }
+
             String trangThaiMoi = chuanHoaTrangThai(Objects.toString(cboTrangThai.getSelectedItem(), STATUS_TRONG));
             if (STATUS_BAO_TRI.equalsIgnoreCase(trangThaiMoi) && coDuLieuHoatDong(ban.getMaBan())) {
                 thongBao("Không thể chuyển sang bảo trì vì bàn đang có đặt bàn hoặc hóa đơn đang hoạt động.");
                 continue;
             }
-            int soCho = macDinhChoNgoiTheoLoai(itemLoai.getValue());
+
             ban.setTenBan(layTenBanHienThi(ban));
             ban.setMaLoaiBan(new LoaiBan(itemLoai.getValue(), itemLoai.getLabel()));
-            ban.setSoChoNgoi(soCho);
+            ban.setSoChoNgoi(macDinhChoNgoiTheoLoai(itemLoai.getValue()));
             ban.setTrangThai(trangThaiMoi);
             ban.setGhiChu(catGhiChuBan(nullIfBlank(txtAreaGhiChu.getText())));
+
             if (banDAO.capNhatBan(ban)) {
-                thongBao("Đã cập nhật bàn " + ban.getMaBan() + ".\nTên bàn: " + layTenBanHienThi(ban) + "\nSố chỗ mới: " + soCho);
+                thongBao("Đã cập nhật bàn " + ban.getMaBan() + ".");
                 taiLaiVaChonBan(ban.getMaBan());
                 return;
             }
@@ -867,19 +941,23 @@ public class Ban_GUI extends JPanel {
     private void xuLyXoaBan() {
         Ban ban = yeuCauChonBan();
         if (ban == null) return;
-        String status = layTrangThaiHienThi(ban);
+
+        String status = layTrangThaiHienTaiTuCSDL(ban.getMaBan());
         if (!laBanTrong(status)) {
             thongBao("Chỉ được xóa bàn đang trống.\nBàn hiện tại đang ở trạng thái: " + status);
             return;
         }
+
         if (coDuLieuLienQuan(ban.getMaBan())) {
             thongBao("Không thể xóa vì bàn này đã có dữ liệu hóa đơn hoặc phiếu đặt bàn liên quan.");
             return;
         }
+
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc muốn xóa bàn " + ban.getMaBan() + " không?\nBàn sẽ bị xóa khỏi cơ sở dữ liệu nếu chưa từng phát sinh hóa đơn hoặc phiếu đặt.",
                 "Xác nhận xóa bàn", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (confirm != JOptionPane.YES_OPTION) return;
+
         if (banDAO.xoaBan(ban.getMaBan())) {
             thongBao("Đã xóa bàn " + ban.getMaBan() + ".");
             banDangChon = null;
@@ -892,11 +970,16 @@ public class Ban_GUI extends JPanel {
     private void moDialogChuyenKhuVuc() {
         Ban ban = yeuCauChonBan();
         if (ban == null) return;
-        String status = layTrangThaiHienThi(ban);
-        if (!laBanTrong(status) && !STATUS_BAO_TRI.equalsIgnoreCase(status)) {
-            thongBao("Chỉ chuyển khu vực khi bàn đang trống hoặc bảo trì.\nTrạng thái hiện tại: " + status);
+
+        // CHẶN 1: bàn nguồn đang Đã đặt / Đang phục vụ thì không cho chuyển.
+        String trangThaiNguon = layTrangThaiHienTaiTuCSDL(ban.getMaBan());
+        if (!laBanTrong(trangThaiNguon) && !STATUS_BAO_TRI.equalsIgnoreCase(trangThaiNguon)) {
+            thongBao("Không thể chuyển bàn.\nBàn nguồn " + ban.getMaBan()
+                    + " đang ở trạng thái: " + trangThaiNguon
+                    + ".\nChỉ được chuyển bàn trống hoặc bàn bảo trì.");
             return;
         }
+
         if (khuVucMap.size() < 2) {
             thongBao("Cần có ít nhất 2 khu vực để chuyển bàn.");
             return;
@@ -909,73 +992,103 @@ public class Ban_GUI extends JPanel {
 
         JLabel lblMaBanMoi = createPreviewLabel();
         JLabel lblTenBanMoi = createPreviewLabel();
+        JLabel lblCanhBao = createPreviewLabel();
         JTextArea txtLyDo = createDialogTextArea();
         txtLyDo.setRows(4);
 
         Runnable capNhatPreview = () -> {
-            ComboItem<KhuVuc> item = (ComboItem<KhuVuc>) cboKhuVucDich.getSelectedItem();
+            ComboItem<KhuVuc> item = getSelectedComboItem(cboKhuVucDich);
             if (item == null || item.getValue() == null) {
                 lblMaBanMoi.setText("Mã bàn sau khi chuyển: -");
                 lblTenBanMoi.setText("Tên bàn sau khi chuyển: -");
+                lblCanhBao.setText("Trạng thái bàn đích: -");
                 return;
             }
             KhuVuc khuVucDich = item.getValue();
             String maMoi = taoMaBanKhaDung(khuVucDich, ban.getMaBan());
             lblMaBanMoi.setText("Mã bàn sau khi chuyển: " + safe(maMoi, "-"));
             lblTenBanMoi.setText("Tên bàn sau khi chuyển: " + safe(taoTenBanTheoMa(maMoi), "-"));
+            if (maMoi == null) {
+                lblCanhBao.setText("Trạng thái bàn đích: Không còn mã bàn trống phù hợp trong khu vực này");
+            } else {
+                Ban banDich = timBanTheoMa(maMoi);
+                lblCanhBao.setText(banDich == null
+                        ? "Trạng thái bàn đích: Mã mới chưa tồn tại, có thể chuyển"
+                        : "Trạng thái bàn đích: " + layTrangThaiHienTaiTuCSDL(maMoi));
+            }
         };
         cboKhuVucDich.addActionListener(e -> capNhatPreview.run());
         capNhatPreview.run();
 
         JPanel formPanel = createFormPanel();
-        addFormRow(formPanel, 0, "Bàn hiện tại", createValueLabel(ban.getMaBan() + " - " + layTenBanHienThi(ban)));
-        addFormRow(formPanel, 1, "Khu vực hiện tại", createValueLabel(layTenKhuVuc(ban)));
+        addFormRow(formPanel, 0, "Bàn hiện tại", createPreviewLabel(ban.getMaBan() + " - " + layTenBanHienThi(ban)));
+        addFormRow(formPanel, 1, "Khu vực hiện tại", createPreviewLabel(layTenKhuVuc(ban)));
         addFormRow(formPanel, 2, "Khu vực đích", cboKhuVucDich);
-        addFormRow(formPanel, 3, "Mã bàn mới", lblMaBanMoi);
-        addFormRow(formPanel, 4, "Tên bàn mới", lblTenBanMoi);
-        addFormRow(formPanel, 5, "Lý do chuyển", createDialogScrollPane(txtLyDo));
-        JPanel wrapper = createDialogWrapper("Chuyển khu vực bàn",
-                "Khi chuyển khu vực, hệ thống đổi cả mã bàn và tên bàn theo ký hiệu khu vực mới, đồng thời cập nhật hóa đơn/phiếu đặt liên quan.",
-                formPanel, 760, 600);
+        addFormRow(formPanel, 3, "Mã mới", lblMaBanMoi);
+        addFormRow(formPanel, 4, "Tên mới", lblTenBanMoi);
+        addFormRow(formPanel, 5, "Kiểm tra bàn đích", lblCanhBao);
+        addFormRow(formPanel, 6, "Lý do chuyển", createDialogScrollPane(txtLyDo));
+
+        JPanel wrapper = createDialogWrapper(
+                "Chuyển khu vực bàn",
+                "Hệ thống kiểm tra trạng thái thực tế trước khi chuyển. Không cho chuyển bàn nguồn đang đặt/đang phục vụ và không cho chuyển sang bàn đích đang đặt/đang phục vụ.",
+                formPanel, 760, 620);
 
         while (true) {
             int option = JOptionPane.showConfirmDialog(this, wrapper, "Chuyển khu vực bàn", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (option != JOptionPane.OK_OPTION) return;
-            ComboItem<KhuVuc> item = (ComboItem<KhuVuc>) cboKhuVucDich.getSelectedItem();
+
+            ComboItem<KhuVuc> item = getSelectedComboItem(cboKhuVucDich);
             if (item == null || item.getValue() == null) {
                 thongBao("Vui lòng chọn khu vực đích.");
                 continue;
             }
+
             KhuVuc khuVucDich = item.getValue();
-            if (Objects.equals(khuVucDich.getMaKhuVuc(), maKhuVucHienTai)) {
-                thongBao("Vui lòng chọn khu vực khác khu vực hiện tại.");
-                continue;
-            }
             if (!khuVucDangHoatDong(khuVucDich)) {
-                thongBao("Khu vực đích đang không hoạt động.");
+                thongBao("Khu vực đích đang không hoạt động nên không thể chuyển bàn.");
                 continue;
             }
-            if (!conSucChuaDeThem(khuVucDich.getMaKhuVuc(), ban.getMaBan())) {
-                thongBao("Khu vực đích đã đủ số lượng bàn theo cấu hình.");
-                continue;
-            }
+
             String lyDo = safe(txtLyDo.getText(), "").trim();
             if (lyDo.isEmpty()) {
                 thongBao("Vui lòng nhập lý do chuyển khu vực.");
                 continue;
             }
-            String maBanMoi = taoMaBanKhaDung(khuVucDich, ban.getMaBan());
-            String tenBanMoi = taoTenBanTheoMa(maBanMoi);
-            if (maBanMoi == null || maBanMoi.trim().isEmpty()) {
-                thongBao("Không thể tự sinh mã bàn mới. Kiểm tra ký hiệu hoặc sức chứa khu vực đích.");
+
+            // CHẶN 2: kiểm tra lại bàn nguồn ngay lúc bấm OK để tránh dữ liệu bị thay đổi sau khi mở dialog.
+            String trangThaiNguonMoiNhat = layTrangThaiHienTaiTuCSDL(ban.getMaBan());
+            if (!laBanTrong(trangThaiNguonMoiNhat) && !STATUS_BAO_TRI.equalsIgnoreCase(trangThaiNguonMoiNhat)) {
+                thongBao("Không thể chuyển bàn.\nBàn nguồn " + ban.getMaBan()
+                        + " hiện đang ở trạng thái: " + trangThaiNguonMoiNhat + ".");
                 continue;
             }
-            if (timBanTheoMa(maBanMoi) != null) {
-                thongBao("Mã bàn " + maBanMoi + " đã tồn tại. Vui lòng làm mới dữ liệu rồi thử lại.");
-                return;
+
+            String maBanMoi = taoMaBanKhaDung(khuVucDich, ban.getMaBan());
+            String tenBanMoi = taoTenBanTheoMa(maBanMoi);
+
+            if (maBanMoi == null || maBanMoi.trim().isEmpty()) {
+                thongBao("Không thể tự sinh mã bàn mới. Khu vực đích có thể đã đủ bàn hoặc không còn mã bàn trống.");
+                continue;
             }
+
+            Ban banDichDaTonTai = timBanTheoMa(maBanMoi);
+            if (banDichDaTonTai != null) {
+                String trangThaiDich = layTrangThaiHienTaiTuCSDL(maBanMoi);
+                // CHẶN 3: bàn đích đang Đã đặt / Đang phục vụ thì không cho chuyển.
+                if (STATUS_DAT.equalsIgnoreCase(trangThaiDich) || STATUS_PHUC_VU.equalsIgnoreCase(trangThaiDich)) {
+                    thongBao("Không thể chuyển sang bàn " + maBanMoi
+                            + " vì bàn này đang ở trạng thái: " + trangThaiDich + ".");
+                    continue;
+                }
+                thongBao("Không thể chuyển sang mã " + maBanMoi
+                        + " vì mã bàn này đã tồn tại. Vui lòng làm mới dữ liệu rồi thử lại.");
+                continue;
+            }
+
             if (thucHienChuyenKhuVuc(ban, khuVucDich, maBanMoi, tenBanMoi, lyDo)) {
-                thongBao("Đã chuyển bàn thành công.\nMã cũ: " + ban.getMaBan() + "\nMã mới: " + maBanMoi + "\nTên mới: " + tenBanMoi);
+                thongBao("Đã chuyển bàn thành công.\nMã cũ: " + ban.getMaBan()
+                        + "\nMã mới: " + maBanMoi + "\nTên mới: " + tenBanMoi);
                 taiLaiVaChonBan(maBanMoi);
             } else {
                 thongBaoLoi("Chuyển khu vực thất bại. Kiểm tra dữ liệu khóa ngoại hoặc kết nối CSDL.");
@@ -984,121 +1097,67 @@ public class Ban_GUI extends JPanel {
         }
     }
 
-    private JPanel createDialogWrapper(String title, String desc, JPanel formPanel, int width, int height) {
-        JPanel wrapper = new JPanel(new BorderLayout(0, 12));
-        wrapper.setBackground(Color.WHITE);
-        wrapper.setBorder(new EmptyBorder(12, 14, 12, 14));
-        wrapper.setPreferredSize(new Dimension(width, height));
-        JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
-        JLabel lblDesc = new JLabel("<html><body style='width:" + (width - 80) + "px'>" + desc + "</body></html>");
-        lblDesc.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        lblDesc.setForeground(new Color(100, 100, 100));
-        JPanel header = new JPanel();
-        header.setOpaque(false);
-        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
-        header.add(lblTitle);
-        header.add(Box.createRigidArea(new Dimension(0, 4)));
-        header.add(lblDesc);
-        wrapper.add(header, BorderLayout.NORTH);
-        wrapper.add(formPanel, BorderLayout.CENTER);
-        return wrapper;
-    }
-
-    private boolean thucHienChuyenKhuVuc(Ban banCu, KhuVuc khuVucMoi, String maBanMoi, String tenBanMoi, String lyDo) {
+    private boolean thucHienChuyenKhuVuc(Ban banCu, KhuVuc khuVucDich, String maBanMoi, String tenBanMoi, String lyDo) {
         Connection con = null;
-        PreparedStatement insertBan = null;
-        PreparedStatement updatePhieuDatBan = null;
-        PreparedStatement updateHoaDon = null;
-        PreparedStatement deleteBanCu = null;
+        PreparedStatement stmtInsert = null;
+        PreparedStatement stmtUpdateHDB = null;
+        PreparedStatement stmtUpdatePDBB = null;
+        PreparedStatement stmtDelete = null;
         boolean oldAutoCommit = true;
+
         try {
             con = ConnectDB.getConnection();
             if (con == null) return false;
+
             oldAutoCommit = con.getAutoCommit();
             con.setAutoCommit(false);
 
+            String ghiChuMoi = capNhatGhiChuSauKhiChuyen(banCu, khuVucDich, maBanMoi, lyDo);
             String maLoaiBan = banCu.getMaLoaiBan() == null ? null : banCu.getMaLoaiBan().getMaLoaiBan();
-            String trangThaiLuu = chuanHoaTrangThaiDeLuu(banCu);
-            String ghiChuMoi = taoGhiChuChuyenKhuVuc(banCu, khuVucMoi, maBanMoi, tenBanMoi, lyDo);
+            if (maLoaiBan == null || maLoaiBan.trim().isEmpty()) maLoaiBan = layMaLoaiBanDauTien();
 
-            insertBan = con.prepareStatement(
-                    "INSERT INTO Ban (maBan, maKhuVuc, maLoaiBan, tenBan, ghiChu, soChoNgoi, trangThai) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            insertBan.setString(1, maBanMoi);
-            insertBan.setString(2, khuVucMoi.getMaKhuVuc());
-            insertBan.setString(3, maLoaiBan);
-            insertBan.setString(4, tenBanMoi);
-            insertBan.setString(5, catGhiChuBan(ghiChuMoi));
-            insertBan.setInt(6, banCu.getSoChoNgoi());
-            insertBan.setString(7, trangThaiLuu);
-            insertBan.executeUpdate();
+            String sqlInsert = "INSERT INTO Ban(maBan, maKhuVuc, maLoaiBan, tenBan, ghiChu, soChoNgoi, trangThai) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            stmtInsert = con.prepareStatement(sqlInsert);
+            stmtInsert.setString(1, maBanMoi);
+            stmtInsert.setString(2, khuVucDich.getMaKhuVuc());
+            stmtInsert.setString(3, maLoaiBan);
+            stmtInsert.setString(4, tenBanMoi);
+            stmtInsert.setString(5, ghiChuMoi);
+            stmtInsert.setInt(6, banCu.getSoChoNgoi());
+            stmtInsert.setString(7, chuanHoaTrangThai(banCu.getTrangThai()));
+            stmtInsert.executeUpdate();
 
-            updatePhieuDatBan = con.prepareStatement("UPDATE PhieuDatBan SET maBan = ? WHERE maBan = ?");
-            updatePhieuDatBan.setString(1, maBanMoi);
-            updatePhieuDatBan.setString(2, banCu.getMaBan());
-            updatePhieuDatBan.executeUpdate();
+            stmtUpdateHDB = con.prepareStatement("UPDATE HoaDon_Ban SET maBan = ? WHERE maBan = ?");
+            stmtUpdateHDB.setString(1, maBanMoi);
+            stmtUpdateHDB.setString(2, banCu.getMaBan());
+            stmtUpdateHDB.executeUpdate();
 
-            updateHoaDon = con.prepareStatement("UPDATE HoaDon SET maBan = ? WHERE maBan = ?");
-            updateHoaDon.setString(1, maBanMoi);
-            updateHoaDon.setString(2, banCu.getMaBan());
-            updateHoaDon.executeUpdate();
+            stmtUpdatePDBB = con.prepareStatement("UPDATE PhieuDatBan_Ban SET maBan = ? WHERE maBan = ?");
+            stmtUpdatePDBB.setString(1, maBanMoi);
+            stmtUpdatePDBB.setString(2, banCu.getMaBan());
+            stmtUpdatePDBB.executeUpdate();
 
-            deleteBanCu = con.prepareStatement("DELETE FROM Ban WHERE maBan = ?");
-            deleteBanCu.setString(1, banCu.getMaBan());
-            int deleted = deleteBanCu.executeUpdate();
-            if (deleted <= 0) {
-                con.rollback();
-                return false;
-            }
+            stmtDelete = con.prepareStatement("DELETE FROM Ban WHERE maBan = ?");
+            stmtDelete.setString(1, banCu.getMaBan());
+            stmtDelete.executeUpdate();
+
             con.commit();
             return true;
         } catch (Exception e) {
             e.printStackTrace();
-            try {
-                if (con != null) con.rollback();
-            } catch (SQLException rollbackEx) {
-                rollbackEx.printStackTrace();
+            if (con != null) {
+                try { con.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
             }
             return false;
         } finally {
-            closeQuietly(deleteBanCu);
-            closeQuietly(updateHoaDon);
-            closeQuietly(updatePhieuDatBan);
-            closeQuietly(insertBan);
-            try {
-                if (con != null) con.setAutoCommit(oldAutoCommit);
-            } catch (SQLException e) {
-                e.printStackTrace();
+            closeQuietly(stmtDelete);
+            closeQuietly(stmtUpdatePDBB);
+            closeQuietly(stmtUpdateHDB);
+            closeQuietly(stmtInsert);
+            if (con != null) {
+                try { con.setAutoCommit(oldAutoCommit); } catch (SQLException e) { e.printStackTrace(); }
             }
-        }
-    }
-
-    private boolean coDuLieuLienQuan(String maBan) {
-        Connection con = null;
-        PreparedStatement stmtHoaDon = null;
-        PreparedStatement stmtPhieuDatBan = null;
-        ResultSet rsHoaDon = null;
-        ResultSet rsPhieuDatBan = null;
-        try {
-            con = ConnectDB.getConnection();
-            if (con == null) return true;
-            stmtHoaDon = con.prepareStatement("SELECT TOP 1 1 FROM HoaDon WHERE maBan = ?");
-            stmtHoaDon.setString(1, maBan);
-            rsHoaDon = stmtHoaDon.executeQuery();
-            if (rsHoaDon.next()) return true;
-
-            stmtPhieuDatBan = con.prepareStatement("SELECT TOP 1 1 FROM PhieuDatBan WHERE maBan = ?");
-            stmtPhieuDatBan.setString(1, maBan);
-            rsPhieuDatBan = stmtPhieuDatBan.executeQuery();
-            return rsPhieuDatBan.next();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return true;
-        } finally {
-            closeQuietly(rsPhieuDatBan);
-            closeQuietly(stmtPhieuDatBan);
-            closeQuietly(rsHoaDon);
-            closeQuietly(stmtHoaDon);
         }
     }
 
@@ -1109,14 +1168,25 @@ public class Ban_GUI extends JPanel {
         try {
             con = ConnectDB.getConnection();
             if (con == null) return true;
+
             String sql =
                     "SELECT TOP 1 1 FROM Ban b WHERE b.maBan = ? AND (" +
-                    "EXISTS (SELECT 1 FROM HoaDon hd WHERE hd.maBan = b.maBan " +
-                    "AND hd.thoiGianRa IS NULL " +
-                    "AND (hd.trangThai IS NULL OR hd.trangThai NOT IN (N'Đã thanh toán', N'Đã hủy', N'Hủy'))) " +
-                    "OR EXISTS (SELECT 1 FROM PhieuDatBan pdb WHERE pdb.maBan = b.maBan " +
-                    "AND CAST(pdb.thoiGianDen AS DATE) = CAST(GETDATE() AS DATE) " +
-                    "AND (pdb.trangThai IS NULL OR pdb.trangThai NOT IN (N'Đã hủy', N'Hủy', N'Đã nhận bàn', N'Hoàn tất', N'Đã hoàn thành'))))";
+                    "EXISTS ( " +
+                    "   SELECT 1 FROM HoaDon_Ban hdb " +
+                    "   JOIN HoaDon hd ON hd.maHD = hdb.maHD " +
+                    "   WHERE hdb.maBan = b.maBan " +
+                    "   AND hd.thoiGianRa IS NULL " +
+                    "   AND (hd.trangThai IS NULL OR hd.trangThai NOT IN " +
+                    "       (N'Đã thanh toán', N'Đã hủy', N'Hủy', N'Hoàn tất', N'Đã hoàn thành')) " +
+                    ") OR EXISTS ( " +
+                    "   SELECT 1 FROM PhieuDatBan_Ban pdbb " +
+                    "   JOIN PhieuDatBan pdb ON pdb.maPhieuDatBan = pdbb.maPhieuDatBan " +
+                    "   WHERE pdbb.maBan = b.maBan " +
+                    "   AND CAST(pdb.thoiGianDen AS DATE) = CAST(GETDATE() AS DATE) " +
+                    "   AND (pdb.trangThai IS NULL OR pdb.trangThai IN " +
+                    "       (N'Đang chờ', N'Đã đặt', N'Chờ nhận bàn')) " +
+                    "))";
+
             stmt = con.prepareStatement(sql);
             stmt.setString(1, maBan);
             rs = stmt.executeQuery();
@@ -1130,40 +1200,50 @@ public class Ban_GUI extends JPanel {
         }
     }
 
-    private boolean conSucChuaDeThem(String maKhuVuc, String boQuaMaBan) {
-        int dem = 0;
-        for (Ban ban : dsBan) {
-            if (ban.getMaKhuVuc() == null) continue;
-            if (!Objects.equals(maKhuVuc, ban.getMaKhuVuc().getMaKhuVuc())) continue;
-            if (Objects.equals(boQuaMaBan, ban.getMaBan())) continue;
-            dem++;
+    private boolean coDuLieuLienQuan(String maBan) {
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            con = ConnectDB.getConnection();
+            if (con == null) return true;
+
+            String sql =
+                    "SELECT " +
+                    "(SELECT COUNT(*) FROM HoaDon_Ban WHERE maBan = ?) + " +
+                    "(SELECT COUNT(*) FROM PhieuDatBan_Ban WHERE maBan = ?) AS soDong";
+            stmt = con.prepareStatement(sql);
+            stmt.setString(1, maBan);
+            stmt.setString(2, maBan);
+            rs = stmt.executeQuery();
+            return rs.next() && rs.getInt("soDong") > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return true;
+        } finally {
+            closeQuietly(rs);
+            closeQuietly(stmt);
         }
-        KhuVuc kv = khuVucMap.get(maKhuVuc);
-        return kv != null && dem < kv.getSoLuongBan();
     }
 
-    private String taoMaBanKhaDung(KhuVuc khuVuc, String boQuaMaBan) {
-        if (khuVuc == null) return null;
-        String kyHieu = safe(khuVuc.getKyHieu(), "").trim().toUpperCase(Locale.ROOT);
-        if (kyHieu.isEmpty()) return null;
-        int sucChua = Math.max(1, khuVuc.getSoLuongBan());
-        Set<Integer> daDung = new HashSet<>();
-        Pattern pattern = Pattern.compile("^" + Pattern.quote(kyHieu) + "(\\d+)$", Pattern.CASE_INSENSITIVE);
-        for (Ban ban : dsBan) {
-            if (ban == null) continue;
-            if (Objects.equals(boQuaMaBan, ban.getMaBan())) continue;
-            if (ban.getMaKhuVuc() == null || !Objects.equals(khuVuc.getMaKhuVuc(), ban.getMaKhuVuc().getMaKhuVuc())) continue;
-            Matcher matcher = pattern.matcher(safe(ban.getMaBan(), "").trim());
-            if (matcher.matches()) {
-                try {
-                    daDung.add(Integer.parseInt(matcher.group(1)));
-                } catch (Exception ignored) {
-                }
+    private String taoMaBanKhaDung(KhuVuc kv, String maBanDangChuyen) {
+        if (kv == null) return null;
+        String prefix = layKyHieuKhuVuc(kv);
+        if (prefix.isEmpty()) return null;
+
+        int gioiHan = Math.max(kv.getSoLuongBan(), 99);
+        for (int i = 1; i <= gioiHan; i++) {
+            String ma = prefix + String.format("%02d", i);
+            if (ma.equalsIgnoreCase(maBanDangChuyen)) continue;
+
+            Ban banTonTai = timBanTheoMa(ma);
+            if (banTonTai == null) {
+                return ma;
             }
-        }
-        for (int i = 1; i <= sucChua; i++) {
-            if (!daDung.contains(i)) {
-                return kyHieu + String.format("%02d", i);
+
+            // Nếu sau này có logic chọn trực tiếp mã bàn đích, đoạn này vẫn đảm bảo không chọn bàn đã đặt/đang phục vụ.
+            if (laBanDangDatHoacPhucVu(ma)) {
+                continue;
             }
         }
         return null;
@@ -1171,383 +1251,459 @@ public class Ban_GUI extends JPanel {
 
     private String taoTenBanTheoMa(String maBan) {
         if (maBan == null || maBan.trim().isEmpty()) return null;
-        return "Bàn " + maBan.trim().toUpperCase(Locale.ROOT);
-    }
-
-    private boolean tenBanDangDuocSuDungTrongKhuVuc(String maKhuVuc, String tenBan, String boQuaMaBan) {
-        if (maKhuVuc == null || tenBan == null || tenBan.trim().isEmpty()) return false;
-        String tenCanKiemTra = tenBan.trim();
-        for (Ban ban : dsBan) {
-            if (ban == null) continue;
-            if (Objects.equals(boQuaMaBan, ban.getMaBan())) continue;
-            if (ban.getMaKhuVuc() == null) continue;
-            if (!Objects.equals(maKhuVuc, ban.getMaKhuVuc().getMaKhuVuc())) continue;
-            if (tenCanKiemTra.equalsIgnoreCase(safe(ban.getTenBan(), "").trim())) return true;
-        }
-        return false;
-    }
-
-    private Ban timBanTheoMa(String maBan) {
-        for (Ban ban : dsBan) {
-            if (Objects.equals(ban.getMaBan(), maBan)) return ban;
-        }
-        return null;
-    }
-
-    private void sapXepBan(List<Ban> danhSach) {
-        danhSach.sort(Comparator
-                .comparing((Ban b) -> b.getMaKhuVuc() == null ? "" : safe(b.getMaKhuVuc().getMaKhuVuc(), ""))
-                .thenComparing(Ban::getMaBan, this::soSanhMaBanTuNhien));
-    }
-
-    private int soSanhMaBanTuNhien(String a, String b) {
-        String maA = safe(a, "").trim().toUpperCase(Locale.ROOT);
-        String maB = safe(b, "").trim().toUpperCase(Locale.ROOT);
-        String chuA = maA.replaceAll("\\d+$", "");
-        String chuB = maB.replaceAll("\\d+$", "");
-        int cmpChu = chuA.compareTo(chuB);
-        if (cmpChu != 0) return cmpChu;
-        int soA = laySoCuoiMaBan(maA);
-        int soB = laySoCuoiMaBan(maB);
-        if (soA != soB) return Integer.compare(soA, soB);
-        return maA.compareTo(maB);
-    }
-
-    private int laySoCuoiMaBan(String maBan) {
-        if (maBan == null) return Integer.MAX_VALUE;
-        Matcher matcher = Pattern.compile(".*?(\\d+)$").matcher(maBan.trim());
-        if (matcher.matches()) {
+        Matcher matcher = Pattern.compile("(\\d+)$").matcher(maBan.trim());
+        if (matcher.find()) {
             try {
-                return Integer.parseInt(matcher.group(1));
-            } catch (Exception e) {
-                return Integer.MAX_VALUE;
+                return "Bàn " + Integer.parseInt(matcher.group(1));
+            } catch (NumberFormatException ignored) {
+                return "Bàn " + matcher.group(1);
             }
         }
-        return Integer.MAX_VALUE;
+        return "Bàn " + maBan.trim();
     }
 
-    private String layTenBanHienThi(Ban ban) {
-        if (ban == null) return "-";
-        String tenLuuTrongSQL = safe(ban.getTenBan(), "").trim();
-        if (!tenLuuTrongSQL.isEmpty()) return tenLuuTrongSQL;
-        return taoTenBanTheoMa(ban.getMaBan());
+    private String layKyHieuKhuVuc(KhuVuc kv) {
+        String kyHieu = safe(kv.getKyHieu(), "").trim().toUpperCase(Locale.ROOT);
+        if (!kyHieu.isEmpty()) return kyHieu;
+
+        String ten = normalize(kv.getTenKhuVuc()).toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+        if (!ten.isEmpty()) return ten.substring(0, 1);
+
+        String ma = safe(kv.getMaKhuVuc(), "").trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9]", "");
+        return ma.isEmpty() ? "B" : ma.substring(0, 1);
     }
 
-    private String layTenKhuVuc(Ban ban) {
-        if (ban == null || ban.getMaKhuVuc() == null) return "-";
-        KhuVuc kv = khuVucMap.get(ban.getMaKhuVuc().getMaKhuVuc());
-        return kv == null ? ban.getMaKhuVuc().getMaKhuVuc() : xayDungTenHienThiKhuVuc(kv);
+    private String capNhatGhiChuSauKhiChuyen(Ban banCu, KhuVuc khuVucDich, String maBanMoi, String lyDo) {
+        String ghiChuCu = safe(banCu.getGhiChu(), "").trim();
+        String dongMoi = "Chuyển từ " + banCu.getMaBan() + " sang " + maBanMoi
+                + " - Khu vực: " + safe(khuVucDich.getTenKhuVuc(), khuVucDich.getMaKhuVuc())
+                + " - Lý do: " + lyDo;
+        return catGhiChuBan(ghiChuCu.isEmpty() ? dongMoi : ghiChuCu + "\n" + dongMoi);
     }
 
-    private String layTenLoaiBan(Ban ban) {
-        if (ban == null || ban.getMaLoaiBan() == null) return "-";
-        String maLoai = ban.getMaLoaiBan().getMaLoaiBan();
-        return loaiBanMap.getOrDefault(maLoai, maLoai);
-    }
-
-    private String layTrangThaiHienThi(Ban ban) {
-        if (ban == null) return "-";
-        String stored = chuanHoaTrangThai(ban.getTrangThai());
-        String currentRaw = hienThiTrangThaiMap.get(ban.getMaBan());
-        String current = currentRaw == null ? null : chuanHoaTrangThai(currentRaw);
-        if (STATUS_PHUC_VU.equalsIgnoreCase(current)) return STATUS_PHUC_VU;
-        if (STATUS_DAT.equalsIgnoreCase(current)) return STATUS_DAT;
-        if (STATUS_BAO_TRI.equalsIgnoreCase(stored)) return STATUS_BAO_TRI;
-        if (current != null && !current.trim().isEmpty()) return current;
-        return stored;
-    }
-
-    private String chuanHoaTrangThaiDeLuu(Ban ban) {
-        return ban == null ? STATUS_TRONG : chuanHoaTrangThai(ban.getTrangThai());
-    }
-
-    private String chuanHoaTrangThai(String trangThai) {
-        if (trangThai == null || trangThai.trim().isEmpty()) return STATUS_TRONG;
-        String value = trangThai.trim();
-        if ("Trống".equalsIgnoreCase(value) || STATUS_TRONG.equalsIgnoreCase(value)) return STATUS_TRONG;
-        if ("Đang sử dụng".equalsIgnoreCase(value) || STATUS_PHUC_VU.equalsIgnoreCase(value)) return STATUS_PHUC_VU;
-        if ("Đã đặt".equalsIgnoreCase(value) || STATUS_DAT.equalsIgnoreCase(value)) return STATUS_DAT;
-        if ("Bảo trì".equalsIgnoreCase(value) || STATUS_BAO_TRI.equalsIgnoreCase(value)) return STATUS_BAO_TRI;
-        return value;
-    }
-
-    private boolean laBanTrong(String status) {
-        return STATUS_TRONG.equalsIgnoreCase(status) || "Trống".equalsIgnoreCase(status);
+    private String layMaLoaiBanDauTien() {
+        if (!loaiBanMap.isEmpty()) return loaiBanMap.keySet().iterator().next();
+        return "LB001";
     }
 
     private boolean khuVucDangHoatDong(KhuVuc kv) {
         if (kv == null) return false;
-        String trangThai = safe(kv.getTrangThai(), "").trim();
-        return trangThai.isEmpty()
-                || "Hoạt động".equalsIgnoreCase(trangThai)
-                || "Đang hoạt động".equalsIgnoreCase(trangThai);
-    }
-
-    private String xayDungTenHienThiKhuVuc(KhuVuc kv) {
-        if (kv == null) return "-";
-        String ten = safe(kv.getTenKhuVuc(), kv.getMaKhuVuc());
-        String kyHieu = safe(kv.getKyHieu(), "").trim();
-        return kyHieu.isEmpty() ? ten : ten + " (" + kyHieu + ")";
-    }
-
-    private String xayDungGhiChuChiTiet(Ban ban) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Trạng thái thực tế hiện tại: ").append(layTrangThaiHienThi(ban));
-        sb.append("\nMã bàn: ").append(safe(ban.getMaBan(), "-"));
-        sb.append("\nTên bàn: ").append(layTenBanHienThi(ban));
-        sb.append("\nTrạng thái lưu trong bảng Ban: ").append(safe(chuanHoaTrangThaiDeLuu(ban), STATUS_TRONG));
-        sb.append("\nCập nhật lúc: ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
-        sb.append("\n\nGhi chú bàn:");
-        String ghiChu = safe(ban.getGhiChu(), "").trim();
-        if (ghiChu.isEmpty()) {
-            sb.append("\n- Không có ghi chú.");
-        } else {
-            sb.append("\n- ").append(ghiChu.replace("\n", "\n- "));
-        }
-        return sb.toString();
-    }
-
-    private String taoGhiChuChuyenKhuVuc(Ban banCu, KhuVuc khuVucMoi, String maBanMoi, String tenBanMoi, String lyDo) {
-        String thoiGian = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-        String ghiChuCu = safe(banCu.getGhiChu(), "").trim();
-        String lyDoGon = catChuoi(safe(lyDo, "").replace("\n", " ").trim(), 70);
-
-        StringBuilder sb = new StringBuilder();
-        // Ghi chú của bảng Ban trong SQL chỉ dài NVARCHAR(255), nên ưu tiên lưu lần chuyển mới nhất.
-        sb.append("[Chuyển khu vực] ")
-                .append(thoiGian)
-                .append(" | ").append(banCu.getMaBan())
-                .append(" - ").append(layTenBanHienThi(banCu))
-                .append(" -> ").append(maBanMoi)
-                .append(" - ").append(tenBanMoi)
-                .append(" | ").append(layTenKhuVuc(banCu))
-                .append(" -> ").append(safe(khuVucMoi.getTenKhuVuc(), khuVucMoi.getMaKhuVuc()))
-                .append(" | Lý do: ").append(lyDoGon);
-
-        if (!ghiChuCu.isEmpty()) {
-            sb.append("\nGhi chú cũ: ").append(catChuoi(ghiChuCu.replace("\n", " "), 80));
-        }
-        return catGhiChuBan(sb.toString());
-    }
-
-    private String catGhiChuBan(String value) {
-        return catChuoi(value, 255);
-    }
-
-    private String catChuoi(String value, int maxLength) {
-        if (value == null) return null;
-        String text = value.trim();
-        if (text.length() <= maxLength) return text;
-        if (maxLength <= 3) return text.substring(0, maxLength);
-        return text.substring(0, maxLength - 3) + "...";
+        String tt = normalize(kv.getTrangThai());
+        return tt.isEmpty() || tt.contains("hoat dong") || tt.contains("dang hoat dong");
     }
 
     private int macDinhChoNgoiTheoLoai(String maLoaiBan) {
-        if (maLoaiBan == null) return 4;
-        switch (maLoaiBan) {
-            case "LB01": return 2;
-            case "LB02": return 4;
-            case "LB03": return 6;
-            case "LB04": return 8;
-            default: return 4;
+        String ten = loaiBanMap.get(maLoaiBan);
+        Matcher matcher = Pattern.compile("(\\d+)").matcher(safe(ten, ""));
+        if (matcher.find()) {
+            try { return Integer.parseInt(matcher.group(1)); } catch (Exception ignored) {}
         }
+        String ma = safe(maLoaiBan, "").toUpperCase(Locale.ROOT);
+        if (ma.endsWith("1") || ma.endsWith("001")) return 2;
+        if (ma.endsWith("2") || ma.endsWith("002")) return 4;
+        if (ma.endsWith("3") || ma.endsWith("003")) return 6;
+        if (ma.endsWith("4") || ma.endsWith("004")) return 8;
+        return 4;
     }
 
-    @SuppressWarnings("unchecked")
     private ComboItem<KhuVuc>[] taoDanhSachKhuVuc() {
-        List<ComboItem<KhuVuc>> ds = new ArrayList<>();
+        @SuppressWarnings("unchecked")
+        ComboItem<KhuVuc>[] arr = new ComboItem[khuVucMap.size()];
+        int i = 0;
         for (KhuVuc kv : khuVucMap.values()) {
-            ds.add(new ComboItem<>(xayDungTenHienThiKhuVuc(kv), kv));
+            arr[i++] = new ComboItem<>(kv, labelTabKhuVuc(kv));
         }
-        return ds.toArray(new ComboItem[0]);
+        return arr;
     }
 
-    @SuppressWarnings("unchecked")
     private ComboItem<String>[] taoDanhSachLoaiBan() {
-        List<ComboItem<String>> ds = new ArrayList<>();
+        @SuppressWarnings("unchecked")
+        ComboItem<String>[] arr = new ComboItem[loaiBanMap.size()];
+        int i = 0;
         for (Map.Entry<String, String> entry : loaiBanMap.entrySet()) {
-            ds.add(new ComboItem<>(entry.getValue(), entry.getKey()));
+            arr[i++] = new ComboItem<>(entry.getKey(), safe(entry.getValue(), entry.getKey()));
         }
-        return ds.toArray(new ComboItem[0]);
+        return arr;
     }
 
-    private void chonLoaiBan(JComboBox<ComboItem<String>> comboBox, String maLoaiBan) {
-        if (comboBox == null) return;
-        for (int i = 0; i < comboBox.getItemCount(); i++) {
-            ComboItem<String> item = comboBox.getItemAt(i);
-            if (Objects.equals(item.getValue(), maLoaiBan)) {
-                comboBox.setSelectedIndex(i);
+    private void boChonKhuVucKhac(JComboBox<ComboItem<KhuVuc>> combo, String maKhuVucHienTai) {
+        for (int i = 0; i < combo.getItemCount(); i++) {
+            ComboItem<KhuVuc> item = combo.getItemAt(i);
+            if (item != null && item.getValue() != null
+                    && !Objects.equals(item.getValue().getMaKhuVuc(), maKhuVucHienTai)) {
+                combo.setSelectedIndex(i);
                 return;
             }
         }
     }
 
-    private void boChonKhuVucKhac(JComboBox<ComboItem<KhuVuc>> comboBox, String maKhuVucHienTai) {
-        if (comboBox == null || comboBox.getItemCount() == 0) return;
-        for (int i = 0; i < comboBox.getItemCount(); i++) {
-            ComboItem<KhuVuc> item = comboBox.getItemAt(i);
-            if (item == null || item.getValue() == null) continue;
-            if (!Objects.equals(item.getValue().getMaKhuVuc(), maKhuVucHienTai)) {
-                comboBox.setSelectedIndex(i);
+    private void chonLoaiBanTrongCombo(JComboBox<ComboItem<String>> combo, String maLoaiBan) {
+        for (int i = 0; i < combo.getItemCount(); i++) {
+            ComboItem<String> item = combo.getItemAt(i);
+            if (item != null && Objects.equals(item.getValue(), maLoaiBan)) {
+                combo.setSelectedIndex(i);
                 return;
             }
         }
-        comboBox.setSelectedIndex(0);
     }
 
     private JPanel createFormPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setOpaque(false);
-        // Tăng chiều cao form để các ô ghi chú dạng nhiều dòng không bị ép mỏng trong dialog.
-        panel.setPreferredSize(new Dimension(620, 500));
-        panel.setMinimumSize(new Dimension(620, 470));
         return panel;
     }
 
-    private void addFormRow(JPanel panel, int row, String label, Component comp) {
-        GridBagConstraints gbcLabel = new GridBagConstraints();
-        gbcLabel.gridx = 0;
-        gbcLabel.gridy = row;
-        gbcLabel.anchor = GridBagConstraints.NORTHWEST;
-        gbcLabel.insets = new Insets(8, 0, 8, 14);
+    private void addFormRow(JPanel panel, int row, String label, JComponent field) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 0, 8, 12);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = row;
         JLabel lbl = new JLabel(label + ":");
         lbl.setFont(new Font("SansSerif", Font.BOLD, 13));
-        lbl.setPreferredSize(new Dimension(155, 28));
-        panel.add(lbl, gbcLabel);
+        panel.add(lbl, gbc);
 
-        GridBagConstraints gbcComp = new GridBagConstraints();
-        gbcComp.gridx = 1;
-        gbcComp.gridy = row;
-        gbcComp.weightx = 1;
-        gbcComp.fill = GridBagConstraints.HORIZONTAL;
-        gbcComp.insets = new Insets(8, 0, 8, 0);
-        if (comp instanceof JComponent) ((JComponent) comp).setFont(new Font("SansSerif", Font.PLAIN, 13));
-        if (comp instanceof JTextField) {
-            comp.setPreferredSize(new Dimension(390, 30));
-        } else if (comp instanceof JComboBox) {
-            comp.setPreferredSize(new Dimension(390, 30));
-        } else if (comp instanceof JScrollPane) {
-            // Riêng ô ghi chú cần cao hơn và được fill theo cả 2 chiều để không bị ép thành 1 đường mỏng.
-            gbcComp.fill = GridBagConstraints.BOTH;
-            gbcComp.weighty = 1;
-            comp.setPreferredSize(new Dimension(430, 130));
-            comp.setMinimumSize(new Dimension(430, 120));
-        } else if (comp instanceof JLabel) {
-            comp.setPreferredSize(new Dimension(390, 30));
-        }
-        panel.add(comp, gbcComp);
+        gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 0, 8, 0);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.gridx = 1;
+        gbc.gridy = row;
+        panel.add(field, gbc);
+    }
+
+    private JPanel createDialogWrapper(String title, String desc, JPanel formPanel, int width, int height) {
+        JPanel wrapper = new JPanel(new BorderLayout(0, 12));
+        wrapper.setBackground(Color.WHITE);
+        wrapper.setBorder(new EmptyBorder(12, 14, 12, 14));
+        wrapper.setPreferredSize(new Dimension(width, height));
+
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 18));
+        JLabel lblDesc = new JLabel("<html><body style='width:" + (width - 80) + "px'>" + desc + "</body></html>");
+        lblDesc.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        lblDesc.setForeground(new Color(100, 100, 100));
+
+        JPanel header = new JPanel();
+        header.setOpaque(false);
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+        header.add(lblTitle);
+        header.add(Box.createRigidArea(new Dimension(0, 6)));
+        header.add(lblDesc);
+
+        wrapper.add(header, BorderLayout.NORTH);
+        wrapper.add(formPanel, BorderLayout.CENTER);
+        return wrapper;
     }
 
     private JTextArea createDialogTextArea() {
         JTextArea area = new JTextArea(5, 30);
         area.setLineWrap(true);
         area.setWrapStyleWord(true);
-        area.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        area.setBorder(new EmptyBorder(8, 8, 8, 8));
+        area.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        area.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(215, 215, 215), 1, true),
+                new EmptyBorder(8, 10, 8, 10)));
         return area;
     }
 
     private JScrollPane createDialogScrollPane(JTextArea area) {
-        area.setRows(5);
-        area.setLineWrap(true);
-        area.setWrapStyleWord(true);
         JScrollPane scrollPane = new JScrollPane(area);
-        // Luôn hiện thanh cuộn dọc để người dùng thấy rõ có thể kéo xuống khi ghi chú dài.
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setPreferredSize(new Dimension(430, 130));
-        scrollPane.setMinimumSize(new Dimension(430, 120));
-        scrollPane.setBorder(new LineBorder(new Color(210, 210, 210), 1, true));
-        scrollPane.getVerticalScrollBar().setUnitIncrement(12);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         return scrollPane;
     }
 
     private JLabel createPreviewLabel() {
-        JLabel label = new JLabel("-");
-        label.setFont(new Font("SansSerif", Font.BOLD, 13));
-        label.setForeground(new Color(40, 100, 180));
-        return label;
+        return createPreviewLabel("-");
     }
 
-    private JLabel createValueLabel(String text) {
+    private JLabel createPreviewLabel(String text) {
         JLabel label = new JLabel(text);
-        label.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        label.setForeground(new Color(40, 40, 40));
+        label.setOpaque(true);
+        label.setBackground(new Color(250, 250, 250));
+        label.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        label.setBorder(BorderFactory.createCompoundBorder(
+                new LineBorder(new Color(228, 228, 228), 1, true),
+                new EmptyBorder(8, 10, 8, 10)));
         return label;
     }
 
     private Ban yeuCauChonBan() {
         if (banDangChon == null) {
             thongBao("Vui lòng chọn một bàn trước.");
+            return null;
         }
-        return banDangChon;
+        Ban moiNhat = timBanTheoMa(banDangChon.getMaBan());
+        if (moiNhat == null) {
+            thongBao("Bàn đang chọn không còn tồn tại. Vui lòng làm mới dữ liệu.");
+            napDuLieuVaRender(false);
+            return null;
+        }
+        boSungThongTinBan(moiNhat);
+        banDangChon = moiNhat;
+        return moiNhat;
     }
 
-    private void thongBao(String message) {
-        JOptionPane.showMessageDialog(this, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-    }
+    private Ban timBanTheoMa(String maBan) {
+        if (maBan == null) return null;
+        for (Ban ban : dsBan) {
+            if (ban != null && maBan.equalsIgnoreCase(safe(ban.getMaBan(), ""))) {
+                return ban;
+            }
+        }
 
-    private void thongBaoLoi(String message) {
-        JOptionPane.showMessageDialog(this, message, "Lỗi", JOptionPane.ERROR_MESSAGE);
-    }
-
-    private String normalize(String value) {
-        String raw = safe(value, "").trim().toLowerCase(Locale.ROOT);
-        String normalized = Normalizer.normalize(raw, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
-        return normalized.replace('đ', 'd');
-    }
-
-    private String safe(String value, String fallback) {
-        return value == null ? fallback : value;
-    }
-
-    private String nullIfBlank(String value) {
-        if (value == null || value.trim().isEmpty()) return null;
-        return value.trim();
-    }
-
-    private void closeQuietly(AutoCloseable closeable) {
-        if (closeable == null) return;
         try {
-            closeable.close();
+            Ban ban = banDAO.getBanTheoMa(maBan);
+            if (ban != null) boSungThongTinBan(ban);
+            return ban;
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
     }
 
-    private Map<String, String> createLoaiBanMap() {
-        Map<String, String> map = new LinkedHashMap<>();
-        map.put("LB01", "Bàn 2 chỗ");
-        map.put("LB02", "Bàn 4 chỗ");
-        map.put("LB03", "Bàn 6 chỗ");
-        map.put("LB04", "Bàn 8 chỗ");
-        return map;
+    private void sapXepBan(List<Ban> list) {
+        Collections.sort(list, Comparator
+                .comparing((Ban b) -> b.getMaKhuVuc() == null ? "" : safe(b.getMaKhuVuc().getMaKhuVuc(), ""))
+                .thenComparingInt(b -> laySoThuTuBan(b.getMaBan()))
+                .thenComparing(b -> safe(b.getMaBan(), "")));
+    }
+
+    private int laySoThuTuBan(String maBan) {
+        Matcher matcher = Pattern.compile("(\\d+)$").matcher(safe(maBan, ""));
+        if (matcher.find()) {
+            try { return Integer.parseInt(matcher.group(1)); } catch (Exception ignored) {}
+        }
+        return Integer.MAX_VALUE;
+    }
+
+    private String layTenBanHienThi(Ban ban) {
+        if (ban == null) return "-";
+        String ten = safe(ban.getTenBan(), "").trim();
+        return ten.isEmpty() ? taoTenBanTheoMa(ban.getMaBan()) : ten;
+    }
+
+    private String layTenKhuVuc(Ban ban) {
+        if (ban == null || ban.getMaKhuVuc() == null) return "-";
+        KhuVuc kv = ban.getMaKhuVuc();
+        String ten = safe(kv.getTenKhuVuc(), "").trim();
+        return ten.isEmpty() ? safe(kv.getMaKhuVuc(), "-") : ten;
+    }
+
+    private String layTenLoaiBan(Ban ban) {
+        if (ban == null || ban.getMaLoaiBan() == null) return "-";
+        String maLoai = safe(ban.getMaLoaiBan().getMaLoaiBan(), "");
+        String ten = safe(ban.getMaLoaiBan().getTenLoaiBan(), "").trim();
+        if (!ten.isEmpty()) return ten;
+        return safe(loaiBanMap.get(maLoai), maLoai);
+    }
+
+    private String layTrangThaiHienThi(Ban ban) {
+        if (ban == null) return STATUS_TRONG;
+        String status = hienThiTrangThaiMap.get(ban.getMaBan());
+        if (status != null && !status.trim().isEmpty()) return chuanHoaTrangThai(status);
+        return chuanHoaTrangThai(ban.getTrangThai());
+    }
+
+    private boolean laBanTrong(String status) {
+        String normalized = normalize(status);
+        return normalized.isEmpty() || normalized.equals("ban trong") || normalized.equals("trong");
+    }
+
+    private String chuanHoaTrangThai(String status) {
+        String s = safe(status, "").trim();
+        String n = normalize(s);
+        if (n.contains("phuc vu") || n.contains("dang phuc vu") || n.contains("da nhan ban")) return STATUS_PHUC_VU;
+        if (n.contains("da dat") || n.contains("dang cho") || n.contains("cho nhan ban")) return STATUS_DAT;
+        if (n.contains("bao tri")) return STATUS_BAO_TRI;
+        return STATUS_TRONG;
+    }
+
+    private String xayDungTenHienThiKhuVuc(KhuVuc kv) {
+        if (kv == null) return "Khu vực";
+        String ten = safe(kv.getTenKhuVuc(), kv.getMaKhuVuc());
+        String kyHieu = safe(kv.getKyHieu(), "").trim();
+        return kyHieu.isEmpty() ? ten : ten + " - " + kyHieu;
+    }
+
+    private String xayDungGhiChuChiTiet(Ban ban) {
+        if (ban == null) return "";
+        StringBuilder sb = new StringBuilder();
+        sb.append("Mã bàn: ").append(safe(ban.getMaBan(), "-")).append('\n');
+        sb.append("Tên bàn: ").append(layTenBanHienThi(ban)).append('\n');
+        sb.append("Khu vực: ").append(layTenKhuVuc(ban)).append('\n');
+        sb.append("Loại bàn: ").append(layTenLoaiBan(ban)).append('\n');
+        sb.append("Số chỗ: ").append(ban.getSoChoNgoi()).append('\n');
+        sb.append("Trạng thái thực tế: ").append(layTrangThaiHienThi(ban)).append('\n');
+        String ghiChu = safe(ban.getGhiChu(), "").trim();
+        if (!ghiChu.isEmpty()) {
+            sb.append("\nGhi chú:\n").append(ghiChu);
+        }
+        return sb.toString();
+    }
+
+    private String catGhiChuBan(String text) {
+        String s = safe(text, "").trim();
+        return s.length() > 1000 ? s.substring(0, 1000) : s;
+    }
+
+    private String nullIfBlank(String text) {
+        return text == null || text.trim().isEmpty() ? null : text.trim();
+    }
+
+    private String safe(Object value, String defaultValue) {
+        if (value == null) return defaultValue;
+        String s = String.valueOf(value);
+        return s == null ? defaultValue : s;
+    }
+
+    private String normalize(String input) {
+        String s = safe(input, "").trim().toLowerCase(Locale.ROOT);
+        if (s.isEmpty()) return "";
+        String temp = Normalizer.normalize(s, Normalizer.Form.NFD);
+        temp = temp.replaceAll("\\p{M}", "");
+        temp = temp.replace('đ', 'd').replace('Đ', 'D');
+        return temp.replaceAll("\\s+", " ");
+    }
+
+    private void thongBao(String msg) {
+        JOptionPane.showMessageDialog(this, msg, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void thongBaoLoi(String msg) {
+        JOptionPane.showMessageDialog(this, msg, "Lỗi", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private void closeQuietly(AutoCloseable c) {
+        if (c == null) return;
+        try { c.close(); } catch (Exception ignored) {}
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> ComboItem<T> getSelectedComboItem(JComboBox<ComboItem<T>> combo) {
+        Object obj = combo.getSelectedItem();
+        return obj instanceof ComboItem ? (ComboItem<T>) obj : null;
+    }
+
+    private Color mauTheoTrangThai(String status) {
+        if (STATUS_PHUC_VU.equalsIgnoreCase(status)) return new Color(255, 239, 239);
+        if (STATUS_DAT.equalsIgnoreCase(status)) return new Color(255, 248, 230);
+        if (STATUS_BAO_TRI.equalsIgnoreCase(status)) return new Color(238, 238, 238);
+        return new Color(235, 248, 239);
+    }
+
+    private Color mauChuTheoTrangThai(String status) {
+        if (STATUS_PHUC_VU.equalsIgnoreCase(status)) return new Color(198, 40, 40);
+        if (STATUS_DAT.equalsIgnoreCase(status)) return new Color(230, 126, 34);
+        if (STATUS_BAO_TRI.equalsIgnoreCase(status)) return new Color(90, 90, 90);
+        return new Color(46, 125, 50);
+    }
+
+    private class BanCard extends JPanel {
+        private static final long serialVersionUID = 1L;
+        private final Ban ban;
+        private final JLabel lblMa;
+        private final JLabel lblTen;
+        private final JLabel lblLoai;
+        private final JLabel lblStatus;
+
+        BanCard(Ban ban) {
+            this.ban = ban;
+
+            // Bản sửa UI: tăng chiều cao card và dùng BoxLayout để không bị cắt chữ
+            setLayout(new BorderLayout(0, 0));
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            setPreferredSize(new Dimension(190, 170));
+            setMinimumSize(new Dimension(190, 170));
+            setBackground(Color.WHITE);
+            setOpaque(true);
+
+            lblMa = new JLabel(safe(ban.getMaBan(), "-"));
+            lblMa.setFont(new Font("SansSerif", Font.BOLD, 21));
+            lblMa.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            lblTen = new JLabel(layTenBanHienThi(ban));
+            lblTen.setFont(new Font("SansSerif", Font.PLAIN, 14));
+            lblTen.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            lblLoai = new JLabel(layTenLoaiBan(ban) + " • " + ban.getSoChoNgoi() + " chỗ");
+            lblLoai.setFont(new Font("SansSerif", Font.PLAIN, 13));
+            lblLoai.setForeground(new Color(95, 95, 95));
+            lblLoai.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            lblStatus = new JLabel(layTrangThaiHienThi(ban));
+            lblStatus.setFont(new Font("SansSerif", Font.BOLD, 13));
+            lblStatus.setHorizontalAlignment(SwingConstants.CENTER);
+            lblStatus.setOpaque(true);
+            lblStatus.setBorder(new EmptyBorder(7, 8, 7, 8));
+
+            JPanel textPanel = new JPanel();
+            textPanel.setOpaque(false);
+            textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+            textPanel.setBorder(new EmptyBorder(8, 10, 6, 10));
+            textPanel.add(lblMa);
+            textPanel.add(Box.createVerticalStrut(6));
+            textPanel.add(lblTen);
+            textPanel.add(Box.createVerticalStrut(6));
+            textPanel.add(lblLoai);
+
+            JPanel statusWrap = new JPanel(new BorderLayout());
+            statusWrap.setOpaque(false);
+            statusWrap.setBorder(new EmptyBorder(0, 10, 10, 10));
+            statusWrap.add(lblStatus, BorderLayout.CENTER);
+
+            add(textPanel, BorderLayout.CENTER);
+            add(statusWrap, BorderLayout.SOUTH);
+
+            addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    chonBan(ban);
+                }
+            });
+
+            capNhatStyle();
+        }
+
+        void capNhatStyle() {
+            boolean selected = banDangChon != null && Objects.equals(banDangChon.getMaBan(), ban.getMaBan());
+            String status = layTrangThaiHienThi(ban);
+
+            setBackground(selected ? new Color(230, 240, 255) : Color.WHITE);
+            setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(selected ? new Color(40, 100, 180) : new Color(225, 225, 225),
+                            selected ? 2 : 1, true),
+                    new EmptyBorder(4, 4, 4, 4)));
+
+            lblStatus.setText(status);
+            lblStatus.setBackground(mauTheoTrangThai(status));
+            lblStatus.setForeground(mauChuTheoTrangThai(status));
+        }
     }
 
     private static class ComboItem<T> {
-        private final String label;
         private final T value;
+        private final String label;
 
-        ComboItem(String label, T value) {
-            this.label = label;
+        ComboItem(T value, String label) {
             this.value = value;
+            this.label = label;
         }
 
-        public String getLabel() { return label; }
-        public T getValue() { return value; }
+        T getValue() { return value; }
+        String getLabel() { return label; }
         @Override public String toString() { return label; }
     }
 
     private static class ComboRenderer extends DefaultListCellRenderer {
         private static final long serialVersionUID = 1L;
-
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (value instanceof ComboItem) {
-                ComboItem<?> item = (ComboItem<?>) value;
-                setText(item.getLabel());
-            }
+            if (value instanceof ComboItem) setText(((ComboItem<?>) value).getLabel());
+            setBorder(new EmptyBorder(6, 8, 6, 8));
             return this;
         }
     }
@@ -1566,93 +1722,11 @@ public class Ban_GUI extends JPanel {
             if (getText() != null && !getText().isEmpty()) return;
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            g2.setColor(new Color(145, 145, 145));
+            g2.setColor(new Color(160, 160, 160));
             g2.setFont(getFont().deriveFont(Font.ITALIC));
             Insets insets = getInsets();
-            int y = (getHeight() - g2.getFontMetrics().getHeight()) / 2 + g2.getFontMetrics().getAscent();
-            g2.drawString(prompt, insets.left, y);
+            g2.drawString(prompt, insets.left, getHeight() / 2 + g2.getFontMetrics().getAscent() / 2 - 2);
             g2.dispose();
         }
-    }
-
-    private class BanCard extends JPanel {
-        private static final long serialVersionUID = 1L;
-        private final Ban ban;
-        private final JLabel lblStatus;
-        private final JLabel lblSeats;
-
-        BanCard(Ban ban) {
-            this.ban = ban;
-            setLayout(new BorderLayout(0, 10));
-            setCursor(new Cursor(Cursor.HAND_CURSOR));
-            setBorder(new EmptyBorder(12, 12, 12, 12));
-
-            JPanel top = new JPanel(new BorderLayout());
-            top.setOpaque(false);
-            JLabel lblCode = new JLabel(layTenBanHienThi(ban));
-            lblCode.setFont(new Font("SansSerif", Font.BOLD, 18));
-            top.add(lblCode, BorderLayout.WEST);
-            lblSeats = new JLabel(ban.getSoChoNgoi() + " chỗ");
-            lblSeats.setFont(new Font("SansSerif", Font.BOLD, 12));
-            lblSeats.setForeground(new Color(40, 100, 180));
-            top.add(lblSeats, BorderLayout.EAST);
-            add(top, BorderLayout.NORTH);
-
-            JPanel center = new JPanel();
-            center.setOpaque(false);
-            center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
-            JLabel lblMaHeThong = new JLabel("Mã bàn: " + safe(ban.getMaBan(), "-"));
-            lblMaHeThong.setFont(new Font("SansSerif", Font.PLAIN, 12));
-            lblMaHeThong.setForeground(new Color(95, 95, 95));
-            center.add(lblMaHeThong);
-            center.add(Box.createRigidArea(new Dimension(0, 6)));
-            JLabel lblLoai = new JLabel(layTenLoaiBan(ban));
-            lblLoai.setFont(new Font("SansSerif", Font.PLAIN, 12));
-            lblLoai.setForeground(new Color(95, 95, 95));
-            center.add(lblLoai);
-            add(center, BorderLayout.CENTER);
-
-            lblStatus = new JLabel(layTrangThaiHienThi(ban), SwingConstants.CENTER);
-            lblStatus.setOpaque(true);
-            lblStatus.setFont(new Font("SansSerif", Font.BOLD, 12));
-            lblStatus.setBorder(new EmptyBorder(6, 10, 6, 10));
-            add(lblStatus, BorderLayout.SOUTH);
-
-            addMouseListener(new java.awt.event.MouseAdapter() {
-                @Override
-                public void mouseClicked(java.awt.event.MouseEvent e) {
-                    chonBan(ban);
-                }
-            });
-            capNhatStyle();
-        }
-
-        void capNhatStyle() {
-            String status = layTrangThaiHienThi(ban);
-            Color[] colors = mauTheoTrangThai(status);
-            lblStatus.setText(status);
-            lblStatus.setBackground(colors[0]);
-            lblStatus.setForeground(colors[1]);
-            lblSeats.setText(ban.getSoChoNgoi() + " chỗ");
-            boolean selected = banDangChon != null && Objects.equals(banDangChon.getMaBan(), ban.getMaBan());
-            setBackground(selected ? new Color(235, 244, 255) : Color.WHITE);
-            setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(selected ? new Color(40, 100, 180) : new Color(228, 228, 228), selected ? 2 : 1, true),
-                    new EmptyBorder(12, 12, 12, 12)));
-            repaint();
-        }
-    }
-
-    private Color[] mauTheoTrangThai(String status) {
-        if (STATUS_PHUC_VU.equalsIgnoreCase(status)) {
-            return new Color[] { new Color(255, 235, 238), new Color(183, 28, 28) };
-        }
-        if (STATUS_DAT.equalsIgnoreCase(status)) {
-            return new Color[] { new Color(255, 248, 225), new Color(230, 81, 0) };
-        }
-        if (STATUS_BAO_TRI.equalsIgnoreCase(status)) {
-            return new Color[] { new Color(232, 234, 246), new Color(49, 27, 146) };
-        }
-        return new Color[] { new Color(232, 245, 233), new Color(27, 94, 32) };
     }
 }

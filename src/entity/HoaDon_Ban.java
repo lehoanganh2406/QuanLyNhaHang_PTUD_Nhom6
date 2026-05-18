@@ -35,12 +35,5 @@ public class HoaDon_Ban {
         this.ban = ban;
     }
 
-    @Override
-    public String toString() {
-
-        return "HoaDon_Ban{" +
-                "hoaDon=" + hoaDon +
-                ", ban=" + ban +
-                '}';
-    }
+   
 }

@@ -21,10 +21,7 @@ public class LoaiKhuyenMai {
 		this.maLoaiKM = maLoaiKM;
 		this.tenLoaiKM = tenLoaiKM;
 	}
-	@Override
-	public String toString() {
-		return "LoaiKhuyenMai [maLoaiKM=" + maLoaiKM + ", tenLoaiKM=" + tenLoaiKM + "]";
-	}
+
 	
 	
 }

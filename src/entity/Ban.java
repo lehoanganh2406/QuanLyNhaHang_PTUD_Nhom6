@@ -65,11 +65,7 @@ public class Ban {
 	public Ban(String maBan) {
 	    this.maBan = maBan;
 	}
-	@Override
-	public String toString() {
-		return "Ban [maBan=" + maBan + ", maKhuVuc=" + maKhuVuc + ", maLoaiBan=" + maLoaiBan + ", tenBan=" + tenBan
-				+ ", ghiChu=" + ghiChu + ", soChoNgoi=" + soChoNgoi + ", trangThai=" + trangThai + "]";
-	}
+
 	public Ban() {
 		// TODO Auto-generated constructor stub
 	}

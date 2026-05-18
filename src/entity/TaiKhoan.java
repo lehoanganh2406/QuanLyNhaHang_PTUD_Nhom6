@@ -54,11 +54,7 @@ public class TaiKhoan {
 		this.trangThai = trangThai;
 		this.maNV = maNV;
 	}
-	@Override
-	public String toString() {
-		return "TaiKhoan [maTaiKhoan=" + maTaiKhoan + ", tenDangNhap=" + tenDangNhap + ", matKhau=" + matKhau
-				+ ", phanQuyen=" + phanQuyen + ", trangThai=" + trangThai + ", maNV=" + maNV + "]";
-	}
+
 	public TaiKhoan(String tenDangNhap, String matKhau) {
 		super();
 		this.tenDangNhap = tenDangNhap;

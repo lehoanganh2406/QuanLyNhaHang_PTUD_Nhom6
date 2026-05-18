@@ -45,11 +45,7 @@ public class KhuVuc {
 		this.trangThai = trangThai;
 		this.kyHieu = kyHieu;
 	}
-	@Override
-	public String toString() {
-		return "KhuVuc [maKhuVuc=" + maKhuVuc + ", tenKhuVuc=" + tenKhuVuc + ", soLuongBan=" + soLuongBan
-				+ ", trangThai=" + trangThai + ", kyHieu=" + kyHieu + "]";
-	}
+
 	public KhuVuc() {
 		// TODO Auto-generated constructor stub
 	}

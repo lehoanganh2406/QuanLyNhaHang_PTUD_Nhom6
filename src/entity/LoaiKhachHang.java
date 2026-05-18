@@ -21,10 +21,7 @@ public class LoaiKhachHang {
 		this.maLoaiKH = maLoaiKH;
 		this.tenLoaiKH = tenLoaiKH;
 	}
-	@Override
-	public String toString() {
-		return "LoaiKhachHang [maLoaiKH=" + maLoaiKH + ", tenLoaiKH=" + tenLoaiKH + "]";
-	}
+
 	public LoaiKhachHang() {
 		// TODO Auto-generated constructor stub
 	}

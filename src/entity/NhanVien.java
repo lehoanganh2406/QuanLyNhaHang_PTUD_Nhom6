@@ -143,18 +143,4 @@ public class NhanVien {
     public NhanVien() {
     }
 
-    // ================= TO STRING =================
-    @Override
-    public String toString() {
-        return "NhanVien [maNV=" + maNV 
-                + ", hoTen=" + hoTen 
-                + ", ngaySinh=" + ngaySinh
-                + ", gioiTinh=" + gioiTinh
-                + ", cccd=" + cccd 
-                + ", email=" + email 
-                + ", sdt=" + sdt
-                + ", chucVu=" + chucVu 
-                + ", trangThai=" + trangThai
-                + ", lyDo=" + lyDo + "]";
-    }
 }

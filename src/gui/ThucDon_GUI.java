@@ -46,8 +46,8 @@ public class ThucDon_GUI extends JPanel {
     private static final Color C_BTN_REF = new Color(230, 116, 35);
     private static final Color C_BTN_LOC = new Color(150, 106, 48);
 
-    private static final int CARD_W = 235;
-    private static final int CARD_H = 315;
+    private static final int CARD_W = 250;
+    private static final int CARD_H = 330;
     private static final int IMG_W = 205;
     private static final int IMG_H = 160;
     private static final int GAP = 18;
@@ -134,12 +134,44 @@ public class ThucDon_GUI extends JPanel {
     }
 
     private void loadAllFirstTime() {
-        List<MonAn> list = monDAO.getAllMonAn();
-        cache.put("ALL", list);
 
-        JScrollPane scroll = buildGridScroll(list, "ALL");
-        pCards.add(scroll, "ALL");
-        cardLayout.show(pCards, "ALL");
+        pCards.removeAll();
+
+        pCards.add(
+                makeLoadingPanel("Đang tải dữ liệu..."),
+                "LOADING"
+        );
+
+        cardLayout.show(pCards, "LOADING");
+
+        new SwingWorker<List<MonAn>, Void>() {
+
+            @Override
+            protected List<MonAn> doInBackground() {
+                return monDAO.getAllMonAn();
+            }
+
+            @Override
+            protected void done() {
+                try {
+
+                    List<MonAn> list = get();
+
+                    cache.put("ALL", list);
+
+                    JScrollPane scroll =
+                            buildGridScroll(list, "ALL");
+
+                    pCards.add(scroll, "ALL");
+
+                    cardLayout.show(pCards, "ALL");
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+        }.execute();
     }
 
 
@@ -1301,41 +1333,78 @@ public class ThucDon_GUI extends JPanel {
 //            }
 //        }.execute();
 //    }
-    private void loadImgAsync(JLabel lblImg, String anhMon, int w, int h) {
+    private void loadImgAsync(
+            JLabel lblImg,
+            String anhMon,
+            int w,
+            int h
+    ) {
+
+        lblImg.setText("Đang tải...");
         lblImg.setIcon(null);
-        lblImg.setText("Không có ảnh");
 
-        if (anhMon == null || anhMon.trim().isEmpty()) return;
+        new SwingWorker<ImageIcon, Void>() {
 
-        String baseDir = System.getProperty("user.dir") + File.separator + "img";
-        String input = anhMon.trim();
+            @Override
+            protected ImageIcon doInBackground() {
 
-        File file = new File(input);
-        if (!file.exists()) {
-            file = new File(baseDir, input);
-        }
+                try {
 
-        if (!file.exists()) {
-            String name = input;
-            int dot = input.lastIndexOf('.');
-            if (dot > 0) name = input.substring(0, dot);
+                    if (anhMon == null
+                            || anhMon.trim().isEmpty()) {
+                        return null;
+                    }
 
-            String[] exts = {".png", ".jpg", ".jpeg", ".gif"};
-            for (String ext : exts) {
-                File f = new File(baseDir, name + ext);
-                if (f.exists()) {
-                    file = f;
-                    break;
+                    String baseDir =
+                            System.getProperty("user.dir")
+                            + File.separator
+                            + "img";
+
+                    File file =
+                            new File(baseDir, anhMon);
+
+                    if (!file.exists()) {
+                        return null;
+                    }
+
+                    Image img =
+                            new ImageIcon(
+                                    file.getAbsolutePath()
+                            )
+                            .getImage()
+                            .getScaledInstance(
+                                    w,
+                                    h,
+                                    Image.SCALE_FAST
+                            );
+
+                    return new ImageIcon(img);
+
+                } catch (Exception e) {
+                    return null;
                 }
             }
-        }
 
-        if (!file.exists()) return;
+            @Override
+            protected void done() {
 
-        ImageIcon icon = new ImageIcon(file.getAbsolutePath());
-        Image scaled = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
-        lblImg.setIcon(new ImageIcon(scaled));
-        lblImg.setText("");
+                try {
+
+                    ImageIcon icon = get();
+
+                    if (icon != null) {
+                        lblImg.setIcon(icon);
+                        lblImg.setText("");
+                    } else {
+                        lblImg.setText("Không có ảnh");
+                    }
+
+                } catch (Exception e) {
+                    lblImg.setText("Lỗi ảnh");
+                }
+            }
+
+        }.execute();
     }
 
 

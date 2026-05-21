@@ -315,8 +315,14 @@ public class XuLyMonAn_DigLog extends JDialog {
                 if (maMoi != null) {
                     loai.setMaLoaiMonAn(maMoi);
 
-                    dsLoai.add(loai);
-                    cbLoaiMon.addItem(loai.getTenLoaiMonAn());
+                    loadLoaiMonFromDB();
+
+                    cbLoaiMon.removeAllItems();
+
+                    for (LoaiMonAn lm : dsLoai) {
+                        cbLoaiMon.addItem(lm.getTenLoaiMonAn());
+                    }
+
                     cbLoaiMon.setSelectedItem(loai.getTenLoaiMonAn());
 
                     if (parentGUI != null) {
@@ -861,8 +867,19 @@ public class XuLyMonAn_DigLog extends JDialog {
             return;
         }
 
-        LoaiMonAn loai =
-                dsLoai.get(cbLoaiMon.getSelectedIndex());
+        int selectedIndex = cbLoaiMon.getSelectedIndex();
+
+        if (selectedIndex < 0 || selectedIndex >= dsLoai.size()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Loại món không hợp lệ!",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        LoaiMonAn loai = dsLoai.get(selectedIndex);
 
         boolean trangThai =
                 cbTrangThai.getSelectedItem()

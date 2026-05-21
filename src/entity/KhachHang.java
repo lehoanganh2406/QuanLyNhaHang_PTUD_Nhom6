@@ -44,11 +44,9 @@ public class KhachHang {
 		this.maLoaiKH = maLoaiKH;
 		this.diemTichLuy = diemTichLuy;
 	}
-	@Override
-	public String toString() {
-		return "KhachHang [maKH=" + maKH + ", tenKH=" + tenKH + ", sdt=" + sdt + ", maLoaiKH=" + maLoaiKH
-				+ ", diemTichLuy=" + diemTichLuy + "]";
-	}
+public KhachHang() {
+	// TODO Auto-generated constructor stub
+}
 	
 	
 }

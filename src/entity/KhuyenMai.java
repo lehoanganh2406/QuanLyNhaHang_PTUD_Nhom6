@@ -97,12 +97,8 @@ public class KhuyenMai {
 		this.ghiChu = ghiChu;
 		this.trangThai = trangThai;
 	}
-	@Override
-	public String toString() {
-		return "KhuyenMai [maKM=" + maKM + ", maLoaiKM=" + maLoaiKM + ", maNV=" + maNV + ", giaTri=" + giaTri
-				+ ", tenKhuyenMai=" + tenKhuyenMai + ", thoiGianBatDau=" + thoiGianBatDau + ", thoiGianKetThuc="
-				+ thoiGianKetThuc + ", doiTuongApDung=" + doiTuongApDung + ", dieuKienApDung=" + dieuKienApDung
-				+ ", ghiChu=" + ghiChu + ", trangThai=" + trangThai + "]";
-	}
+public KhuyenMai() {
+	// TODO Auto-generated constructor stub
+}
 	
 }

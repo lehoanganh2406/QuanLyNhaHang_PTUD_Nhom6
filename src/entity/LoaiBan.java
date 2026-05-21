@@ -21,10 +21,7 @@ public class LoaiBan {
 		this.maLoaiBan = maLoaiBan;
 		this.tenLoaiBan = tenLoaiBan;
 	}
-	@Override
-	public String toString() {
-		return "LoaiBan [maLoaiBan=" + maLoaiBan + ", tenLoaiBan=" + tenLoaiBan + "]";
-	}
+
 	public LoaiBan() {
 		// TODO Auto-generated constructor stub
 	}

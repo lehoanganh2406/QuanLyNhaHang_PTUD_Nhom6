@@ -185,7 +185,7 @@ public class MonAn_DAO {
         Connection con = ConnectDB.getInstance().getConnection();
 
         String sql = "INSERT INTO MonAn (maLoaiMonAn, tenMon,donViTinh, anhMon, giaGoc, moTa, trangThai) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement stmt = con.prepareStatement(sql)) {
             stmt.setString(1, mon.getMaLoaiMonAn().getMaLoaiMonAn());

@@ -329,7 +329,8 @@ public class Pn_ThanhMenu extends JPanel {
 
     	if (isLeTan()) {
     	    mnHeThong.removeSubItem("Quản lý tài khoản");
-
+    	    mnHeThong.removeSubItem("Quản lý ca");
+            mnXuLy.removeSubItem("Bar/Bếp");
     	    mnXuLy.removeSubItem("Hóa đơn");
 
     	    mnThongKe.removeSubItem("Phân tích bán hàng");
@@ -823,10 +824,19 @@ public class Pn_ThanhMenu extends JPanel {
                 Window owner = SwingUtilities.getWindowAncestor(this);
 
                 DongCa_DigLog dlg;
+
                 if (owner instanceof Frame) {
-                    dlg = new DongCa_DigLog((Frame) owner, caDangMo);
+                    dlg = new DongCa_DigLog(
+                            (Frame) owner,
+                            caDangMo,
+                            taiKhoanDangNhap
+                    );
                 } else {
-                    dlg = new DongCa_DigLog(null, caDangMo);
+                    dlg = new DongCa_DigLog(
+                            null,
+                            caDangMo,
+                            taiKhoanDangNhap
+                    );
                 }
 
                 dlg.setVisible(true);

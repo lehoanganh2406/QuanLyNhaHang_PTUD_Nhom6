@@ -157,8 +157,8 @@ public class NhanVien_GUI extends JFrame {
 
         rdNam = new JRadioButton("Nam");
         rdNu  = new JRadioButton("Nữ");
-        rdNam.setFont(new Font("Arial", Font.PLAIN, 15));
-        rdNu.setFont(new Font("Arial", Font.PLAIN, 15));
+        rdNam.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        rdNu.setFont(new Font("SansSerif", Font.PLAIN, 15));
         rdNam.setOpaque(false);
         rdNu.setOpaque(false);
         rdNam.setFont(new Font("SansSerif", Font.PLAIN, 17));

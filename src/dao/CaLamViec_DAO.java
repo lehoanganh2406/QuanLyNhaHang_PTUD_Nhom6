@@ -448,9 +448,10 @@ ELSE ca.tongDoanhThu END AS tongDoanhThu,
             SELECT ISNULL(SUM(tongTien), 0)
             FROM HoaDon
             WHERE LTRIM(RTRIM(trangThai)) = N'Đã thanh toán'
-              AND LTRIM(RTRIM(phuongThucThanhToan)) = ?
-              AND thoiGianRa IS NOT NULL
-              AND thoiGianRa >= ?
+AND UPPER(LTRIM(RTRIM(phuongThucThanhToan)))
+    = UPPER(?)
+AND thoiGianRa IS NOT NULL
+AND thoiGianRa >= ?
         """;
 
         try {
@@ -478,7 +479,8 @@ ELSE ca.tongDoanhThu END AS tongDoanhThu,
         String sql = """
             SELECT ISNULL(SUM(tienCoc), 0)
             FROM PhieuDatBan
-            WHERE LTRIM(RTRIM(phuongThucThanhToanCoc)) = ?
+            WHERE UPPER(LTRIM(RTRIM(phuongThucThanhToanCoc)))
+      = UPPER(?)
               AND thoiGianDatPhieu IS NOT NULL
               AND thoiGianDatPhieu >= ?
               AND thoiGianDatPhieu <= GETDATE()
@@ -513,9 +515,18 @@ ELSE ca.tongDoanhThu END AS tongDoanhThu,
         CaLamViec ca = layCaTheoMa(maCa);
         if (ca == null) return 0; // tránh null
         if (ca.getThoiGianDongCa() == null) {
-            double tienMat = ca.getTienMoCa();
-            tienMat += tinhTienTheoPhuongThuc("Tiền mặt", ca.getThoiGianMoCa());
-            tienMat += tinhTienCocTheoPhuongThuc("Tiền mặt", ca.getThoiGianMoCa());
+        	double tienMat = 0;
+
+        	tienMat += tinhTienTheoPhuongThuc(
+        	        "Tiền mặt",
+        	        ca.getThoiGianMoCa()
+        	);
+
+        	tienMat += tinhTienCocTheoPhuongThuc(
+        	        "Tiền mặt",
+        	        ca.getThoiGianMoCa()
+        	);
+
             return tienMat;
         }
         return ca.getTienMatCuoiCa();

@@ -18,7 +18,11 @@ import javax.swing.border.EmptyBorder;
 
 import dao.CaLamViec_DAO;
 import entity.CaLamViec;
+import entity.TaiKhoan;
 import gui.DangNhap_GUI;
+import gui.TrangChu_GUI;
+import digLog.TienMoCa_DigLog;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -50,13 +54,15 @@ public class DongCa_DigLog extends JDialog {
     private double tienChuyenKhoanCuoiCa;
     private double tienVisaCuoiCa;
     private double tongDoanhThu;
+    private TaiKhoan taiKhoanDangNhap;
 
     private boolean dongCaThanhCong = false;
 
-    public DongCa_DigLog(Frame owner, CaLamViec caDangMo) {
+    public DongCa_DigLog(Frame owner, CaLamViec caDangMo, TaiKhoan taiKhoanDangNhap) {
         super(owner, "Đóng ca làm việc", true);
         this.caDangMo = caDangMo;
         this.caDAO = new CaLamViec_DAO();
+        this.taiKhoanDangNhap = taiKhoanDangNhap;
 
         initComponents();
         loadDuLieuCa();
@@ -298,15 +304,32 @@ public class DongCa_DigLog extends JDialog {
             hienThiFormTongKetCa();
 
             Window owner = SwingUtilities.getWindowAncestor(this);
+
+            // đóng dialog hiện tại
             dispose();
 
+            // đóng app cũ
             if (owner != null) {
                 owner.dispose();
             }
 
-            DangNhap_GUI dangNhap = new DangNhap_GUI();
-            dangNhap.setVisible(true);
+         // mở tiền mở ca
+            TienMoCa_DigLog dlg =
+                    new TienMoCa_DigLog(
+                            null,
+                            taiKhoanDangNhap
+                    );
 
+            dlg.setVisible(true);
+
+            // nếu mở ca thành công thì mở lại app
+            if (dlg.isMoCaThanhCong()) {
+
+                TrangChu_GUI trangChu =
+                        new TrangChu_GUI(null);
+
+                trangChu.setVisible(true);
+            }
         } else {
             JOptionPane.showMessageDialog(this,
                     "Đóng ca thất bại!",

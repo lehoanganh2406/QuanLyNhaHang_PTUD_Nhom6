@@ -621,6 +621,7 @@ public class TaiKhoan_GUI extends JFrame {
         txtMatKhau.setText("");
 //        txtTenDangNhap.setEnabled(true);
         txtTenDangNhap.setEditable(true);
+        
         txtMatKhau.setEnabled(true);
         txtMatKhau.setEditable(true);
         cbNhanVien.setEnabled(true);

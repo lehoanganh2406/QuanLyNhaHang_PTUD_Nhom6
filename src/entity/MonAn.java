@@ -73,12 +73,4 @@ public class MonAn {
     public boolean isTrangThai() { return trangThai; }
     public void setTrangThai(boolean trangThai) { this.trangThai = trangThai; }
 
-    @Override
-    public String toString() {
-        return "MonAn [maMon=" + maMon +
-                ", tenMon=" + tenMon +
-                ", giaGoc=" + giaGoc +
-                ", donGia=" + donGia +
-                "]";
-    }
 }

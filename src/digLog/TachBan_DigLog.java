@@ -53,10 +53,10 @@ public class TachBan_DigLog extends JDialog {
 
     // maMon -> (maBan -> spinner)
     private final Map<
-            String,
-            Map<String, JSpinner>
-            > mapSpinnerBan =
-            new LinkedHashMap<>();
+    String,
+    Map<String, JSpinner>
+    > mapSpinnerBan =
+    new LinkedHashMap<>();
 
     private boolean tachThanhCong = false;
 
@@ -803,8 +803,13 @@ public class TachBan_DigLog extends JDialog {
                 row.add(sp);
             }
 
+            String key =
+                    ct.getMaMon().getMaMon()
+                    + "_"
+                    + ct.getMaBan().getMaBan();
+
             mapSpinnerBan.put(
-                    ct.getMaMon().getMaMon(),
+                    key,
                     mapBan
             );
 
@@ -906,11 +911,16 @@ public class TachBan_DigLog extends JDialog {
 
              for (ChiTietHoaDon ct : dsChiTiet) {
 
-                 String maMon =
-                         ct.getMaMon().getMaMon();
+            	 String maMon =
+            		        ct.getMaMon().getMaMon();
 
-                 Map<String, JSpinner> mapBan =
-                         mapSpinnerBan.get(maMon);
+            		String key =
+            		        maMon
+            		        + "_"
+            		        + ct.getMaBan().getMaBan();
+
+            		Map<String, JSpinner> mapBan =
+            		        mapSpinnerBan.get(key);
 
                  if (mapBan == null)
                      continue;

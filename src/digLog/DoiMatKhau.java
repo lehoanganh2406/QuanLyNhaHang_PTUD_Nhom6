@@ -101,10 +101,18 @@ public class DoiMatKhau extends JDialog {
 
     private JButton createButton(String text, Color bg) {
         JButton btn = new JButton(text);
+
         btn.setBackground(bg);
         btn.setForeground(Color.WHITE);
+
+        btn.setOpaque(true);
+        btn.setContentAreaFilled(true);
+        btn.setBorderPainted(false);
+
         btn.setFocusPainted(false);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 14));
         btn.setPreferredSize(new Dimension(110, 38));
+
         return btn;
     }
 

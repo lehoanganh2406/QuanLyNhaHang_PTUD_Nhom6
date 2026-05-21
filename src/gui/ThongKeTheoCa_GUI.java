@@ -180,7 +180,7 @@ public class ThongKeTheoCa_GUI extends JPanel {
         }
 
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
-        DongCa_DigLog dialog = new DongCa_DigLog(owner, caDangMo);
+        DongCa_DigLog dialog = new DongCa_DigLog(owner, caDangMo, taiKhoanDangNhap);
         dialog.setVisible(true);
 
         if (dialog.isDongCaThanhCong()) {

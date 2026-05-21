@@ -318,7 +318,7 @@ public class HoaDon_GUI extends JFrame {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 c.setBackground(CLR_TABLE_HDR);
                 c.setForeground(new Color(50, 40, 30));
-                c.setFont(new Font("Arial", Font.BOLD, 15));
+                c.setFont(new Font("SansSerif", Font.BOLD, 15));
                 ((JLabel) c).setHorizontalAlignment(JLabel.CENTER);
                 return c;
             }
@@ -1150,7 +1150,7 @@ public class HoaDon_GUI extends JFrame {
 
 
     private void styleComboBox(JComboBox<?> cb) {
-        cb.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        cb.setFont(new Font("SansSerif", Font.PLAIN, 15));
         cb.setForeground(Color.BLACK);
         cb.setFocusable(false);
 
@@ -1172,7 +1172,7 @@ public class HoaDon_GUI extends JFrame {
 
                         list, value, index, isSelected, cellHasFocus);
 
-                lbl.setFont(new Font("SansSerif", Font.PLAIN, 16));
+                lbl.setFont(new Font("SansSerif", Font.PLAIN, 15));
                 lbl.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
 
                 String text = value == null ? "" : value.toString();

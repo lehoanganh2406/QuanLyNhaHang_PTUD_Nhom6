@@ -41,7 +41,7 @@ public class Bar_Bep_GUI extends JPanel {
         pnPhai=taoCot();
 
         add(taoPanelCoHeader(
-                "☕ NHÂN VIÊN ORDER",
+                "NHÂN VIÊN ORDER",
                 pnTrai
         ));
 
@@ -94,7 +94,7 @@ public class Bar_Bep_GUI extends JPanel {
 
         lbl.setFont(
                 new Font(
-                        "Arial",
+                        "SansSerif",
                         Font.BOLD,
                         24
                 )
@@ -156,7 +156,7 @@ public class Bar_Bep_GUI extends JPanel {
 
         lbl.setFont(
                 new Font(
-                        "Arial",
+                        "SansSerif",
                         Font.BOLD,
                         18
                 )
@@ -341,7 +341,7 @@ public class Bar_Bep_GUI extends JPanel {
         pnMon.setOpaque(false);
 
         JLabel lblTen = new JLabel(ct.getMaMon().getTenMon());
-        lblTen.setFont(new Font("Arial",Font.BOLD,18));
+        lblTen.setFont(new Font("SansSerif",Font.BOLD,18));
 
         JLabel lblNote = new JLabel(
                 "✎ " + (ct.getGhiChu()==null ? "" : ct.getGhiChu())
@@ -379,39 +379,41 @@ public class Bar_Bep_GUI extends JPanel {
                     +")";
 
         }else{
-        	String dsBan =
-        	        hdDAO.layChuoiBanTheoHD(
-        	                ct.getMaHD().getMaHD()
-        	        );
+        	boolean laMonDatTruocChung =
+        	        ct.getGhiChu() != null
+        	        &&
+        	        ct.getGhiChu()
+        	        .contains("[DAT_CHUNG]");
 
-        	if(dsBan.contains(",")){
+        	// =============================
+        	// MÓN ĐẶT TRƯỚC CHUNG
+        	// =============================
 
-        	    // món đặt trước chung
-        	    boolean laMonDatTruocChung =
-        	            ct.getTrangThai()
-        	            .equalsIgnoreCase("Đã gửi bếp")
-        	            &&
-        	            ct.getGhiChu() != null
-        	            &&
-        	            ct.getGhiChu().contains("[DAT_CHUNG]");
+        	if(laMonDatTruocChung){
 
-        	    if(laMonDatTruocChung){
+        	    String dsBan =
+        	            hdDAO.layChuoiBanTheoHD(
+        	                    ct.getMaHD()
+        	                    .getMaHD()
+        	            );
 
-        	        thongTinBan =
-        	                dsBan.replace(", ", "+");
-        	    }
-        	    else{
-
-        	        // chuyển bàn -> lấy bàn hiện tại
-        	        thongTinBan =
-        	                dsBan;
-        	    }
-
-        	}else{
-
-        	    // chỉ có 1 bàn
         	    thongTinBan =
-        	            dsBan;
+        	            dsBan.replace(
+        	                    ", ",
+        	                    "+"
+        	            );
+        	}
+
+        	// =============================
+        	// GHÉP BÀN / TÁCH BÀN / THƯỜNG
+        	// luôn hiện bàn order gốc
+        	// =============================
+
+        	else{
+
+        	    thongTinBan =
+        	            ct.getMaBan()
+        	            .getMaBan();
         	}
         }
 
@@ -434,10 +436,10 @@ public class Bar_Bep_GUI extends JPanel {
         lblBan.setOpaque(true);
         lblBan.setBackground(new Color(233,77,61));
         lblBan.setForeground(Color.WHITE);
-        lblBan.setFont(new Font("Arial",Font.BOLD,13));
+        lblBan.setFont(new Font("SansSerif",Font.BOLD,13));
 
         JLabel lblTime = new JLabel("🕒 " + phut + " phút trước");
-        lblTime.setFont(new Font("Arial",Font.PLAIN,12));
+        lblTime.setFont(new Font("SansSerif",Font.PLAIN,12));
 
         pnTime.add(lblBan);
         pnTime.add(lblTime);
@@ -458,7 +460,7 @@ public class Bar_Bep_GUI extends JPanel {
         lblSL.setOpaque(true);
         lblSL.setBackground(BG_SL);
         lblSL.setForeground(Color.WHITE);
-        lblSL.setFont(new Font("Arial",Font.BOLD,24));
+        lblSL.setFont(new Font("SansSerif",Font.BOLD,24));
         lblSL.setPreferredSize(new Dimension(58,58));
 
         JButton btn2 = new JButton(
@@ -525,7 +527,7 @@ public class Bar_Bep_GUI extends JPanel {
             lblTong.setOpaque(true);
             lblTong.setBackground(BG_TOTAL);
             lblTong.setForeground(Color.WHITE);
-            lblTong.setFont(new Font("Arial",Font.BOLD,24));
+            lblTong.setFont(new Font("SansSerif",Font.BOLD,24));
             lblTong.setPreferredSize(new Dimension(58,58));
 
             JButton btnAll = new JButton(
@@ -613,7 +615,7 @@ public class Bar_Bep_GUI extends JPanel {
 
         btn.setFont(
                 new Font(
-                        "Arial",
+                        "SansSerif",
                         Font.BOLD,
                         22
                 )

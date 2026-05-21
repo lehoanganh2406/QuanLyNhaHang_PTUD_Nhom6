@@ -401,6 +401,12 @@ public class NhanVien_GUI extends JFrame {
             String lyDoNghi = txtLyDoNghi.getText().trim();
 
             // ===== VALIDATE (ĐẶT Ở ĐÂY) =====
+            if (!hoTen.matches("^[\\p{L}\\s]+$")) {
+                JOptionPane.showMessageDialog(this,
+                        "Họ tên không được chứa ký tự đặc biệt hoặc số!");
+                txtHoTen.requestFocus();
+                return;
+            }
             if (sdt.isEmpty() || !sdt.matches("\\d{10}")) {
                 JOptionPane.showMessageDialog(this, "SĐT phải có đúng 10 chữ số!");
                 txtSDT.requestFocus();
@@ -449,7 +455,82 @@ public class NhanVien_GUI extends JFrame {
         }
     }
 
+//    private void capNhatNhanVien() {
+//        int row = table.getSelectedRow();
+//
+//        if (row < 0) {
+//            JOptionPane.showMessageDialog(this, "Chọn một dòng để cập nhật!");
+//            return;
+//        }
+//
+//        try {
+//            NhanVien nvCu = dsNV.get(row);
+//            String anh = duongDanAnh;
+//            if (anh == null || anh.isEmpty()) anh = nvCu.getAnhNhanVien();
+//
+//
+//
+//            if (anh == null || anh.isEmpty()) {
+//                anh = nvCu.getAnhNhanVien();
+//            }
+//
+//            String trangThaiCu = nvCu.getTrangThai();
+//
+//            String trangThaiMoi = cbTrangThai.getSelectedItem().toString();
+//            String lyDo = nvCu.getLyDo();
+//
+//
+//
+////            String lyDo = nvCu.getLyDo();
+//
+//            if (trangThaiCu.equalsIgnoreCase("Đang làm")
+//                    && trangThaiMoi.equalsIgnoreCase("Nghỉ việc")) {
+//
+//
+//                lyDo = JOptionPane.showInputDialog(this, "Nhập lý do nghỉ việc:");
+//                if (lyDo == null || lyDo.trim().isEmpty()) {
+//                    JOptionPane.showMessageDialog(this, "Phải nhập lý do!");
+//                    return;
+//                }
+//            }
+//            if (trangThaiMoi.equalsIgnoreCase("Đang làm")) lyDo = null;
+//
+//
+//
+//            if (trangThaiMoi.equalsIgnoreCase("Đang làm")) {
+//                lyDo = null;
+//            }
+//
+//
+//            NhanVien nv = new NhanVien(
+//                    txtMaNV.getText().trim(),
+//                    txtHoTen.getText().trim(),
+//                    anh,
+//                    txtNgaySinh.getDate(),
+//                    rdNam.isSelected(),
+//                    txtCCCD.getText().trim(),
+//                    txtEmail.getText().trim(),
+//                    txtSDT.getText().trim(),
+//                    cbChucVu.getSelectedItem().toString(),
+//                    trangThaiMoi,
+//                    lyDo
+//            );
+//
+//            if (nv_dao.capNhatNhanVien(nv)) {
+//                loadData();
+//                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+//                lamMoi();
+//            } else {
+//                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            JOptionPane.showMessageDialog(this, "Lỗi cập nhật nhân viên!");
+//        }
+//    }
+    
     private void capNhatNhanVien() {
+
         int row = table.getSelectedRow();
 
         if (row < 0) {
@@ -458,68 +539,108 @@ public class NhanVien_GUI extends JFrame {
         }
 
         try {
+
             NhanVien nvCu = dsNV.get(row);
+
             String anh = duongDanAnh;
-            if (anh == null || anh.isEmpty()) anh = nvCu.getAnhNhanVien();
-
-
 
             if (anh == null || anh.isEmpty()) {
                 anh = nvCu.getAnhNhanVien();
             }
 
-            String trangThaiCu = nvCu.getTrangThai();
+            // ===== LẤY DỮ LIỆU =====
+            String hoTen = txtHoTen.getText().trim();
+            String sdt = txtSDT.getText().trim();
+            String cccd = txtCCCD.getText().trim();
+            String email = txtEmail.getText().trim();
 
+            String trangThaiCu = nvCu.getTrangThai();
             String trangThaiMoi = cbTrangThai.getSelectedItem().toString();
+
             String lyDo = nvCu.getLyDo();
 
+            // ===== VALIDATE =====
 
+            // Họ tên không được rỗng
+            if (hoTen.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Họ tên không được để trống!");
+                txtHoTen.requestFocus();
+                return;
+            }
 
-//            String lyDo = nvCu.getLyDo();
+            // Không cho ký tự đặc biệt hoặc số
+            if (!hoTen.matches("^[\\p{L}\\s]+$")) {
+                JOptionPane.showMessageDialog(this,
+                        "Họ tên không được chứa số hoặc ký tự đặc biệt!");
+                txtHoTen.requestFocus();
+                return;
+            }
 
+            // Validate SĐT
+            if (sdt.isEmpty() || !sdt.matches("\\d{10}")) {
+                JOptionPane.showMessageDialog(this,
+                        "SĐT phải có đúng 10 chữ số!");
+                txtSDT.requestFocus();
+                return;
+            }
+
+            // Validate CCCD
+            if (cccd.isEmpty() || !cccd.matches("\\d{12}")) {
+                JOptionPane.showMessageDialog(this,
+                        "CCCD phải có đúng 12 chữ số!");
+                txtCCCD.requestFocus();
+                return;
+            }
+
+            // ===== XỬ LÝ TRẠNG THÁI =====
             if (trangThaiCu.equalsIgnoreCase("Đang làm")
                     && trangThaiMoi.equalsIgnoreCase("Nghỉ việc")) {
 
+                lyDo = JOptionPane.showInputDialog(this,
+                        "Nhập lý do nghỉ việc:");
 
-                lyDo = JOptionPane.showInputDialog(this, "Nhập lý do nghỉ việc:");
                 if (lyDo == null || lyDo.trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Phải nhập lý do!");
+                    JOptionPane.showMessageDialog(this,
+                            "Phải nhập lý do!");
                     return;
                 }
             }
-            if (trangThaiMoi.equalsIgnoreCase("Đang làm")) lyDo = null;
-
-
 
             if (trangThaiMoi.equalsIgnoreCase("Đang làm")) {
                 lyDo = null;
             }
 
-
+            // ===== TẠO ĐỐI TƯỢNG =====
             NhanVien nv = new NhanVien(
                     txtMaNV.getText().trim(),
-                    txtHoTen.getText().trim(),
+                    hoTen,
                     anh,
                     txtNgaySinh.getDate(),
                     rdNam.isSelected(),
-                    txtCCCD.getText().trim(),
-                    txtEmail.getText().trim(),
-                    txtSDT.getText().trim(),
+                    cccd,
+                    email,
+                    sdt,
                     cbChucVu.getSelectedItem().toString(),
                     trangThaiMoi,
                     lyDo
             );
 
+            // ===== UPDATE =====
             if (nv_dao.capNhatNhanVien(nv)) {
                 loadData();
-                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+                JOptionPane.showMessageDialog(this,
+                        "Cập nhật thành công!");
                 lamMoi();
             } else {
-                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!");
+                JOptionPane.showMessageDialog(this,
+                        "Cập nhật thất bại!");
             }
+
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi cập nhật nhân viên!");
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi cập nhật nhân viên!");
         }
     }
 

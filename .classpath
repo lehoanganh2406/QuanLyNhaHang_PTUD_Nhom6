@@ -11,5 +11,16 @@
 	<classpathentry kind="lib" path="libs/jakarta.mail-2.0.1.jar"/>
 	<classpathentry kind="lib" path="libs/mssql-jdbc-12.10.0.jre11.jar"/>
 	<classpathentry kind="lib" path="libs/jakarta.activation-2.0.1.jar"/>
+	<classpathentry kind="lib" path="libs/commons-codec-1.15.jar"/>
+	<classpathentry kind="lib" path="libs/commons-collections4-4.4.jar"/>
+	<classpathentry kind="lib" path="libs/commons-compress-1.21.jar"/>
+	<classpathentry kind="lib" path="libs/commons-io-2.11.0.jar"/>
+	<classpathentry kind="lib" path="libs/curvesapi-1.07.jar"/>
+	<classpathentry kind="lib" path="libs/poi-5.2.3.jar"/>
+	<classpathentry kind="lib" path="libs/poi-ooxml-5.2.3.jar"/>
+	<classpathentry kind="lib" path="libs/log4j-api-2.18.0.jar"/>
+	<classpathentry kind="lib" path="libs/poi-ooxml-full-5.2.3.jar"/>
+	<classpathentry kind="lib" path="libs/xmlbeans-5.0.3.jar"/>
+	<classpathentry kind="lib" path="libs/log4j-core-2.18.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

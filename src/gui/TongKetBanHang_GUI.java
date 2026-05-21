@@ -16,11 +16,8 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,6 +31,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -1012,7 +1012,8 @@ public class TongKetBanHang_GUI extends JPanel {
 
     private void exportBaoCaoExcel() {
         if (tableModel.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất báo cáo.");
+            JOptionPane.showMessageDialog(this,
+                    "Không có dữ liệu để xuất báo cáo.");
             return;
         }
 
@@ -1021,87 +1022,250 @@ public class TongKetBanHang_GUI extends JPanel {
 
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Lưu báo cáo doanh thu");
-        chooser.setFileFilter(new FileNameExtensionFilter("Excel 97-2003 (*.xls)", "xls"));
-        chooser.setSelectedFile(new File(taoTenFileBaoCao(range)));
+        chooser.setFileFilter(
+                new FileNameExtensionFilter(
+                        "Excel Workbook (*.xlsx)", "xlsx"));
+
+        chooser.setSelectedFile(new File(
+                taoTenFileBaoCao(range)
+                        .replace(".xls", ".xlsx")));
 
         int result = chooser.showSaveDialog(this);
+
         if (result != JFileChooser.APPROVE_OPTION) {
             return;
         }
 
         File file = chooser.getSelectedFile();
-        if (!file.getName().toLowerCase().endsWith(".xls")) {
-            file = new File(file.getAbsolutePath() + ".xls");
+
+        if (!file.getName().toLowerCase()
+                .endsWith(".xlsx")) {
+            file = new File(
+                    file.getAbsolutePath() + ".xlsx");
         }
 
-        try (BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+        try (Workbook workbook =
+                     new XSSFWorkbook()) {
 
-            writer.write('\uFEFF');
-            writer.write("<?xml version=\"1.0\"?>\n");
-            writer.write("<?mso-application progid=\"Excel.Sheet\"?>\n");
-            writer.write("<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"\n");
-            writer.write(" xmlns:o=\"urn:schemas-microsoft-com:office:office\"\n");
-            writer.write(" xmlns:x=\"urn:schemas-microsoft-com:office:excel\"\n");
-            writer.write(" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n");
-            writer.write(" xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n");
+            Sheet sheet =
+                    workbook.createSheet("BaoCao");
 
-            writer.write("<Styles>\n");
-            writer.write("<Style ss:ID=\"Default\" ss:Name=\"Normal\"><Alignment ss:Vertical=\"Center\"/><Font ss:FontName=\"Arial\" ss:Size=\"11\"/></Style>\n");
-            writer.write("<Style ss:ID=\"Title\"><Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\"/><Font ss:FontName=\"Arial\" ss:Bold=\"1\" ss:Size=\"18\"/></Style>\n");
-            writer.write("<Style ss:ID=\"SubInfo\"><Alignment ss:Horizontal=\"Left\" ss:Vertical=\"Center\"/><Font ss:FontName=\"Arial\" ss:Size=\"11\"/></Style>\n");
-            writer.write("<Style ss:ID=\"Header\"><Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\"/><Borders><Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/></Borders><Font ss:FontName=\"Arial\" ss:Bold=\"1\" ss:Size=\"12\"/><Interior ss:Color=\"#E9EEF7\" ss:Pattern=\"Solid\"/></Style>\n");
-            writer.write("<Style ss:ID=\"CellCenter\"><Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\"/><Borders><Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/></Borders><Font ss:FontName=\"Arial\" ss:Size=\"12\"/></Style>\n");
-            writer.write("<Style ss:ID=\"CellLeft\"><Alignment ss:Horizontal=\"Left\" ss:Vertical=\"Center\"/><Borders><Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/></Borders><Font ss:FontName=\"Arial\" ss:Size=\"12\"/></Style>\n");
-            writer.write("<Style ss:ID=\"CellMoney\"><Alignment ss:Horizontal=\"Right\" ss:Vertical=\"Center\"/><Borders><Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/></Borders><Font ss:FontName=\"Arial\" ss:Size=\"12\"/></Style>\n");
-            writer.write("<Style ss:ID=\"Footer\"><Alignment ss:Horizontal=\"Left\" ss:Vertical=\"Center\"/><Borders><Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/><Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\"/></Borders><Font ss:FontName=\"Arial\" ss:Bold=\"1\" ss:Size=\"13\"/><Interior ss:Color=\"#F4F4F6\" ss:Pattern=\"Solid\"/></Style>\n");
-            writer.write("</Styles>\n");
+            // ======================
+            // STYLE
+            // ======================
 
-            writer.write("<Worksheet ss:Name=\"BaoCaoDoanhThu\">\n");
-            writer.write("<Table>\n");
-            writer.write("<Column ss:Width=\"70\"/><Column ss:Width=\"130\"/><Column ss:Width=\"190\"/><Column ss:Width=\"100\"/><Column ss:Width=\"70\"/><Column ss:Width=\"130\"/>\n");
+            org.apache.poi.ss.usermodel.Font titleFont =
+                    workbook.createFont();
+            titleFont.setBold(true);
+            titleFont.setFontHeightInPoints(
+                    (short) 18);
 
-            writer.write("<Row ss:Height=\"28\"><Cell ss:MergeAcross=\"5\" ss:StyleID=\"Title\"><Data ss:Type=\"String\">BÁO CÁO DOANH THU</Data></Cell></Row>\n");
-            writer.write("<Row ss:Height=\"22\"><Cell ss:MergeAcross=\"5\" ss:StyleID=\"SubInfo\"><Data ss:Type=\"String\">Kiểu thống kê: "
-                    + escapeXml(selectedMode.getText()) + "    |    Khoảng thời gian: " + escapeXml(range.description)
-                    + "</Data></Cell></Row>\n");
-            writer.write("<Row ss:Height=\"22\"><Cell ss:MergeAcross=\"5\" ss:StyleID=\"SubInfo\"><Data ss:Type=\"String\">Tổng món bán: "
-                    + escapeXml(lblTongMonBan.getText()) + "    |    Tổng số lượng: "
-                    + escapeXml(lblTongSoLuong.getText()) + "    |    Doanh thu: "
-                    + escapeXml(lblDoanhThu.getText()) + "    |    Bán chạy nhất: "
-                    + escapeXml(stripHtml(lblBanChayNhat.getText())) + "</Data></Cell></Row>\n");
-            writer.write("<Row ss:Height=\"12\"></Row>\n");
+            CellStyle titleStyle =
+                    workbook.createCellStyle();
+            titleStyle.setAlignment(
+                    HorizontalAlignment.CENTER);
+            titleStyle.setFont(titleFont);
 
-            writer.write("<Row ss:Height=\"24\">");
-            for (int i = 0; i < tableModel.getColumnCount(); i++) {
-                writer.write("<Cell ss:StyleID=\"Header\"><Data ss:Type=\"String\">" + escapeXml(tableModel.getColumnName(i)) + "</Data></Cell>");
+            org.apache.poi.ss.usermodel.Font headerFont =
+                    workbook.createFont();
+            headerFont.setBold(true);
+
+            CellStyle headerStyle =
+                    workbook.createCellStyle();
+
+            headerStyle.setFont(headerFont);
+            headerStyle.setAlignment(
+                    HorizontalAlignment.CENTER);
+
+            headerStyle.setBorderBottom(
+                    BorderStyle.THIN);
+            headerStyle.setBorderTop(
+                    BorderStyle.THIN);
+            headerStyle.setBorderLeft(
+                    BorderStyle.THIN);
+            headerStyle.setBorderRight(
+                    BorderStyle.THIN);
+
+            CellStyle cellStyle =
+                    workbook.createCellStyle();
+
+            cellStyle.setBorderBottom(
+                    BorderStyle.THIN);
+            cellStyle.setBorderTop(
+                    BorderStyle.THIN);
+            cellStyle.setBorderLeft(
+                    BorderStyle.THIN);
+            cellStyle.setBorderRight(
+                    BorderStyle.THIN);
+
+            CellStyle moneyStyle =
+                    workbook.createCellStyle();
+
+            moneyStyle.cloneStyleFrom(
+                    cellStyle);
+
+            moneyStyle.setAlignment(
+                    HorizontalAlignment.RIGHT);
+
+            // ======================
+            // TITLE
+            // ======================
+
+            int rowIndex = 0;
+
+            Row titleRow =
+                    sheet.createRow(rowIndex++);
+
+            Cell titleCell =
+                    titleRow.createCell(0);
+
+            titleCell.setCellValue(
+                    "BÁO CÁO DOANH THU");
+
+            titleCell.setCellStyle(
+                    titleStyle);
+
+            sheet.addMergedRegion(
+                    new CellRangeAddress(
+                            0, 0, 0, 5));
+
+            // ======================
+            // INFO
+            // ======================
+
+            Row infoRow1 =
+                    sheet.createRow(rowIndex++);
+
+            infoRow1.createCell(0)
+                    .setCellValue(
+                            "Kiểu thống kê: "
+                            + selectedMode.getText()
+                            + " | Khoảng thời gian: "
+                            + range.description);
+
+            Row infoRow2 =
+                    sheet.createRow(rowIndex++);
+
+            infoRow2.createCell(0)
+                    .setCellValue(
+                            "Tổng món bán: "
+                            + lblTongMonBan.getText()
+                            + " | Tổng SL: "
+                            + lblTongSoLuong.getText()
+                            + " | Doanh thu: "
+                            + lblDoanhThu.getText());
+
+            rowIndex++;
+
+            // ======================
+            // HEADER
+            // ======================
+
+            Row headerRow =
+                    sheet.createRow(rowIndex++);
+
+            for (int i = 0;
+                 i < tableModel.getColumnCount();
+                 i++) {
+
+                Cell cell =
+                        headerRow.createCell(i);
+
+                cell.setCellValue(
+                        tableModel.getColumnName(i));
+
+                cell.setCellStyle(
+                        headerStyle);
             }
-            writer.write("</Row>\n");
 
-            for (int r = 0; r < tableModel.getRowCount(); r++) {
-                writer.write("<Row ss:Height=\"24\">");
-                for (int c = 0; c < tableModel.getColumnCount(); c++) {
-                    Object value = tableModel.getValueAt(r, c);
-                    String text = value == null ? "" : value.toString();
-                    String styleId = c == 2 ? "CellLeft" : (c == 5 ? "CellMoney" : "CellCenter");
-                    writer.write("<Cell ss:StyleID=\"" + styleId + "\"><Data ss:Type=\"String\">"
-                            + escapeXml(text) + "</Data></Cell>");
+            // ======================
+            // DATA
+            // ======================
+
+            for (int r = 0;
+                 r < tableModel.getRowCount();
+                 r++) {
+
+                Row row =
+                        sheet.createRow(
+                                rowIndex++);
+
+                for (int c = 0;
+                     c < tableModel.getColumnCount();
+                     c++) {
+
+                    Cell cell =
+                            row.createCell(c);
+
+                    Object value =
+                            tableModel.getValueAt(r, c);
+
+                    if (value != null) {
+                        cell.setCellValue(
+                                value.toString());
+                    }
+
+                    if (c == 5) {
+                        cell.setCellStyle(
+                                moneyStyle);
+                    } else {
+                        cell.setCellStyle(
+                                cellStyle);
+                    }
                 }
-                writer.write("</Row>\n");
             }
 
-            writer.write("<Row ss:Height=\"28\">");
-            writer.write("<Cell ss:MergeAcross=\"1\" ss:StyleID=\"Footer\"><Data ss:Type=\"String\">" + escapeXml(lblFooterDong.getText()) + "</Data></Cell>");
-            writer.write("<Cell ss:MergeAcross=\"1\" ss:StyleID=\"Footer\"><Data ss:Type=\"String\">" + escapeXml(lblFooterSL.getText()) + "</Data></Cell>");
-            writer.write("<Cell ss:MergeAcross=\"1\" ss:StyleID=\"Footer\"><Data ss:Type=\"String\">" + escapeXml(lblFooterTien.getText()) + "</Data></Cell>");
-            writer.write("</Row>\n");
+            // ======================
+            // FOOTER
+            // ======================
 
-            writer.write("</Table>\n</Worksheet>\n</Workbook>\n");
+            Row footer =
+                    sheet.createRow(rowIndex);
 
-            JOptionPane.showMessageDialog(this, "Xuất báo cáo thành công!\nFile Excel: " + file.getAbsolutePath());
+            footer.createCell(0)
+                    .setCellValue(
+                            lblFooterDong.getText());
+
+            footer.createCell(2)
+                    .setCellValue(
+                            lblFooterSL.getText());
+
+            footer.createCell(4)
+                    .setCellValue(
+                            lblFooterTien.getText());
+
+            // ======================
+            // AUTO WIDTH
+            // ======================
+
+            for (int i = 0; i < 6; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            // ======================
+            // SAVE FILE
+            // ======================
+
+            FileOutputStream fos =
+                    new FileOutputStream(file);
+
+            workbook.write(fos);
+            fos.close();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Xuất Excel thành công!\n"
+                    + file.getAbsolutePath());
+
         } catch (Exception ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Xuất báo cáo thất bại:\n" + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Xuất Excel thất bại:\n"
+                    + ex.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 

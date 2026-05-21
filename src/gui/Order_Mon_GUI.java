@@ -21,6 +21,7 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Window;
+import java.awt.event.ActionEvent;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.List;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -48,6 +50,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.Scrollable;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.ScrollPaneConstants;
@@ -560,6 +563,32 @@ public class Order_Mon_GUI extends JPanel {
 
         btnThanhToan = new JButton("Thanh toán [F4]");
         styleMainButton(btnThanhToan, BTN_PAY, Color.BLACK, 20, true);
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+                KeyStroke.getKeyStroke("F4"),
+                "thanhToan"
+        );
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+                KeyStroke.getKeyStroke("F9"),
+                "guiMon"
+        );
+
+        getActionMap().put("guiMon", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnGuiThucDon.isEnabled()) {
+                    btnGuiThucDon.doClick();
+                }
+            }
+        });
+
+        getActionMap().put("thanhToan", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnThanhToan.isEnabled()) {
+                    btnThanhToan.doClick();
+                }
+            }
+        });
 
         btnQuayLai.addActionListener(e -> {
 

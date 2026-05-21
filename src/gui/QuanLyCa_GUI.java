@@ -37,7 +37,7 @@ public class QuanLyCa_GUI extends JPanel {
     private JLabel lblTongCa;
     private JLabel lblCaDangMo;
     private JLabel lblDoanhThu;
-    private JLabel lblTienMat;
+
 
     private JTextField txtTuKhoa;
     private JComboBox<String> cboTrangThai;
@@ -101,18 +101,35 @@ public class QuanLyCa_GUI extends JPanel {
     }
 
     private JPanel buildSummaryCards() {
-        JPanel cards = new JPanel(new GridLayout(1, 4, 14, 0));
+
+        JPanel cards =
+                new JPanel(
+                        new GridLayout(1, 3, 14, 0)
+                );
+
         cards.setOpaque(false);
 
         lblTongCa = new JLabel("0");
         lblCaDangMo = new JLabel("0");
         lblDoanhThu = new JLabel("0 VNĐ");
-        lblTienMat = new JLabel("0 VNĐ");
 
-        cards.add(card("Tổng số ca", lblTongCa, BLUE));
-        cards.add(card("Ca đang mở", lblCaDangMo, GREEN));
-        cards.add(card("Tổng doanh thu", lblDoanhThu, ORANGE));
-        cards.add(card("Tiền mặt cuối ca", lblTienMat, RED));
+        cards.add(card(
+                "Tổng số ca",
+                lblTongCa,
+                BLUE
+        ));
+
+        cards.add(card(
+                "Ca đang mở",
+                lblCaDangMo,
+                GREEN
+        ));
+
+        cards.add(card(
+                "Tổng doanh thu",
+                lblDoanhThu,
+                ORANGE
+        ));
 
         return cards;
     }
@@ -340,7 +357,7 @@ public class QuanLyCa_GUI extends JPanel {
                     r[4],                 // Tài khoản
                     r[5],                 // Nhân viên (tài khoản)
                     formatMoney(r[6]),    // Tiền mở ca
-                    formatMoney(r[7]),    // Tiền mặt hiện tại
+                    formatMoney(r[7]),
                     formatMoney(r[8]),    // Chuyển khoản
                     formatMoney(r[9]),    // Visa
                     formatMoney(r[10]),   // Tổng doanh thu
@@ -366,7 +383,7 @@ public class QuanLyCa_GUI extends JPanel {
         lblTongCa.setText(String.valueOf(tongCa));
         lblCaDangMo.setText(String.valueOf(dangMo));
         lblDoanhThu.setText(formatMoney(doanhThu));
-        lblTienMat.setText(formatMoney(tienMat));
+
     }
 
     private void locDuLieu() {
@@ -422,9 +439,17 @@ public class QuanLyCa_GUI extends JPanel {
                 DongCa_DigLog dlg;
 
                 if (w instanceof Frame) {
-                    dlg = new DongCa_DigLog((Frame) w, caDangMo);
+                    dlg = new DongCa_DigLog(
+                            (Frame) w,
+                            caDangMo,
+                            taiKhoanDangNhap
+                    );
                 } else {
-                    dlg = new DongCa_DigLog(null, caDangMo);
+                    dlg = new DongCa_DigLog(
+                            null,
+                            caDangMo,
+                            taiKhoanDangNhap
+                    );
                 }
 
                 dlg.setVisible(true);
@@ -484,7 +509,7 @@ public class QuanLyCa_GUI extends JPanel {
         info.add(label("Tiền mở ca"));
         info.add(value(formatMoney(ca[6])));
 
-        info.add(label("Tiền mặt cuối ca"));
+        info.add(label("Tiền mặt"));
         info.add(value(formatMoney(ca[7])));
 
         info.add(label("Chuyển khoản cuối ca"));

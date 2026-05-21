@@ -183,28 +183,80 @@ public class ChuyenBan_DigLog extends JDialog {
 
         tabbedPane.removeAll();
 
+        // ===== TAB TẤT CẢ =====
+        ArrayList<String[]> dsTatCa =
+                banDAO.getDanhSachBanTheoThoiGian(
+                        new java.sql.Timestamp(
+                                System.currentTimeMillis()
+                        )
+                );
+
         tabbedPane.addTab(
                 "Tất cả",
-                taoScrollPane(
-                        banDAO.getAllBan()
+                taoScrollPaneRealtime(
+                        dsTatCa,
+                        null
                 )
         );
 
-        ArrayList<KhuVuc> dsKV=
+        // ===== TAB KHU VỰC =====
+        ArrayList<KhuVuc> dsKV =
                 khuVucDAO.getAllKhuVuc();
 
-        for(KhuVuc kv:dsKV){
+        for(KhuVuc kv : dsKV){
 
-            ArrayList<Ban> dsBan=
-                    banDAO.getBanTheoKhuVuc(
-                            kv.getMaKhuVuc()
+            ArrayList<String[]> dsKVRealtime =
+                    banDAO.getDanhSachBanTheoThoiGian(
+                            new java.sql.Timestamp(
+                                    System.currentTimeMillis()
+                            )
                     );
 
             tabbedPane.addTab(
                     kv.getTenKhuVuc(),
-                    taoScrollPane(dsBan)
+                    taoScrollPaneRealtime(
+                            dsKVRealtime,
+                            kv.getTenKhuVuc()
+                    )
             );
         }
+    }
+    private JScrollPane taoScrollPaneRealtime(
+            ArrayList<String[]> ds,
+            String tenKhuVuc
+    ){
+
+        ArrayList<Ban> dsBan =
+                new ArrayList<>();
+
+        for(String[] row : ds){
+
+            // lọc theo khu vực
+            if(
+                    tenKhuVuc != null
+                    &&
+                    !tenKhuVuc.equalsIgnoreCase(
+                            row[4]
+                    )
+            ){
+                continue;
+            }
+
+            Ban ban = new Ban();
+
+            ban.setMaBan(row[0]);
+            ban.setTenBan(row[1]);
+            ban.setSoChoNgoi(
+                    Integer.parseInt(row[2])
+            );
+
+            // realtime từ DB
+            ban.setTrangThai(row[3]);
+
+            dsBan.add(ban);
+        }
+
+        return taoScrollPane(dsBan);
     }
 
     // ================= PANEL =================
@@ -358,12 +410,18 @@ public class ChuyenBan_DigLog extends JDialog {
                     	        java.awt.event.MouseEvent e
                     	){
 
-                    	    String tt =
-                    	            ban.getTrangThai() == null
-                    	            ? ""
-                    	            : ban.getTrangThai()
-                    	                  .trim()
-                    	                  .toLowerCase();
+                    		Ban banMoi =
+                    	            banDAO.getBanTheoMa(
+                    	                    ban.getMaBan()
+                    	            );
+
+                    		String tt =
+                    		        banMoi != null
+                    		        && banMoi.getTrangThai() != null
+                    		        ? banMoi.getTrangThai()
+                    		                .trim()
+                    		                .toLowerCase()
+                    		        : "";
 
                     	    if(
                     	            tt.contains("đang phục vụ")

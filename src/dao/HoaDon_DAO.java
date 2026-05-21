@@ -1,6 +1,7 @@
 package dao;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -284,7 +285,7 @@ public class HoaDon_DAO {
                     hinhThucPhucVu,
                     trangThai
                 )
-                VALUES(?,?,?,?,GETDATE(),?,?)
+                VALUES(?,?,?,?,?,?,?)
             """;
 
             PreparedStatement ps =
@@ -307,9 +308,14 @@ public class HoaDon_DAO {
             } else {
                 ps.setString(4, maPhieuDatBan);
             }
-
-            ps.setString(5, hinhThucPhucVu);
-            ps.setString(6, trangThai);
+            ps.setTimestamp(
+                    5,
+                    Timestamp.valueOf(
+                            LocalDateTime.now()
+                    )
+            );
+            ps.setString(6, hinhThucPhucVu);
+            ps.setString(7, trangThai);
 
             boolean ok =
                     ps.executeUpdate() > 0;
@@ -409,7 +415,7 @@ public class HoaDon_DAO {
                     thueVAT = ?,
                     tienThua = ?,
                     phuongThucThanhToan = ?,
-                    thoiGianRa = GETDATE(),
+                    thoiGianRa = ?,
                     trangThai = N'Đã thanh toán'
                 WHERE maHD = ?
             """;
@@ -432,7 +438,13 @@ public class HoaDon_DAO {
             stmt.setDouble(4, thueVAT);
             stmt.setDouble(5, tienThua);
             stmt.setString(6, phuongThucThanhToan);
-            stmt.setString(7, maHD);
+            stmt.setTimestamp(
+                    7,
+                    Timestamp.valueOf(
+                            LocalDateTime.now()
+                    )
+            );
+            stmt.setString(8, maHD);
 
             return stmt.executeUpdate() > 0;
 

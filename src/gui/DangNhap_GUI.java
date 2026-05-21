@@ -253,18 +253,61 @@ public class DangNhap_GUI extends JFrame {
                 btnDangNhap.setEnabled(true);
 
                 try {
-                    TaiKhoan tk = get();
 
-                    if (tk != null) {
-                        moTienMoCaSauDangNhap(tk);
-                    } else {
-                        JOptionPane.showMessageDialog(DangNhap_GUI.this,
-                                "Sai tên đăng nhập hoặc mật khẩu!");
-                    }
+                	TaiKhoan_DAO tkDao = new TaiKhoan_DAO();
+
+                	// kiểm tra tên đăng nhập tồn tại không
+                	TaiKhoan tkTheoTen = tkDao.getTaiKhoanTheoTenDangNhap(tenDangNhap);
+
+                	if (tkTheoTen == null) {
+
+                	    JOptionPane.showMessageDialog(
+                	            DangNhap_GUI.this,
+                	            "Tên đăng nhập không đúng!"
+                	    );
+
+                	    txtTenDangNhap.requestFocus();
+                	    setLoiUser(true);
+                	    return;
+                	}
+
+                	// kiểm tra mật khẩu
+                	TaiKhoan tk = get();
+
+                	if (tk == null) {
+
+                	    JOptionPane.showMessageDialog(
+                	            DangNhap_GUI.this,
+                	            "Mật khẩu không đúng!"
+                	    );
+
+                	    txtMatKhau.requestFocus();
+                	    setLoiPass(true);
+                	    return;
+                	}
+
+                	// đăng nhập thành công
+                	String chucVu = tk.getMaNV().getChucVu();
+
+                	if ("Bếp".equalsIgnoreCase(chucVu)) {
+
+                	    TrangChu_GUI trangChu = new TrangChu_GUI(tk);
+                	    trangChu.setVisible(true);
+                	    dispose();
+
+                	} else {
+
+                	    moTienMoCaSauDangNhap(tk);
+                	}
+
                 } catch (Exception ex) {
+
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(DangNhap_GUI.this,
-                            "Lỗi kết nối hoặc truy vấn dữ liệu!");
+
+                    JOptionPane.showMessageDialog(
+                            DangNhap_GUI.this,
+                            "Lỗi kết nối hoặc truy vấn dữ liệu!"
+                    );
                 }
             }
         };
@@ -317,7 +360,7 @@ public class DangNhap_GUI extends JFrame {
             }
 
             if (chon == 1) {
-                DongCa_DigLog dlgDongCa = new DongCa_DigLog(this, caDangMo);
+                DongCa_DigLog dlgDongCa = new DongCa_DigLog(this, caDangMo, tk);
                 dlgDongCa.setVisible(true);
 
                 if (!dlgDongCa.isDongCaThanhCong()) {

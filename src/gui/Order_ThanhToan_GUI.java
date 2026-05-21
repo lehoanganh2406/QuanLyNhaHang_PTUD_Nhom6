@@ -1,6 +1,7 @@
 package gui;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -480,6 +481,19 @@ public class Order_ThanhToan_GUI extends JPanel {
         btnQuayLai.addActionListener(e -> quayLaiOrderMon());
         btnTamTinh.addActionListener(e -> moPhieuTamTinh());
         btnThanhToan.addActionListener(e -> xuLyThanhToan());
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+                KeyStroke.getKeyStroke("F4"),
+                "thanhToan"
+        );
+
+        getActionMap().put("thanhToan", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (btnThanhToan.isEnabled()) {
+                    btnThanhToan.doClick();
+                }
+            }
+        });
 
         return right;
     }

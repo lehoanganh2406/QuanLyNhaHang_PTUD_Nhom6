@@ -219,28 +219,24 @@ public class ChiTietHoaDon_DAO {
             Connection con = ConnectDB.getConnection();
 
             String sql = """
-                    SELECT
-    cthd.*,
-    hb.maBan AS maBanHienTai,
-    ma.tenMon,
-    ma.anhMon,
-    hd.hinhThucPhucVu
+            		SELECT
+            		    cthd.*,
+            		    ma.tenMon,
+            		    ma.anhMon,
+            		    hd.hinhThucPhucVu
 
-FROM ChiTietHoaDon cthd
+            		FROM ChiTietHoaDon cthd
 
-JOIN MonAn ma
-    ON ma.maMon = cthd.maMon
+            		JOIN MonAn ma
+            		    ON ma.maMon = cthd.maMon
 
-JOIN HoaDon hd
-    ON hd.maHD = cthd.maHD
+            		JOIN HoaDon hd
+            		    ON hd.maHD = cthd.maHD
 
-JOIN HoaDon_Ban hb
-    ON hb.maHD = cthd.maHD
+            		WHERE cthd.trangThai = ?
 
-WHERE cthd.trangThai = ?
-
-ORDER BY cthd.thoiGianGui ASC
-                    """;
+            		ORDER BY cthd.thoiGianGui ASC
+            		""";
 
             PreparedStatement ps = con.prepareStatement(sql);
 
@@ -995,6 +991,32 @@ ORDER BY ct.thoiGianGui
                          maMon,
                          maBanCu
                  );
+      // =====================================
+      // CẬP NHẬT BÀN CHO MÓN CHƯA XONG
+      // =====================================
+
+      String maBanThucTe =
+              maBanCu;
+
+      if(
+              ctCu.getTrangThai() != null
+              &&
+              (
+                  ctCu.getTrangThai()
+                  .equalsIgnoreCase(
+                          "Đã gửi bếp"
+                  )
+                  ||
+                  ctCu.getTrangThai()
+                  .equalsIgnoreCase(
+                          "Đang chế biến"
+                  )
+              )
+      ){
+
+          maBanThucTe =
+                  maBanMoi;
+      }
 
          if (ctCu == null) {
              return false;
@@ -1022,59 +1044,75 @@ ORDER BY ct.thoiGianGui
              capNhatChiTietHoaDon(ctCu);
          }
 
-         // =============================================
-         // CHECK BÀN MỚI ĐÃ CÓ MÓN CHƯA
-         // =============================================
+      // =============================================
+      // CHECK MÓN ĐÃ CÓ Ở BÀN ĐÍCH CHƯA
+      // =============================================
 
-         ChiTietHoaDon ctMoi =
-                 getChiTietHoaDon(
-                         maHD,
-                         maMon,
-                         maBanMoi
-                 );
+      ChiTietHoaDon ctMoi =
+              getChiTietHoaDon(
+                      maHD,
+                      maMon,
+                      maBanThucTe
+              );
 
-         // =============================================
-         // ĐÃ CÓ -> CỘNG SL
-         // =============================================
+      // cùng bàn -> bỏ qua
+      if(
+              maBanCu.equalsIgnoreCase(
+                      maBanThucTe
+              )
+      ){
 
-         if (ctMoi != null) {
+          return true;
+      }
 
-             ctMoi.setSoLuong(
-                     ctMoi.getSoLuong()
-                             + soLuongTach
-             );
+      // =============================================
+      // ĐÃ CÓ -> CỘNG SL
+      // =============================================
 
-             capNhatChiTietHoaDon(ctMoi);
-         }
+      if (ctMoi != null) {
 
-         // =============================================
-         // CHƯA CÓ -> INSERT
-         // =============================================
+          ctMoi.setSoLuong(
+                  ctMoi.getSoLuong()
+                  + soLuongTach
+          );
 
-         else {
+          capNhatChiTietHoaDon(
+                  ctMoi
+          );
+      }
 
-             Ban banMoi =
-                     new Ban();
+      // =============================================
+      // CHƯA CÓ -> INSERT
+      // =============================================
 
-             banMoi.setMaBan(maBanMoi);
+      else {
 
-             ChiTietHoaDon ctNew =
-                     new ChiTietHoaDon(
-                             new HoaDon(maHD),
-                             banMoi,
-                             ctCu.getMaMon(),
-                             soLuongTach,
-                             ctCu.getDonGia(),
-                             ctCu.getGhiChu(),
-                             ctCu.getTrangThai(),
-                             null,
-                             0,
-                             null,
-                             LocalDateTime.now()
-                     );
+          Ban banMoi =
+                  new Ban();
 
-             themChiTietHoaDon(ctNew);
-         }
+          banMoi.setMaBan(
+                  maBanThucTe
+          );
+
+          ChiTietHoaDon ctNew =
+                  new ChiTietHoaDon(
+                          new HoaDon(maHD),
+                          banMoi,
+                          ctCu.getMaMon(),
+                          soLuongTach,
+                          ctCu.getDonGia(),
+                          ctCu.getGhiChu(),
+                          ctCu.getTrangThai(),
+                          null,
+                          0,
+                          null,
+                          LocalDateTime.now()
+                  );
+
+          themChiTietHoaDon(
+                  ctNew
+          );
+      }
 
          return true;
 

@@ -1781,6 +1781,25 @@ public class Order_Mon_GUI extends JPanel {
         return lbl;
     }
 
+//    private void styleMainButton(JButton btn, Color bg, Color fg, int fontSize, boolean bold) {
+//        btn.setBackground(bg);
+//        btn.setForeground(fg);
+//        btn.setOpaque(true);
+//        btn.setContentAreaFilled(true);
+//        btn.setBorder(BorderFactory.createLineBorder(new Color(215, 215, 215), 1));
+//        btn.setFocusPainted(false);
+//        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+//        btn.setFont(new Font("SansSerif", bold ? Font.BOLD : Font.PLAIN, fontSize));
+//        btn.setMargin(new Insets(0, 6, 0, 6));
+//        btn.setHorizontalAlignment(SwingConstants.CENTER);
+//        btn.setVerticalAlignment(SwingConstants.CENTER);
+//        btn.setHorizontalTextPosition(SwingConstants.CENTER);
+//        btn.setVerticalTextPosition(SwingConstants.CENTER);
+//        btn.setIconTextGap(4);
+//        btn.updateUI(); 
+//        System.out.println(btn.getUI().getClass());
+//    }
+    
     private void styleMainButton(JButton btn, Color bg, Color fg, int fontSize, boolean bold) {
     	btn.setUI(
                 new javax.swing.plaf.basic.BasicButtonUI()
@@ -1799,7 +1818,7 @@ public class Order_Mon_GUI extends JPanel {
         btn.setHorizontalTextPosition(SwingConstants.CENTER);
         btn.setVerticalTextPosition(SwingConstants.CENTER);
         btn.setIconTextGap(4);
-        btn.updateUI();
+
     }
 
     private void taoTabsLoai() {

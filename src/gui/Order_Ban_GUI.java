@@ -419,6 +419,7 @@ public class Order_Ban_GUI extends JPanel {
 
     private JToggleButton taoTabKhuVuc(String tenKhuVuc, boolean selected) {
         JToggleButton btn = new JToggleButton(tenKhuVuc);
+        btn.setUI(new javax.swing.plaf.basic.BasicButtonUI());
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setFont(new Font("SansSerif", Font.PLAIN, 22));

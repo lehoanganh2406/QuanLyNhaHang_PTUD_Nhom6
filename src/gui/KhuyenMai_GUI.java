@@ -304,6 +304,7 @@ public class KhuyenMai_GUI extends JPanel {
 
     private JButton createButton(String text, Color bg, Color fg) {
         JButton btn = new JButton(text);
+        btn.setUI(new javax.swing.plaf.basic.BasicButtonUI());
         btn.setFont(new Font("SansSerif", Font.BOLD, 14));
         btn.setBackground(bg);
         btn.setForeground(fg);

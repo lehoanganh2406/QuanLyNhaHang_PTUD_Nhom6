@@ -322,6 +322,9 @@ public class TraCuu_GUI extends JPanel {
 
     private JToggleButton createLeftButton(String text, boolean selected) {
         JToggleButton btn = new JToggleButton(text, selected);
+        btn.setUI(
+        	    new javax.swing.plaf.basic.BasicToggleButtonUI()
+        	);
         btn.setFocusPainted(false);
         btn.setFont(new Font("SansSerif", Font.PLAIN, 20));
         btn.setForeground(Color.BLACK);
@@ -1956,6 +1959,7 @@ public class TraCuu_GUI extends JPanel {
 
     private JToggleButton createTabButton(String text, boolean selected) {
         JToggleButton btn = new JToggleButton(text, selected);
+        btn.setUI(new javax.swing.plaf.basic.BasicButtonUI());
         btn.setFocusPainted(false);
         btn.setFont(new Font("SansSerif", Font.PLAIN, 17));
         btn.setForeground(Color.BLACK);

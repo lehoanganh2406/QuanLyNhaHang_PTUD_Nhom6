@@ -43,6 +43,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -91,6 +92,7 @@ public class TongKetBanHang_GUI extends JPanel {
     private JToggleButton btnTuan;
     private JToggleButton btnThang;
     private JToggleButton btnNam;
+    private JButton btnFilter;
 
     private JPanel filterFieldsPanel;
 
@@ -264,6 +266,7 @@ public class TongKetBanHang_GUI extends JPanel {
         group.add(btnThang);
         group.add(btnNam);
         btnTuan.setSelected(true);
+        btnFilter = createFilterButton();
 
         startChooser = new JDateChooser();
         startChooser.setPreferredSize(new Dimension(140, 34));
@@ -397,7 +400,7 @@ public class TongKetBanHang_GUI extends JPanel {
             filterFieldsPanel.add(startChooser);
             filterFieldsPanel.add(createFieldLabel("Đến ngày:"));
             filterFieldsPanel.add(endChooser);
-            filterFieldsPanel.add(createFilterButton());
+            filterFieldsPanel.add(btnFilter);
             lblFilterHint.setText("ⓘ Dữ liệu được thống kê theo khoảng ngày. Có thể chuyển sang Tuần / Tháng / Năm để xem tổng hợp khác.");
         } else if (selectedMode == PeriodMode.TUAN) {
             filterFieldsPanel.add(createFieldLabel("Từ tuần:"));
@@ -406,7 +409,7 @@ public class TongKetBanHang_GUI extends JPanel {
             filterFieldsPanel.add(cboToWeek);
             filterFieldsPanel.add(createFieldLabel("Năm:"));
             filterFieldsPanel.add(cboWeekYear);
-            filterFieldsPanel.add(createFilterButton());
+            filterFieldsPanel.add(btnFilter);
             lblFilterHint.setText("ⓘ Dữ liệu được thống kê theo khoảng tuần. Có thể chuyển sang Ngày / Tháng / Năm để xem theo khoảng thời gian khác.");
         } else if (selectedMode == PeriodMode.THANG) {
             filterFieldsPanel.add(createFieldLabel("Từ tháng:"));
@@ -415,14 +418,14 @@ public class TongKetBanHang_GUI extends JPanel {
             filterFieldsPanel.add(cboToMonth);
             filterFieldsPanel.add(createFieldLabel("Năm:"));
             filterFieldsPanel.add(cboMonthYear);
-            filterFieldsPanel.add(createFilterButton());
+            filterFieldsPanel.add(btnFilter);
             lblFilterHint.setText("ⓘ Dữ liệu được thống kê theo khoảng tháng. Biểu đồ doanh thu sẽ gom theo từng tháng trong năm đã chọn.");
         } else {
             filterFieldsPanel.add(createFieldLabel("Từ năm:"));
             filterFieldsPanel.add(cboFromYear);
             filterFieldsPanel.add(createFieldLabel("Đến năm:"));
             filterFieldsPanel.add(cboToYear);
-            filterFieldsPanel.add(createFilterButton());
+            filterFieldsPanel.add(btnFilter);
             lblFilterHint.setText("ⓘ Dữ liệu được thống kê theo khoảng năm. Phù hợp để xem xu hướng doanh thu dài hạn.");
         }
 
@@ -777,6 +780,8 @@ public class TongKetBanHang_GUI extends JPanel {
 
     private DateRange getSelectedDateRange() {
         try {
+            commitDateChooserText();
+
             if (selectedMode == PeriodMode.NGAY) {
                 Date start = startChooser.getDate();
                 Date end = endChooser.getDate();
@@ -832,6 +837,24 @@ public class TongKetBanHang_GUI extends JPanel {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Dữ liệu lọc không hợp lệ: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             return null;
+        }
+    }
+
+
+    private void commitDateChooserText() {
+        commitDateChooser(startChooser);
+        commitDateChooser(endChooser);
+    }
+
+    private void commitDateChooser(JDateChooser chooser) {
+        if (chooser == null || chooser.getDateEditor() == null) return;
+        try {
+            java.awt.Component comp = chooser.getDateEditor().getUiComponent();
+            if (comp instanceof JFormattedTextField) {
+                ((JFormattedTextField) comp).commitEdit();
+            }
+        } catch (Exception ignored) {
+            // Nếu người dùng nhập sai định dạng ngày, getSelectedDateRange() sẽ báo lỗi/không cho lọc.
         }
     }
 
@@ -898,38 +921,56 @@ public class TongKetBanHang_GUI extends JPanel {
         Connection con = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
+
         try {
             con = ConnectDB.getConnection();
             if (con == null) return list;
 
+            /*
+             * Quan trọng:
+             * Doanh thu biểu đồ phải lấy theo cùng điều kiện với bảng chi tiết.
+             * Không lấy lại toàn bộ HoaDon rồi SUM(tongTien) nếu đang lọc ngày/tháng/năm.
+             */
             String sql;
             if (selectedMode == PeriodMode.NGAY) {
-                sql = "SELECT CAST(thoiGianRa AS DATE) AS nhom, ISNULL(SUM(tongTien),0) AS doanhThu "
-                        + "FROM HoaDon "
-                        + "WHERE trangThai = N'Đã thanh toán' "
-                        + "AND thoiGianRa >= ? AND thoiGianRa < ? "
-                        + "GROUP BY CAST(thoiGianRa AS DATE) "
+                sql = "SELECT CAST(hd.thoiGianRa AS DATE) AS nhom, "
+                        + "ISNULL(SUM((ct.soLuong - ISNULL(ct.soLuongHuy,0)) * ct.donGia),0) AS doanhThu "
+                        + "FROM HoaDon hd "
+                        + "JOIN ChiTietHoaDon ct ON ct.maHD = hd.maHD "
+                        + "WHERE hd.trangThai = N'Đã thanh toán' "
+                        + "AND hd.thoiGianRa >= ? AND hd.thoiGianRa < ? "
+                        + "AND (ct.trangThai IS NULL OR ct.trangThai <> N'Đã hủy') "
+                        + "GROUP BY CAST(hd.thoiGianRa AS DATE) "
                         + "ORDER BY nhom";
             } else if (selectedMode == PeriodMode.TUAN) {
-                sql = "SELECT DATEPART(YEAR, thoiGianRa) AS nam, DATEPART(ISO_WEEK, thoiGianRa) AS tuan, ISNULL(SUM(tongTien),0) AS doanhThu "
-                        + "FROM HoaDon "
-                        + "WHERE trangThai = N'Đã thanh toán' "
-                        + "AND thoiGianRa >= ? AND thoiGianRa < ? "
-                        + "GROUP BY DATEPART(YEAR, thoiGianRa), DATEPART(ISO_WEEK, thoiGianRa) "
+                sql = "SELECT DATEPART(YEAR, hd.thoiGianRa) AS nam, DATEPART(ISO_WEEK, hd.thoiGianRa) AS tuan, "
+                        + "ISNULL(SUM((ct.soLuong - ISNULL(ct.soLuongHuy,0)) * ct.donGia),0) AS doanhThu "
+                        + "FROM HoaDon hd "
+                        + "JOIN ChiTietHoaDon ct ON ct.maHD = hd.maHD "
+                        + "WHERE hd.trangThai = N'Đã thanh toán' "
+                        + "AND hd.thoiGianRa >= ? AND hd.thoiGianRa < ? "
+                        + "AND (ct.trangThai IS NULL OR ct.trangThai <> N'Đã hủy') "
+                        + "GROUP BY DATEPART(YEAR, hd.thoiGianRa), DATEPART(ISO_WEEK, hd.thoiGianRa) "
                         + "ORDER BY nam, tuan";
             } else if (selectedMode == PeriodMode.THANG) {
-                sql = "SELECT DATEPART(YEAR, thoiGianRa) AS nam, DATEPART(MONTH, thoiGianRa) AS thang, ISNULL(SUM(tongTien),0) AS doanhThu "
-                        + "FROM HoaDon "
-                        + "WHERE trangThai = N'Đã thanh toán' "
-                        + "AND thoiGianRa >= ? AND thoiGianRa < ? "
-                        + "GROUP BY DATEPART(YEAR, thoiGianRa), DATEPART(MONTH, thoiGianRa) "
+                sql = "SELECT DATEPART(YEAR, hd.thoiGianRa) AS nam, DATEPART(MONTH, hd.thoiGianRa) AS thang, "
+                        + "ISNULL(SUM((ct.soLuong - ISNULL(ct.soLuongHuy,0)) * ct.donGia),0) AS doanhThu "
+                        + "FROM HoaDon hd "
+                        + "JOIN ChiTietHoaDon ct ON ct.maHD = hd.maHD "
+                        + "WHERE hd.trangThai = N'Đã thanh toán' "
+                        + "AND hd.thoiGianRa >= ? AND hd.thoiGianRa < ? "
+                        + "AND (ct.trangThai IS NULL OR ct.trangThai <> N'Đã hủy') "
+                        + "GROUP BY DATEPART(YEAR, hd.thoiGianRa), DATEPART(MONTH, hd.thoiGianRa) "
                         + "ORDER BY nam, thang";
             } else {
-                sql = "SELECT DATEPART(YEAR, thoiGianRa) AS nam, ISNULL(SUM(tongTien),0) AS doanhThu "
-                        + "FROM HoaDon "
-                        + "WHERE trangThai = N'Đã thanh toán' "
-                        + "AND thoiGianRa >= ? AND thoiGianRa < ? "
-                        + "GROUP BY DATEPART(YEAR, thoiGianRa) "
+                sql = "SELECT DATEPART(YEAR, hd.thoiGianRa) AS nam, "
+                        + "ISNULL(SUM((ct.soLuong - ISNULL(ct.soLuongHuy,0)) * ct.donGia),0) AS doanhThu "
+                        + "FROM HoaDon hd "
+                        + "JOIN ChiTietHoaDon ct ON ct.maHD = hd.maHD "
+                        + "WHERE hd.trangThai = N'Đã thanh toán' "
+                        + "AND hd.thoiGianRa >= ? AND hd.thoiGianRa < ? "
+                        + "AND (ct.trangThai IS NULL OR ct.trangThai <> N'Đã hủy') "
+                        + "GROUP BY DATEPART(YEAR, hd.thoiGianRa) "
                         + "ORDER BY nam";
             }
 
@@ -954,6 +995,7 @@ public class TongKetBanHang_GUI extends JPanel {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi tải biểu đồ doanh thu: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         } finally {
             closeQuietly(rs);
             closeQuietly(stmt);

@@ -857,6 +857,7 @@ public class KhachHang_GUI extends JPanel {
 
     private JButton createButton(String text, Color color) {
         JButton btn = new JButton(text);
+        btn.setUI(new javax.swing.plaf.basic.BasicButtonUI());
         btn.setFont(new Font("SansSerif", Font.BOLD, 15));
         btn.setBackground(color);
         btn.setForeground(Color.BLACK);

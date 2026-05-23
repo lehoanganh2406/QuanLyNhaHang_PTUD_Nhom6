@@ -86,12 +86,8 @@ public class Starting {
 
             try {
 
-                // Dùng giao diện của hệ điều hành
-                UIManager.setLookAndFeel(
-                        UIManager.getSystemLookAndFeelClassName()
-                );
-
-                // Kết nối database
+            	
+                // Kết nối cơ sở dữ liệu
                 ConnectDB.getInstance().connect();
 
                 // Mở form đăng nhập

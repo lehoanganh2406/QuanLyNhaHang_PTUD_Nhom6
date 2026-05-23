@@ -511,7 +511,10 @@ public class Order_ThanhToan_GUI extends JPanel {
     }
 
     private void styleButton(JButton btn, Color bg, int fontSize, boolean bold) {
-        btn.setBackground(bg);
+    	btn.setUI(
+    		    new javax.swing.plaf.basic.BasicButtonUI()
+    		);
+    	btn.setBackground(bg);
         btn.setOpaque(true);
         btn.setContentAreaFilled(true);
         btn.setFocusPainted(false);

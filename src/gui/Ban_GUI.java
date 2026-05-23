@@ -347,6 +347,7 @@ public class Ban_GUI extends JPanel {
 
     private JButton createActionButton(String text, Color bg, Color fg) {
         JButton button = new JButton(text);
+        button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
         button.setFont(new Font("SansSerif", Font.BOLD, 13));
         button.setFocusPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));

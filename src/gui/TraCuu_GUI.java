@@ -1956,6 +1956,9 @@ public class TraCuu_GUI extends JPanel {
 
     private JToggleButton createTabButton(String text, boolean selected) {
         JToggleButton btn = new JToggleButton(text, selected);
+        btn.setUI(
+        	    new javax.swing.plaf.basic.BasicToggleButtonUI()
+        	);
         btn.setFocusPainted(false);
         btn.setFont(new Font("SansSerif", Font.PLAIN, 17));
         btn.setForeground(Color.BLACK);
@@ -1973,6 +1976,7 @@ public class TraCuu_GUI extends JPanel {
             btn.setBackground(btn.isSelected() ? BG_TAB_SELECTED : BG_TAB);
             btn.repaint();
         });
+//        System.out.println(btn.getUI().getClass());
 
         return btn;
     }

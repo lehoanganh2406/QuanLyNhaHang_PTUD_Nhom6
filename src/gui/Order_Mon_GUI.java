@@ -1804,18 +1804,13 @@ public class Order_Mon_GUI extends JPanel {
     	btn.setUI(
                 new javax.swing.plaf.basic.BasicButtonUI()
         );
-
     	btn.setBackground(bg);
         btn.setForeground(fg);
-
         btn.setOpaque(true);
-        btn.setContentAreaFilled(true);
-        btn.setBorderPainted(true);
-
-
+//        btn.setContentAreaFilled(true);
+        btn.setBorder(BorderFactory.createLineBorder(new Color(215, 215, 215), 1));
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setBorder(BorderFactory.createLineBorder(new Color(215, 215, 215), 1));
         btn.setFont(new Font("SansSerif", bold ? Font.BOLD : Font.PLAIN, fontSize));
         btn.setMargin(new Insets(0, 6, 0, 6));
         btn.setHorizontalAlignment(SwingConstants.CENTER);
@@ -1824,7 +1819,6 @@ public class Order_Mon_GUI extends JPanel {
         btn.setVerticalTextPosition(SwingConstants.CENTER);
         btn.setIconTextGap(4);
 
-        btn.updateUI();
     }
 
     private void taoTabsLoai() {

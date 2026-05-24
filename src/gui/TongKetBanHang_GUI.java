@@ -80,7 +80,7 @@ public class TongKetBanHang_GUI extends JPanel {
         public String getText() { return text; }
     }
 
-    private PeriodMode selectedMode = PeriodMode.TUAN;
+    private PeriodMode selectedMode = PeriodMode.NGAY;
 
     private JLabel lblSubTitle;
     private JLabel lblFilterHint;
@@ -265,7 +265,7 @@ public class TongKetBanHang_GUI extends JPanel {
         group.add(btnTuan);
         group.add(btnThang);
         group.add(btnNam);
-        btnTuan.setSelected(true);
+        btnNgay.setSelected(true);
         btnFilter = createFilterButton();
 
         startChooser = new JDateChooser();
@@ -303,6 +303,7 @@ public class TongKetBanHang_GUI extends JPanel {
         btn.setContentAreaFilled(true);
         btn.addActionListener(e -> {
             selectedMode = mode;
+            setDefaultRangeForMode(mode);
             refreshFilterFields();
             loadData();
         });
@@ -360,7 +361,7 @@ public class TongKetBanHang_GUI extends JPanel {
             cboToMonth.addItem("Tháng " + m);
         }
         int currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1;
-        cboFromMonth.setSelectedIndex(Math.max(0, currentMonth - 2));
+        cboFromMonth.setSelectedIndex(currentMonth - 1);
         cboToMonth.setSelectedIndex(currentMonth - 1);
     }
 
@@ -383,7 +384,7 @@ public class TongKetBanHang_GUI extends JPanel {
         }
 
         int currentWeek = LocalDate.now().get(weekFields.weekOfWeekBasedYear());
-        int from = oldFrom > 0 ? Math.min(oldFrom, maxWeek) : Math.max(1, currentWeek - 1);
+        int from = oldFrom > 0 ? Math.min(oldFrom, maxWeek) : Math.min(maxWeek, currentWeek);
         int to = oldTo > 0 ? Math.min(oldTo, maxWeek) : Math.min(maxWeek, currentWeek);
         cboFromWeek.setSelectedIndex(from - 1);
         cboToWeek.setSelectedIndex(to - 1);
@@ -755,18 +756,55 @@ public class TongKetBanHang_GUI extends JPanel {
     }
 
     private void setDefaultDates() {
-        Calendar cal = Calendar.getInstance();
-        endChooser.setDate(cal.getTime());
-        cal.add(Calendar.DAY_OF_MONTH, -30);
-        startChooser.setDate(cal.getTime());
+        setDefaultRangeForMode(PeriodMode.NGAY);
+        setDefaultRangeForMode(PeriodMode.TUAN);
+        setDefaultRangeForMode(PeriodMode.THANG);
+        setDefaultRangeForMode(PeriodMode.NAM);
+    }
 
+    /*
+     * Khi chuyển tab, mặc định chỉ lấy đúng 1 đơn vị thời gian của tab đó:
+     * - Ngày: hôm nay -> hôm nay
+     * - Tuần: tuần hiện tại -> tuần hiện tại
+     * - Tháng: tháng hiện tại -> tháng hiện tại
+     * - Năm: năm hiện tại -> năm hiện tại
+     *
+     * Nhờ vậy tab Ngày/Tuần/Tháng/Năm không còn bị giống nhau do cùng lấy khoảng gần 1 tháng.
+     */
+    private void setDefaultRangeForMode(PeriodMode mode) {
         LocalDate now = LocalDate.now();
-        String year = String.valueOf(now.getYear());
-        cboWeekYear.setSelectedItem(year);
-        cboMonthYear.setSelectedItem(year);
-        cboFromYear.setSelectedItem(year);
-        cboToYear.setSelectedItem(year);
-        rebuildWeekCombos();
+        String currentYear = String.valueOf(now.getYear());
+
+        if (mode == PeriodMode.NGAY) {
+            Date today = Date.from(now.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            startChooser.setDate(today);
+            endChooser.setDate(today);
+            return;
+        }
+
+        if (mode == PeriodMode.TUAN) {
+            cboWeekYear.setSelectedItem(currentYear);
+            rebuildWeekCombos();
+
+            int maxWeek = cboFromWeek.getItemCount();
+            int currentWeek = now.get(weekFields.weekOfWeekBasedYear());
+            int index = Math.max(0, Math.min(currentWeek, maxWeek) - 1);
+
+            cboFromWeek.setSelectedIndex(index);
+            cboToWeek.setSelectedIndex(index);
+            return;
+        }
+
+        if (mode == PeriodMode.THANG) {
+            cboMonthYear.setSelectedItem(currentYear);
+            int monthIndex = now.getMonthValue() - 1;
+            cboFromMonth.setSelectedIndex(monthIndex);
+            cboToMonth.setSelectedIndex(monthIndex);
+            return;
+        }
+
+        cboFromYear.setSelectedItem(currentYear);
+        cboToYear.setSelectedItem(currentYear);
     }
 
     private void loadData() {

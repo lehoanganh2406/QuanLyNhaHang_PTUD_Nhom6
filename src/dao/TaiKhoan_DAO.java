@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import org.mindrot.jbcrypt.BCrypt;
 
 import connectDB.ConnectDB;
 import entity.NhanVien;
@@ -209,39 +210,44 @@ public class TaiKhoan_DAO {
         return null;
     }
 
-    public TaiKhoan dangNhap(String tenDangNhap, String matKhau) {
+    public TaiKhoan dangNhap(String tenDangNhap, String matKhauNhap) {
         Connection con = ConnectDB.getConnection();
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
 
-        String sql = "SELECT tk.maTaiKhoan, tk.tenDangNhap, tk.matKhau, tk.phanQuyen, tk.trangThai, " +
-                     "tk.maNV, nv.hoTen, nv.chucVu " +
+        String sql = "SELECT tk.maTaiKhoan, tk.tenDangNhap, tk.matKhau, " +
+                     "tk.phanQuyen, tk.trangThai, tk.maNV, nv.hoTen, nv.chucVu " +
                      "FROM TaiKhoan tk " +
                      "JOIN NhanVien nv ON tk.maNV = nv.maNV " +
-                     "WHERE tk.tenDangNhap = ? AND tk.matKhau = ? AND tk.trangThai = 1";
+                     "WHERE tk.tenDangNhap = ? AND tk.trangThai = 1";
 
         try {
-            stmt = con.prepareStatement(sql);
+            PreparedStatement stmt = con.prepareStatement(sql);
             stmt.setString(1, tenDangNhap);
-            stmt.setString(2, matKhau);
-            rs = stmt.executeQuery();
+
+            ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                String maTaiKhoan = rs.getString("maTaiKhoan");
-                String phanQuyen = rs.getString("phanQuyen");
-                boolean trangThai = rs.getBoolean("trangThai");
-                String maNhanVien = rs.getString("maNV");
-                String hoTen = rs.getString("hoTen");
-                String chucVu = rs.getString("chucVu");
+                String hashTrongDB = rs.getString("matKhau");
+
+                if (!BCrypt.checkpw(matKhauNhap, hashTrongDB)) {
+                    return null;
+                }
 
                 NhanVien nv = new NhanVien();
-                nv.setMaNV(maNhanVien);
-                nv.setHoTen(hoTen);
-                nv.setChucVu(chucVu);
+                nv.setMaNV(rs.getString("maNV"));
+                nv.setHoTen(rs.getString("hoTen"));
+                nv.setChucVu(rs.getString("chucVu"));
 
-                return new TaiKhoan(maTaiKhoan, tenDangNhap, matKhau, phanQuyen, trangThai, nv);
+                return new TaiKhoan(
+                        rs.getString("maTaiKhoan"),
+                        tenDangNhap,
+                        hashTrongDB,
+                        rs.getString("phanQuyen"),
+                        rs.getBoolean("trangThai"),
+                        nv
+                );
             }
-        } catch (SQLException e) {
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -258,7 +264,16 @@ public class TaiKhoan_DAO {
             stmt = con.prepareStatement(sql);
             stmt.setString(1, tk.getMaTaiKhoan());
             stmt.setString(2, tk.getTenDangNhap());
-            stmt.setString(3, tk.getMatKhau());
+            String hash =
+                    BCrypt.hashpw(
+                            tk.getMatKhau(),
+                            BCrypt.gensalt(12)
+                    );
+
+            stmt.setString(
+                    3,
+                    hash
+            );
             stmt.setString(4, tk.getPhanQuyen());
             stmt.setBoolean(5, tk.isTrangThai());
             stmt.setString(6, tk.getMaNV().getMaNV());
@@ -314,16 +329,19 @@ public class TaiKhoan_DAO {
 
     public boolean doiMatKhau(String maTK, String matKhauMoi) {
         Connection con = ConnectDB.getConnection();
-        PreparedStatement stmt = null;
 
         String sql = "UPDATE TaiKhoan SET matKhau = ? WHERE maTaiKhoan = ?";
 
         try {
-            stmt = con.prepareStatement(sql);
-            stmt.setString(1, matKhauMoi);
+            PreparedStatement stmt = con.prepareStatement(sql);
+
+            String hash = BCrypt.hashpw(matKhauMoi, BCrypt.gensalt(12));
+
+            stmt.setString(1, hash);
             stmt.setString(2, maTK);
 
             return stmt.executeUpdate() > 0;
+
         } catch (SQLException e) {
             e.printStackTrace();
         }

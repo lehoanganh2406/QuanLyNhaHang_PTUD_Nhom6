@@ -252,6 +252,22 @@ public class PhieuDatBan_DigLog extends JDialog {
         spnSoLuongKhach.setFont(inputFont);
         spnSoLuongKhach.setPreferredSize(new Dimension(300, 36));
         spnSoLuongKhach.setBorder(new LineBorder(BORDER, 1));
+        JTextField txtSoLuong =
+                ((JSpinner.DefaultEditor)
+                spnSoLuongKhach.getEditor())
+                .getTextField();
+
+        txtSoLuong.addKeyListener(new KeyAdapter() {
+            public void keyTyped(KeyEvent e) {
+                char c = e.getKeyChar();
+                String text = txtSoLuong.getText();
+
+                if (!Character.isDigit(c)
+                        || (text.isEmpty() && c == '0')) {
+                    e.consume();
+                }
+            }
+        });
 
         JComponent editor = spnSoLuongKhach.getEditor();
         if (editor instanceof JSpinner.DefaultEditor) {
@@ -2082,18 +2098,8 @@ public class PhieuDatBan_DigLog extends JDialog {
         JLabel lblGio = new JLabel("Giờ:");
         lblGio.setFont(new Font("Arial", Font.PLAIN, 14));
 
-        String[] dsGio = new String[14];
-        for (int i = 0; i < 14; i++) {
-            dsGio[i] = String.format("%02d", i + 9);
-        }
-
-        String[] dsPhut = new String[60];
-        for (int i = 0; i < 60; i++) {
-            dsPhut[i] = String.format("%02d", i);
-        }
-
-        javax.swing.JComboBox<String> cboGio = new javax.swing.JComboBox<>(dsGio);
-        javax.swing.JComboBox<String> cboPhut = new javax.swing.JComboBox<>(dsPhut);
+        JComboBox<String> cboGio = new JComboBox<>();
+        JComboBox<String> cboPhut = new JComboBox<>();
 
         cboGio.setFont(new Font("Arial", Font.PLAIN, 14));
         cboPhut.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -2101,22 +2107,89 @@ public class PhieuDatBan_DigLog extends JDialog {
         cboGio.setPreferredSize(new Dimension(70, 32));
         cboPhut.setPreferredSize(new Dimension(70, 32));
 
-        Calendar nowPlus30p = Calendar.getInstance();
-        nowPlus30p.add(Calendar.MINUTE, 30);
+        Runnable capNhatPhut = () -> {
 
-        int gioMacDinh = nowPlus30p.get(Calendar.HOUR_OF_DAY);
-        int phutMacDinh = nowPlus30p.get(Calendar.MINUTE);
+            cboPhut.removeAllItems();
 
-        if (gioMacDinh < 9) {
-            gioMacDinh = 9;
-            phutMacDinh = 0;
-        } else if (gioMacDinh > 22) {
-            gioMacDinh = 22;
-            phutMacDinh = 0;
-        }
+            Calendar now = Calendar.getInstance();
+            now.add(Calendar.MINUTE, 30);
 
-        cboGio.setSelectedItem(String.format("%02d", gioMacDinh));
-        cboPhut.setSelectedItem(String.format("%02d", phutMacDinh));
+            Calendar chon = Calendar.getInstance();
+            chon.setTime(chooser.getDate());
+
+            boolean laHomNay =
+                    now.get(Calendar.YEAR)
+                    == chon.get(Calendar.YEAR)
+                    &&
+                    now.get(Calendar.DAY_OF_YEAR)
+                    == chon.get(Calendar.DAY_OF_YEAR);
+
+            Object selected =
+                    cboGio.getSelectedItem();
+
+            if (selected == null) return;
+
+            int gio =
+                    Integer.parseInt(
+                            selected.toString()
+                    );
+
+            int phutBatDau =
+                    laHomNay
+                    && gio == now.get(Calendar.HOUR_OF_DAY)
+                    ? now.get(Calendar.MINUTE) + 2
+                    : 0;
+
+            for (int i = phutBatDau; i < 60; i++)
+                cboPhut.addItem(
+                        String.format("%02d", i)
+                );
+        };
+
+        Runnable capNhatGio = () -> {
+
+            cboGio.removeAllItems();
+
+            Calendar now = Calendar.getInstance();
+            now.add(Calendar.MINUTE, 30);
+
+            Calendar chon = Calendar.getInstance();
+            chon.setTime(chooser.getDate());
+
+            boolean laHomNay =
+                    now.get(Calendar.YEAR)
+                    == chon.get(Calendar.YEAR)
+                    &&
+                    now.get(Calendar.DAY_OF_YEAR)
+                    == chon.get(Calendar.DAY_OF_YEAR);
+
+            int gioBatDau =
+                    laHomNay
+                    ? Math.max(
+                            9,
+                            now.get(Calendar.HOUR_OF_DAY)
+                    )
+                    : 9;
+
+            for (int i = gioBatDau; i <= 22; i++)
+                cboGio.addItem(
+                        String.format("%02d", i)
+                );
+
+            cboGio.setSelectedIndex(0);
+            capNhatPhut.run();
+        };
+
+        capNhatGio.run();
+
+        chooser.addPropertyChangeListener(
+                "date",
+                e -> capNhatGio.run()
+        );
+
+        cboGio.addActionListener(
+                e -> capNhatPhut.run()
+        );
 
         JPanel pnlGioPhut = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         pnlGioPhut.setBackground(Color.WHITE);
@@ -2180,15 +2253,27 @@ public class PhieuDatBan_DigLog extends JDialog {
                     && homNayCal.get(Calendar.DAY_OF_YEAR) == ngayChon.get(Calendar.DAY_OF_YEAR);
 
             if (cungNgay) {
-            	Timestamp mocToiThieu = new Timestamp(nowPlus30p.getTimeInMillis());
 
-            	if (tgChon.before(mocToiThieu)) {
-            	    JOptionPane.showMessageDialog(
-            	            dlg,
-            	            "Nếu đặt trong hôm nay thì giờ vào phải sau thời điểm hiện tại ít nhất 30 phút!"
-            	    );
-            	    return;
-            	}
+                Calendar nowPlus30p =
+                        Calendar.getInstance();
+
+                nowPlus30p.add(
+                        Calendar.MINUTE,
+                        30
+                );
+
+                Timestamp mocToiThieu =
+                        new Timestamp(
+                                nowPlus30p.getTimeInMillis()
+                        );
+
+                if (tgChon.before(mocToiThieu)) {
+                    JOptionPane.showMessageDialog(
+                            dlg,
+                            "Nếu đặt trong hôm nay thì giờ vào phải sau hiện tại ít nhất 30 phút!"
+                    );
+                    return;
+                }
             }
 
             thoiGianDaChon = tgChon;
@@ -2341,6 +2426,64 @@ public class PhieuDatBan_DigLog extends JDialog {
 
         root.add(top,BorderLayout.NORTH);
         root.add(scroll,BorderLayout.CENTER);
+        JPanel pnlBottom =
+                new JPanel(
+                        new FlowLayout(
+                                FlowLayout.RIGHT,
+                                10,
+                                8
+                        )
+                );
+
+        pnlBottom.setBackground(
+                Color.WHITE
+        );
+
+        JButton btnXong =
+                new JButton("Xong");
+
+        btnXong.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        14
+                )
+        );
+
+        btnXong.setPreferredSize(
+                new Dimension(
+                        100,
+                        38
+                )
+        );
+
+        btnXong.setBackground(
+                new Color(
+                        33,
+                        150,
+                        243
+                )
+        );
+
+        btnXong.setForeground(
+                Color.WHITE
+        );
+
+        btnXong.setOpaque(true);
+        btnXong.setBorderPainted(false);
+        btnXong.setFocusPainted(false);
+        btnXong.setContentAreaFilled(true);
+
+        btnXong.addActionListener(
+                e -> popupBan.setVisible(false)
+        );
+
+        pnlBottom.add(btnXong);
+
+        root.add(
+                pnlBottom,
+                BorderLayout.SOUTH
+        );
 
         popupBan.add(root);
     }

@@ -142,6 +142,18 @@ public class DatBan_GUI extends JPanel {
                 this.ghiChu = ghiChu;
             }
         }
+        private boolean laGioDaQua(Date ngay, int gio) {
+
+            Calendar now = Calendar.getInstance();
+
+            Calendar cell = Calendar.getInstance();
+            cell.setTime(ngay);
+            cell.set(Calendar.HOUR_OF_DAY, gio);
+            cell.set(Calendar.MINUTE, 59);
+            cell.set(Calendar.SECOND, 59);
+
+            return cell.before(now);
+        }
 
         public DatBanMainPanel() {
             setLayout(new BorderLayout());
@@ -1228,7 +1240,28 @@ public class DatBan_GUI extends JPanel {
 
                     String key = visibleTables.get(r).toLowerCase() + "_" + hours.get(c);
                     BookingDisplayItem item = daySlotMap.get(key);
-                    bodyPanel.add(createBookingSlotCell(item, hourWidths[c], rowHeight), gbcB);
+                    JPanel cell =
+                            createBookingSlotCell(
+                                    item,
+                                    hourWidths[c],
+                                    rowHeight
+                            );
+
+                    if (laGioDaQua(
+                            currentCalendar.getTime(),
+                            hours.get(c)
+                    )) {
+
+                        cell.setBackground(
+                                new Color(
+                                        200, 200, 200, 65
+                                )
+                        );
+
+                        cell.setOpaque(true);
+                    }
+
+                    bodyPanel.add(cell, gbcB);
                 }
             }
 
@@ -1363,7 +1396,36 @@ public class DatBan_GUI extends JPanel {
 
                         String key = d + "_" + visibleTables.get(r).toLowerCase() + "_" + startHour;
                         BookingDisplayItem item = weekSlotMap.get(key);
-                        bodyPanel.add(createBookingSlotCell(item, hourWidths[colIndex], rowHeight), gbcB);
+                        Calendar day =
+                                (Calendar) weekStart.clone();
+
+                        day.add(
+                                Calendar.DAY_OF_MONTH,
+                                d
+                        );
+
+                        JPanel cell =
+                                createBookingSlotCell(
+                                        item,
+                                        hourWidths[colIndex],
+                                        rowHeight
+                                );
+
+                        if (laGioDaQua(
+                                day.getTime(),
+                                startHour
+                        )) {
+
+                            cell.setBackground(
+                                    new Color(
+                                            200, 200, 200, 65
+                                    )
+                            );
+
+                            cell.setOpaque(true);
+                        }
+
+                        bodyPanel.add(cell, gbcB);
                     }
                     colIndex++;
                 }
@@ -1385,7 +1447,7 @@ public class DatBan_GUI extends JPanel {
             gbc.fill = java.awt.GridBagConstraints.BOTH;
 
             int availableWidth = getCenterAvailableWidth();
-            int colBan = clamp((int) (availableWidth * 0.12), 110, 140);
+            int colBan = clamp((int) (availableWidth * 0.18), 180, 260);
             int colNgay = clamp((int) (availableWidth * 0.15), 130, 170);
             int colThoiGian = clamp((int) (availableWidth * 0.12), 110, 140);
             int colThongTin = Math.max(450, availableWidth - colBan - colNgay - colThoiGian);
@@ -1409,7 +1471,14 @@ public class DatBan_GUI extends JPanel {
             gbc.weightx = 1;
             content.add(createCell("Thông tin", colThongTin, headerH, true, SwingConstants.LEFT), gbc);
 
-            java.util.List<BookingDisplayItem> filtered = getFilteredBookingsByWeek(currentCalendar.getTime());
+            java.util.List<BookingDisplayItem> filtered =
+                    getAllBookings();
+            filtered.sort(
+                    (a, b) ->
+                            b.thoiGianDen.compareTo(
+                                    a.thoiGianDen
+                            )
+            );
             if (!filtered.isEmpty()) {
                 for (int i = 0; i < filtered.size(); i++) {
                     BookingDisplayItem item = filtered.get(i);
@@ -1473,7 +1542,47 @@ public class DatBan_GUI extends JPanel {
 
             return scrollPane;
         }
+        private java.util.List<BookingDisplayItem> getAllBookings() {
 
+            java.util.List<BookingDisplayItem> result =
+                    new ArrayList<>();
+
+            try {
+
+                PhieuDatBan_DAO dao =
+                        new PhieuDatBan_DAO();
+
+                ArrayList<String[]> ds =
+                        dao.getAllPhieuDatBan();
+
+                for (String[] row : ds) {
+
+                    Timestamp tg =
+                            Timestamp.valueOf(row[5]);
+
+                    BookingDisplayItem item =
+                            new BookingDisplayItem(
+                                    row[0],
+                                    row[1],
+                                    row[2],
+                                    row[3],
+                                    row[8],
+                                    tg,
+                                    Integer.parseInt(row[4]),
+                                    row[7]
+                            );
+
+                    if (isAcceptedByFilter(item)) {
+                        result.add(item);
+                    }
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return result;
+        }
         private JPanel createBookingInfoCell(BookingDisplayItem item, int w, int h) {
             JPanel wrapper = new JPanel(new BorderLayout());
             wrapper.setBackground(Color.WHITE);

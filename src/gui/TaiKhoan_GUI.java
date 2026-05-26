@@ -208,6 +208,7 @@ public class TaiKhoan_GUI extends JFrame {
             NhanVien nv = dsNV.get(index - 1);
 
             txtTenDangNhap.setText(nv.getMaNV());
+            txtTenDangNhap.setEditable(false);
 
             String chucVu = nv.getChucVu();
             if (chucVu != null && chucVu.trim().equalsIgnoreCase("Quản lý")) {
@@ -801,8 +802,10 @@ public class TaiKhoan_GUI extends JFrame {
         txtTenDangNhap.setText(tableModel.getValueAt(row, 1).toString());
         cbVaiTro.setSelectedItem(tableModel.getValueAt(row, 2).toString());
 
-        String mkThat = tableModel.getValueAt(row, 3).toString();
-        txtMatKhau.setText(PasswordUtil.maHoaMD5(mkThat));
+//        String mkThat = tableModel.getValueAt(row, 3).toString();
+//        txtMatKhau.setText(PasswordUtil.maHoaMD5(mkThat));
+        txtMatKhau.setText(tableModel.getValueAt(row, 3).toString());
+
 
         txtTenDangNhap.setEditable(false);
 

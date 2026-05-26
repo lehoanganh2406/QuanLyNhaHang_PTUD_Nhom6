@@ -179,6 +179,175 @@ public class PhieuDatBan_DAO {
 
         return null;
     }
+    public ArrayList<String[]> getAllPhieuDatBan() {
+
+        ArrayList<String[]> ds =
+                new ArrayList<>();
+
+        Connection con = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+
+            con = ConnectDB.getConnection();
+
+            String sql = """
+
+                SELECT
+                    pdb.maPhieuDatBan,
+
+                    STRING_AGG(
+                        pdbb.maBan,
+                        ','
+                    ) AS dsMaBan,
+
+                    pdb.tenKhach,
+                    pdb.sdt,
+                    pdb.soLuongNguoi,
+                    pdb.thoiGianDen,
+                    pdb.tienCoc,
+                    pdb.ghiChu,
+                    pdb.trangThai,
+                    pdb.phuongThucHoanTien,
+                    pdb.lyDoHuy,
+                    pdb.tienHoanTra,
+                    pdb.phuongThucThanhToanCoc,
+                    pdb.thoiGianDatPhieu
+
+                FROM PhieuDatBan pdb
+
+                JOIN PhieuDatBan_Ban pdbb
+                    ON pdb.maPhieuDatBan =
+                       pdbb.maPhieuDatBan
+
+                GROUP BY
+                    pdb.maPhieuDatBan,
+                    pdb.tenKhach,
+                    pdb.sdt,
+                    pdb.soLuongNguoi,
+                    pdb.thoiGianDen,
+                    pdb.tienCoc,
+                    pdb.ghiChu,
+                    pdb.trangThai,
+                    pdb.phuongThucHoanTien,
+                    pdb.lyDoHuy,
+                    pdb.tienHoanTra,
+                    pdb.phuongThucThanhToanCoc,
+                    pdb.thoiGianDatPhieu
+
+                ORDER BY
+                    pdb.thoiGianDen DESC
+
+            """;
+
+            stmt = con.prepareStatement(sql);
+
+            rs = stmt.executeQuery();
+
+            while (rs.next()) {
+
+                String[] row =
+                        new String[14];
+
+                row[0] =
+                        rs.getString(
+                                "maPhieuDatBan"
+                        );
+
+                row[1] =
+                        rs.getString(
+                                "dsMaBan"
+                        );
+
+                row[2] =
+                        rs.getString(
+                                "tenKhach"
+                        );
+
+                row[3] =
+                        rs.getString(
+                                "sdt"
+                        );
+
+                row[4] =
+                        String.valueOf(
+                                rs.getInt(
+                                        "soLuongNguoi"
+                                )
+                        );
+
+                row[5] =
+                        String.valueOf(
+                                rs.getTimestamp(
+                                        "thoiGianDen"
+                                )
+                        );
+
+                row[6] =
+                        rs.getBigDecimal(
+                                "tienCoc"
+                        ) == null
+                                ? "0"
+                                : rs.getBigDecimal(
+                                        "tienCoc"
+                                ).toPlainString();
+
+                row[7] =
+                        rs.getString(
+                                "ghiChu"
+                        );
+
+                row[8] =
+                        rs.getString(
+                                "trangThai"
+                        );
+
+                row[9] =
+                        rs.getString(
+                                "phuongThucHoanTien"
+                        );
+
+                row[10] =
+                        rs.getString(
+                                "lyDoHuy"
+                        );
+
+                row[11] =
+                        rs.getBigDecimal(
+                                "tienHoanTra"
+                        ) == null
+                                ? "0"
+                                : rs.getBigDecimal(
+                                        "tienHoanTra"
+                                ).toPlainString();
+
+                row[12] =
+                        rs.getString(
+                                "phuongThucThanhToanCoc"
+                        );
+
+                row[13] =
+                        String.valueOf(
+                                rs.getTimestamp(
+                                        "thoiGianDatPhieu"
+                                )
+                        );
+
+                ds.add(row);
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+        } finally {
+
+            closeResources(rs, stmt);
+        }
+
+        return ds;
+    }
 
     public boolean kiemTraTrungLich(
             String maBan,

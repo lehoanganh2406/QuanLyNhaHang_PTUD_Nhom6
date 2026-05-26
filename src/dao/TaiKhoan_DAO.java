@@ -211,41 +211,65 @@ public class TaiKhoan_DAO {
     }
 
     public TaiKhoan dangNhap(String tenDangNhap, String matKhauNhap) {
-        Connection con = ConnectDB.getConnection();
+        String sql = """
+            SELECT tk.maTaiKhoan, tk.tenDangNhap, tk.matKhau,
+                   tk.phanQuyen, tk.trangThai, tk.maNV,
+                   nv.hoTen, nv.chucVu
+            FROM TaiKhoan tk
+            JOIN NhanVien nv ON tk.maNV = nv.maNV
+            WHERE tk.tenDangNhap = ? AND tk.trangThai = 1
+        """;
 
-        String sql = "SELECT tk.maTaiKhoan, tk.tenDangNhap, tk.matKhau, " +
-                     "tk.phanQuyen, tk.trangThai, tk.maNV, nv.hoTen, nv.chucVu " +
-                     "FROM TaiKhoan tk " +
-                     "JOIN NhanVien nv ON tk.maNV = nv.maNV " +
-                     "WHERE tk.tenDangNhap = ? AND tk.trangThai = 1";
-
-        try {
-            PreparedStatement stmt = con.prepareStatement(sql);
+        try (
+            Connection con = ConnectDB.getConnection();
+            PreparedStatement stmt = con.prepareStatement(sql)
+        ) {
             stmt.setString(1, tenDangNhap);
-
             ResultSet rs = stmt.executeQuery();
 
-            if (rs.next()) {
-                String hashTrongDB = rs.getString("matKhau");
+            if (!rs.next()) return null;
 
-                if (!BCrypt.checkpw(matKhauNhap, hashTrongDB)) {
-                    return null;
+            String mkTrongDB = rs.getString("matKhau");
+            boolean hopLe;
+
+            // Kiểm tra BCrypt hoặc mật khẩu thường
+            if (mkTrongDB.startsWith("$2")) {
+                hopLe = BCrypt.checkpw(matKhauNhap, mkTrongDB);
+            } else {
+                hopLe = matKhauNhap.equals(mkTrongDB);
+
+                // Auto nâng cấp mật khẩu sang BCrypt
+                if (hopLe) {
+                    String hashMoi = BCrypt.hashpw(matKhauNhap, BCrypt.gensalt(12));
+
+                    String sqlUpdate =
+                            "UPDATE TaiKhoan SET matKhau = ? WHERE maTaiKhoan = ?";
+
+                    try (PreparedStatement ps = con.prepareStatement(sqlUpdate)) {
+                        ps.setString(1, hashMoi);
+                        ps.setString(2, rs.getString("maTaiKhoan"));
+                        ps.executeUpdate();
+                    }
+
+                    mkTrongDB = hashMoi;
                 }
-
-                NhanVien nv = new NhanVien();
-                nv.setMaNV(rs.getString("maNV"));
-                nv.setHoTen(rs.getString("hoTen"));
-                nv.setChucVu(rs.getString("chucVu"));
-
-                return new TaiKhoan(
-                        rs.getString("maTaiKhoan"),
-                        tenDangNhap,
-                        hashTrongDB,
-                        rs.getString("phanQuyen"),
-                        rs.getBoolean("trangThai"),
-                        nv
-                );
             }
+
+            if (!hopLe) return null;
+
+            NhanVien nv = new NhanVien();
+            nv.setMaNV(rs.getString("maNV"));
+            nv.setHoTen(rs.getString("hoTen"));
+            nv.setChucVu(rs.getString("chucVu"));
+
+            return new TaiKhoan(
+                    rs.getString("maTaiKhoan"),
+                    tenDangNhap,
+                    mkTrongDB,
+                    rs.getString("phanQuyen"),
+                    rs.getBoolean("trangThai"),
+                    nv
+            );
 
         } catch (Exception e) {
             e.printStackTrace();

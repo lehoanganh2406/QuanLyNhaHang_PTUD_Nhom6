@@ -333,42 +333,62 @@ public class TrangChu_GUI extends JFrame {
                     );
                 }
 
-                // reload lại trang đặt bàn
                 SwingUtilities.invokeLater(() -> {
 
-                    if(pageCache.containsKey("DatBan_GUI")){
+                    if(pageCache.containsKey(
+                            "DatBan_GUI"
+                    )){
+
+                        Component current =
+                                null;
+
+                        for(Component c :
+                                contentPanel.getComponents()){
+
+                            if(c.isVisible()){
+
+                                current = c;
+                                break;
+                            }
+                        }
 
                         contentPanel.remove(
-                                pageCache.get("DatBan_GUI")
+                                pageCache.get(
+                                        "DatBan_GUI"
+                                )
                         );
 
-                        pageCache.remove("DatBan_GUI");
-                    }
+                        pageCache.remove(
+                                "DatBan_GUI"
+                        );
 
-                    JPanel page =
-                            createPageFromOldFrame(
+                        JPanel page =
+                                createPageFromOldFrame(
+                                        "DatBan_GUI"
+                                );
+
+                        if(page != null){
+
+                            contentPanel.add(
+                                    page,
                                     "DatBan_GUI"
                             );
 
-                    if(page != null){
+                            pageCache.put(
+                                    "DatBan_GUI",
+                                    page
+                            );
 
-                        contentPanel.add(
-                                page,
-                                "DatBan_GUI"
-                        );
+                            if(current != null){
 
-                        pageCache.put(
-                                "DatBan_GUI",
-                                page
-                        );
+                                current.setVisible(
+                                        true
+                                );
+                            }
 
-                        cardLayout.show(
-                                contentPanel,
-                                "DatBan_GUI"
-                        );
-
-                        contentPanel.revalidate();
-                        contentPanel.repaint();
+                            contentPanel.revalidate();
+                            contentPanel.repaint();
+                        }
                     }
                 });
 

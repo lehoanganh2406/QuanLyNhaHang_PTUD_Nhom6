@@ -294,8 +294,19 @@ public class TaiKhoan_DAO {
 
         try {
             stmt = con.prepareStatement(sql);
+//            stmt.setString(1, tk.getTenDangNhap());
+//            stmt.setString(2, tk.getMatKhau());
+//            stmt.setString(3, tk.getPhanQuyen());
+            
             stmt.setString(1, tk.getTenDangNhap());
-            stmt.setString(2, tk.getMatKhau());
+
+            String hash = BCrypt.hashpw(
+                    tk.getMatKhau(),
+                    BCrypt.gensalt(12)
+            );
+
+            stmt.setString(2, hash);
+
             stmt.setString(3, tk.getPhanQuyen());
             stmt.setBoolean(4, tk.isTrangThai());
             stmt.setString(5, tk.getMaNV().getMaNV());

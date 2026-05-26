@@ -57,7 +57,7 @@ public class ManHinhKhach_GUI extends JFrame {
 
             ImageIcon icon =
                     new ImageIcon(
-                            "img/trangchu.png"
+                            "img/manhinhkhach.png"
                     );
 
             Dimension screen =
@@ -722,7 +722,7 @@ public class ManHinhKhach_GUI extends JFrame {
 
             ImageIcon icon =
                     new ImageIcon(
-                            "img/trangchu.png"
+                            "img/manhinhkhach.png"
                     );
 
             Dimension screen =

@@ -8,6 +8,7 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfWriter;
 
 import java.time.LocalDateTime;
@@ -416,12 +417,19 @@ public class DongCa_DigLog extends JDialog {
             PdfWriter.getInstance(doc, new FileOutputStream(path));
             doc.open();
 
-            com.itextpdf.text.Font titleFont =
-                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-            com.itextpdf.text.Font normalFont =
-                    FontFactory.getFont(FontFactory.HELVETICA, 12);
+            BaseFont bf = BaseFont.createFont(
+                    "/System/Library/Fonts/Supplemental/Arial.ttf",
+                    BaseFont.IDENTITY_H,
+                    BaseFont.EMBEDDED
+            );
 
-            Paragraph title = new Paragraph("TONG KET CA LAM VIEC", titleFont);
+            com.itextpdf.text.Font titleFont =
+                    new com.itextpdf.text.Font(bf, 18, Font.BOLD);
+
+            com.itextpdf.text.Font normalFont =
+                    new com.itextpdf.text.Font(bf, 12, Font.PLAIN);
+
+            Paragraph title = new Paragraph("TỔNG KẾT CA LÀM VIỆC", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             title.setSpacingAfter(20);
             doc.add(title);

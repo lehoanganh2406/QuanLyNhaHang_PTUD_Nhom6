@@ -503,7 +503,7 @@ public class HoaDonChiTiet_DigLog extends JPanel {
                 if (c instanceof JPanel) {
                     JPanel p = (JPanel) c;
 
-                    if (p.getLayout() instanceof GridLayout && p.getComponentCount() == 4) {
+                    if (p.getComponentCount() == 4) {
                         String c1 = getLabelText(p.getComponent(0));
                         String c2 = getLabelText(p.getComponent(1));
                         String c3 = getLabelText(p.getComponent(2));

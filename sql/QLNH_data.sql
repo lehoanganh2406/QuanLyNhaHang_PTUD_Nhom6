@@ -717,3 +717,4 @@ SELECT * FROM PhieuDatBan;
 SELECT * FROM HoaDon;
 SELECT * FROM ChiTietHoaDon;
 GO
+

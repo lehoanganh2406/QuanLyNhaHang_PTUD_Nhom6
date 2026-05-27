@@ -6,7 +6,9 @@ import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -32,6 +34,7 @@ public class ThongKeTheoCa_GUI extends JPanel {
 
     private CaThongKe caDangChon;
     private ThongKeCaData thongKeCa = new ThongKeCaData();
+    public static Map<String, LocalDateTime> dsThoiGianHuy = new HashMap<>();
 
     private final DecimalFormat moneyFormat = new DecimalFormat("#,##0");
     private final DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
@@ -451,6 +454,7 @@ public class ThongKeTheoCa_GUI extends JPanel {
                     formatMoney(hd.tongTien)
             });
         }
+   
 
         for (MonThongKeRow m : thongKeCa.dsMon) {
             modelMonMain.addRow(new Object[]{
@@ -550,8 +554,7 @@ public class ThongKeTheoCa_GUI extends JPanel {
                     + "ISNULL(SUM(CASE WHEN phuongThucThanhToanCoc IN (N'Visa', N'VISA') THEN tienCoc ELSE 0 END), 0) AS cocVisa "
                     + "FROM PhieuDatBan "
                     + "WHERE thoiGianDatPhieu >= ? "
-                    + "AND thoiGianDatPhieu <= ? "
-                    + "AND trangThai <> N'Đã hủy'";
+                    + "AND thoiGianDatPhieu <= ? ";
 
             stmt = con.prepareStatement(sql);
             stmt.setTimestamp(1, Timestamp.valueOf(ca.moCa));
@@ -568,8 +571,52 @@ public class ThongKeTheoCa_GUI extends JPanel {
                 data.tienMat += cocTienMat;
                 data.tienChuyenKhoan += cocChuyenKhoan;
                 data.tienVisa += cocVisa;
+                
             }
+         // 2b. Trừ tiền hoàn cọc trong ca
+            closeQuietly(rs);
+            closeQuietly(stmt);
 
+            sql =
+                "SELECT "
+              + "ISNULL(SUM(tienHoanTra),0) AS tongHoan, "
+              + "ISNULL(SUM(CASE "
+              + "WHEN phuongThucHoanTien = N'Tiền mặt' "
+              + "THEN tienHoanTra ELSE 0 END),0) AS hoanTienMat, "
+              + "ISNULL(SUM(CASE "
+              + "WHEN phuongThucHoanTien = N'Chuyển khoản' "
+              + "THEN tienHoanTra ELSE 0 END),0) AS hoanCK, "
+              + "ISNULL(SUM(CASE "
+              + "WHEN phuongThucHoanTien IN (N'Visa',N'VISA') "
+              + "THEN tienHoanTra ELSE 0 END),0) AS hoanVisa "
+              + "FROM PhieuDatBan "
+              + "WHERE trangThai = N'Đã hủy' "
+              + "AND tienHoanTra > 0 "
+              + "AND thoiGianDatPhieu >= ? "
+              + "AND thoiGianDatPhieu <= ?";
+
+            stmt = con.prepareStatement(sql);
+            stmt.setTimestamp(1,
+                    Timestamp.valueOf(ca.moCa));
+            stmt.setTimestamp(2,
+                    Timestamp.valueOf(end));
+
+            rs = stmt.executeQuery();
+
+            if (rs.next()) {
+
+                data.doanhThu -=
+                        rs.getDouble("tongHoan");
+
+                data.tienMat -=
+                        rs.getDouble("hoanTienMat");
+
+                data.tienChuyenKhoan -=
+                        rs.getDouble("hoanCK");
+
+                data.tienVisa -=
+                        rs.getDouble("hoanVisa");
+            }
             closeQuietly(rs);
             closeQuietly(stmt);
 
@@ -633,24 +680,68 @@ public class ThongKeTheoCa_GUI extends JPanel {
             closeQuietly(stmt);
 
             // 5. Thêm dòng tiền cọc vào bảng danh sách thanh toán
-            sql = "SELECT maPhieuDatBan, thoiGianDatPhieu, phuongThucThanhToanCoc, tienCoc "
-                    + "FROM PhieuDatBan "
-                    + "WHERE thoiGianDatPhieu >= ? AND thoiGianDatPhieu <= ? "
-                    + "AND trangThai <> N'Đã hủy' "
-                    + "AND tienCoc > 0 "
-                    + "ORDER BY thoiGianDatPhieu";
+            sql =
+                    "SELECT maPhieuDatBan, "
+                  + "thoiGianDatPhieu AS tg, "
+                  + "phuongThucThanhToanCoc AS pt, "
+                  + "tienCoc AS tien, "
+                  + "'COC' AS loai "
+                  + "FROM PhieuDatBan "
+                  + "WHERE thoiGianDatPhieu >= ? "
+                  + "AND thoiGianDatPhieu <= ? "
+                  + "AND tienCoc > 0 "
+
+                  + "UNION ALL "
+
+                  + "SELECT maPhieuDatBan, "
+                  + "thoiGianDatPhieu AS tg, "
+                  + "phuongThucHoanTien AS pt, "
+                  + "-tienHoanTra AS tien, "
+                  + "'HOAN' AS loai "
+                  + "FROM PhieuDatBan "
+                  + "WHERE trangThai = N'Đã hủy' "
+                  + "AND tienHoanTra > 0 "
+                  + "AND thoiGianDatPhieu >= ? "
+                  + "AND thoiGianDatPhieu <= ? "
+
+                  + "ORDER BY tg";
 
             stmt = con.prepareStatement(sql);
+
             stmt.setTimestamp(1, Timestamp.valueOf(ca.moCa));
             stmt.setTimestamp(2, Timestamp.valueOf(end));
+
+            stmt.setTimestamp(3, Timestamp.valueOf(ca.moCa));
+            stmt.setTimestamp(4, Timestamp.valueOf(end));
+
             rs = stmt.executeQuery();
 
             while (rs.next()) {
                 HoaDonCaRow row = new HoaDonCaRow();
-                row.maHD = "Cọc " + rs.getString("maPhieuDatBan");
-                row.thoiGian = toLocalDateTime(rs.getTimestamp("thoiGianDatPhieu"));
-                row.phuongThuc = rs.getString("phuongThucThanhToanCoc");
-                row.tongTien = rs.getDouble("tienCoc");
+                String loai = rs.getString("loai");
+                String maPDB =rs.getString("maPhieuDatBan");
+                if ("HOAN".equals(loai)) {
+                    row.maHD = "Hoàn cọc "+ maPDB;
+                } else {
+                    row.maHD = "Cọc " + maPDB;
+                }
+                if ("HOAN".equals(loai)) {
+
+                    row.thoiGian =
+                            dsThoiGianHuy.getOrDefault(
+                                    maPDB,
+                                    LocalDateTime.now()
+                            );
+
+                } else {
+
+                    row.thoiGian =
+                            toLocalDateTime(
+                                    rs.getTimestamp("tg")
+                            );
+                }
+                row.phuongThuc = rs.getString("pt");
+                row.tongTien =rs.getDouble("tien");
                 data.dsHoaDon.add(row);
             }
 
@@ -732,11 +823,12 @@ public class ThongKeTheoCa_GUI extends JPanel {
         double tienVisaCuoiCa;
     }
 
-    private static class HoaDonCaRow {
-        String maHD;
-        LocalDateTime thoiGian;
-        String phuongThuc;
-        double tongTien;
+    public static class HoaDonCaRow {
+
+        public String maHD;
+        public LocalDateTime thoiGian;
+        public String phuongThuc;
+        public double tongTien;
     }
 
     private static class MonThongKeRow {

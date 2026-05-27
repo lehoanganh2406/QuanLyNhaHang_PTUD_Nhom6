@@ -20,6 +20,7 @@ import dao.CaLamViec_DAO;
 import entity.CaLamViec;
 import entity.TaiKhoan;
 import gui.DangNhap_GUI;
+import gui.ThongKeTheoCa_GUI;
 import gui.TrangChu_GUI;
 import digLog.TienMoCa_DigLog;
 
@@ -195,18 +196,33 @@ public class DongCa_DigLog extends JDialog {
         double cocTienMat = 0;
         double cocChuyenKhoan = 0;
         double cocVisa = 0;
+        
+        double hoanTienMat = 0;
+        double hoanChuyenKhoan = 0;
+        double hoanVisa = 0;
 
         String sqlHoaDon = """
-            SELECT
-                ISNULL(SUM(CASE WHEN LTRIM(RTRIM(phuongThucThanhToan)) = N'Tiền mặt' THEN tongTien ELSE 0 END), 0) AS tienMat,
-                ISNULL(SUM(CASE WHEN LTRIM(RTRIM(phuongThucThanhToan)) = N'Chuyển khoản' THEN tongTien ELSE 0 END), 0) AS chuyenKhoan,
-                ISNULL(SUM(CASE WHEN UPPER(LTRIM(RTRIM(phuongThucThanhToan))) = N'VISA' THEN tongTien ELSE 0 END), 0) AS visa
-            FROM HoaDon
-            WHERE LTRIM(RTRIM(trangThai)) = N'Đã thanh toán'
-              AND thoiGianRa IS NOT NULL
-              AND thoiGianRa >= ?
-              AND thoiGianRa <= ?
-        """;
+        	    SELECT
+        	        ISNULL(SUM(CASE
+        	            WHEN LTRIM(RTRIM(phuongThucThanhToan)) = N'Tiền mặt'
+        	            THEN ISNULL(tongTien,0) + ISNULL(thueVAT,0)
+        	            ELSE 0 END), 0) AS tienMat,
+
+        	        ISNULL(SUM(CASE
+        	            WHEN LTRIM(RTRIM(phuongThucThanhToan)) = N'Chuyển khoản'
+        	            THEN ISNULL(tongTien,0) + ISNULL(thueVAT,0)
+        	            ELSE 0 END), 0) AS chuyenKhoan,
+
+        	        ISNULL(SUM(CASE
+        	            WHEN UPPER(LTRIM(RTRIM(phuongThucThanhToan))) = N'VISA'
+        	            THEN ISNULL(tongTien,0) + ISNULL(thueVAT,0)
+        	            ELSE 0 END), 0) AS visa
+        	    FROM HoaDon
+        	    WHERE LTRIM(RTRIM(trangThai)) = N'Đã thanh toán'
+        	      AND thoiGianRa IS NOT NULL
+        	      AND thoiGianRa >= ?
+        	      AND thoiGianRa <= ?
+        	""";
 
         String sqlCoc = """
             SELECT
@@ -219,6 +235,34 @@ public class DongCa_DigLog extends JDialog {
               AND thoiGianDatPhieu <= ?
               AND ISNULL(LTRIM(RTRIM(trangThai)), N'') <> N'Đã hủy'
         """;
+        String sqlHoan = """
+        	    SELECT
+        	        ISNULL(SUM(CASE
+        	            WHEN LTRIM(RTRIM(phuongThucHoanTien))
+        	                 = N'Tiền mặt'
+        	            THEN tienHoanTra ELSE 0 END),0)
+        	            AS tienMat,
+
+        	        ISNULL(SUM(CASE
+        	            WHEN LTRIM(RTRIM(phuongThucHoanTien))
+        	                 = N'Chuyển khoản'
+        	            THEN tienHoanTra ELSE 0 END),0)
+        	            AS chuyenKhoan
+
+        	    FROM PhieuDatBan
+        	    WHERE trangThai = N'Đã hủy'
+        	      AND tienHoanTra > 0
+        	      AND maPhieuDatBan IN (
+
+        	            SELECT DISTINCT
+        	                REPLACE(maHD,'Hoàn cọc ','')
+        	            FROM (
+        	                SELECT
+        	                    maHD
+        	                FROM HoaDon
+        	            ) x
+        	      )
+        	""";
 
         try {
             Connection con = ConnectDB.getConnection();
@@ -248,18 +292,31 @@ public class DongCa_DigLog extends JDialog {
             }
             rs.close();
             ps.close();
+            
+            ps = con.prepareStatement(sqlHoan);
+            rs = ps.executeQuery();
+
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                hoanTienMat = rs.getDouble("tienMat");
+                hoanChuyenKhoan =rs.getDouble("chuyenKhoan");
+            }
+
+            rs.close();
+            ps.close();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        tienMatCuoiCa = caDangMo.getTienMoCa() + tienMatBanHang + cocTienMat;
-        tienChuyenKhoanCuoiCa = tienCKBanHang + cocChuyenKhoan;
+        tienMatCuoiCa = caDangMo.getTienMoCa() + tienMatBanHang + cocTienMat- hoanTienMat;
+        tienChuyenKhoanCuoiCa = tienCKBanHang + cocChuyenKhoan - hoanChuyenKhoan;
         tienVisaCuoiCa = tienVisaBanHang + cocVisa;
 
-        tongDoanhThu =
-                tienMatBanHang + tienCKBanHang + tienVisaBanHang
-              + cocTienMat + cocChuyenKhoan + cocVisa;
+        tongDoanhThu =(tienMatBanHang + cocTienMat - hoanTienMat)
+              +(tienCKBanHang + cocChuyenKhoan - hoanChuyenKhoan)
+              + (tienVisaBanHang + cocVisa);
 
         lblTienMat.setText(formatTien(tienMatCuoiCa));
         lblChuyenKhoan.setText(formatTien(tienChuyenKhoanCuoiCa));

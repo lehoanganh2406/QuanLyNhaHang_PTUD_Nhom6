@@ -43,6 +43,7 @@ import javax.swing.plaf.basic.BasicComboBoxUI;
 import dao.PhieuDatBan_DAO;
 import dao.ChiTietDatMon_DAO;
 import entity.ChiTietDatMon;
+import gui.ThongKeTheoCa_GUI;
 
 public class HuyBan_DigLog extends JDialog {
 
@@ -475,8 +476,14 @@ public class HuyBan_DigLog extends JDialog {
             );
 
             if (ok) {
+            	ThongKeTheoCa_GUI
+                .dsThoiGianHuy
+                .put(
+                        maPhieuDatBan,
+                        LocalDateTime.now()
+                );
                 huyThanhCong = true;
-                
+
                 dispose();
             } else {
                 JOptionPane.showMessageDialog(this,

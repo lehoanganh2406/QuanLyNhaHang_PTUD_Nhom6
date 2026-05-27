@@ -1303,11 +1303,14 @@ public class HoaDon_GUI extends JFrame {
     
     private ImageIcon loadIcon(String path, int w, int h) {
         try {
-            ImageIcon icon = new ImageIcon(path);
-
-            if (icon.getIconWidth() <= 0) return null;
-
-            Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            // chuyển "img/abc.png" -> "/abc.png"
+            path = "/" + path.replace("img/", "");
+            java.net.URL imgURL = getClass().getResource(path);
+            if (imgURL == null) return null;
+            ImageIcon icon = new ImageIcon(imgURL);
+            Image img = icon.getImage().getScaledInstance(
+                    w, h, Image.SCALE_SMOOTH
+            );
             return new ImageIcon(img);
         } catch (Exception e) {
             return null;

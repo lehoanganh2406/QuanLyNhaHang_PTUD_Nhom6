@@ -899,24 +899,30 @@ public class TaiKhoan_GUI extends JFrame {
 //        }
 //    }
     private void loadAnhNhanVien(String fileName) {
-        if (fileName != null && !fileName.isEmpty()) {
+        if (fileName != null && !fileName.trim().isEmpty()) {
 
-            String path = fileName;
+            try {
+                java.net.URL imgURL = getClass().getResource("/" + fileName);
+                if (imgURL != null) {
+                    ImageIcon icon = new ImageIcon(imgURL);
+                    Image img = icon.getImage().getScaledInstance(
+                            sc(150),
+                            sc(170),
+                            Image.SCALE_SMOOTH
+                    );
+                    lblAnh.setIcon(new ImageIcon(img));
+                    lblAnh.setText("");
 
-            if (!fileName.contains(":") && !fileName.startsWith("img/") && !fileName.startsWith("img\\")) {
-                path = System.getProperty("user.dir") + "/img/" + fileName;
-            }
+                } else {
+                    lblAnh.setIcon(null);
+                    lblAnh.setText("Không tìm thấy ảnh");
+                }
 
-            ImageIcon icon = new ImageIcon(path);
-
-            if (icon.getIconWidth() > 0) {
-                Image img = icon.getImage().getScaledInstance(sc(150), sc(170), Image.SCALE_SMOOTH);
-                lblAnh.setIcon(new ImageIcon(img));
-                lblAnh.setText("");
-            } else {
+            } catch (Exception e) {
                 lblAnh.setIcon(null);
-                lblAnh.setText("Không tìm thấy ảnh");
+                lblAnh.setText("Lỗi tải ảnh");
             }
+
         } else {
             lblAnh.setIcon(null);
             lblAnh.setText("Chưa có ảnh");
@@ -1018,10 +1024,14 @@ public class TaiKhoan_GUI extends JFrame {
 
     private ImageIcon loadIcon(String path, int w, int h) {
         try {
-            ImageIcon icon = new ImageIcon(path);
-            if (icon.getIconWidth() <= 0) return null;
-
-            Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            // chuyển "img/abc.png" -> "/abc.png"
+            path = "/" + path.replace("img/", "");
+            java.net.URL imgURL = getClass().getResource(path);
+            if (imgURL == null) return null;
+            ImageIcon icon = new ImageIcon(imgURL);
+            Image img = icon.getImage().getScaledInstance(
+                    w, h, Image.SCALE_SMOOTH
+            );
             return new ImageIcon(img);
         } catch (Exception e) {
             return null;
@@ -1047,31 +1057,22 @@ public class TaiKhoan_GUI extends JFrame {
             }
         };
 
-
-
         int w = text.length() > 12 ? 210 : 135;
         btn.setPreferredSize(new Dimension(sc(w), sc(42)));
         btn.setForeground(new Color(30, 30, 30));
         btn.setFont(f("SansSerif", Font.BOLD, 14));
-
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);
         btn.setBorderPainted(false);
         btn.setOpaque(false);
-
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-
         btn.setMargin(new Insets(sc(4), sc(10), sc(4), sc(10)));
 
 
         if (iconPath != null) {
             btn.setIcon(loadIcon(iconPath, sc(18), sc(18)));
             btn.setHorizontalTextPosition(SwingConstants.RIGHT);
-
-
             btn.setIconTextGap(sc(7));
-
         }
 
         return btn;

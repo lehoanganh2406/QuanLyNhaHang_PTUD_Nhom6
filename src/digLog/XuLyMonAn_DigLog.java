@@ -202,11 +202,19 @@ public class XuLyMonAn_DigLog extends JDialog {
 //        btnThemLoai = new JButton("+");
 //        btnThemLoai.setPreferredSize(new Dimension(40, 30));
         btnThemLoai = new JButton();
-
-        ImageIcon iconPlus = new ImageIcon("img/cn_them.png");
-        Image img = iconPlus.getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
-
-        btnThemLoai.setIcon(new ImageIcon(img));
+        java.net.URL imgURL = getClass().getResource("/cn_them.png");
+        if (imgURL != null) {
+            ImageIcon iconPlus = new ImageIcon(imgURL);
+            Image img = iconPlus.getImage()
+                            .getScaledInstance(
+                                    18,
+                                    18,
+                                    Image.SCALE_SMOOTH
+                            );
+            btnThemLoai.setIcon(
+                    new ImageIcon(img)
+            );
+        }
         btnThemLoai.setPreferredSize(new Dimension(50, 30));
 
         btnThemLoai.setFocusPainted(false);
@@ -584,56 +592,32 @@ public class XuLyMonAn_DigLog extends JDialog {
 
         try {
 
-            String baseDir =
-                    System.getProperty("user.dir")
-                            + File.separator
-                            + "img";
+            String fileName = tenAnh.trim();
 
-            String input = tenAnh.trim();
+            // nếu DB lỡ lưu img/abc.png
+            fileName = fileName.replace("img/", "");
 
-            // TH1: DB lưu full path
-            File file = new File(input);
+            java.net.URL imgURL =
+                    getClass().getResource(
+                            "/" + fileName
+                    );
 
-            if (file.exists()) {
-                setAnhPreview(file);
-                return;
-            }
+            if (imgURL != null) {
 
-            // TH2: DB chỉ lưu tên file
-            file = new File(baseDir, input);
+                Image img =
+                        new ImageIcon(imgURL)
+                                .getImage()
+                                .getScaledInstance(
+                                        230,
+                                        135,
+                                        Image.SCALE_SMOOTH
+                                );
 
-            if (file.exists()) {
-                setAnhPreview(file);
-                return;
-            }
-
-            // TH3: DB lưu thiếu extension
-            String tenKhongExt = input;
-
-            int dotIndex = input.lastIndexOf(".");
-
-            if (dotIndex > 0) {
-                tenKhongExt = input.substring(0, dotIndex);
-            }
-
-            String[] exts = {
-                    ".png",
-                    ".jpg",
-                    ".jpeg",
-                    ".gif"
-            };
-
-            for (String ext : exts) {
-
-                file = new File(
-                        baseDir,
-                        tenKhongExt + ext
+                lblAnh.setIcon(
+                        new ImageIcon(img)
                 );
 
-                if (file.exists()) {
-                    setAnhPreview(file);
-                    return;
-                }
+                lblAnh.setText("");
             }
 
         } catch (Exception e) {

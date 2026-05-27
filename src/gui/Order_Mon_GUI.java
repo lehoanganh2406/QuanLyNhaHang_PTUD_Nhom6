@@ -1962,23 +1962,16 @@ public class Order_Mon_GUI extends JPanel {
     }
 
     private ImageIcon loadImageMon(String fileName) {
-        if (fileName == null || fileName.trim().isEmpty()) return null;
-
-        String[] paths = {
-                fileName,
-                "img/" + fileName,
-                "image/" + fileName,
-                "images/" + fileName
-        };
-
-        for (String path : paths) {
-            try {
-                ImageIcon icon = new ImageIcon(path);
-                if (icon.getIconWidth() > 0) return icon;
-            } catch (Exception e) {
-            }
+        if (fileName == null || fileName.trim().isEmpty()) {
+            return null;
         }
-        return null;
+
+        java.net.URL imgURL =
+                getClass().getResource("/" + fileName);
+
+        return imgURL != null
+                ? new ImageIcon(imgURL)
+                : null;
     }
 
     private void addMouseAll(Component comp, java.awt.event.MouseAdapter adapter) {

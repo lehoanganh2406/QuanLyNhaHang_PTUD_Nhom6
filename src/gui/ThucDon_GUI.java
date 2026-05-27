@@ -1355,28 +1355,21 @@ public class ThucDon_GUI extends JPanel {
                         return null;
                     }
 
-                    String baseDir =
-                            System.getProperty("user.dir")
-                            + File.separator
-                            + "img";
+                    java.net.URL imgURL =
+                            getClass().getResource("/" + anhMon);
 
-                    File file =
-                            new File(baseDir, anhMon);
-
-                    if (!file.exists()) {
+                    if (imgURL == null) {
                         return null;
                     }
 
                     Image img =
-                            new ImageIcon(
-                                    file.getAbsolutePath()
-                            )
-                            .getImage()
-                            .getScaledInstance(
-                                    w,
-                                    h,
-                                    Image.SCALE_FAST
-                            );
+                            new ImageIcon(imgURL)
+                                    .getImage()
+                                    .getScaledInstance(
+                                            w,
+                                            h,
+                                            Image.SCALE_FAST
+                                    );
 
                     return new ImageIcon(img);
 
@@ -1387,9 +1380,7 @@ public class ThucDon_GUI extends JPanel {
 
             @Override
             protected void done() {
-
                 try {
-
                     ImageIcon icon = get();
 
                     if (icon != null) {
@@ -1397,30 +1388,37 @@ public class ThucDon_GUI extends JPanel {
                         lblImg.setText("");
                     } else {
                         lblImg.setText("Không có ảnh");
+                        lblImg.setIcon(null);
                     }
 
                 } catch (Exception e) {
-                    lblImg.setText("Lỗi ảnh");
+                    lblImg.setText("Lỗi tải");
+                    lblImg.setIcon(null);
                 }
             }
-
         }.execute();
     }
 
-
-
     private ImageIcon loadIcon(String path, int w, int h) {
         try {
-            ImageIcon icon = new ImageIcon(path);
-            if (icon.getIconWidth() <= 0) {
+
+            // "img/abc.png" -> "/abc.png"
+            path = "/" + path.replace("img/", "");
+            java.net.URL imgURL =
+                    getClass().getResource(path);
+            if (imgURL == null) {
                 return null;
             }
-            Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            ImageIcon icon = new ImageIcon(imgURL);
+            Image img = icon.getImage().getScaledInstance(
+                    w,
+                    h,
+                    Image.SCALE_SMOOTH
+            );
             return new ImageIcon(img);
         } catch (Exception e) {
             return null;
         }
-
     }
 
     private String truncate(String s, int max) {

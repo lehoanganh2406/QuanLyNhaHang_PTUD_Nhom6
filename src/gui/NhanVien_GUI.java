@@ -846,21 +846,33 @@ public class NhanVien_GUI extends JFrame {
     }
 
     private void loadAnhNhanVien(String fileName) {
-        if (fileName != null && !fileName.isEmpty()) {
-            String fullPath = System.getProperty("user.dir") + "/img/" + fileName;
-            File file = new File(fullPath);
-            if (file.exists()) {
+        if (fileName != null && !fileName.trim().isEmpty()) {
 
+            try {
+                java.net.URL imgURL =
+                        getClass().getResource("/" + fileName);
 
-                ImageIcon icon = new ImageIcon(fullPath);
-                Image img = icon.getImage().getScaledInstance(140, 160, Image.SCALE_SMOOTH);
+                if (imgURL != null) {
 
-                lblAnh.setIcon(new ImageIcon(img));
-                lblAnh.setText("");
-            } else {
+                    ImageIcon icon = new ImageIcon(imgURL);
+
+                    Image img = icon.getImage().getScaledInstance(
+                            140, 160, Image.SCALE_SMOOTH
+                    );
+
+                    lblAnh.setIcon(new ImageIcon(img));
+                    lblAnh.setText("");
+
+                } else {
+                    lblAnh.setIcon(null);
+                    lblAnh.setText("Không tìm thấy ảnh");
+                }
+
+            } catch (Exception e) {
                 lblAnh.setIcon(null);
-                lblAnh.setText("Không tìm thấy ảnh");
+                lblAnh.setText("Lỗi tải ảnh");
             }
+
         } else {
             lblAnh.setIcon(null);
             lblAnh.setText("Chọn ảnh");
@@ -1123,12 +1135,14 @@ public class NhanVien_GUI extends JFrame {
 
     private ImageIcon loadIcon(String path, int w, int h) {
         try {
-            ImageIcon icon = new ImageIcon(path);
-            if (icon.getIconWidth() <= 0) return null;
-
-            Image img = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            path = "/" + path.replace("img/", "");
+            java.net.URL imgURL = getClass().getResource(path);
+            if (imgURL == null) return null;
+            ImageIcon icon = new ImageIcon(imgURL);
+            Image img = icon.getImage().getScaledInstance(
+                    w, h, Image.SCALE_SMOOTH
+            );
             return new ImageIcon(img);
-
         } catch (Exception e) {
             return null;
         }

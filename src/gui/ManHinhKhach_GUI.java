@@ -55,10 +55,9 @@ public class ManHinhKhach_GUI extends JFrame {
 
         try {
 
-            ImageIcon icon =
-                    new ImageIcon(
-                            "img/manhinhkhach.png"
-                    );
+        	ImageIcon icon = new ImageIcon(
+        		    getClass().getResource("/manhinhkhach.png")
+        		);
 
             Dimension screen =
                     Toolkit.getDefaultToolkit()
@@ -519,10 +518,9 @@ public class ManHinhKhach_GUI extends JFrame {
      // ĐỔI ẢNH BÊN TRÁI
      try {
 
-         ImageIcon icon =
-                 new ImageIcon(
-                         "img/dangnhap.png"
-                 );
+    	 ImageIcon icon = new ImageIcon(
+    			    getClass().getResource("/dangnhap.png")
+    			);
 
          Dimension screen =
                  Toolkit.getDefaultToolkit()
@@ -720,10 +718,9 @@ public class ManHinhKhach_GUI extends JFrame {
         pnOrderList.repaint();
         try {
 
-            ImageIcon icon =
-                    new ImageIcon(
-                            "img/manhinhkhach.png"
-                    );
+        	ImageIcon icon = new ImageIcon(
+        		    getClass().getResource("/manhinhkhach.png")
+        		);
 
             Dimension screen =
                     Toolkit.getDefaultToolkit()

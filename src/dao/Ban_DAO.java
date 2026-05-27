@@ -294,83 +294,87 @@ public class Ban_DAO {
 
 	    String sql = """
 
-	        SELECT
-	            b.maBan,
-	            b.tenBan,
-	            b.soChoNgoi,
-	            kv.tenKhuVuc,
+	    	    SELECT
+	    	        b.maBan,
+	    	        b.tenBan,
+	    	        b.soChoNgoi,
+	    	        kv.tenKhuVuc,
 
-	            CASE
+	    	        CASE
 
-	                WHEN EXISTS(
+	    	            -- ĐANG PHỤC VỤ (theo hóa đơn trong phạm vi 2 tiếng)
+	    	            WHEN EXISTS(
 
-	                    SELECT 1
-	                    FROM HoaDon hd
-	                    JOIN HoaDon_Ban hdb
-	                        ON hd.maHD = hdb.maHD
-	                    WHERE hdb.maBan = b.maBan
-	                    AND CAST(hd.thoiGianVao AS DATE)
-	                        = CAST(? AS DATE)
-	                    AND hd.thoiGianRa IS NULL
-	                    AND (
-	                        hd.trangThai IS NULL
-	                        OR hd.trangThai <> N'Đã hủy'
-	                    )
+	    	                SELECT 1
+	    	                FROM HoaDon hd
+	    	                JOIN HoaDon_Ban hdb
+	    	                    ON hd.maHD = hdb.maHD
+	    	                WHERE hdb.maBan = b.maBan
+	    	                AND hd.thoiGianVao
+	    	                    < DATEADD(HOUR,2,?)
+	    	                AND DATEADD(HOUR,2,hd.thoiGianVao)
+	    	                    > ?
+	    	                AND hd.thoiGianRa IS NULL
+	    	                AND (
+	    	                    hd.trangThai IS NULL
+	    	                    OR hd.trangThai <> N'Đã hủy'
+	    	                )
 
-	                )
-	                    THEN N'Đang phục vụ'
+	    	            )
+	    	                THEN N'Đang phục vụ'
 
-	                WHEN EXISTS(
+	    	            -- ĐÃ NHẬN BÀN (khách đặt đã vào)
+	    	            WHEN EXISTS(
 
-	                    SELECT 1
-	                    FROM PhieuDatBan pdb
-	                    JOIN PhieuDatBan_Ban pdbb
-	                        ON pdb.maPhieuDatBan =
-	                           pdbb.maPhieuDatBan
-	                    WHERE pdbb.maBan = b.maBan
-	                    AND pdb.trangThai = N'Đã nhận bàn'
-	                    AND pdb.thoiGianDen
-	                        < DATEADD(HOUR,2,?)
-	                    AND DATEADD(HOUR,2,pdb.thoiGianDen)
-	                        > ?
+	    	                SELECT 1
+	    	                FROM PhieuDatBan pdb
+	    	                JOIN PhieuDatBan_Ban pdbb
+	    	                    ON pdb.maPhieuDatBan =
+	    	                       pdbb.maPhieuDatBan
+	    	                WHERE pdbb.maBan = b.maBan
+	    	                AND pdb.trangThai = N'Đã nhận bàn'
+	    	                AND pdb.thoiGianDen
+	    	                    < DATEADD(HOUR,2,?)
+	    	                AND DATEADD(HOUR,2,pdb.thoiGianDen)
+	    	                    > ?
 
-	                )
-	                    THEN N'Đang phục vụ'
+	    	            )
+	    	                THEN N'Đang phục vụ'
 
-	                WHEN EXISTS(
+	    	            -- BÀN ĐÃ ĐẶT
+	    	            WHEN EXISTS(
 
-	                    SELECT 1
-	                    FROM PhieuDatBan pdb
-	                    JOIN PhieuDatBan_Ban pdbb
-	                        ON pdb.maPhieuDatBan =
-	                           pdbb.maPhieuDatBan
-	                    WHERE pdbb.maBan = b.maBan
-	                    AND pdb.trangThai IN
-	                    (
-	                        N'Đang chờ',
-	                        N'Đã đặt'
-	                    )
-	                    AND pdb.thoiGianDen
-	                        < DATEADD(HOUR,2,?)
-	                    AND DATEADD(HOUR,2,pdb.thoiGianDen)
-	                        > ?
+	    	                SELECT 1
+	    	                FROM PhieuDatBan pdb
+	    	                JOIN PhieuDatBan_Ban pdbb
+	    	                    ON pdb.maPhieuDatBan =
+	    	                       pdbb.maPhieuDatBan
+	    	                WHERE pdbb.maBan = b.maBan
+	    	                AND pdb.trangThai IN
+	    	                (
+	    	                    N'Đang chờ',
+	    	                    N'Đã đặt'
+	    	                )
+	    	                AND pdb.thoiGianDen
+	    	                    < DATEADD(HOUR,2,?)
+	    	                AND DATEADD(HOUR,2,pdb.thoiGianDen)
+	    	                    > ?
 
-	                )
-	                    THEN N'Đã đặt'
+	    	            )
+	    	                THEN N'Đã đặt'
 
-	                ELSE N'Bàn trống'
+	    	            ELSE N'Bàn trống'
 
-	            END AS trangThaiHienTai
+	    	        END AS trangThaiHienTai
 
-	        FROM Ban b
+	    	    FROM Ban b
 
-	        LEFT JOIN KhuVuc kv
-	            ON b.maKhuVuc = kv.maKhuVuc
+	    	    LEFT JOIN KhuVuc kv
+	    	        ON b.maKhuVuc = kv.maKhuVuc
 
-	        ORDER BY b.tenBan
+	    	    ORDER BY b.tenBan
 
-	    """;
-
+	    	""";
 	    try(
 	            PreparedStatement stmt =
 	                    con.prepareStatement(sql)
@@ -381,6 +385,7 @@ public class Ban_DAO {
 	        stmt.setTimestamp(3, thoiGianChon);
 	        stmt.setTimestamp(4, thoiGianChon);
 	        stmt.setTimestamp(5, thoiGianChon);
+	        stmt.setTimestamp(6, thoiGianChon);
 
 	        try(
 	                ResultSet rs =

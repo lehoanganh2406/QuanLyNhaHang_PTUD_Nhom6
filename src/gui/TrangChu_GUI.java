@@ -79,7 +79,7 @@ public class TrangChu_GUI extends JFrame {
     }
 
     private JPanel createTrangChuPanel() {
-        backgroundImage = new ImageIcon("img/trangchu.png").getImage();
+        backgroundImage = new ImageIcon(getClass().getResource("/trangchu.png")).getImage();
 
         JPanel panel = new JPanel(null) {
             private static final long serialVersionUID = 1L;
@@ -112,32 +112,76 @@ public class TrangChu_GUI extends JFrame {
 
         return panel;
     }
-    private JPanel taoNutTrangChu(String iconPath, String text, String pageName) {
+    private JPanel taoNutTrangChu(
+            String iconPath,
+            String text,
+            String pageName
+    ) {
+
         JPanel p = new JPanel(new BorderLayout(0, 8));
         p.setOpaque(false);
         p.setPreferredSize(new java.awt.Dimension(130, 145));
         p.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         JLabel lblIcon = new JLabel();
-        lblIcon.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblIcon.setHorizontalAlignment(
+                javax.swing.SwingConstants.CENTER
+        );
 
-        ImageIcon icon = new ImageIcon(iconPath);
-        Image img = icon.getImage().getScaledInstance(125, 90, Image.SCALE_SMOOTH);
-        lblIcon.setIcon(new ImageIcon(img));
+        // "img/abc.png" -> "/abc.png"
+        iconPath = "/" + iconPath.replace("img/", "");
 
-        JLabel lblText = new JLabel(text, javax.swing.SwingConstants.CENTER);
-        lblText.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 18));
-        lblText.setForeground(new java.awt.Color(235, 205, 135));
+        java.net.URL imgURL =
+                getClass().getResource(iconPath);
+
+        if (imgURL != null) {
+
+            ImageIcon icon =
+                    new ImageIcon(imgURL);
+
+            Image img =
+                    icon.getImage()
+                            .getScaledInstance(
+                                    125,
+                                    90,
+                                    Image.SCALE_SMOOTH
+                            );
+
+            lblIcon.setIcon(
+                    new ImageIcon(img)
+            );
+        }
+
+        JLabel lblText = new JLabel(
+                text,
+                javax.swing.SwingConstants.CENTER
+        );
+
+        lblText.setFont(
+                new java.awt.Font(
+                        "SansSerif",
+                        java.awt.Font.BOLD,
+                        18
+                )
+        );
+
+        lblText.setForeground(
+                new java.awt.Color(235, 205, 135)
+        );
 
         p.add(lblIcon, BorderLayout.CENTER);
         p.add(lblText, BorderLayout.SOUTH);
 
-        p.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                showPage(pageName);
-            }
-        });
+        p.addMouseListener(
+                new java.awt.event.MouseAdapter() {
+                    @Override
+                    public void mouseClicked(
+                            java.awt.event.MouseEvent e
+                    ) {
+                        showPage(pageName);
+                    }
+                }
+        );
 
         return p;
     }

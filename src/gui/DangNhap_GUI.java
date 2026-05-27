@@ -60,7 +60,7 @@ public class DangNhap_GUI extends JFrame {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                ImageIcon bgIcon = new ImageIcon("img/dangnhap.png");
+                ImageIcon bgIcon = new ImageIcon( getClass().getResource("/dangnhap.png"));
                 Image img = bgIcon.getImage();
                 g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
             }
@@ -77,7 +77,7 @@ public class DangNhap_GUI extends JFrame {
         lblTopIcon.setHorizontalAlignment(SwingConstants.CENTER);
         lblTopIcon.setBounds(0, 40, 610, 80);
 
-        ImageIcon iconTop = new ImageIcon("img/dn_chuong.png");
+        ImageIcon iconTop = new ImageIcon(getClass().getResource("/dn_chuong.png"));
         Image imgTop = iconTop.getImage().getScaledInstance(100, 100, Image.SCALE_SMOOTH);
         lblTopIcon.setIcon(new ImageIcon(imgTop));
         panelRight.add(lblTopIcon);
@@ -99,7 +99,8 @@ public class DangNhap_GUI extends JFrame {
         lblUserIcon.setHorizontalAlignment(SwingConstants.CENTER);
         lblUserIcon.setBounds(15, 18, 40, 30);
 
-        ImageIcon userIcon = new ImageIcon("img/dn_icon_ten.png");
+        ImageIcon userIcon = new ImageIcon(getClass().getResource("/dn_icon_ten.png"));
+        
         Image userImg = userIcon.getImage().getScaledInstance(34, 34, Image.SCALE_SMOOTH);
         lblUserIcon.setIcon(new ImageIcon(userImg));
         pnlUser.add(lblUserIcon);
@@ -129,7 +130,7 @@ public class DangNhap_GUI extends JFrame {
         lblPassIcon.setHorizontalAlignment(SwingConstants.CENTER);
         lblPassIcon.setBounds(15, 15, 40, 35);
 
-        ImageIcon passIcon = new ImageIcon("img/dn_icon_mk.png");
+        ImageIcon passIcon = new ImageIcon(getClass().getResource("/dn_icon_mk.png"));
         Image passImg = passIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
         lblPassIcon.setIcon(new ImageIcon(passImg));
         pnlPass.add(lblPassIcon);
@@ -154,10 +155,11 @@ public class DangNhap_GUI extends JFrame {
         lblEye.setHorizontalAlignment(SwingConstants.CENTER);
         lblEye.setBounds(325, 18, 35, 30);
 
-        ImageIcon eyeOpenIcon = new ImageIcon("img/Dn_eye_open.png");
+        ImageIcon eyeOpenIcon = new ImageIcon(getClass().getResource("/Dn_eye_open.png"));
         Image eyeOpenImg = eyeOpenIcon.getImage().getScaledInstance(27, 27, Image.SCALE_SMOOTH);
 
-        ImageIcon eyeCloseIcon = new ImageIcon("img/Dn_eye_off.png");
+        ImageIcon eyeCloseIcon = new ImageIcon(getClass().getResource("/Dn_eye_off.png"));
+        
         Image eyeCloseImg = eyeCloseIcon.getImage().getScaledInstance(27, 27, Image.SCALE_SMOOTH);
 
         lblEye.setIcon(new ImageIcon(eyeCloseImg));
@@ -558,10 +560,10 @@ public class DangNhap_GUI extends JFrame {
         dlg.setResizable(false);
 
         ImageIcon eyeOpenIcon = new ImageIcon(
-                new ImageIcon("img/Dn_eye_open.png").getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH)
+                new ImageIcon(getClass().getResource("/Dn_eye_open.png")).getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH)
         );
         ImageIcon eyeCloseIcon = new ImageIcon(
-                new ImageIcon("img/Dn_eye_off.png").getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH)
+                new ImageIcon(getClass().getResource("/Dn_eye_off.png")).getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH)
         );
 
         JLabel lblTitle = new JLabel("ĐỔI MẬT KHẨU", SwingConstants.CENTER);

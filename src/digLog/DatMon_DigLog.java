@@ -240,13 +240,38 @@ public class DatMon_DigLog extends JDialog {
         btnSearch.setBackground(new Color(248, 248, 248));
         btnSearch.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        ImageIcon iconSearch = new ImageIcon(SEARCH_ICON_PATH);
-        if (iconSearch.getIconWidth() > 0) {
-            Image imgSearch = iconSearch.getImage().getScaledInstance(18, 18, Image.SCALE_SMOOTH);
-            btnSearch.setIcon(new ImageIcon(imgSearch));
+        java.net.URL imgURL =
+                getClass().getResource(
+                        "/" + SEARCH_ICON_PATH.replace("img/", "")
+                );
+
+        if (imgURL != null) {
+
+            ImageIcon iconSearch =
+                    new ImageIcon(imgURL);
+
+            Image imgSearch =
+                    iconSearch.getImage()
+                            .getScaledInstance(
+                                    18,
+                                    18,
+                                    Image.SCALE_SMOOTH
+                            );
+
+            btnSearch.setIcon(
+                    new ImageIcon(imgSearch)
+            );
+
         } else {
+
             btnSearch.setText("⌕");
-            btnSearch.setFont(new Font("SansSerif", Font.PLAIN, 18));
+            btnSearch.setFont(
+                    new Font(
+                            "SansSerif",
+                            Font.PLAIN,
+                            18
+                    )
+            );
         }
 
         searchWrap.add(txtSearch, BorderLayout.CENTER);
@@ -570,22 +595,24 @@ public class DatMon_DigLog extends JDialog {
     }
 
     private ImageIcon loadImageMon(String fileName) {
-        if (fileName == null || fileName.trim().isEmpty()) return null;
-
-        String[] paths = {
-                "img/" + fileName,
-                "image/" + fileName,
-                "images/" + fileName
-        };
-
-        for (String path : paths) {
-            try {
-                ImageIcon icon = new ImageIcon(path);
-                if (icon.getIconWidth() > 0) return icon;
-            } catch (Exception e) {
-            }
+        if (fileName == null || fileName.trim().isEmpty()) {
+            return null;
         }
-        return null;
+
+        try {
+
+            java.net.URL imgURL =
+                    getClass().getResource("/" + fileName);
+
+            if (imgURL == null) {
+                return null;
+            }
+
+            return new ImageIcon(imgURL);
+
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private void addMouseAll(Component comp, java.awt.event.MouseAdapter adapter) {

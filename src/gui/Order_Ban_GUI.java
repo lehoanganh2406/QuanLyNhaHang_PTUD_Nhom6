@@ -20,8 +20,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -72,6 +74,9 @@ public class Order_Ban_GUI extends JPanel {
     private JButton btnPrevNgay;
     private JButton btnNextNgay;
     private JDateChooser dcNgayChon;
+    private static final Set<String> daCanhBao1Gio = new HashSet<>();
+    private static final Set<String> daCanhBao15Phut = new HashSet<>();
+    private static final Set<String> daCanhBaoToiGio = new HashSet<>();
 
     private final Ban_DAO banDAO = new Ban_DAO();
     private final KhuVuc_DAO khuVucDAO = new KhuVuc_DAO();
@@ -508,6 +513,7 @@ public class Order_Ban_GUI extends JPanel {
                 long motTieng = 60L * 60L * 1000L;
                 Timestamp mocBatDauBanDat = new Timestamp(thoiGianDen.getTime() - motTieng);
 
+                
                 if (!now.before(mocBatDauBanDat) && now.before(thoiGianDen)) {
                     for (String[] banRow : dsTatCaBanTheoNgay) {
                         if (banRow == null || banRow.length < 5) continue;
@@ -516,23 +522,50 @@ public class Order_Ban_GUI extends JPanel {
                         String trangThaiBan = banRow[4];
 
                         if (maBan.equalsIgnoreCase(maBanRow)) {
-                        	
 
-                        	String tt =
-                        	        chuanHoaTrangThai(trangThaiBan);
+                            String tt =
+                                    chuanHoaTrangThai(trangThaiBan);
 
-                        	if (
-                        	        "Bàn trống".equalsIgnoreCase(tt)
-                        	        &&
-                        	        (
-                        	            "Đang chờ".equalsIgnoreCase(trangThaiPhieu)
-                        	            ||
-                        	            "Đã đặt".equalsIgnoreCase(trangThaiPhieu)
-                        	        )
-                        	) {
+                            // 1. Nếu bàn trống -> đổi luôn thành bàn đặt
+                            if (
+                                    "Bàn trống".equalsIgnoreCase(tt)
+                                    &&
+                                    (
+                                        "Đang chờ".equalsIgnoreCase(trangThaiPhieu)
+                                        ||
+                                        "Đã đặt".equalsIgnoreCase(trangThaiPhieu)
+                                    )
+                            ) {
 
-                        	    banRow[4] = "Bàn đặt";
-                        	}
+                                banRow[4] = "Bàn đặt";
+                            }
+
+                            // 2. Nếu bàn đang phục vụ -> cảnh báo
+                            else if (
+                                    "Bàn đang phục vụ".equalsIgnoreCase(tt)
+                            ) {
+
+                            	String key =
+                            	        maBan.trim()
+                            	        + "_"
+                            	        + thoiGianDen.getTime();
+
+                                // chỉ cảnh báo 1 lần
+                            	if (daCanhBao1Gio.add(key)) {
+
+                            	    SwingUtilities.invokeLater(() -> {
+
+                            	        JOptionPane.showMessageDialog(
+                            	                Order_Ban_GUI.this,
+                            	                "⚠ Bàn " + banRow[1]
+                            	                + " còn 1 giờ nữa có khách đặt!",
+                            	                "Cảnh báo bàn đặt",
+                            	                JOptionPane.WARNING_MESSAGE
+                            	        );
+                            	    });
+                            	}
+                            }
+
                             break;
                         }
                     }

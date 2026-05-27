@@ -1361,7 +1361,6 @@ public class PhieuDatBan_DigLog extends JDialog {
 
         try {
             PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
-
             boolean biTrung = dao.kiemTraTrungLich(
                     maBanDuocChon,
                     thoiGianDaChon,
@@ -1387,7 +1386,6 @@ public class PhieuDatBan_DigLog extends JDialog {
             BigDecimal tienCoc = new BigDecimal(tienCocText);
 
             String phuongThucCoc = cboPTThanhToanCoc.getSelectedItem().toString();
-
             String maPhieuMoi = dao.themPhieuDatBan(
             	    dsBanDaChon,
                     txtKhachHang.getText().trim(),
@@ -1424,173 +1422,112 @@ public class PhieuDatBan_DigLog extends JDialog {
 
                     for(String maBan : dsMonTheoBan.keySet()){
 
-                        ArrayList<ChiTietDatMon> dsMon =
-                                dsMonTheoBan.get(maBan);
+                        ArrayList<ChiTietDatMon> dsMon = dsMonTheoBan.get(maBan);
 
                         if(dsMon == null || dsMon.isEmpty()){
-
                             continue;
                         }
 
                         // TẠO PDM
-                        PhieuDatMon pdm =
-                                new PhieuDatMon();
-
+                        PhieuDatMon pdm = new PhieuDatMon();
                         pdm.setMaPhieuDatMon(
                                 "PDMR"
                                 + System.currentTimeMillis()
                                 + stt
                         );
 
-                        PhieuDatBan pdb =
-                                new PhieuDatBan();
-
+                        PhieuDatBan pdb = new PhieuDatBan();
                         pdb.setMaPhieuDatBan(maPhieuMoi);
-
                         pdm.setPhieuDatBan(pdb);
-
-                        pdm.setHinhThucDatMon(
-                                "Đặt riêng"
-                        );
-
+                        pdm.setHinhThucDatMon("Đặt riêng");
                         pdm.setGhiChu("");
-
-                        pdm.setThoiGianTao(
-                                java.time.LocalDateTime.now()
-                        );
-
-                        boolean taoPDM =
-                                pdmDAO.themPhieuDatMon(pdm);
-
+                        pdm.setThoiGianTao(java.time.LocalDateTime.now());
+                        boolean taoPDM = pdmDAO.themPhieuDatMon(pdm);
                         if(!taoPDM){
-
                             luuMonOK = false;
                             break;
                         }
-
                         // MAP BÀN
-                        boolean mapBan =
-                                pdmBanDAO.themBanVaoPhieu(
+                        boolean mapBan = pdmBanDAO.themBanVaoPhieu(
                                         pdm.getMaPhieuDatMon(),
                                         maBan
                                 );
-
                         if(!mapBan){
-
                             luuMonOK = false;
                             break;
                         }
 
                         // GÁN PDM CHO MÓN
                         for(ChiTietDatMon ct : dsMon){
-
-                            ct.setPhieuDatMon(pdm);
+                        	ct.setPhieuDatMon(pdm);
                         }
-
                         // LƯU CT MÓN
-                        boolean luuCT =
-                                ctMonDAO.luuDanhSachMonTheoPhieu(
+                        boolean luuCT = ctMonDAO.luuDanhSachMonTheoPhieu(
                                         pdm.getMaPhieuDatMon(),
                                         dsMon
                                 );
 
                         if(!luuCT){
-
                             luuMonOK = false;
                             break;
                         }
-
                         stt++;
                     }
-
                 }
 
                 /* =========================
                    ORDER CHUNG
                 ========================= */
                 else{
-
                     if(
                             dsMonDatTam != null
                             &&
                             !dsMonDatTam.isEmpty()
                     ){
-
-                        PhieuDatMon pdm =
-                                new PhieuDatMon();
-
+                        PhieuDatMon pdm = new PhieuDatMon();
                         pdm.setMaPhieuDatMon(
                                 "PDMC"
                                 + System.currentTimeMillis()
                         );
-
-                        PhieuDatBan pdb =
-                                new PhieuDatBan();
-
+                        PhieuDatBan pdb = new PhieuDatBan();
                         pdb.setMaPhieuDatBan(maPhieuMoi);
-
                         pdm.setPhieuDatBan(pdb);
-
-                        pdm.setHinhThucDatMon(
-                                "Đặt chung"
-                        );
-
+                        pdm.setHinhThucDatMon("Đặt chung");
                         pdm.setGhiChu("");
-
-                        pdm.setThoiGianTao(
-                                java.time.LocalDateTime.now()
-                        );
-
-                        boolean taoPDM =
-                                pdmDAO.themPhieuDatMon(pdm);
+                        pdm.setThoiGianTao(java.time.LocalDateTime.now());
+                        boolean taoPDM = pdmDAO.themPhieuDatMon(pdm);
 
                         if(taoPDM){
-
                             // MAP NHIỀU BÀN
                             pdmBanDAO.themNhieuBanVaoPhieu(
                                     pdm.getMaPhieuDatMon(),
                                     dsBanDaChon
                             );
-
                             // GÁN PDM CHO MÓN
                             for(ChiTietDatMon ct : dsMonDatTam){
-
                                 ct.setPhieuDatMon(pdm);
                             }
-
-                            luuMonOK =
-                                    ctMonDAO.luuDanhSachMonTheoPhieu(
+                            luuMonOK = ctMonDAO.luuDanhSachMonTheoPhieu(
                                             pdm.getMaPhieuDatMon(),
                                             dsMonDatTam
                                     );
-
                         }else{
-
                             luuMonOK = false;
                         }
                     }
                 }
 
                 Ban_DAO banDAO = new Ban_DAO();
-
                 boolean capNhatBanOK = true;
-
                 for(String maBan : dsBanDaChon){
-
-                    boolean ok =
-                            banDAO.capNhatTrangThaiBan(
+                    boolean ok = banDAO.capNhatTrangThaiBan(
                                     maBan,
-                                    "Đang chờ"
-                            );
-
+                                    "Đang chờ");
                     if(!ok){
-
                         capNhatBanOK = false;
                     }
                 }
-
                 if (luuMonOK && capNhatBanOK) {
-                    
                     dispose();
                 } else {
                     JOptionPane.showMessageDialog(
@@ -1623,14 +1560,11 @@ public class PhieuDatBan_DigLog extends JDialog {
 
     private void capNhatPhieuDatBan() {
         if (maPhieuHienTai == null || maPhieuHienTai.trim().isEmpty()) return;
-
         if (!validateForm()) {
             return;
         }
-
         try {
             PhieuDatBan_DAO dao = new PhieuDatBan_DAO();
-
             boolean biTrung = dao.kiemTraTrungLich(
                     maBanDuocChon,
                     thoiGianDaChon,

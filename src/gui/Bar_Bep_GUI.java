@@ -625,10 +625,10 @@ public class Bar_Bep_GUI extends JPanel {
 
         try {
 
-            File file = new File("libs/notification.wav");
-
-            AudioInputStream audio =
-                    AudioSystem.getAudioInputStream(file);
+        	AudioInputStream audio =
+                    AudioSystem.getAudioInputStream(
+                            getClass().getResource("/notification.wav")
+                    );
 
             Clip clip = AudioSystem.getClip();
 

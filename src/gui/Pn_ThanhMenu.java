@@ -875,7 +875,7 @@ public class Pn_ThanhMenu extends JPanel {
         dangNhap.setVisible(true);
     }
     private JPanel createLogoHome() {
-        ImageIcon icon = new ImageIcon("img/logo.png");
+        ImageIcon icon = new ImageIcon(getClass().getResource("/logo.png"));
 
         JPanel pnLogo = new JPanel() {
             @Override

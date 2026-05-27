@@ -12,7 +12,7 @@ public class Starting {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-            	
+            	System.setProperty("apple.awt.UIElement", "true");
                 // Kết nối cơ sở dữ liệu
                 ConnectDB.getInstance().connect();
 
